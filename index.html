@@ -300,7 +300,7 @@ function getTemaLC() { try { return JSON.parse(localStorage.getItem("lc_tema")||
 
 const { useState } = React;
 
-const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 // Cargas de salida precargadas por día (soda en unidades: 1 cajón = 6 sifones)
 const CARGA_DIA_DEFAULT = {
@@ -3879,7 +3879,7 @@ function NuevoCliente({diaActual,onGuardar,onVolver}) {
 // ─── MÓDULO PROMOCIÓN ────────────────────────────────────────────────────────
 
 function CargaHistorica({clientes,productos,onGuardar,onVolver,enConfig}) {
-  const DIAS_REP = ["Martes","Miércoles","Jueves","Viernes"];
+  const DIAS_REP = ["Martes","Miércoles","Jueves","Viernes","Sábado"];
   const [fecha,setFecha]   = React.useState("2026-01-06");
   const [dia,setDia]       = React.useState("Martes");
   const [filas,setFilas]   = React.useState([]);
