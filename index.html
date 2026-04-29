@@ -93,11 +93,11 @@ self.addEventListener('fetch',e=>{
             id: ingId,
             tipo: 'ingreso',
             ent: 'negocio',
-            desc: 'La Catalina — Reparto ' + fecha,
+            desc: 'Reparto del día — ' + fecha,
             monto: ingresos.total,
             efectivo: ingresos.efectivo,
             transferencia: ingresos.transferencia,
-            cat: 'La Catalina',
+            cat: 'App de Reparto',
             fecha: fecha,
             metodo: 'efectivo',
             _origen: 'la_catalina',
@@ -497,17 +497,18 @@ function App() {
   const [productos, setProductos] = useLS("cat_productos_v3", PRODUCTOS_INICIALES);
   const normStock = (s) => {
     const empty = {sifon:0,bidon10:0,bidon20:0};
-    const base = {soderia:{...empty},casa:{...empty},camion:{...empty}};
+    const base = {soderia:{...empty},soderia_vacios:{...empty},casa:{...empty},camion:{...empty}};
     if(!s||typeof s!=="object") return base;
     if(s.soderia&&typeof s.soderia==="object") {
       return {
-        soderia:{sifon:s.soderia?.sifon||0,bidon10:s.soderia?.bidon10||0,bidon20:s.soderia?.bidon20||0},
-        casa:   {sifon:s.casa?.sifon||0,bidon10:s.casa?.bidon10||0,bidon20:s.casa?.bidon20||0},
-        camion: {sifon:s.camion?.sifon||0,bidon10:s.camion?.bidon10||0,bidon20:s.camion?.bidon20||0},
+        soderia:        {sifon:s.soderia?.sifon||0,bidon10:s.soderia?.bidon10||0,bidon20:s.soderia?.bidon20||0},
+        soderia_vacios: {sifon:s.soderia_vacios?.sifon||0,bidon10:s.soderia_vacios?.bidon10||0,bidon20:s.soderia_vacios?.bidon20||0},
+        casa:           {sifon:s.casa?.sifon||0,bidon10:s.casa?.bidon10||0,bidon20:s.casa?.bidon20||0},
+        camion:         {sifon:s.camion?.sifon||0,bidon10:s.camion?.bidon10||0,bidon20:s.camion?.bidon20||0},
       };
     }
     // old format
-    return {soderia:{sifon:s.sifon||0,bidon10:s.bidon10||0,bidon20:s.bidon20||0},casa:{...empty},camion:{...empty}};
+    return {soderia:{sifon:s.sifon||0,bidon10:s.bidon10||0,bidon20:s.bidon20||0},soderia_vacios:{...empty},casa:{...empty},camion:{...empty}};
   };
   const [stockRaw, setStockRaw] = useLS("cat_stock_v4", {soderia:{sifon:0,bidon10:0,bidon20:0},casa:{sifon:0,bidon10:0,bidon20:0},camion:{sifon:0,bidon10:0,bidon20:0}});
   const stockNorm = React.useMemo(()=>normStock(stockRaw), [JSON.stringify(stockRaw)]);
@@ -1026,7 +1027,7 @@ function App() {
           clientes={clientes}
           onConfirmar={(ventaId)=>{const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);saveVentas(nv);}}
           onVolver={()=>irA("menu")} />}
-      {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual&&v.pago==="transferencia"&&!v.transConfirmada).length} />}
+      {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&v.pago==="transferencia"&&!v.transConfirmada).length} />}
       {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
       {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("selectorFechaPlanilla");}} onVolver={()=>irA("selectorFechaPlanilla")} />}
       {pantalla==="selectorFechaClientes" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("inicioReparto");}} onVolver={()=>irA("diaPrincipal")} />}
@@ -1034,19 +1035,18 @@ function App() {
         onGuardar={(p,descontar)=>{
           savePlanilla(`${diaActual}_${fechaActual}`,p);
           if(descontar){
-            setStock(prev=>{
-              const s=JSON.parse(JSON.stringify(normStock(prev)));
-              const soda=Number(p.productos?.soda?.llenos||0);
-              const b10=Number(p.productos?.b10?.llenos||0);
-              const b20=Number(p.productos?.b20?.llenos||0);
-              s.soderia.sifon  =Math.max(0,(s.soderia.sifon||0)-soda);
-              s.soderia.bidon10=Math.max(0,(s.soderia.bidon10||0)-b10);
-              s.soderia.bidon20=Math.max(0,(s.soderia.bidon20||0)-b20);
-              s.camion.sifon   =(s.camion.sifon||0)+soda;
-              s.camion.bidon10 =(s.camion.bidon10||0)+b10;
-              s.camion.bidon20 =(s.camion.bidon20||0)+b20;
-              syncData({stock:normStock(s)}); return normStock(s);
-            });
+            const s=JSON.parse(JSON.stringify(normStock(stockNorm)));
+            const soda=Number(p.productos?.soda?.llenos||0);
+            const b10=Number(p.productos?.b10?.llenos||0);
+            const b20=Number(p.productos?.b20?.llenos||0);
+            s.soderia.sifon  =Math.max(0,(s.soderia.sifon||0)-soda);
+            s.soderia.bidon10=Math.max(0,(s.soderia.bidon10||0)-b10);
+            s.soderia.bidon20=Math.max(0,(s.soderia.bidon20||0)-b20);
+            s.camion.sifon   =(s.camion.sifon||0)+soda;
+            s.camion.bidon10 =(s.camion.bidon10||0)+b10;
+            s.camion.bidon20 =(s.camion.bidon20||0)+b20;
+            setStock(normStock(s));
+            syncData({stock:normStock(s)});
           }
           irA("clientes");
         }} onVolver={()=>irA("selectorFechaClientes")} />}
@@ -1073,8 +1073,30 @@ function App() {
         }}
         />}
       {pantalla==="detalleCliente" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} noVisitas={(noVisitas||[]).filter(v=>v.clienteId===cliente.id)} dia={diaActual} fecha={fechaActual} productos={productos} onVenta={()=>irA("venta")} onVolver={()=>irA("clientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>eliminarCliente(cliente.id)}
-          onNoEstaCliente={()=>{const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];saveNoVisitas(nv);}}
-          onNoQuiereCliente={()=>{const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];saveNoVisitas(nv);}}
+          onNoEstaCliente={()=>{
+            const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
+            saveNoVisitas(nv);
+            const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+            const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual).map(v=>v.clienteId));
+            const noVMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
+            const terminados=new Set(clientesDia.filter(c=>ventasIds.has(c.id)||noVMap[c.id]==="noquiso"||noVMap[c.id]==="noesta2").map(c=>c.id));
+            const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&noVMap[c.id]!=="noesta"&&c.id!==cliente.id);
+            const noestaPend=clientesDia.filter(c=>noVMap[c.id]==="noesta"&&!terminados.has(c.id)&&c.id!==cliente.id);
+            const sig=normalPend[0]||noestaPend[0];
+            if(sig){setClienteId(sig.id);irA("detalleCliente");}else irA("clientes");
+          }}
+          onNoQuiereCliente={()=>{
+            const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
+            saveNoVisitas(nv);
+            const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+            const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual).map(v=>v.clienteId));
+            const noVMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
+            const terminados=new Set(clientesDia.filter(c=>ventasIds.has(c.id)||noVMap[c.id]==="noquiso"||noVMap[c.id]==="noesta2").map(c=>c.id));
+            const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&noVMap[c.id]!=="noesta"&&c.id!==cliente.id);
+            const noestaPend=clientesDia.filter(c=>noVMap[c.id]==="noesta"&&!terminados.has(c.id)&&c.id!==cliente.id);
+            const sig=normalPend[0]||noestaPend[0];
+            if(sig){setClienteId(sig.id);irA("detalleCliente");}else irA("clientes");
+          }}
           recordatorios={recordatorios}
           onGuardarRecordatorio={(r)=>saveRecordatorios([...(recordatorios||[]),r])}
           onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
@@ -1477,13 +1499,17 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
 
   // Stock base editable (sodería y depósito)
   const [base, setBase] = React.useState(()=>({
-    soderia: {...(stock?.soderia||{sifon:0,bidon10:0,bidon20:0})},
-    casa:    {...(stock?.casa   ||{sifon:0,bidon10:0,bidon20:0})},
+    soderia:        {...(stock?.soderia        ||{sifon:0,bidon10:0,bidon20:0})},
+    soderia_vacios: {...(stock?.soderia_vacios ||{sifon:0,bidon10:0,bidon20:0})},
+    casa:           {...(stock?.casa           ||{sifon:0,bidon10:0,bidon20:0})},
   }));
   const setB = (lugar,key,val) => setBase(b=>({...b,[lugar]:{...b[lugar],[key]:Number(val)||0}}));
 
   // Hoy
   const hoy = new Date().toISOString().slice(0,10);
+
+  // ¿El día ya fue cerrado?
+  const diaCerradoHoy = DIAS.some(d=>!!planillas[`${d}_${hoy}`]?._diaCerrado);
 
   // Lo cargado hoy en el camión (desde planillas)
   const cargadoHoy = {sifon:0,bidon10:0,bidon20:0};
@@ -1513,8 +1539,8 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
     });
   });
 
-  // En camión ahora = cargado - vendido
-  const enCamion = {
+  // En camión ahora = cargado - vendido (0 si ya cerró el día)
+  const enCamion = diaCerradoHoy ? {sifon:0,bidon10:0,bidon20:0} : {
     sifon:   Math.max(0, cargadoHoy.sifon   - vendidoHoy.sifon),
     bidon10: Math.max(0, cargadoHoy.bidon10 - vendidoHoy.bidon10),
     bidon20: Math.max(0, cargadoHoy.bidon20 - vendidoHoy.bidon20),
@@ -1550,7 +1576,7 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
   });
 
   const guardar = () => {
-    setStock({soderia:base.soderia,casa:base.casa,camion:stock?.camion||{sifon:0,bidon10:0,bidon20:0}});
+    setStock({soderia:base.soderia,soderia_vacios:base.soderia_vacios,casa:base.casa,camion:stock?.camion||{sifon:0,bidon10:0,bidon20:0}});
     setGuardado(true);
     setTimeout(()=>setGuardado(false),2000);
   };
@@ -1605,33 +1631,55 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
         {/* SECCIÓN 1 — Sodería */}
         <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #1D9E75"}}>
           <div style={{fontSize:12,fontWeight:700,color:"#1D9E75",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>🏭 Sodería — Stock disponible</div>
-          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:10}}>Llenos listos para salir mañana</div>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:6}}>Llenos listos para salir</div>
           <div style={{display:"flex",gap:8,marginBottom:12}}>
             <StatBox label="Cajones soda" val={Math.floor((base.soderia.sifon||0)/CAJON)} sub={`${base.soderia.sifon||0} sif`} color="#e2ecff"/>
             <StatBox label="Bidón 10L" val={base.soderia.bidon10||0} color="#e2ecff"/>
             <StatBox label="Bidón 20L" val={base.soderia.bidon20||0} color="#e2ecff"/>
           </div>
-          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:8}}>Ajustar stock físico:</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:6}}>Vacíos en sodería</div>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <StatBox label="Cajones soda" val={Math.floor((base.soderia_vacios.sifon||0)/CAJON)} sub={`${base.soderia_vacios.sifon||0} sif`} color="#f5b942"/>
+            <StatBox label="Bidón 10L" val={base.soderia_vacios.bidon10||0} color="#f5b942"/>
+            <StatBox label="Bidón 20L" val={base.soderia_vacios.bidon20||0} color="#f5b942"/>
+          </div>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:8}}>Ajustar llenos:</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
             <InputStock lugar="soderia" label="Cajones soda" field="sifon" isCajon={true}/>
             <InputStock lugar="soderia" label="Bidón 10L" field="bidon10"/>
             <InputStock lugar="soderia" label="Bidón 20L" field="bidon20"/>
+          </div>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:8}}>Ajustar vacíos:</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <InputStock lugar="soderia_vacios" label="Caj. soda vacíos" field="sifon" isCajon={true}/>
+            <InputStock lugar="soderia_vacios" label="Bidón 10L vacíos" field="bidon10"/>
+            <InputStock lugar="soderia_vacios" label="Bidón 20L vacíos" field="bidon20"/>
           </div>
         </div>
 
         {/* SECCIÓN 2 — Camión (solo si hay reparto hoy) */}
         {hayRepartHoy ? (
-          <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #185FA5"}}>
-            <div style={{fontSize:12,fontWeight:700,color:"#185FA5",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>🚚 Camión — En reparto ahora</div>
-            <div style={{display:"flex",gap:8,marginBottom:8}}>
-              <StatBox label="Cajones" val={Math.floor(enCamion.sifon/CAJON)} color="#7ecfff"/>
-              <StatBox label="10L" val={enCamion.bidon10} color="#7ecfff"/>
-              <StatBox label="20L" val={enCamion.bidon20} color="#7ecfff"/>
+          <div style={{...s.card,margin:"0 0 12px",borderLeft:`3px solid ${diaCerradoHoy?"#1D9E75":"#185FA5"}`}}>
+            <div style={{fontSize:12,fontWeight:700,color:diaCerradoHoy?"#1D9E75":"#185FA5",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10}}>
+              🚚 Camión — {diaCerradoHoy?"Día cerrado ✅":"En reparto ahora"}
             </div>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)",borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
-              Cargado: {Math.floor(cargadoHoy.sifon/CAJON)} caj · {cargadoHoy.bidon10} 10L · {cargadoHoy.bidon20} 20L
-              {"  |  "}Vendido: {Math.floor(vendidoHoy.sifon/CAJON)} caj · {vendidoHoy.bidon10} 10L · {vendidoHoy.bidon20} 20L
-            </div>
+            {diaCerradoHoy ? (
+              <div style={{fontSize:13,color:"#4dd9a0",textAlign:"center",padding:"8px 0"}}>
+                ✅ El camión fue descargado — stock actualizado
+              </div>
+            ) : (
+              <>
+                <div style={{display:"flex",gap:8,marginBottom:8}}>
+                  <StatBox label="Cajones" val={Math.floor(enCamion.sifon/CAJON)} color="#7ecfff"/>
+                  <StatBox label="10L" val={enCamion.bidon10} color="#7ecfff"/>
+                  <StatBox label="20L" val={enCamion.bidon20} color="#7ecfff"/>
+                </div>
+                <div style={{fontSize:11,color:"var(--color-text-tertiary)",borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
+                  Cargado: {Math.floor(cargadoHoy.sifon/CAJON)} caj · {cargadoHoy.bidon10} 10L · {cargadoHoy.bidon20} 20L
+                  {"  |  "}Vendido: {Math.floor(vendidoHoy.sifon/CAJON)} caj · {vendidoHoy.bidon10} 10L · {vendidoHoy.bidon20} 20L
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div style={{...s.card,margin:"0 0 12px",background:"rgba(24,95,165,0.05)",border:"0.5px dashed rgba(24,95,165,0.3)"}}>
@@ -2035,7 +2083,7 @@ function MenuDias({dias,onDia,onResumen,onConfig,onGestionClientes,onPromocion,o
   );
 }
 
-function DiaPrincipal({dia,onIrClientes,onIrPlanilla,onVolver,ventasPendientesTransfer}) {
+function DiaPrincipal({dia,onIrClientes,onIrPlanilla,onVolver,onVerConfirmaciones,ventasPendientesTransfer}) {
   return (
     <div style={s.screen}>
       <div style={s.header}>
@@ -2052,7 +2100,7 @@ function DiaPrincipal({dia,onIrClientes,onIrPlanilla,onVolver,ventasPendientesTr
         </button>
         {ventasPendientesTransfer>0&&(
           <button style={{...s.card,margin:"0 0 10px",background:"#1e3a5f",border:"1px solid #f5b942",display:"flex",alignItems:"center",gap:10,width:"100%",textAlign:"left",cursor:"pointer"}}
-            onClick={onIrClientes}>
+            onClick={onVerConfirmaciones}>
             <span style={{fontSize:22}}>🔴</span>
             <div style={{flex:1}}>
               <div style={{fontSize:13,fontWeight:500,color:"#f5b942"}}>{ventasPendientesTransfer} transferencia{ventasPendientesTransfer>1?"s":""} sin confirmar</div>
@@ -2129,9 +2177,42 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
 
   const totalGastos=(datos.gastos||[]).reduce((a,g)=>a+num(g.monto),0);
   const efectivo=num(datos.efectivo), fiado=num(datos.fiado), retenciones=num(datos.retenciones);
-  const sobrante=efectivo-(totalVentaPlata-fiado); // retenciones es informativo, no afecta el sobrante
+  const sobrante=efectivo-(totalVentaPlata-fiado);
   const ganancia=(cobEfectivo - totalVentaLlenar - totalGastos) + cobTransNeto;
   const totalLlenosIngresados=PRODUCTOS_CONFIG.reduce((a,p)=>a+num(datos.productos[p.id]?.llenos),0);
+
+  // ── Cierre del día / stock ──
+  const planKeyToStockKey = {"soda":"sifon","b10":"bidon10","b20":"bidon20"};
+  const PROD_LABEL = {soda:"Sifones",b10:"Bidón 10L",b20:"Bidón 20L"};
+  const [mostrarCierre, setMostrarCierre] = useState(false);
+  const yaCerrado = !!planilla._diaCerrado;
+  const llenosCargados = {soda:Number(datos.productos?.soda?.llenos||0),b10:Number(datos.productos?.b10?.llenos||0),b20:Number(datos.productos?.b20?.llenos||0)};
+  const vendidosDia = {soda:0,b10:0,b20:0};
+  ventas.forEach(v=>v.detalle.forEach(d=>{const k=prodKey[d.nombre];if(k)vendidosDia[k]+=d.cantidad;}));
+  const prestadosDia={soda:0,b10:0,b20:0},devueltosDia={soda:0,b10:0,b20:0};
+  ventas.forEach(v=>{
+    (v.envPrest||[]).forEach(e=>{const k=prodKey[e.prod];if(k)prestadosDia[k]+=Number(e.cant)||0;});
+    (v.envDev||[]).forEach(e=>{const k=prodKey[e.prod];if(k)devueltosDia[k]+=Number(e.cant)||0;});
+  });
+  const sobrantes={},vaciosRec={};
+  ["soda","b10","b20"].forEach(pk=>{
+    sobrantes[pk]=Math.max(0,llenosCargados[pk]-vendidosDia[pk]-prestadosDia[pk]);
+    vaciosRec[pk]=vendidosDia[pk]+devueltosDia[pk];
+  });
+  const confirmarCierre = () => {
+    const s=JSON.parse(JSON.stringify(stock));
+    if(!s.soderia_vacios) s.soderia_vacios={sifon:0,bidon10:0,bidon20:0};
+    ["soda","b10","b20"].forEach(pk=>{
+      const sk=planKeyToStockKey[pk];
+      s.soderia[sk]        =(s.soderia[sk]||0)+sobrantes[pk];
+      s.soderia_vacios[sk] =(s.soderia_vacios[sk]||0)+vaciosRec[pk];
+      s.camion[sk]         =0;
+    });
+    setStock(s);
+    syncData({stock:s});
+    onGuardar({...datos,_diaCerrado:true,_stockActualizado:true});
+    setMostrarCierre(false);
+  };
 
   return (
     <div style={s.screen}>
@@ -2420,6 +2501,74 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
           </div>
         </div>
         <button style={s.btnPrimary} onClick={()=>onGuardar(datos)}>Guardar planilla</button>
+
+        {/* ── Botón Cerrar día / actualizar stock ── */}
+        {!yaCerrado ? (
+          <button style={{width:"100%",padding:"14px",borderRadius:10,border:"2px solid #f5b942",background:"#2e1f06",color:"#f5b942",fontSize:15,fontWeight:600,cursor:"pointer",marginTop:10}}
+            onClick={()=>setMostrarCierre(true)}>
+            🔒 Cerrar el día y actualizar stock
+          </button>
+        ) : (
+          <div style={{textAlign:"center",padding:"12px",borderRadius:10,background:"rgba(29,158,117,0.15)",color:"#4dd9a0",fontSize:13,fontWeight:500,marginTop:10}}>
+            ✅ Día cerrado — stock actualizado
+          </div>
+        )}
+
+        {mostrarCierre&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}
+            onClick={()=>setMostrarCierre(false)}>
+            <div style={{background:"var(--color-background-primary)",borderRadius:"16px 16px 0 0",padding:"24px 20px",width:"100%",maxWidth:480}}
+              onClick={e=>e.stopPropagation()}>
+              <div style={{fontSize:17,fontWeight:700,color:"var(--color-text-primary)",marginBottom:4}}>🔒 Cerrar el día</div>
+              <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16}}>Esto actualiza el stock de la sodería. Verificá que los números sean correctos.</div>
+              <div style={{background:"var(--color-background-secondary)",borderRadius:10,overflow:"hidden",marginBottom:16}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"8px 12px",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                  {["Producto","✅ Llenos vuelven","📦 Vacíos vuelven"].map(h=>(
+                    <div key={h} style={{fontSize:11,fontWeight:600,color:"var(--color-text-secondary)",textAlign:h==="Producto"?"left":"center"}}>{h}</div>
+                  ))}
+                </div>
+                {["soda","b10","b20"].map(pk=>{
+                  const esSoda=pk==="soda";
+                  const llLabel=esSoda?`${Math.floor(sobrantes[pk]/CAJON_SODA)} caj (${sobrantes[pk]} un)`:String(sobrantes[pk]);
+                  const vacLabel=esSoda?`${Math.floor(vaciosRec[pk]/CAJON_SODA)} caj (${vaciosRec[pk]} un)`:String(vaciosRec[pk]);
+                  return (
+                    <div key={pk} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"10px 12px",borderBottom:"0.5px solid var(--color-border-tertiary)",alignItems:"center"}}>
+                      <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{PROD_LABEL[pk]}</div>
+                      <div style={{textAlign:"center",fontSize:14,fontWeight:600,color:"#4dd9a0"}}>{llLabel}</div>
+                      <div style={{textAlign:"center",fontSize:14,fontWeight:600,color:"#f5b942"}}>{vacLabel}</div>
+                    </div>
+                  );
+                })}
+                <div style={{background:"rgba(29,158,117,0.08)",borderTop:"1px solid rgba(29,158,117,0.3)",padding:"10px 12px"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"var(--color-text-secondary)",marginBottom:6,textTransform:"uppercase"}}>📦 Quedará en sodería</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:4}}>
+                    {["soda","b10","b20"].map(pk=>{
+                      const sk=planKeyToStockKey[pk];
+                      const nuevoLl=(stock?.soderia?.[sk]||0)+sobrantes[pk];
+                      const nuevoVac=(stock?.soderia_vacios?.[sk]||0)+vaciosRec[pk];
+                      const esSoda=pk==="soda";
+                      return (
+                        <div key={pk} style={{textAlign:"center",background:"var(--color-background-primary)",borderRadius:8,padding:"8px 4px"}}>
+                          <div style={{fontSize:10,color:"var(--color-text-tertiary)",marginBottom:2}}>{PROD_LABEL[pk]}</div>
+                          <div style={{fontSize:15,fontWeight:700,color:"#4dd9a0"}}>{esSoda?`${Math.floor(nuevoLl/CAJON_SODA)} caj`:nuevoLl}</div>
+                          <div style={{fontSize:10,color:"var(--color-text-tertiary)"}}>llenos</div>
+                          <div style={{fontSize:13,fontWeight:600,color:"#f5b942",marginTop:2}}>{esSoda?`${Math.floor(nuevoVac/CAJON_SODA)} caj`:nuevoVac}</div>
+                          <div style={{fontSize:10,color:"var(--color-text-tertiary)"}}>vacíos</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:10}}>
+                <button style={{flex:1,padding:"13px",borderRadius:10,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-secondary)",fontSize:14,cursor:"pointer"}}
+                  onClick={()=>setMostrarCierre(false)}>Cancelar</button>
+                <button style={{flex:2,padding:"13px",borderRadius:10,border:"none",background:"#f5b942",color:"#1a1a1a",fontSize:14,fontWeight:700,cursor:"pointer"}}
+                  onClick={confirmarCierre}>✅ Confirmar cierre</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2716,9 +2865,9 @@ function ListaClientes({clientes,dia,fecha,ventas,ventasTodas,noVisitas,prospect
       </div>
       {filtrados.length===0&&<div style={{textAlign:"center",padding:"40px 20px",color:"var(--color-text-tertiary)",fontSize:14}}>No hay clientes para {dia}.</div>}
       {pendientesNormales.length>0&&<><span style={s.sectionTitle}>Pendientes ({pendientesNormales.length})</span>{pendientesNormales.map(c=><Card key={c.id} c={c}/>)}</>}
+      {volverAlFinal.length>0&&<><span style={{...s.sectionTitle,color:"#f5b942"}}>🔄 Volver a visitar ({volverAlFinal.length})</span>{volverAlFinal.map(c=><Card key={c.id} c={c}/>)}</>}
       {listos.length>0&&<><span style={s.sectionTitle}>Entregado ({listos.length})</span>{listos.map(c=><Card key={c.id} c={c}/>)}</>}
       {sinEntrega.length>0&&<><span style={s.sectionTitle}>Sin entrega ({sinEntrega.length})</span>{sinEntrega.map(c=><Card key={c.id} c={c}/>)}</>}
-      {volverAlFinal.length>0&&<><span style={{...s.sectionTitle,color:"#f5b942"}}>🔄 Volver a visitar ({volverAlFinal.length})</span>{volverAlFinal.map(c=><Card key={c.id} c={c}/>)}</>}
 
       {/* Prospectos del día — al final de la lista */}
       {prospectosDelDia.length>0&&(
@@ -2984,11 +3133,11 @@ function DetalleCliente({cliente,ventas,noVisitas,dia,fecha,productos,onVenta,on
               </div>
             : <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
                 <button style={{background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"1px solid var(--color-border-warning)",borderRadius:10,padding:"12px 0",fontSize:13,cursor:"pointer",fontWeight:500,flex:1,minWidth:90}}
-                  onClick={()=>{onNoEstaCliente&&onNoEstaCliente();onVolver();}}>
+                  onClick={()=>{onNoEstaCliente&&onNoEstaCliente();}}>
                   🔄 No está
                 </button>
                 <button style={{background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"1px solid var(--color-border-danger)",borderRadius:10,padding:"12px 0",fontSize:13,cursor:"pointer",fontWeight:500,flex:1,minWidth:90}}
-                  onClick={()=>{onNoQuiereCliente&&onNoQuiereCliente();onVolver();}}>
+                  onClick={()=>{onNoQuiereCliente&&onNoQuiereCliente();}}>
                   🚫 No quiere
                 </button>
                 <button style={{...s.btnPrimary,padding:"12px 0",fontSize:15,borderRadius:10,flex:2,minWidth:120}} onClick={onVenta}>
@@ -2998,7 +3147,7 @@ function DetalleCliente({cliente,ventas,noVisitas,dia,fecha,productos,onVenta,on
           }
 
           {/* Historial colapsable */}
-          <details style={{marginTop:4}} open>
+          <details style={{marginTop:4}}>
             <summary style={{cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--color-background-tertiary)",borderRadius:8,padding:"10px 14px",marginBottom:4}}>
               <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>📋 Historial completo del cliente</span>
               <span style={{fontSize:11,color:"var(--color-text-tertiary)"}}>▾</span>
@@ -5610,7 +5759,7 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
               ['💰','Ingresos del día','Efectivo + transferencias cobradas'],
               ['💸','Gastos adicionales','Combustible, gastos del reparto'],
               ['📅','Fecha del reparto','Se registra en el día correspondiente'],
-              ['🔗','Identificador','Aparece con badge "La Catalina"'],
+              ['🔗','Identificador','Aparece como movimiento en Emma Control'],
             ].map(([ico,t,d])=>(
               <div key={t} style={{display:'flex',gap:10,alignItems:'flex-start',padding:'7px 0',borderBottom:'0.5px solid var(--color-border-tertiary)'}}>
                 <span style={{fontSize:18,flexShrink:0}}>{ico}</span>
@@ -5621,8 +5770,60 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
               </div>
             ))}
           </div>
+
+          {ecToken&&ecToken.length>=8&&(
+            <EnviarResumenEC ecToken={ecToken} ventas={ventas} />
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function EnviarResumenEC({ecToken, ventas}) {
+  const [enviando, setEnviando] = React.useState(false);
+  const [ultimaSync, setUltimaSync] = React.useState(()=>localStorage.getItem('sm_ec_ultima')||'');
+  const db = window.db;
+
+  const enviarResumen = async () => {
+    if(!ecToken||!db){ alert('Error: verificá la conexión'); return; }
+    setEnviando(true);
+    try {
+      const hoy = new Date().toLocaleDateString('es-AR');
+      const ventasHoy = (ventas||[]).filter(v=>v.fecha===hoy);
+      const gastos = JSON.parse(localStorage.getItem('lc_gastos')||'[]');
+      const gastosHoy = gastos.filter(g=>g.fecha===hoy);
+      const totalVentas = ventasHoy.reduce((s,v)=>s+(v.total||0),0);
+      const totalGastos = gastosHoy.reduce((s,g)=>s+(g.monto||0),0);
+      const movs = [
+        ...ventasHoy.map(v=>({id:'venta_'+v.id,tipo:'ingreso',monto:v.total||0,descripcion:'Venta reparto: '+(v.cliente||''),fecha:hoy,origen:'reparto_multi'})),
+        ...gastosHoy.map(g=>({id:'gasto_'+g.id,tipo:'egreso',monto:g.monto||0,descripcion:'Gasto reparto: '+(g.concepto||''),fecha:hoy,origen:'reparto_multi'}))
+      ];
+      if(!movs.length){ alert('No hay movimientos para enviar hoy'); setEnviando(false); return; }
+      const batch = db.batch();
+      movs.forEach(m=>{
+        const ref = db.collection('sinc_reparto').doc(ecToken).collection('movimientos').doc(m.id);
+        batch.set(ref, m);
+      });
+      await batch.commit();
+      const ahora = new Date().toLocaleString('es-AR');
+      setUltimaSync(ahora);
+      localStorage.setItem('sm_ec_ultima', ahora);
+      alert('✅ Resumen enviado!\nVentas: $'+totalVentas.toLocaleString('es-AR')+'\nGastos: $'+totalGastos.toLocaleString('es-AR'));
+    } catch(e){ alert('Error al enviar: '+e.message); }
+    setEnviando(false);
+  };
+
+  return (
+    <div style={{background:'var(--color-background-secondary)',borderRadius:12,padding:14,border:'0.5px solid var(--color-border-tertiary)',marginTop:12}}>
+      <div style={{fontSize:11,fontWeight:700,color:'var(--color-text-secondary)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>📤 Enviar resumen del día</div>
+      <button
+        onClick={enviarResumen}
+        disabled={enviando}
+        style={{width:'100%',padding:'12px',borderRadius:10,border:'none',background:'var(--color-accent)',color:'white',fontSize:14,fontWeight:700,cursor:'pointer',marginBottom:8}}>
+        {enviando?'⏳ Enviando...':'📤 Enviar resumen a Emma Control'}
+      </button>
+      {ultimaSync&&<div style={{fontSize:11,color:'var(--color-text-secondary)',textAlign:'center'}}>Última sincronización: {ultimaSync}</div>}
     </div>
   );
 }
