@@ -3525,16 +3525,11 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
             </div>
             {c.notas&&<div style={{fontSize:12,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
             <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
-              {c.sifon>0    && <span style={s.tag}>Sifón×{c.sifon}</span>}
-              {c.bidon10>0  && <span style={s.tag}>10L×{c.bidon10}</span>}
-              {c.bidon20>0  && <span style={s.tag}>20L×{c.bidon20}</span>}
-              {c.dispenser>0 && <span style={{...s.tag,color:"#5daaff"}}>Disp×{c.dispenser}</span>}
+              <TagsCliente cliente={c} ventas={todasVentas||ventas}/>
               {atendido    && <span style={s.badge("success")}>✓ Listo</span>}
               {est==="noesta" && !atendido  && <span style={s.badge("warning")}>🔄 No estaba aún</span>}
               {est==="noesta2"  && <span style={s.badge("warning")}>No estaba</span>}
               {est==="noquiso"  && <span style={s.badge("danger")}>No quiso</span>}
-              {c.saldo<0   && <span style={s.badge("danger")}>Debe {fmt(Math.abs(c.saldo))}</span>}
-              {c.saldo>0   && <span style={s.badge("success")}>A favor {fmt(c.saldo)}</span>}
             </div>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:8,flexShrink:0,alignItems:"center"}}>
@@ -5281,6 +5276,33 @@ function PromoComodato({prospecto:p,onGuardar,onVolver}) {
 }
 
 
+function TagsCliente({cliente,ventas,style}) {
+  const cl=cliente;
+  const TH={background:"rgba(56,138,221,0.28)",color:"#ffffff",border:"1px solid rgba(56,138,221,0.5)",borderRadius:6,padding:"3px 9px",fontSize:13,fontWeight:700,display:"inline-block"};
+  const TP={background:"rgba(245,158,11,0.28)",color:"#ffffff",border:"1px solid rgba(245,158,11,0.55)",borderRadius:6,padding:"3px 9px",fontSize:13,fontWeight:700,display:"inline-block"};
+  const TD={background:"rgba(226,75,74,0.25)",color:"#ffffff",border:"1px solid rgba(226,75,74,0.5)",borderRadius:6,padding:"3px 9px",fontSize:13,fontWeight:700,display:"inline-block"};
+  const TF={background:"rgba(29,158,117,0.25)",color:"#ffffff",border:"1px solid rgba(29,158,117,0.5)",borderRadius:6,padding:"3px 9px",fontSize:13,fontWeight:700,display:"inline-block"};
+  const ex={sifon:0,b10:0,b20:0};
+  (ventas||[]).filter(v=>v.clienteId===cl.id).forEach(v=>{
+    (v.envPrest||[]).forEach(e=>{if(e.prod==="Sifón 1.5L")ex.sifon+=Number(e.cant)||0;if(e.prod==="Bidón 10L")ex.b10+=Number(e.cant)||0;if(e.prod==="Bidón 20L")ex.b20+=Number(e.cant)||0;});
+    (v.envDev||[]).forEach(e=>{if(e.prod==="Sifón 1.5L")ex.sifon-=Number(e.cant)||0;if(e.prod==="Bidón 10L")ex.b10-=Number(e.cant)||0;if(e.prod==="Bidón 20L")ex.b20-=Number(e.cant)||0;});
+  });
+  return(
+    <div style={{display:"flex",flexWrap:"wrap",gap:5,...(style||{})}}>
+      {cl.sifon>0&&<span style={TH}>Sif ×{cl.sifon}</span>}
+      {cl.bidon10>0&&<span style={TH}>10L ×{cl.bidon10}</span>}
+      {cl.bidon20>0&&<span style={TH}>20L ×{cl.bidon20}</span>}
+      {cl.dispenser>0&&<span style={TH}>Disp ×{cl.dispenser}</span>}
+      {ex.sifon>0&&<span style={TP}>+{ex.sifon} sif prest.</span>}
+      {ex.b10>0&&<span style={TP}>+{ex.b10} 10L prest.</span>}
+      {ex.b20>0&&<span style={TP}>+{ex.b20} 20L prest.</span>}
+      {(cl.saldo||0)<0&&<span style={TD}>Debe {fmt(Math.abs(cl.saldo))}</span>}
+      {(cl.saldo||0)>0&&<span style={TF}>A favor {fmt(cl.saldo)}</span>}
+    </div>
+  );
+}
+
+
 function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReordenarTodo,onRegistrarVenta,onVerDetalle,ventas}) {
   const [fotoClienteId,setFotoClienteId] = React.useState(null);
   const fotoCliente = fotoClienteId ? clientes.find(c=>c.id===fotoClienteId) : null;
@@ -6603,95 +6625,6 @@ function NuevaVentaLibre({cliente,productos,fechaInicial,onGuardar,onVolver}) {
 }
 
 
-// ── MensajesMasivos ──────────────────────────────────────────────
-function MensajesMasivos({clientes,onVolver}) {
-  const DIAS_REP = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const PLANTILLAS = [
-    {label:"Cambio de precio 💰",  texto:"Hola! Les avisamos que a partir de la próxima semana habrá un ajuste en los precios. Cualquier consulta estamos a disposición. Gracias! 🙏 — {nombre del negocio}"},
-    {label:"Demora en reparto ⏰", texto:"Hola! Les avisamos que hoy el reparto tiene una demora. Pasamos en el transcurso del día. Disculpen el inconveniente! — {nombre del negocio}"},
-    {label:"Cambio de día 📅",     texto:"Hola! Esta semana el reparto se realiza el {dia2}. Gracias por su comprensión! — {nombre del negocio}"},
-    {label:"Feriado 🎉",           texto:"Hola! El próximo reparto no se realizará por feriado. Retomamos la semana siguiente. Gracias! — {nombre del negocio}"},
-    {label:"Texto libre ✏️",       texto:""},
-  ];
-
-  const [plantilla,setPlantilla] = React.useState(0);
-  const [mensaje,setMensaje]     = React.useState(PLANTILLAS[0].texto);
-  const [dia2,setDia2]           = React.useState("Miércoles");
-  const [copiado,setCopiado]     = React.useState(false);
-
-  const copiar = () => {
-    const txt = mensaje.replace(/{dia2}/g, dia2);
-    navigator.clipboard.writeText(txt).catch(()=>{
-      const el=document.createElement("textarea");
-      el.value=txt; document.body.appendChild(el);
-      el.select(); document.execCommand("copy");
-      document.body.removeChild(el);
-    });
-    setCopiado(true);
-    setTimeout(()=>setCopiado(false), 2500);
-  };
-
-  const abrirWhatsApp = () => window.open("https://wa.me/","_blank");
-
-  return (
-    <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Mensajes masivos</span>
-      </div>
-      <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
-
-        {/* Plantillas */}
-        <div style={s.card}>
-          <div style={{fontSize:12,fontWeight:500,color:"var(--color-text-secondary)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>Plantilla</div>
-          <div style={{display:"flex",flexDirection:"column",gap:4}}>
-            {PLANTILLAS.map((p,i)=>(
-              <button key={i} style={{textAlign:"left",padding:"10px 12px",borderRadius:8,border:`0.5px solid ${plantilla===i?"#5daaff":"var(--color-border-secondary)"}`,background:plantilla===i?"var(--color-background-info)":"var(--color-background-secondary)",color:plantilla===i?"#5daaff":"var(--color-text-secondary)",fontSize:13,cursor:"pointer"}}
-                onClick={()=>{setPlantilla(i);if(p.texto)setMensaje(p.texto.replace(/{dia2}/g,dia2));}}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-          {plantilla===2&&(
-            <div style={{marginTop:10}}>
-              <label style={s.label}>Nuevo día</label>
-              <select style={s.select} value={dia2} onChange={e=>{setDia2(e.target.value);setMensaje(PLANTILLAS[2].texto.replace(/{dia2}/g,e.target.value));}}>
-                {DIAS_REP.map(d=><option key={d}>{d}</option>)}
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* Mensaje */}
-        <div style={s.card}>
-          <div style={{fontSize:12,fontWeight:500,color:"var(--color-text-secondary)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>Mensaje</div>
-          <textarea style={{...s.input,minHeight:130,resize:"vertical",fontSize:14,lineHeight:1.6}}
-            value={mensaje} onChange={e=>setMensaje(e.target.value)}
-            placeholder="Escribí tu mensaje..." />
-          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:4}}>{mensaje.length} caracteres</div>
-        </div>
-
-        {/* Botones */}
-        <button style={{...s.btnPrimary,padding:"14px",fontSize:15,borderRadius:12,opacity:!mensaje.trim()?0.5:1,background:copiado?"#4dd9a0":undefined,color:copiado?"#0a2e1f":undefined}}
-          disabled={!mensaje.trim()} onClick={copiar}>
-          {copiado?"✓ ¡Mensaje copiado!":"📋 Copiar mensaje"}
-        </button>
-
-        <button style={{...s.btn,padding:"14px",fontSize:15,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#25D366",color:"#fff",border:"none"}}
-          onClick={abrirWhatsApp}>
-          💬 Abrir WhatsApp
-        </button>
-
-        <div style={{fontSize:12,color:"var(--color-text-tertiary)",textAlign:"center",lineHeight:1.6}}>
-          Copiá el mensaje → abrí WhatsApp → buscá tu lista de difusión → pegá y enviá
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-// ── RepartidoresPanel ──────────────────────────────────────────────
 function RepartidoresPanel({negocioId, clientes}) {
   const [repartidores, setRepartidores] = React.useState([]);
   const [cargando, setCargando]         = React.useState(true);
@@ -7440,6 +7373,7 @@ async function guardarLogoFirestore(codigo, logoB64) {
     return true;
   } catch(e) { console.error("Error guardando logo:", e); return false; }
 }
+
 
 function ConfigApariencia() {
   const [temaActual, setTemaActual] = React.useState(getTemaActual);
