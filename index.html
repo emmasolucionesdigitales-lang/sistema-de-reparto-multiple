@@ -520,7 +520,7 @@ const s = {
   metricLabel:{ fontSize:11, color:"var(--color-text-secondary)", marginBottom:3 },
   metricVal:{ fontSize:17, fontWeight:500, color:"var(--color-text-primary)" },
   badge:(c)=>({ fontSize:10, fontWeight:500, padding:"2px 7px", borderRadius:6, background:`var(--color-background-${c})`, color:`var(--color-text-${c})` }),
-  tag:{ fontSize:11, color:"var(--color-text-secondary)", background:"var(--color-background-tertiary)", borderRadius:6, padding:"2px 7px" },
+  tag:{ fontSize:13, fontWeight:500, color:"var(--color-text-secondary)", background:"var(--color-background-tertiary)", borderRadius:8, padding:"3px 9px" },
   divider:{ borderTop:"0.5px solid var(--color-border-tertiary)", margin:"10px 0" },
   sectionTitle:{ fontSize:10, color:"var(--color-text-tertiary)", padding:"12px 14px 4px", fontWeight:500, textTransform:"uppercase", letterSpacing:"0.07em", display:"block" },
   select:{ width:"100%", padding:"8px 10px", border:"0.5px solid var(--color-border-secondary)", borderRadius:8, fontSize:14, background:"var(--color-background-tertiary)", color:"var(--color-text-primary)", outline:"none", boxSizing:"border-box" },
@@ -1464,7 +1464,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     if(clientesDia.length===0) return;
     const ventasDia   = ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual);
     const noVisitasDia= (noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual);
-    const atendidos   = new Set(ventasDia.map(v=>v.clienteId));
+    const atendidos   = new Set(ventasDia.filter(v=>!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
     const conEstado   = new Set([...atendidos,...noVisitasDia.map(v=>v.clienteId)]);
     const todosVisitados = clientesDia.every(c=>conEstado.has(c.id));
     if(!todosVisitados) return;
@@ -1649,7 +1649,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           }
           irA("clientes");
         }} onVolver={()=>irA("selectorFechaClientes")} />}
-      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual)} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
+      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual)} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
           const otros=clientes.filter(c=>c.dia!==diaActual);
           saveClientes([...otros,...lista]);
         }} onRegistrarNoVisita={(clienteId,motivo)=>{const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo}];saveNoVisitas(nv);}} onQuitarNoVisita={(clienteId)=>{const nv=(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual));saveNoVisitas(nv);}}
@@ -1676,7 +1676,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
             saveNoVisitas(nv);
             const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-            const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual).map(v=>v.clienteId));
+            const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
             const noVMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
             const terminados=new Set(clientesDia.filter(c=>ventasIds.has(c.id)||noVMap[c.id]==="noquiso"||noVMap[c.id]==="noesta2").map(c=>c.id));
             const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&noVMap[c.id]!=="noesta"&&c.id!==cliente.id);
@@ -1688,7 +1688,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
             saveNoVisitas(nv);
             const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-            const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual).map(v=>v.clienteId));
+            const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
             const noVMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
             const terminados=new Set(clientesDia.filter(c=>ventasIds.has(c.id)||noVMap[c.id]==="noquiso"||noVMap[c.id]==="noesta2").map(c=>c.id));
             const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&noVMap[c.id]!=="noesta"&&c.id!==cliente.id);
@@ -1705,7 +1705,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             const calc=calcVenta(det,pago,String(monto),0,productos);
             const vt={id:Date.now(),clienteId:c.id,cliente:c.nombre,dia:diaActual,fechaKey:fechaActual,fecha:new Date().toLocaleString("es-AR"),
               detalle:det,pago,obs:`Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,saldoAplicado:0,
-              neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[]};
+              neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],_esCobro:true};
             const nv=[...ventas,vt];
             saveVentas(nv);
             const nc=clientes.map(x=>x.id===c.id?{...x,saldo:(c.saldo||0)+monto}:x);
@@ -1718,7 +1718,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo}];
           saveNoVisitas(nv);
           const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual).map(v=>v.clienteId),...(nv).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
+          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...(nv).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
           visitadosIds.add(clienteId);
           const siguiente=clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
           if(siguiente){setClienteId(siguiente.id);irA("detalleCliente");}else irA("clientes");
@@ -1727,7 +1727,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
           saveNoVisitas(nv);
           const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual).map(v=>v.clienteId),...nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
+          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
           visitadosIds.add(clienteId);
           const siguiente=clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
           if(siguiente){setClienteId(siguiente.id);irA("detalleCliente");}else irA("clientes");
@@ -1737,7 +1737,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   // Auto-advance to next pending client (noesta = volver al final, no saltar a ellos)
   const clientesDia = clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
   const visitadosIds = new Set([
-    ...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual).map(v=>v.clienteId),
+    ...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),
     ...(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)
   ]);
   visitadosIds.add(clienteId);
@@ -1788,7 +1788,21 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       {pantalla==="detalleDesdeGestion" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual||cliente.dia} fecha={fechaActual} productos={productos} onVenta={()=>{setDiaActual(cliente.dia);const hoy=new Date().toISOString().slice(0,10);if(!fechaActual)setFechaActual(hoy);irA("venta");}} onVolver={()=>irA("gestionClientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>{eliminarCliente(cliente.id);irA("gestionClientes");}}
           onNoEstaCliente={()=>{}} onNoQuiereCliente={()=>{}}
           recordatorios={recordatorios} onGuardarRecordatorio={(r)=>saveRecordatorios([...(recordatorios||[]),r])} onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
-          onCobrarSaldo={(s)=>{if(cliente){const nc=clientes.map(x=>x.id===cliente.id?{...x,saldo:s}:x);saveClientes(nc);}}} />}
+          onCobrarSaldo={(monto,pago)=>{
+            if(cliente){
+              const saldoAntes=cliente.saldo||0;
+              const saldoDespues=saldoAntes+monto;
+              const det=[{nombre:"Cobro de deuda",cantidad:1,precio:0,total:0}];
+              const fk=fechaActual||new Date().toISOString().slice(0,10);
+              const vt={id:Date.now(),clienteId:cliente.id,cliente:cliente.nombre,
+                dia:diaActual||cliente.dia,fechaKey:fk,fecha:new Date().toLocaleString("es-AR"),
+                detalle:det,pago,obs:`Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,saldoAplicado:0,
+                neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],
+                saldoAntes,saldoDespues,_esCobro:true};
+              saveVentas([...ventas,vt]);
+              saveClientes(clientes.map(x=>x.id===cliente.id?{...x,saldo:saldoDespues}:x));
+            }
+          }} />}
       {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} ventas={ventas} productos={productos} planillas={planillas} onVolver={()=>irA("menu")} />}
       {pantalla==="resumen"        && <Resumen ventas={ventas} clientes={clientes} productos={productos} planillas={planillas} noVisitas={noVisitas||[]} onVolver={()=>irA("menu")} />}
       {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDia} setCargasDia={saveCargasDia} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} />}
@@ -2333,18 +2347,18 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
     const k=prodKey[d.nombre]; if(k) vendidoHoy[k]+=d.cantidad;
   }));
 
-  // Lo que está en el camión ahora = cargado hoy - vendido hoy (0 si ya cerró)
+  // En camión: valor real de Firebase (actualizado por InicioReparto/cerrarCamion)
   const enCamionHoy = diaCerradoHoy ? {sifon:0,bidon10:0,bidon20:0} : {
-    sifon:   Math.max(0, cargadoHoy.sifon   - vendidoHoy.sifon),
-    bidon10: Math.max(0, cargadoHoy.bidon10 - vendidoHoy.bidon10),
-    bidon20: Math.max(0, cargadoHoy.bidon20 - vendidoHoy.bidon20),
+    sifon:   stock?.camion?.sifon   || 0,
+    bidon10: stock?.camion?.bidon10 || 0,
+    bidon20: stock?.camion?.bidon20 || 0,
   };
 
-  // Stock sodería calculado = base - en camión
+  // Sodería: valor real de Firebase
   const soCal = {
-    sifon:   Math.max(0, base.soderia.sifon   - enCamionHoy.sifon),
-    bidon10: Math.max(0, base.soderia.bidon10 - enCamionHoy.bidon10),
-    bidon20: Math.max(0, base.soderia.bidon20 - enCamionHoy.bidon20),
+    sifon:   stock?.soderia?.sifon   || 0,
+    bidon10: stock?.soderia?.bidon10 || 0,
+    bidon20: stock?.soderia?.bidon20 || 0,
   };
 
   // Envases en clientes
@@ -2389,7 +2403,15 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
       {tab==="stock"&&(<>
         {/* Estado actual calculado */}
         <div style={{...s.card,margin:"0 0 12px",background:"var(--color-background-secondary)"}}>
-          <div style={{fontSize:11,fontWeight:500,color:"var(--color-text-secondary)",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>📊 Estado actual (calculado)</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:500,color:"var(--color-text-secondary)",textTransform:"uppercase",letterSpacing:"0.05em"}}>📊 Estado actual (calculado)</div>
+            {(stock?.camion?.sifon>0||stock?.camion?.bidon10>0||stock?.camion?.bidon20>0)&&(
+              <button style={{...s.btn,fontSize:10,padding:"3px 8px",color:"var(--color-text-danger)",border:"1px solid var(--color-text-danger)"}}
+                onClick={()=>{if(window.confirm("¿Limpiar camión? Solo si no hay reparto activo.")){setStock(prev=>({...prev,camion:{sifon:0,bidon10:0,bidon20:0}}));}}}>
+                🔄 Limpiar camión
+              </button>
+            )}
+          </div>
           <div style={{display:"flex",gap:8,marginBottom:10}}>
             {[["🏭 Sodería",[Math.floor(soCal.sifon/CAJON),soCal.bidon10,soCal.bidon20]],["🚚 En reparto",[Math.floor(enCamionHoy.sifon/CAJON),enCamionHoy.bidon10,enCamionHoy.bidon20]]].map(([titulo,vals])=>(
               <div key={titulo} style={{flex:1}}>
@@ -2468,7 +2490,7 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
           });
           return ex.sifon>0||ex.bidon10>0||ex.bidon20>0;
         }).sort((a,b)=>{const dA=DIAS.indexOf(a.dia),dB=DIAS.indexOf(b.dia);return dA!==dB?dA-dB:(a.orden||9999)-(b.orden||9999);}).map(c=>{
-          const vC=ventas.filter(v=>v.clienteId===c.id);
+          const vC=(todasVentas||ventas).filter(v=>v.clienteId===c.id);
           const extra={sifon:0,bidon10:0,bidon20:0};
           vC.forEach(v=>{
             (v.envPrest||[]).forEach(e=>{const k=e.prod==="Sifón 1.5L"?"sifon":e.prod==="Bidón 10L"?"bidon10":e.prod==="Bidón 20L"?"bidon20":null;if(k)extra[k]+=Number(e.cant)||0;});
@@ -2539,7 +2561,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
               <div>
                 <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{c?.nombre||"Cliente desconocido"}</div>
-                <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>{c?.calle?`${c.calle} ${c.nro||""}`:c?.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c?.barrio?` · ${c.barrio}`:""}</div>
+                <div style={{fontSize:14,color:"var(--color-text-secondary)",marginTop:2}}>{c?.calle?`${c.calle} ${c.nro||""}`:c?.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c?.barrio?` · ${c.barrio}`:""}</div>
               </div>
               {c?.telefono&&<a href={`https://wa.me/54${c.telefono}`} target="_blank" rel="noreferrer" style={{fontSize:20,textDecoration:"none"}}>💬</a>}
             </div>
@@ -3411,12 +3433,12 @@ function InicioReparto({dia,fecha,planilla,productos,cargasDia,stock,onGuardar,o
   );
 }
 
-function ListaClientes({clientes,dia,fecha,ventas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onConfirmarTransfer}) {
+function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onConfirmarTransfer}) {
   const [busqueda,setBusqueda] = useState("");
   const [editandoOrden,setEditandoOrden] = useState(null);
   const [ordenTemp,setOrdenTemp] = useState("");
   // ventas y noVisitas ya filtradas por fecha+dia desde App
-  const atendidos = new Set(ventas.map(v=>v.clienteId));
+  const atendidos = new Set(ventas.filter(v=>!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
   const noVMap = {}; (noVisitas||[]).filter(v=>v.fecha===fecha).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
   // visitados = ventas + noesta2 + noquiso (noesta 1ra vez NO cuenta)
   const visitadosSinVenta = new Set(
@@ -3498,7 +3520,7 @@ function ListaClientes({clientes,dia,fecha,ventas,noVisitas,prospectos,recordato
                 );
               })()}
             </div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>
+            <div style={{fontSize:17,color:"var(--color-text-secondary)",marginTop:2}}>
               {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
             </div>
             {c.notas&&<div style={{fontSize:12,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
@@ -3641,7 +3663,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
   const [mostrarFotoGrande,setMostrarFotoGrande] = useState(false);
   const recActivos = (recordatorios||[]).filter(r=>r.clienteId===cliente.id&&!r.confirmado);
   const historial = [...ventas].sort((a,b)=>(b.fechaKey||"").localeCompare(a.fechaKey||"")||(b.id||0)-(a.id||0));
-  const ventaHoy  = fecha ? ventas.find(v=>v.fechaKey===fecha) : null;
+  const ventaHoy  = fecha ? ventas.find(v=>v.fechaKey===fecha&&!v._esCobro&&!v._esAjuste) : null;
   const initials  = cliente.nombre.split(" ").slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
   const totalComprado = ventas.reduce((a,v)=>a+(v.neto||0),0);
   const promedioVenta = ventas.length>0 ? Math.round(totalComprado/ventas.length) : 0;
@@ -5403,7 +5425,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:500,fontSize:14,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.nombre}</div>
-                  <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>
+                  <div style={{fontSize:16,color:"var(--color-text-secondary)",marginTop:2}}>
                     {c.dia} · {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
                   </div>
                   {c.notas&&<div style={{fontSize:11,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
@@ -5427,7 +5449,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                         {total.bidon20>0&&<span style={{...s.tag,color:"var(--color-text-warning)",fontWeight:500}}>+{total.bidon20} 20L extra</span>}
                       </>);
                     })()}
-                    {c.telefono&&<a href={`https://wa.me/54${c.telefono}`} target="_blank" rel="noreferrer" style={{...s.tag,textDecoration:"none",cursor:"pointer"}} onClick={e=>e.stopPropagation()}>💬 {c.telefono}</a>}
+                    
                   </div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0,alignItems:"center"}}>
