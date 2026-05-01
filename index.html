@@ -6828,9 +6828,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button><span style={s.headerTitle}>Configuración</span></div>
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
-          [["precios","💲","Precios"],["stock","📦","Stock"],["cargas","🚚","Cargas"],["historial","📋","Historial"]],
-          [["importar","📥","Importar"],["backup","💾","Backup"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
-          [["equipo","👥","Equipo"],["vincular","🔗","Vincular"]],
+          [["precios","💲","Precios"],["stock","📦","Stock"],["historial","📋","Historial"],["backup","💾","Backup"]],
+          [["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"],["equipo","👥","Equipo"],["vincular","🔗","Vincular"]],
         ].map((fila,fi)=>(
           <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
             {fila.map(([id,ico,lbl])=>(
@@ -7016,61 +7015,6 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
     })}
   </div>
 )}
-      {tab==="cargas"&&(
-          <div style={{padding:16}}>
-            <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
-              Cantidades con las que salís cada día. Se usan como valores por defecto al iniciar el reparto.
-              Los sifones se ingresan en cajones (1 cajón = 6 sifones).
-            </p>
-            {DIAS.filter(d=>d!=="Lunes").map(function(dia){
-              var c = (cargasDia||CARGA_DIA_DEFAULT)[dia]||{soda:0,b10:0,b20:0};
-              var cajones = Math.floor((c.soda||0)/6);
-              return (
-                <div key={dia} style={{...s.card,margin:"0 0 12px"}}>
-                  <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>{dia}</div>
-                  <div style={s.grid3}>
-                    <div>
-                      <label style={{...s.label,textAlign:"center"}}>Cajones soda</label>
-                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                        value={cajones||""}
-                        placeholder="0"
-                        onChange={e=>{
-                          var caj=Number(e.target.value)||0;
-                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                          nuevo[dia]=Object.assign({},c,{soda:caj*6});
-                          setCargasDia(nuevo);
-                        }} />
-                      <div style={{fontSize:10,color:"var(--color-text-tertiary)",textAlign:"center",marginTop:2}}>{c.soda||0} unidades</div>
-                    </div>
-                    <div>
-                      <label style={{...s.label,textAlign:"center"}}>Bidón 10L</label>
-                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                        value={c.b10||""}
-                        placeholder="0"
-                        onChange={e=>{
-                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                          nuevo[dia]=Object.assign({},c,{b10:Number(e.target.value)||0});
-                          setCargasDia(nuevo);
-                        }} />
-                    </div>
-                    <div>
-                      <label style={{...s.label,textAlign:"center"}}>Bidón 20L</label>
-                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                        value={c.b20||""}
-                        placeholder="0"
-                        onChange={e=>{
-                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                          nuevo[dia]=Object.assign({},c,{b20:Number(e.target.value)||0});
-                          setCargasDia(nuevo);
-                        }} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <button style={s.btnPrimary} onClick={()=>{ setCargasDia(Object.assign({},cargasDia)); alert("Cargas guardadas"); }}>Guardar cargas</button>
-          </div>
-        )}
         {tab==="stock"&&(
           <div style={{padding:16}}>
             <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
@@ -7098,6 +7042,60 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
               </div>
             ))}
             <button style={s.btnPrimary} onClick={()=>{syncData({stock});alert("Stock guardado");}}>Guardar stock</button>
+            <div style={{marginTop:24,borderTop:"1px solid var(--color-border-secondary)",paddingTop:20}}>
+              <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>🚚 Cargas por día</div>
+              <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
+                Cantidades con las que salís cada día. Se usan como valores por defecto al iniciar el reparto.
+                Los sifones se ingresan en cajones (1 cajón = 6 sifones).
+              </p>
+              {DIAS.map(function(dia){
+                var c = (cargasDia||CARGA_DIA_DEFAULT)[dia]||{soda:0,b10:0,b20:0};
+                var cajones = Math.floor((c.soda||0)/6);
+                return (
+                  <div key={dia} style={{...s.card,margin:"0 0 12px"}}>
+                    <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>{dia}</div>
+                    <div style={s.grid3}>
+                      <div>
+                        <label style={{...s.label,textAlign:"center"}}>Cajones soda</label>
+                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                          value={cajones||""}
+                          placeholder="0"
+                          onChange={e=>{
+                            var caj=Number(e.target.value)||0;
+                            var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
+                            nuevo[dia]=Object.assign({},c,{soda:caj*6});
+                            setCargasDia(nuevo);
+                          }} />
+                        <div style={{fontSize:10,color:"var(--color-text-tertiary)",textAlign:"center",marginTop:2}}>{c.soda||0} unidades</div>
+                      </div>
+                      <div>
+                        <label style={{...s.label,textAlign:"center"}}>Bidón 10L</label>
+                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                          value={c.b10||""}
+                          placeholder="0"
+                          onChange={e=>{
+                            var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
+                            nuevo[dia]=Object.assign({},c,{b10:Number(e.target.value)||0});
+                            setCargasDia(nuevo);
+                          }} />
+                      </div>
+                      <div>
+                        <label style={{...s.label,textAlign:"center"}}>Bidón 20L</label>
+                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                          value={c.b20||""}
+                          placeholder="0"
+                          onChange={e=>{
+                            var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
+                            nuevo[dia]=Object.assign({},c,{b20:Number(e.target.value)||0});
+                            setCargasDia(nuevo);
+                          }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <button style={s.btnPrimary} onClick={()=>{ setCargasDia(Object.assign({},cargasDia)); alert("Cargas guardadas"); }}>Guardar cargas</button>
+            </div>
           </div>
         )}
         {tab==="historial"&&(
@@ -7109,8 +7107,9 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             enConfig={true}
           />
         )}
-        {tab==="importar"&&(
+        {tab==="backup"&&(
         <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+          {/* IMPORTAR CLIENTES */}
           <div style={{...s.card,margin:0,borderLeft:"3px solid #185FA5"}}>
             <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:6}}>📥 Importar clientes desde planilla Excel</div>
             <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10,lineHeight:1.6}}>
@@ -7136,8 +7135,6 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             />
             <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>Solo archivos .xlsx — usa la planilla oficial del sistema</div>
           </div>
-
-          {/* Resumen de clientes actuales */}
           {clientes.length > 0 && (
             <div style={{...s.card,margin:0}}>
               <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)",marginBottom:8}}>
@@ -7160,10 +7157,7 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
               }}>🗑 Borrar todos los clientes</button>
             </div>
           )}
-        </div>
-        )}
-        {tab==="backup"&&(
-        <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{borderTop:"1px solid var(--color-border-secondary)",paddingTop:4}}></div>
           {/* RECUPERACION DE EMERGENCIA */}
           {(()=>{
             const backupKeys = Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).sort().reverse();
