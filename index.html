@@ -1053,6 +1053,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     return h;
   });
   const [diaActual, setDiaActual]   = useLS("cat_dia_actual", "");
+  const [repartos, setRepartos]     = useLS("cat_repartos_v1", []);
+  const [repartoActual, setRepartoActual] = useLS("cat_reparto_actual_v1", null);
+  // repartos: [{id, numero, nombre, repartidorNombre, codigo}]
+  const saveRepartos = (v) => { setRepartos(v); syncData({repartos:v}); };
   // Reset diaActual when it's invalid
   React.useEffect(()=>{
     if(diaActual && !DIAS.includes(diaActual)) setDiaActual("");
@@ -1209,6 +1213,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       if (data.mantVeh?.length)    localStorage.setItem("cat_mant_vehiculo_v1", JSON.stringify(data.mantVeh));
       if (data.histPrecios?.length) localStorage.setItem("lc_hist_precios", JSON.stringify(data.histPrecios));
       if (data.zonasReparto && Object.keys(data.zonasReparto).length) setZonasReparto(data.zonasReparto);
+      if (data.repartos?.length) { setRepartos(data.repartos); try{localStorage.setItem("cat_repartos_v1",JSON.stringify(data.repartos));}catch{} }
       // Refrescar logo desde licencia
       const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
       if(lic?.codigo && window.db) {
@@ -1229,7 +1234,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
 
   // Ref siempre actualizado — evita datos viejos en el debounce
   const estadoRef = React.useRef({clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios});
-  React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,zonasReparto}; });
+  React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,zonasReparto,repartos}; });
 
   // Auto backup DIARIO a localStorage
   React.useEffect(()=>{
@@ -1251,7 +1256,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     setSyncStatus("saving");
     const mantVehActual = (() => { try { return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
     const histPreciosActual = (() => { try { return JSON.parse(localStorage.getItem("lc_hist_precios")||"[]"); } catch { return []; } })();
-    const data = { ...estadoRef.current, ...overrides, noVisitas: estadoRef.current.noVisitas||[], prospectos: estadoRef.current.prospectos||[], recordatorios: estadoRef.current.recordatorios||[], mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{} };
+    const data = { ...estadoRef.current, ...overrides, noVisitas: estadoRef.current.noVisitas||[], prospectos: estadoRef.current.prospectos||[], recordatorios: estadoRef.current.recordatorios||[], mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{}, repartos: overrides.repartos||estadoRef.current.repartos||[] };
     estadoRef.current = data;
     debounceSave(() => {
       if(!navigator.onLine) {
@@ -1609,17 +1614,50 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     <div style={{position:"relative"}}>
     <div style={{...s.app, zoom: SCALES[scaleIdx]}}>
       <SyncBar status={syncStatus} isOnline={isOnline} />
-      {pantalla==="portada"        && <Portada onIngresar={()=>irA("menu")} />}
-      {pantalla==="menu"           && <MenuDias dias={DIAS} onDia={d=>{setDiaActual(d);irA("diaPrincipal");}} onResumen={()=>irA("resumen")} onConfig={()=>irA("config")} onGestionClientes={()=>irA("gestionClientes")} onPromocion={()=>irA("promocion")} onStock={()=>irA("stock")} onAgenda={()=>irA("agenda")} onVolver={()=>irA("portada")} darkMode={darkMode} onToggleDark={()=>setDarkMode(!darkMode)} clientes={clientes} ventas={ventas} stock={stockNorm}
-          recordatoriosActivos={recordatoriosActivos}
-          onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
-          onVerConfirmaciones={(dia)=>{setDiaActual(dia);irA("confirmacionesDia");}}
-          transferenciasPendientes={DIAS.map(dia=>{
-            const vts = ventas.filter(v=>v.dia===dia&&v.pago==="transferencia"&&!v.transConfirmada);
-            if(!vts.length) return null;
-            const fechas = [...new Set(vts.map(v=>v.fechaKey))].sort().reverse();
-            return {dia, fecha:fechas[0]||"", count:vts.length, monto:vts.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0), ventas:vts};
-          }).filter(Boolean)} zonasReparto={zonasReparto} onSetZona={(dia,zona)=>{const nz={...zonasReparto,[dia]:zona};setZonasReparto(nz);syncData({zonasReparto:nz});}} />}
+      {pantalla==="portada" && <Portada onIngresar={()=>irA("menu")} />}
+      {pantalla==="menu" && <MenuRepartos
+        repartos={repartos}
+        clientes={clientes}
+        ventas={ventas}
+        onSeleccionar={(rep)=>{setRepartoActual(rep);irA("diasReparto");}}
+        onConfig={()=>irA("config")}
+        onResumen={()=>irA("resumen")}
+        onStock={()=>irA("stock")}
+        onAgenda={()=>irA("agenda")}
+        onVolver={()=>irA("portada")}
+        darkMode={darkMode}
+        onToggleDark={()=>setDarkMode(!darkMode)}
+        saveRepartos={saveRepartos}
+      />}
+      {pantalla==="diasReparto" && repartoActual && <MenuDias
+        dias={DIAS}
+        reparto={repartoActual}
+        onDia={d=>{setDiaActual(d);irA("diaPrincipal");}}
+        onResumen={()=>irA("resumen")}
+        onConfig={()=>irA("config")}
+        onGestionClientes={()=>irA("gestionClientes")}
+        onPromocion={()=>irA("promocion")}
+        onStock={()=>irA("stock")}
+        onAgenda={()=>irA("agenda")}
+        onVolver={()=>irA("menu")}
+        darkMode={darkMode}
+        onToggleDark={()=>setDarkMode(!darkMode)}
+        clientes={clientes.filter(c=>c.repartoId===repartoActual.id)}
+        ventas={ventas.filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return cl?.repartoId===repartoActual.id;})}
+        stock={stockNorm}
+        recordatoriosActivos={recordatoriosActivos}
+        onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
+        onVerConfirmaciones={(dia)=>{setDiaActual(dia);irA("confirmacionesDia");}}
+        transferenciasPendientes={DIAS.map(dia=>{
+          const clientesRep=clientes.filter(c=>c.repartoId===repartoActual.id);
+          const vts=ventas.filter(v=>v.dia===dia&&v.pago==="transferencia"&&!v.transConfirmada&&clientesRep.some(c=>c.id===v.clienteId));
+          if(!vts.length) return null;
+          const fechas=[...new Set(vts.map(v=>v.fechaKey))].sort().reverse();
+          return {dia,fecha:fechas[0]||"",count:vts.length,monto:vts.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0),ventas:vts};
+        }).filter(Boolean)}
+        zonasReparto={zonasReparto}
+        onSetZona={(dia,zona)=>{const nz={...zonasReparto,[dia]:zona};setZonasReparto(nz);syncData({zonasReparto:nz});}}
+      />}
       {pantalla==="confirmacionesDia" && <ConfirmacionesDia
           dia={diaActual}
           ventas={ventas.filter(v=>v.dia===diaActual&&v.pago==="transferencia")}
@@ -1649,7 +1687,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           }
           irA("clientes");
         }} onVolver={()=>irA("selectorFechaClientes")} />}
-      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual)} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
+      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id))} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
           const otros=clientes.filter(c=>c.dia!==diaActual);
           saveClientes([...otros,...lista]);
         }} onRegistrarNoVisita={(clienteId,motivo)=>{const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo}];saveNoVisitas(nv);}} onQuitarNoVisita={(clienteId)=>{const nv=(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual));saveNoVisitas(nv);}}
@@ -1745,7 +1783,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   if(siguiente){ setClienteId(siguiente.id); irA("detalleCliente"); }
   else irA("clientes");
 }} onVolver={()=>irA("detalleCliente")} />}
-      {pantalla==="nuevoCliente"   && <NuevoCliente diaActual={diaActual} onGuardar={(datos)=>{
+      {pantalla==="nuevoCliente"   && <NuevoCliente diaActual={diaActual} repartoActual={repartoActual} onGuardar={(datos)=>{
           const orden=datos.orden;
           let base=clientes;
           if(orden&&clientes.some(c=>c.dia===datos.dia&&(c.orden||0)===Number(orden))){
@@ -1762,7 +1800,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         saveProspectos(prospectos.map(x=>x.id===p.id?{...x,estado:"convertido"}:x));
         irA("promocion");
       }} onVolver={()=>irA("menu")} />}
-      {pantalla==="gestionClientes" && <GestionClientes clientes={clientes} onReordenarTodo={(lista)=>saveClientes(lista)} onEditar={(id,cambios)=>{saveClientes(clientes.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={(id)=>{
+      {pantalla==="gestionClientes" && <GestionClientes clientes={clientes} repartos={repartos} repartoActual={repartoActual} onReordenarTodo={(lista)=>saveClientes(lista)} onEditar={(id,cambios)=>{saveClientes(clientes.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={(id)=>{
         if(window.confirm("¿Eliminar cliente?")){
           const eliminado=clientes.find(c=>c.id===id);
           let nc=clientes.filter(c=>c.id!==id);
@@ -2638,7 +2676,166 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
   );
 }
 
-function MenuDias({dias,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,darkMode,onToggleDark,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona}) {
+function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,darkMode,onToggleDark,saveRepartos}) {
+  const [modoNuevo, setModoNuevo] = React.useState(false);
+  const [editandoId, setEditandoId] = React.useState(null);
+  const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
+
+  const genCodigo = () => {
+    const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    return Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join("");
+  };
+
+  const guardarReparto = () => {
+    if(!form.numero||!form.repartidorNombre){alert("Completá número y nombre");return;}
+    const codUpper=(form.codigo||genCodigo()).toUpperCase();
+    if(editandoId){
+      saveRepartos(repartos.map(r=>r.id===editandoId?{...r,...form,codigo:codUpper}:r));
+    } else {
+      const nuevo={id:Date.now(),numero:Number(form.numero),repartidorNombre:form.repartidorNombre.trim(),codigo:codUpper,nombre:`Reparto ${form.numero}`};
+      saveRepartos([...repartos,nuevo].sort((a,b)=>a.numero-b.numero));
+    }
+    setModoNuevo(false);setEditandoId(null);setForm({numero:"",repartidorNombre:"",codigo:""});
+  };
+
+  const eliminarReparto = (id) => {
+    if(!window.confirm("¿Eliminar este reparto?")) return;
+    saveRepartos(repartos.filter(r=>r.id!==id));
+  };
+
+  const clientesPorReparto = (repId) => clientes.filter(c=>c.repartoId===repId);
+  const deudaPorReparto = (repId) => clientes.filter(c=>c.repartoId===repId&&c.saldo<0).reduce((a,c)=>a+Math.abs(c.saldo),0);
+  const deudoresCount = (repId) => clientes.filter(c=>c.repartoId===repId&&c.saldo<0).length;
+
+  return (
+    <div style={s.screen}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>Sistema de Reparto Multi</span>
+        <button style={{...s.btn,padding:"5px 10px",fontSize:18,lineHeight:1}} onClick={onToggleDark}>{darkMode?"☀":"🌙"}</button>
+      </div>
+
+      {/* Barra de acciones */}
+      <div style={{padding:"10px 14px 6px",display:"flex",gap:8,alignItems:"center"}}>
+        <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>
+          📋 {repartos.length} reparto{repartos.length!==1?"s":""}
+        </span>
+        <button style={{...s.btn,padding:"7px 14px",fontSize:12,background:"#185FA5",color:"#e2eaf4",border:"none"}}
+          onClick={()=>{setForm({numero:String(repartos.length+1),repartidorNombre:"",codigo:genCodigo()});setModoNuevo(true);setEditandoId(null);}}>
+          + Nuevo reparto
+        </button>
+      </div>
+
+      {/* Formulario nuevo/editar */}
+      {(modoNuevo||editandoId)&&(
+        <div style={{...s.card,margin:"0 14px 10px",borderLeft:"3px solid #185FA5"}}>
+          <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:12}}>
+            {editandoId?"Editar reparto":"Nuevo reparto"}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:8,marginBottom:8}}>
+            <div>
+              <label style={s.label}>Número</label>
+              <input style={s.input} type="number" min={1} placeholder="1" value={form.numero}
+                onChange={e=>setForm(f=>({...f,numero:e.target.value}))}/>
+            </div>
+            <div>
+              <label style={s.label}>Nombre del repartidor</label>
+              <input style={s.input} placeholder="Ej: Juan Pérez" value={form.repartidorNombre}
+                onChange={e=>setForm(f=>({...f,repartidorNombre:e.target.value}))}/>
+            </div>
+          </div>
+          <div style={{marginBottom:12}}>
+            <label style={s.label}>Código de acceso del repartidor</label>
+            <div style={{display:"flex",gap:8}}>
+              <input style={{...s.input,fontFamily:"monospace",fontSize:18,fontWeight:700,letterSpacing:"0.15em",flex:1,textTransform:"uppercase"}}
+                placeholder="XXXX" maxLength={6} value={form.codigo}
+                onChange={e=>setForm(f=>({...f,codigo:e.target.value.toUpperCase()}))}/>
+              <button style={{...s.btn,padding:"8px 12px",fontSize:12,whiteSpace:"nowrap"}}
+                onClick={()=>setForm(f=>({...f,codigo:genCodigo()}))}>🎲 Generar</button>
+            </div>
+            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:3}}>El repartidor usa este código para entrar</div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button style={{...s.btn,flex:1}} onClick={()=>{setModoNuevo(false);setEditandoId(null);}}>Cancelar</button>
+            <button style={{...s.btnPrimary,flex:2,padding:"10px"}} onClick={guardarReparto}>
+              {editandoId?"Guardar cambios":"Crear reparto"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lista de repartos */}
+      {repartos.length===0&&!modoNuevo&&(
+        <div style={{textAlign:"center",padding:"50px 20px",color:"var(--color-text-tertiary)"}}>
+          <div style={{fontSize:48,marginBottom:12}}>🚚</div>
+          <div style={{fontSize:16,fontWeight:500,color:"var(--color-text-secondary)",marginBottom:6}}>Sin repartos aún</div>
+          <div style={{fontSize:13}}>Tocá "+ Nuevo reparto" para empezar</div>
+        </div>
+      )}
+
+      <div style={{padding:"0 14px"}}>
+        {[...repartos].sort((a,b)=>a.numero-b.numero).map(rep=>{
+          const nCli=clientesPorReparto(rep.id).length;
+          const deuda=deudaPorReparto(rep.id);
+          const nDeudores=deudoresCount(rep.id);
+          return (
+            <div key={rep.id} style={{marginBottom:10}}>
+              {editandoId===rep.id ? null : (
+                <button style={{...s.card,width:"100%",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"16px",margin:0,
+                  background:"var(--color-background-secondary)"}}
+                  onClick={()=>onSeleccionar(rep)}>
+                  {/* Número del reparto */}
+                  <div style={{width:52,height:52,borderRadius:14,background:"#185FA5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",flexShrink:0}}>
+                    {rep.numero}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:16,fontWeight:700,color:"var(--color-text-primary)",marginBottom:3}}>
+                      {rep.repartidorNombre}
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{nCli} cliente{nCli!==1?"s":""}</span>
+                      {nDeudores>0&&<span style={s.badge("danger")}>{nDeudores} deben {fmt(deuda)}</span>}
+                      {nDeudores===0&&nCli>0&&<span style={s.badge("success")}>✓ Sin deudas</span>}
+                    </div>
+                    <div style={{fontSize:10,color:"var(--color-text-tertiary)",marginTop:3,fontFamily:"monospace",letterSpacing:"0.1em"}}>
+                      Código: {rep.codigo}
+                    </div>
+                  </div>
+                  <span style={{color:"var(--color-text-tertiary)",fontSize:20}}>→</span>
+                </button>
+              )}
+              {/* Botones editar/eliminar */}
+              <div style={{display:"flex",gap:6,marginTop:4,justifyContent:"flex-end"}}>
+                <button style={{...s.btn,fontSize:11,padding:"4px 10px"}}
+                  onClick={e=>{e.stopPropagation();setForm({numero:String(rep.numero),repartidorNombre:rep.repartidorNombre,codigo:rep.codigo});setEditandoId(rep.id);setModoNuevo(false);}}>
+                  ✏️ Editar
+                </button>
+                <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:"rgba(220,38,38,0.15)",color:"var(--color-text-danger)"}}
+                  onClick={()=>eliminarReparto(rep.id)}>
+                  🗑 Eliminar
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Botones del menú */}
+      <div style={s.divider} />
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,padding:"0 14px 20px"}}>
+        {[["📊","Resumen",onResumen],["📦","Stock",onStock],["📅","Agenda",onAgenda],["⚙️","Config",onConfig]].map(([ico,lbl,fn])=>(
+          <button key={lbl} onClick={fn} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"14px 6px",borderRadius:12,cursor:"pointer",border:"2px solid transparent",background:"var(--color-background-tertiary)",boxShadow:"0 3px 6px rgba(0,0,0,0.3)",color:"var(--color-text-secondary)"}}>
+            <span style={{fontSize:22}}>{ico}</span>
+            <span style={{fontSize:11,fontWeight:500,color:"var(--color-text-primary)"}}>{lbl}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,darkMode,onToggleDark,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona}) {
   const [editandoZona, setEditandoZona] = React.useState(null);
   return (
     <div style={s.screen}>
@@ -4508,9 +4705,9 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
   );
 }
 
-function NuevoCliente({diaActual,onGuardar,onVolver}) {
+function NuevoCliente({diaActual,repartoActual,onGuardar,onVolver}) {
   const [datos,setDatos]=useState({
-    nombre:"",dia:diaActual||"Martes",barrio:"",manzana:"",lote:"",sector:"",
+    nombre:"",dia:diaActual||"Martes",barrio:"",manzana:"",lote:"",sector:"",repartoId:repartoActual?.id||null,
     calle:"",nro:"",aclaracion:"",telefono:"",maps:"",foto:"",
     notas:"",sifon:0,bidon10:0,bidon20:0,orden:"",saldo:0
   });
@@ -6142,6 +6339,9 @@ function OnboardingRoles({uid, email, onListo}) {
 
 // ── AppRepartidor ──────────────────────────────────────────────
 function AppRepartidor({uid, perfil}) {
+  // Buscar el reparto que corresponde al código del repartidor
+  const todosRepartos = React.useMemo(()=>{ try{return JSON.parse(localStorage.getItem("cat_repartos_v1")||"[]");}catch{return [];} },[]);
+  const miReparto = todosRepartos.find(r=>r.codigo===perfil?.codigo) || null;
   const [pantalla,   setPantalla]   = React.useState("inicio");
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
   const [clienteId,  setClienteId]  = React.useState(null);
@@ -6177,9 +6377,10 @@ function AppRepartidor({uid, perfil}) {
     return dias[new Date().getDay()];
   })();
 
-  // Clientes de este repartidor = barrio en sus sectores + día de hoy
+  // Clientes de este repartidor = su reparto + día de hoy
   const clientes = todosClientes.filter(c =>
     c.dia === diaActual &&
+    (!miReparto || c.repartoId === miReparto.id) &&
     (sectores.length === 0 || sectores.some(s => (c.barrio||"").toLowerCase().includes(s.toLowerCase())))
   ).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
 
@@ -6257,7 +6458,7 @@ function AppRepartidor({uid, perfil}) {
           clientes={clientes}
           dia={diaActual} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
           onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}}
-          onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("inicio")}
+          onNuevoCliente={null} onVolver={()=>irA("inicio")}
           onReordenar={lista=>{
             const otros = todosClientes.filter(c=>!(c.dia===diaActual && (sectores.length===0||sectores.some(s=>(c.barrio||"").toLowerCase().includes(s.toLowerCase())))));
             saveClientes([...otros,...lista]);
@@ -6328,19 +6529,6 @@ function AppRepartidor({uid, perfil}) {
           onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,fechaKl)=>{registrarVentaLibre(d,p,m,sa,ep,ed,obs,op,mt2,0,fechaKl);irA("inicio");}}
           onVolver={()=>irA("ventaLibreSeleccionar")}
         />
-      )}
-      {pantalla==="nuevoCliente"&&(
-        <NuevoCliente diaActual={diaActual} onGuardar={(datos)=>{
-          const orden = datos.orden;
-          let base = todosClientes;
-          if(orden && todosClientes.some(c=>c.dia===datos.dia&&(c.orden||0)===Number(orden))){
-            base = todosClientes.map(c=>c.dia===datos.dia&&(c.orden||0)>=Number(orden)?{...c,orden:(c.orden||0)+1}:c);
-          }
-          const nc = [...base, {...datos, id:Date.now(), saldo:0, dispenser:datos.dispenser||0}]
-            .sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-          saveClientes(nc);
-          irA("clientes");
-        }} onVolver={()=>irA("clientes")} />
       )}
       {pantalla==="planilla"&&(
         <PlanillaDelDia
@@ -6672,7 +6860,6 @@ function RepartidoresPanel({negocioId, clientes}) {
   const [codigo, setCodigo]             = React.useState("");
   const [generando, setGenerando]       = React.useState(false);
   const [copiado, setCopiado]           = React.useState(false);
-  const [confirmado, setConfirmado]     = React.useState(false);
 
   React.useEffect(()=>{
     if(!negocioId) return;
@@ -6689,14 +6876,9 @@ function RepartidoresPanel({negocioId, clientes}) {
   // Barrios disponibles en clientes
   const barriosDisponibles = [...new Set((clientes||[]).map(c=>c.barrio).filter(Boolean))].sort();
 
-  const confirmarDatos = () => {
+  const generarCodigo = async () => {
     if(!nombre.trim()){ alert("Ingresá el nombre del repartidor"); return; }
     if(sectores.length===0){ alert("Agregá al menos un sector/barrio"); return; }
-    setConfirmado(true);
-    setCodigo("");
-  };
-
-  const generarCodigo = async () => {
     setGenerando(true);
     const cod = await crearInvitacion(negocioId, nombre.trim(), sectores);
     setCodigo(cod);
@@ -6744,68 +6926,42 @@ function RepartidoresPanel({negocioId, clientes}) {
       {/* Generar invitación */}
       <div style={{...s.card,margin:0,borderLeft:"3px solid #5daaff"}}>
         <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>➕ Agregar repartidor</div>
+        <label style={s.label}>Nombre del repartidor</label>
+        <input style={{...s.input,marginBottom:12}} placeholder="Ej: Juan Pérez" value={nombre} onChange={e=>{setNombre(e.target.value);setCodigo("");}} />
+        <label style={s.label}>Sectores / Barrios asignados</label>
+        {sectores.length>0&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+            {sectores.map(s=>(
+              <span key={s} style={{background:"#1e3a5f",color:"#5daaff",borderRadius:6,padding:"4px 10px",fontSize:12,display:"flex",alignItems:"center",gap:6}}>
+                {s}
+                <button style={{background:"none",border:"none",color:"#5daaff",cursor:"pointer",fontSize:14,padding:0,lineHeight:1}} onClick={()=>setSectores(sectores.filter(x=>x!==s))}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div style={{display:"flex",gap:6,marginBottom:12}}>
+          <input style={{...s.input,flex:2,margin:0}} placeholder="Escribí un barrio..." value={sectorInput}
+            onChange={e=>setSectorInput(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();agregarSector();}}}
+            list="barrios-disponibles" />
+          <datalist id="barrios-disponibles">
+            {barriosDisponibles.filter(b=>!sectores.includes(b)).map(b=><option key={b} value={b}/>)}
+          </datalist>
+          <button style={{...s.btn,flex:1,padding:"8px"}} onClick={agregarSector}>+ Agregar</button>
+        </div>
+        <button style={{...s.btnPrimary,width:"100%",padding:12}} disabled={generando} onClick={generarCodigo}>
+          {generando?"Generando...":"🔑 Generar código de invitación"}
+        </button>
 
-        {!confirmado ? (
-          <>
-            <label style={s.label}>Nombre del repartidor</label>
-            <input style={{...s.input,marginBottom:12}} placeholder="Ej: Juan Pérez" value={nombre} onChange={e=>{setNombre(e.target.value);setCodigo("");}} />
-            <label style={s.label}>Sectores / Barrios asignados</label>
-            {sectores.length>0&&(
-              <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
-                {sectores.map(sc=>(
-                  <span key={sc} style={{background:"#1e3a5f",color:"#5daaff",borderRadius:6,padding:"4px 10px",fontSize:12,display:"flex",alignItems:"center",gap:6}}>
-                    {sc}
-                    <button style={{background:"none",border:"none",color:"#5daaff",cursor:"pointer",fontSize:14,padding:0,lineHeight:1}} onClick={()=>setSectores(sectores.filter(x=>x!==sc))}>×</button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <div style={{display:"flex",gap:6,marginBottom:12}}>
-              <input style={{...s.input,flex:2,margin:0}} placeholder="Escribí un barrio..." value={sectorInput}
-                onChange={e=>setSectorInput(e.target.value)}
-                onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();agregarSector();}}}
-                list="barrios-disponibles" />
-              <datalist id="barrios-disponibles">
-                {barriosDisponibles.filter(b=>!sectores.includes(b)).map(b=><option key={b} value={b}/>)}
-              </datalist>
-              <button style={{...s.btn,flex:1,padding:"8px"}} onClick={agregarSector}>+ Agregar</button>
-            </div>
-            <button style={{...s.btnPrimary,width:"100%",padding:12}} onClick={confirmarDatos}>
-              ✅ Confirmar datos del repartidor
+        {codigo&&(
+          <div style={{marginTop:14,background:"var(--color-background-tertiary)",borderRadius:10,padding:14,textAlign:"center"}}>
+            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>Código para {nombre} · {sectores.join(", ")}</div>
+            <div style={{fontSize:36,fontWeight:700,color:"#5daaff",letterSpacing:8,marginBottom:12}}>{codigo}</div>
+            <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:10}}>El repartidor lo ingresa al abrir la app por primera vez</div>
+            <button style={{...s.btnPrimary,width:"100%"}} onClick={copiarCodigo}>
+              {copiado?"✓ Copiado!":"📤 Compartir código"}
             </button>
-          </>
-        ) : (
-          <>
-            <div style={{background:"var(--color-background-tertiary)",borderRadius:10,padding:12,marginBottom:14}}>
-              <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:4}}>Repartidor a crear:</div>
-              <div style={{fontSize:16,fontWeight:600,color:"var(--color-text-primary)"}}>{nombre}</div>
-              <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginTop:4}}>Sectores: {sectores.join(", ")}</div>
-            </div>
-            {!codigo ? (
-              <>
-                <button style={{...s.btnPrimary,width:"100%",padding:12,marginBottom:8}} disabled={generando} onClick={generarCodigo}>
-                  {generando?"Generando...":"🔑 Generar código de invitación"}
-                </button>
-                <button style={{...s.btn,width:"100%",padding:10,fontSize:13}} onClick={()=>setConfirmado(false)}>
-                  ← Editar datos
-                </button>
-              </>
-            ) : (
-              <>
-                <div style={{marginTop:4,background:"var(--color-background-tertiary)",borderRadius:10,padding:14,textAlign:"center"}}>
-                  <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>Código para {nombre} · {sectores.join(", ")}</div>
-                  <div style={{fontSize:36,fontWeight:700,color:"#5daaff",letterSpacing:8,marginBottom:12}}>{codigo}</div>
-                  <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:10}}>El repartidor lo ingresa al abrir la app por primera vez</div>
-                  <button style={{...s.btnPrimary,width:"100%",marginBottom:8}} onClick={copiarCodigo}>
-                    {copiado?"✓ Copiado!":"📤 Compartir código"}
-                  </button>
-                  <button style={{...s.btn,width:"100%",padding:10,fontSize:13}} onClick={()=>{setNombre("");setSectores([]);setSectorInput("");setCodigo("");setConfirmado(false);}}>
-                    ➕ Crear otro repartidor
-                  </button>
-                </div>
-              </>
-            )}
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -6828,8 +6984,9 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button><span style={s.headerTitle}>Configuración</span></div>
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
-          [["precios","💲","Precios"],["stock","📦","Stock"],["historial","📋","Historial"],["backup","💾","Backup"]],
-          [["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"],["equipo","👥","Equipo"],["vincular","🔗","Vincular"]],
+          [["precios","💲","Precios"],["stock","📦","Stock"],["cargas","🚚","Cargas"],["historial","📋","Historial"]],
+          [["importar","📥","Importar"],["backup","💾","Backup"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
+          [["equipo","👥","Equipo"],["vincular","🔗","Vincular"]],
         ].map((fila,fi)=>(
           <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
             {fila.map(([id,ico,lbl])=>(
@@ -7015,6 +7172,61 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
     })}
   </div>
 )}
+      {tab==="cargas"&&(
+          <div style={{padding:16}}>
+            <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
+              Cantidades con las que salís cada día. Se usan como valores por defecto al iniciar el reparto.
+              Los sifones se ingresan en cajones (1 cajón = 6 sifones).
+            </p>
+            {DIAS.filter(d=>d!=="Lunes").map(function(dia){
+              var c = (cargasDia||CARGA_DIA_DEFAULT)[dia]||{soda:0,b10:0,b20:0};
+              var cajones = Math.floor((c.soda||0)/6);
+              return (
+                <div key={dia} style={{...s.card,margin:"0 0 12px"}}>
+                  <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>{dia}</div>
+                  <div style={s.grid3}>
+                    <div>
+                      <label style={{...s.label,textAlign:"center"}}>Cajones soda</label>
+                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                        value={cajones||""}
+                        placeholder="0"
+                        onChange={e=>{
+                          var caj=Number(e.target.value)||0;
+                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
+                          nuevo[dia]=Object.assign({},c,{soda:caj*6});
+                          setCargasDia(nuevo);
+                        }} />
+                      <div style={{fontSize:10,color:"var(--color-text-tertiary)",textAlign:"center",marginTop:2}}>{c.soda||0} unidades</div>
+                    </div>
+                    <div>
+                      <label style={{...s.label,textAlign:"center"}}>Bidón 10L</label>
+                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                        value={c.b10||""}
+                        placeholder="0"
+                        onChange={e=>{
+                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
+                          nuevo[dia]=Object.assign({},c,{b10:Number(e.target.value)||0});
+                          setCargasDia(nuevo);
+                        }} />
+                    </div>
+                    <div>
+                      <label style={{...s.label,textAlign:"center"}}>Bidón 20L</label>
+                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                        value={c.b20||""}
+                        placeholder="0"
+                        onChange={e=>{
+                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
+                          nuevo[dia]=Object.assign({},c,{b20:Number(e.target.value)||0});
+                          setCargasDia(nuevo);
+                        }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <button style={s.btnPrimary} onClick={()=>{ setCargasDia(Object.assign({},cargasDia)); alert("Cargas guardadas"); }}>Guardar cargas</button>
+          </div>
+        )}
         {tab==="stock"&&(
           <div style={{padding:16}}>
             <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
@@ -7042,60 +7254,6 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
               </div>
             ))}
             <button style={s.btnPrimary} onClick={()=>{syncData({stock});alert("Stock guardado");}}>Guardar stock</button>
-            <div style={{marginTop:24,borderTop:"1px solid var(--color-border-secondary)",paddingTop:20}}>
-              <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>🚚 Cargas por día</div>
-              <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
-                Cantidades con las que salís cada día. Se usan como valores por defecto al iniciar el reparto.
-                Los sifones se ingresan en cajones (1 cajón = 6 sifones).
-              </p>
-              {DIAS.map(function(dia){
-                var c = (cargasDia||CARGA_DIA_DEFAULT)[dia]||{soda:0,b10:0,b20:0};
-                var cajones = Math.floor((c.soda||0)/6);
-                return (
-                  <div key={dia} style={{...s.card,margin:"0 0 12px"}}>
-                    <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>{dia}</div>
-                    <div style={s.grid3}>
-                      <div>
-                        <label style={{...s.label,textAlign:"center"}}>Cajones soda</label>
-                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                          value={cajones||""}
-                          placeholder="0"
-                          onChange={e=>{
-                            var caj=Number(e.target.value)||0;
-                            var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                            nuevo[dia]=Object.assign({},c,{soda:caj*6});
-                            setCargasDia(nuevo);
-                          }} />
-                        <div style={{fontSize:10,color:"var(--color-text-tertiary)",textAlign:"center",marginTop:2}}>{c.soda||0} unidades</div>
-                      </div>
-                      <div>
-                        <label style={{...s.label,textAlign:"center"}}>Bidón 10L</label>
-                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                          value={c.b10||""}
-                          placeholder="0"
-                          onChange={e=>{
-                            var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                            nuevo[dia]=Object.assign({},c,{b10:Number(e.target.value)||0});
-                            setCargasDia(nuevo);
-                          }} />
-                      </div>
-                      <div>
-                        <label style={{...s.label,textAlign:"center"}}>Bidón 20L</label>
-                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                          value={c.b20||""}
-                          placeholder="0"
-                          onChange={e=>{
-                            var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                            nuevo[dia]=Object.assign({},c,{b20:Number(e.target.value)||0});
-                            setCargasDia(nuevo);
-                          }} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              <button style={s.btnPrimary} onClick={()=>{ setCargasDia(Object.assign({},cargasDia)); alert("Cargas guardadas"); }}>Guardar cargas</button>
-            </div>
           </div>
         )}
         {tab==="historial"&&(
@@ -7107,9 +7265,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             enConfig={true}
           />
         )}
-        {tab==="backup"&&(
+        {tab==="importar"&&(
         <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
-          {/* IMPORTAR CLIENTES */}
           <div style={{...s.card,margin:0,borderLeft:"3px solid #185FA5"}}>
             <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:6}}>📥 Importar clientes desde planilla Excel</div>
             <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10,lineHeight:1.6}}>
@@ -7135,6 +7292,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             />
             <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>Solo archivos .xlsx — usa la planilla oficial del sistema</div>
           </div>
+
+          {/* Resumen de clientes actuales */}
           {clientes.length > 0 && (
             <div style={{...s.card,margin:0}}>
               <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)",marginBottom:8}}>
@@ -7157,7 +7316,10 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
               }}>🗑 Borrar todos los clientes</button>
             </div>
           )}
-          <div style={{borderTop:"1px solid var(--color-border-secondary)",paddingTop:4}}></div>
+        </div>
+        )}
+        {tab==="backup"&&(
+        <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
           {/* RECUPERACION DE EMERGENCIA */}
           {(()=>{
             const backupKeys = Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).sort().reverse();
