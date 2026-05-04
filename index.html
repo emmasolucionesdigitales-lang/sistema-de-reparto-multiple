@@ -6378,12 +6378,11 @@ function AppRepartidor({uid, perfil}) {
     return dias[new Date().getDay()];
   })();
 
-  // Clientes de este repartidor = su reparto + día de hoy
+  // Clientes de este repartidor = su reparto (TODOS los días)
   const clientes = todosClientes.filter(c =>
-    c.dia === diaActual &&
     (!miReparto || c.repartoId === miReparto.id) &&
     (sectores.length === 0 || sectores.some(s => (c.barrio||"").toLowerCase().includes(s.toLowerCase())))
-  ).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+  ).sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
 
   const cliente = todosClientes.find(c=>c.id===clienteId)||null;
 
@@ -6402,8 +6401,8 @@ function AppRepartidor({uid, perfil}) {
       fecha:new Date().toLocaleString("es-AR"), detalle, pago, obs:obs||"", saldoAplicado:saldoAplicado||0,
       envPrest:(envPrest||[]).filter(e=>e.prod&&e.cant), envDev:(envDev||[]).filter(e=>e.prod&&e.cant),
       ...calc, repartidor:perfil.nombre}];
-    saveVentas(nv);
-    saveClientes(clientes.map(x=>x.id===c.id?{...x,saldo:c.saldo+calc.saldoDelta}:x));
+    const clientesActualizados = todosClientes.map(x=>x.id===c.id?{...x,saldo:(x.saldo||0)+calc.saldoDelta}:x);
+    sync({...datos, ventas:nv, clientes:clientesActualizados});
   };
 
   const registrarVentaLibre = (detalle,pago,montoPagado,saldoAplicado,envPrest,envDev,obs,op,mt2,sd,fechaKl) => {
@@ -6449,16 +6448,13 @@ function AppRepartidor({uid, perfil}) {
           <button style={{...s.btn,width:"100%",padding:14,fontSize:14,marginBottom:10}} onClick={()=>irA("planilla")}>
             📊 Planilla del día
           </button>
-          <button style={{...s.btn,width:"100%",padding:14,fontSize:14}} onClick={()=>{setVentaLibreFecha(new Date().toISOString().slice(0,10));irA("ventaLibreSeleccionar");}}>
-            🗓 Venta en otra fecha
-          </button>
         </div>
       )}
       {pantalla==="clientes"&&(
         <ListaClientes
           clientes={clientes}
           dia={""} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
-          onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia);irA("venta");}}
+          onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);irA("venta");}}
           onNuevoCliente={null} onVolver={()=>irA("inicio")}
           onReordenar={lista=>{
             const otros = todosClientes.filter(c=>!(c.dia===diaActual && (sectores.length===0||sectores.some(s=>(c.barrio||"").toLowerCase().includes(s.toLowerCase())))));
@@ -6502,35 +6498,7 @@ function AppRepartidor({uid, perfil}) {
           onVolver={()=>irA("clientes")}
         />
       )}
-      {pantalla==="ventaLibreSeleccionar"&&(
-        <div style={s.screen}>
-          <div style={s.header}>
-            <button style={s.backBtn} onClick={()=>irA("inicio")}>← Volver</button>
-            <span style={s.headerTitle}>Venta en otra fecha</span>
-          </div>
-          <div style={{padding:16}}>
-            <div style={{...s.card,margin:"0 0 14px"}}>
-              <label style={s.label}>Fecha de la venta</label>
-              <input type="date" style={{...s.input,margin:0}} value={ventaLibreFecha} onChange={e=>setVentaLibreFecha(e.target.value)} />
-            </div>
-            <span style={{...s.sectionTitle,padding:"0 0 10px"}}>Seleccioná el cliente</span>
-            {clientes.map(c=>(
-              <button key={c.id} style={{...s.card,width:"100%",textAlign:"left",cursor:"pointer",margin:"0 0 8px"}}
-                onClick={()=>{setClienteId(c.id);irA("ventaLibre");}}>
-                <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{c.nombre}</div>
-                <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{c.dia} · {c.barrio||""}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      {pantalla==="ventaLibre"&&cliente&&(
-        <NuevaVentaLibre
-          cliente={cliente} productos={productos} fechaInicial={ventaLibreFecha}
-          onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,fechaKl)=>{registrarVentaLibre(d,p,m,sa,ep,ed,obs,op,mt2,0,fechaKl);irA("inicio");}}
-          onVolver={()=>irA("ventaLibreSeleccionar")}
-        />
-      )}
+
       {pantalla==="planilla"&&(
         <PlanillaDelDia
           dia={diaActual} fecha={fechaActual} ventas={ventasHoy}
