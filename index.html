@@ -6452,6 +6452,7 @@ function AppRepartidor({uid, perfil}) {
           onIrPlanilla={()=>irA("planilla")}
           onIrTodosClientes={()=>irA("todosClientes")}
           onIrAgenda={()=>irA("agendaRep")}
+          onIrTransfers={()=>irA("confirmTransferRep")}
           onSalir={()=>window.auth.signOut()}
         />
       )}
@@ -6515,6 +6516,18 @@ function AppRepartidor({uid, perfil}) {
         />
       )}
 
+      {pantalla==="confirmTransferRep"&&(
+        <ConfirmacionesDia
+          dia={diaActual}
+          ventas={ventas.filter(v=>v.pago==="transferencia")}
+          clientes={clientes}
+          onConfirmar={(ventaId)=>{
+            const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);
+            sync({...datos,ventas:nv});
+          }}
+          onVolver={()=>irA("inicio")}
+        />
+      )}
       {pantalla==="todosClientes"&&(
         <TodosClientesRepartidor
           clientes={clientes}
@@ -7608,7 +7621,7 @@ async function guardarLogoFirestore(codigo, logoB64) {
 
 
 // ── InicioRepartidor ─────────────────────────────────────────
-function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onSalir}) {
+function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onSalir}) {
   const transfersPend = ventas.filter(v=>v.pago==="transferencia"&&!v.transConfirmada);
   const recActivos    = (recordatorios||[]).filter(r=>!r.confirmado);
   const hoy           = new Date().toISOString().slice(0,10);
@@ -7639,24 +7652,29 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
 
       {/* Alerta transferencias */}
       {transfersPend.length>0&&(
-        <div style={{margin:"10px 14px 0",background:"#2e1f06",border:"1px solid #f5b942",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
+        <button style={{margin:"10px 14px 0",background:"#2e1f06",border:"1px solid #f5b942",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,width:"calc(100% - 28px)",cursor:"pointer",textAlign:"left"}}
+          onClick={onIrTransfers}>
           <span style={{fontSize:20}}>🔴</span>
-          <div>
+          <div style={{flex:1}}>
             <div style={{fontSize:13,fontWeight:600,color:"#f5b942"}}>{transfersPend.length} transferencia{transfersPend.length!==1?"s":""} sin confirmar</div>
-            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Total: {fmt(transfersPend.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0))}</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Total: {fmt(transfersPend.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0))} · Tocá para confirmar →</div>
           </div>
-        </div>
+        </button>
       )}
 
       {/* Alerta recordatorios */}
       {recHoy.length>0&&(
         <div style={{margin:"8px 14px 0"}}>
+          <div style={{fontSize:11,fontWeight:600,color:"#5daaff",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em",cursor:"pointer"}}
+            onClick={onIrAgenda}>
+            🔔 Recordatorios de hoy — <span style={{textDecoration:"underline"}}>ver todos →</span>
+          </div>
           {recHoy.slice(0,3).map(r=>(
             <div key={r.id} style={{...s.card,margin:"0 0 6px",background:"#1e2e4a",border:"0.5px solid #5daaff",display:"flex",gap:8,alignItems:"center"}}>
-              <span style={{fontSize:16}}>{r.tipo==="cobro"?"💰":"🏠"}</span>
-              <div style={{flex:1}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#5daaff"}}>{r.clienteNombre}</div>
-                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{r.motivo}</div>
+              <span style={{fontSize:16,cursor:"pointer"}} onClick={onIrAgenda}>{r.tipo==="cobro"?"💰":"🏠"}</span>
+              <div style={{flex:1,cursor:"pointer"}} onClick={onIrAgenda}>
+                <div style={{fontSize:12,fontWeight:500,color:"#5daaff"}}>{r.clienteNombre} <span style={{fontSize:10,opacity:0.7}}>· tocá para ver →</span></div>
+                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{r.motivo}{r.hora?` · ${r.hora}`:""}</div>
               </div>
               <div style={{display:"flex",gap:4}}>
                 {r.clienteId&&<button style={{background:"#185FA5",color:"#fff",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,cursor:"pointer"}}
@@ -7666,6 +7684,11 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
               </div>
             </div>
           ))}
+          {recActivos.length>3&&(
+            <button style={{...s.btn,width:"100%",fontSize:11,padding:"5px"}} onClick={onIrAgenda}>
+              +{recActivos.length-3} más → Abrir agenda
+            </button>
+          )}
         </div>
       )}
 
