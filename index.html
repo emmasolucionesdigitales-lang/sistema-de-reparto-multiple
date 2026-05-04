@@ -6474,7 +6474,7 @@ function AppRepartidor({uid, perfil}) {
       {pantalla==="detalleCliente"&&cliente&&(
         <DetalleCliente
           cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)}
-          dia={dia} fecha={fechaActual} productos={productos}
+          dia={diaActual} fecha={fechaActual} productos={productos}
           onVenta={()=>irA("venta")}
           onVentaLibre={()=>{setVentaLibreFecha(new Date().toISOString().slice(0,10));irA("ventaLibre");}}
           onVolver={()=>irA("clientes")}
@@ -6841,10 +6841,7 @@ function NuevaVentaLibre({cliente,productos,fechaInicial,onGuardar,onVolver}) {
         }}>
           Guardar venta
         </button>
-        <div style={{display:"flex",gap:8,marginTop:8}}>
-          <button style={{flex:1,background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"0.5px solid var(--color-border-warning)",borderRadius:8,padding:"11px 8px",fontSize:13,fontWeight:500,cursor:"pointer"}} onClick={onNoEsta}>🔄 No está</button>
-          <button style={{flex:1,background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"0.5px solid var(--color-border-danger)",borderRadius:8,padding:"11px 8px",fontSize:13,fontWeight:500,cursor:"pointer"}} onClick={onNoQuiere}>🚫 No quiere</button>
-        </div>
+
       </div>
     </div>
   );
