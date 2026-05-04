@@ -6429,26 +6429,42 @@ function AppRepartidor({uid, perfil}) {
   return (
     <div style={s.app}>
       {pantalla==="inicio"&&(
-        <div style={{padding:16,minHeight:"100vh"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-            <div>
-              <div style={{fontSize:18,fontWeight:600,color:"var(--color-text-primary)"}}>🚐 {perfil.nombre}</div>
-              <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>Reparto · {diaActual}</div>
-              <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{(perfil.sectores||[]).join(" · ")||"Todos los sectores"}</div>
-            </div>
-            <button style={{...s.btn,fontSize:11,padding:"6px 10px"}} onClick={()=>window.auth.signOut()}>Salir</button>
-          </div>
-          <div style={{...s.card,margin:"0 0 16px",background:"var(--color-background-info)"}}>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>📅 Fecha del reparto</div>
-            <input type="date" style={{...s.input,margin:0}} value={fechaActual} onChange={e=>setFechaActual(e.target.value)} />
-          </div>
-          <button style={{...s.btnPrimary,width:"100%",padding:16,fontSize:16,marginBottom:10,borderRadius:12}} onClick={()=>irA("clientes")}>
-            📋 Clientes del reparto
-          </button>
-          <button style={{...s.btn,width:"100%",padding:14,fontSize:14,marginBottom:10}} onClick={()=>irA("planilla")}>
-            📊 Planilla del día
-          </button>
-        </div>
+        <InicioRepartidor
+          perfil={perfil}
+          diaActual={diaActual}
+          fechaActual={fechaActual}
+          setFechaActual={setFechaActual}
+          clientes={clientes}
+          ventas={ventasHoy}
+          noVisitas={noVisHoy}
+          recordatorios={datos.recordatorios||[]}
+          onSaveRecordatorio={(r)=>{
+            const lista=[...(datos.recordatorios||[]),r];
+            sync({...datos,recordatorios:lista});
+          }}
+          onConfirmarRecordatorio={(id)=>{
+            const lista=(datos.recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r);
+            sync({...datos,recordatorios:lista});
+          }}
+          onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(clientes.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
+          onIrCarga={()=>irA("cargaDia")}
+          onIrClientes={()=>irA("clientes")}
+          onIrPlanilla={()=>irA("planilla")}
+          onIrTodosClientes={()=>irA("todosClientes")}
+          onIrAgenda={()=>irA("agendaRep")}
+          onSalir={()=>window.auth.signOut()}
+        />
+      )}
+      {pantalla==="cargaDia"&&(
+        <InicioReparto
+          dia={diaActual} fecha={fechaActual}
+          planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()}
+          productos={productos}
+          cargasDia={datos.cargasDia||CARGA_DIA_DEFAULT}
+          stock={datos.stock||{}}
+          onGuardar={(p)=>{savePlanilla(`${diaActual}_${fechaActual}`,p);irA("inicio");}}
+          onVolver={()=>irA("inicio")}
+        />
       )}
       {pantalla==="clientes"&&(
         <ListaClientes
@@ -6499,6 +6515,30 @@ function AppRepartidor({uid, perfil}) {
         />
       )}
 
+      {pantalla==="todosClientes"&&(
+        <TodosClientesRepartidor
+          clientes={clientes}
+          ventas={ventas}
+          onSeleccionar={(c)=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);irA("venta");}}
+          onVolver={()=>irA("inicio")}
+        />
+      )}
+      {pantalla==="agendaRep"&&(
+        <AgendaRepartidor
+          recordatorios={datos.recordatorios||[]}
+          clientes={clientes}
+          onConfirmar={(id)=>{const l=(datos.recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r);sync({...datos,recordatorios:l});}}
+          onEliminar={(id)=>{const l=(datos.recordatorios||[]).filter(r=>r.id!==id);sync({...datos,recordatorios:l});}}
+          onNuevo={(datos2)=>{
+            const c=clientes.find(x=>x.id===datos2.clienteId);
+            if(!c){alert("Seleccioná un cliente");return;}
+            const l=[...(datos.recordatorios||[]),{...datos2,id:Date.now(),clienteId:c.id,clienteNombre:c.nombre,dia:c.dia,confirmado:false}];
+            sync({...datos,recordatorios:l});
+          }}
+          onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(clientes.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
+          onVolver={()=>irA("inicio")}
+        />
+      )}
       {pantalla==="planilla"&&(
         <PlanillaDelDia
           dia={diaActual} fecha={fechaActual} ventas={ventasHoy}
@@ -7564,6 +7604,268 @@ async function guardarLogoFirestore(codigo, logoB64) {
     if(lic) { lic.logo = logoB64; localStorage.setItem("sr_licencia", JSON.stringify(lic)); }
     return true;
   } catch(e) { console.error("Error guardando logo:", e); return false; }
+}
+
+
+// ── InicioRepartidor ─────────────────────────────────────────
+function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onSalir}) {
+  const transfersPend = ventas.filter(v=>v.pago==="transferencia"&&!v.transConfirmada);
+  const recActivos    = (recordatorios||[]).filter(r=>!r.confirmado);
+  const hoy           = new Date().toISOString().slice(0,10);
+  const recHoy        = recActivos.filter(r=>r.fecha===hoy);
+  const visitadosHoy  = new Set(ventas.filter(v=>v.fechaKey===fechaActual).map(v=>v.clienteId));
+  const noVisHoy      = new Set((noVisitas||[]).filter(v=>v.fecha===fechaActual).map(v=>v.clienteId));
+  const pendHoy       = clientes.filter(c=>!visitadosHoy.has(c.id)&&!noVisHoy.has(c.id)).length;
+
+  return (
+    <div style={{...s.screen,padding:"0 0 32px"}}>
+      {/* Header */}
+      <div style={{...s.header,padding:"12px 14px"}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:16,fontWeight:700,color:"var(--color-text-primary)"}}>🚐 {perfil.nombre}</div>
+          <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual} · {(perfil.sectores||[]).join(" · ")||"Reparto"}</div>
+        </div>
+        <button style={{...s.btn,fontSize:11,padding:"6px 10px"}} onClick={onSalir}>Salir</button>
+      </div>
+
+      {/* Fecha */}
+      <div style={{padding:"10px 14px 0"}}>
+        <div style={{...s.card,margin:0,background:"var(--color-background-info)",padding:"10px 14px"}}>
+          <label style={{fontSize:11,color:"var(--color-text-info)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em",display:"block",marginBottom:4}}>📅 Fecha del reparto</label>
+          <input type="date" style={{...s.input,margin:0,background:"transparent",border:"none",color:"var(--color-text-primary)",fontSize:16,fontWeight:600,padding:"4px 0"}}
+            value={fechaActual} onChange={e=>setFechaActual(e.target.value)} />
+        </div>
+      </div>
+
+      {/* Alerta transferencias */}
+      {transfersPend.length>0&&(
+        <div style={{margin:"10px 14px 0",background:"#2e1f06",border:"1px solid #f5b942",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:20}}>🔴</span>
+          <div>
+            <div style={{fontSize:13,fontWeight:600,color:"#f5b942"}}>{transfersPend.length} transferencia{transfersPend.length!==1?"s":""} sin confirmar</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Total: {fmt(transfersPend.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0))}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Alerta recordatorios */}
+      {recHoy.length>0&&(
+        <div style={{margin:"8px 14px 0"}}>
+          {recHoy.slice(0,3).map(r=>(
+            <div key={r.id} style={{...s.card,margin:"0 0 6px",background:"#1e2e4a",border:"0.5px solid #5daaff",display:"flex",gap:8,alignItems:"center"}}>
+              <span style={{fontSize:16}}>{r.tipo==="cobro"?"💰":"🏠"}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:500,color:"#5daaff"}}>{r.clienteNombre}</div>
+                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{r.motivo}</div>
+              </div>
+              <div style={{display:"flex",gap:4}}>
+                {r.clienteId&&<button style={{background:"#185FA5",color:"#fff",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,cursor:"pointer"}}
+                  onClick={()=>onIrCliente(r.clienteId)}>→</button>}
+                <button style={{background:"#0a2e1f",color:"#4dd9a0",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,cursor:"pointer"}}
+                  onClick={()=>onConfirmarRecordatorio(r.id)}>✓</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Resumen del día */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,padding:"10px 14px 0"}}>
+        <div style={{...s.metricCard,textAlign:"center"}}>
+          <div style={{fontSize:22,fontWeight:700,color:"var(--color-text-primary)"}}>{pendHoy}</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Pendientes</div>
+        </div>
+        <div style={{...s.metricCard,textAlign:"center"}}>
+          <div style={{fontSize:22,fontWeight:700,color:"#4dd9a0"}}>{visitadosHoy.size}</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Entregados</div>
+        </div>
+        <div style={{...s.metricCard,textAlign:"center"}}>
+          <div style={{fontSize:22,fontWeight:700,color:"#f5b942"}}>{recActivos.length}</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Recordat.</div>
+        </div>
+      </div>
+
+      {/* Botones principales */}
+      <div style={{padding:"12px 14px 0",display:"flex",flexDirection:"column",gap:10}}>
+        <button style={{...s.btnPrimary,padding:"16px",fontSize:16,borderRadius:12,display:"flex",alignItems:"center",gap:10}}
+          onClick={onIrClientes}>
+          <span style={{fontSize:22}}>📋</span>
+          <div style={{textAlign:"left"}}>
+            <div>Clientes del día</div>
+            <div style={{fontSize:11,opacity:0.8}}>{pendHoy} pendientes de entregar</div>
+          </div>
+        </button>
+
+        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
+          onClick={onIrCarga}>
+          <span style={{fontSize:22}}>🚚</span>
+          <div>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Carga del día</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Registrar envases que salís a repartir</div>
+          </div>
+          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
+        </button>
+
+        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
+          onClick={onIrPlanilla}>
+          <span style={{fontSize:22}}>📊</span>
+          <div>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Planilla del día</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Totales y cierre del día</div>
+          </div>
+          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
+        </button>
+
+        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
+          onClick={onIrTodosClientes}>
+          <span style={{fontSize:22}}>👥</span>
+          <div>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Todos los clientes</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Registrar ventas y cobros de cualquier día</div>
+          </div>
+          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
+        </button>
+
+        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px",
+          background:recActivos.length>0?"#1e2e4a":undefined,
+          border:recActivos.length>0?"0.5px solid #5daaff":undefined}}
+          onClick={onIrAgenda}>
+          <span style={{fontSize:22}}>📅</span>
+          <div>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>
+              Agenda {recActivos.length>0&&<span style={{...s.badge("info"),fontSize:10,marginLeft:6}}>{recActivos.length}</span>}
+            </div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Recordatorios de visitas y cobros</div>
+          </div>
+          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── TodosClientesRepartidor ──────────────────────────────────
+function TodosClientesRepartidor({clientes,ventas,onSeleccionar,onVolver}) {
+  const [busq,setBusq] = React.useState("");
+  const [diaFiltro,setDiaFiltro] = React.useState("todos");
+  const filtrados = clientes
+    .filter(c=>(diaFiltro==="todos"||c.dia===diaFiltro)&&(c.nombre.toLowerCase().includes(busq.toLowerCase())||(c.barrio||"").toLowerCase().includes(busq.toLowerCase())))
+    .sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
+
+  return (
+    <div style={s.screen}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>Todos los clientes</span>
+      </div>
+      <div style={{padding:"10px 14px 6px"}}>
+        <input style={s.input} placeholder="Buscar cliente o barrio..." value={busq} onChange={e=>setBusq(e.target.value)} />
+        <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap"}}>
+          {["todos",...DIAS].map(d=>(
+            <button key={d} style={{...s.btn,fontSize:11,padding:"3px 9px",
+              background:diaFiltro===d?"#185FA5":"var(--color-background-tertiary)",
+              color:diaFiltro===d?"#e2eaf4":"var(--color-text-secondary)",
+              border:diaFiltro===d?"none":"0.5px solid var(--color-border-secondary)"}}
+              onClick={()=>setDiaFiltro(d)}>{d==="todos"?"Todos":d.slice(0,3)}</button>
+          ))}
+        </div>
+        <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6}}>{filtrados.length} clientes</div>
+      </div>
+      {filtrados.map(c=>{
+        const vUlt=ventas.filter(v=>v.clienteId===c.id).sort((a,b)=>(b.fechaKey||"").localeCompare(a.fechaKey||""))[0];
+        return (
+          <div key={c.id} style={{...s.card,marginBottom:0,borderRadius:0,borderBottom:"0.5px solid var(--color-border-tertiary)",
+            display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"12px 14px"}}
+            onClick={()=>onSeleccionar(c)}>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontWeight:600,fontSize:14,color:"var(--color-text-primary)"}}>{c.nombre}</span>
+                <span style={{fontSize:10,background:"#185FA5",color:"#fff",padding:"1px 6px",borderRadius:10,fontWeight:600}}>{c.dia}</span>
+              </div>
+              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>
+                {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
+              </div>
+              {c.saldo<0&&<span style={{...s.badge("danger"),fontSize:10,marginTop:3,display:"inline-block"}}>Debe {fmt(Math.abs(c.saldo))}</span>}
+              {c.saldo>0&&<span style={{...s.badge("success"),fontSize:10,marginTop:3,display:"inline-block"}}>A favor {fmt(c.saldo)}</span>}
+              {vUlt&&<div style={{fontSize:10,color:"var(--color-text-tertiary)",marginTop:2}}>Última venta: {vUlt.fechaKey}</div>}
+            </div>
+            <span style={{color:"var(--color-text-tertiary)"}}>→</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── AgendaRepartidor ─────────────────────────────────────────
+function AgendaRepartidor({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onIrCliente,onVolver}) {
+  const [mostrarNuevo,setMostrarNuevo] = React.useState(false);
+  const hoy = new Date().toISOString().slice(0,10);
+  const pendientes = [...(recordatorios||[])].filter(r=>!r.confirmado).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const confirmados = [...(recordatorios||[])].filter(r=>r.confirmado).slice(0,5);
+  const tipoIco = {visita:"🏠",cobro:"💰"};
+
+  return (
+    <div style={s.screen}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>📅 Agenda</span>
+        <button style={{...s.btn,padding:"6px 12px",fontSize:12,background:"#185FA5",color:"#e2eaf4",border:"none"}}
+          onClick={()=>setMostrarNuevo(true)}>+ Nuevo</button>
+      </div>
+      {pendientes.length===0&&!mostrarNuevo&&(
+        <div style={{textAlign:"center",padding:"40px 20px",color:"var(--color-text-tertiary)"}}>
+          <div style={{fontSize:36,marginBottom:10}}>📅</div>
+          <div style={{fontSize:14}}>Sin recordatorios pendientes</div>
+        </div>
+      )}
+      {pendientes.map(r=>{
+        const c=clientes.find(x=>x.id===r.clienteId);
+        const vencido=r.fecha<hoy;
+        const esHoy=r.fecha===hoy;
+        return (
+          <div key={r.id} style={{...s.card,borderLeft:`3px solid ${vencido?"var(--color-text-danger)":esHoy?"#f5b942":"#5daaff"}`}}>
+            <div style={{display:"flex",gap:8,alignItems:"flex-start"}}>
+              <span style={{fontSize:18}}>{tipoIco[r.tipo]||"🔔"}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)"}}>{c?.nombre||r.clienteNombre}</div>
+                <div style={{fontSize:12,color:vencido?"var(--color-text-danger)":esHoy?"#f5b942":"var(--color-text-secondary)"}}>
+                  {vencido?"⚠ ":esHoy?"📌 ":""}{r.fecha}{r.hora?` · ${r.hora}`:""}
+                </div>
+                <div style={{fontSize:12,color:"var(--color-text-primary)",marginTop:2}}>{r.motivo}</div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:8}}>
+              {r.clienteId&&<button style={{flex:2,padding:"7px",borderRadius:8,border:"none",background:"#185FA5",color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}
+                onClick={()=>onIrCliente(r.clienteId)}>
+                {r.tipo==="cobro"?"💰 Ir a cobrar":"🏠 Ver cliente"}</button>}
+              <button style={{flex:1,padding:"7px",borderRadius:8,border:"none",background:"#0a2e1f",color:"#4dd9a0",fontSize:12,cursor:"pointer"}}
+                onClick={()=>onConfirmar(r.id)}>✓ Listo</button>
+              <button style={{...s.btn,padding:"7px 10px",fontSize:11}} onClick={()=>onEliminar(r.id)}>🗑</button>
+            </div>
+          </div>
+        );
+      })}
+      {confirmados.length>0&&(
+        <div style={{padding:"0 14px"}}>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",margin:"8px 0 4px",textTransform:"uppercase"}}>✓ Completados recientes</div>
+          {confirmados.map(r=>(
+            <div key={r.id} style={{fontSize:12,color:"var(--color-text-tertiary)",padding:"4px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+              {tipoIco[r.tipo]||"🔔"} {r.clienteNombre} · {r.fecha}
+            </div>
+          ))}
+        </div>
+      )}
+      {mostrarNuevo&&(
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.7)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div style={{background:"var(--color-background-secondary)",borderRadius:16,padding:20,width:"100%",maxWidth:400,maxHeight:"90vh",overflowY:"auto"}}>
+            <div style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>🔔 Nuevo recordatorio</div>
+            <NuevoRecordatorioForm clientes={clientes} onGuardar={(datos)=>{onNuevo(datos);setMostrarNuevo(false);}} onCerrar={()=>setMostrarNuevo(false)} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 
