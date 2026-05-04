@@ -6346,6 +6346,7 @@ function AppRepartidor({uid, perfil}) {
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
   const [clienteId,  setClienteId]  = React.useState(null);
   const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toISOString().slice(0,10));
+  const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual);
   const [datos,      setDatos]      = React.useState(null);
 
   // Detectar día actual automáticamente
@@ -6397,7 +6398,7 @@ function AppRepartidor({uid, perfil}) {
   const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo) => {
     const c = cliente;
     const calc = calcVenta(detalle, pago, montoPagado, saldoAplicado, productos);
-    const nv = [...ventas, {id:Date.now(), clienteId:c.id, cliente:c.nombre, dia:diaActual, fechaKey:fechaActual,
+    const nv = [...ventas, {id:Date.now(), clienteId:c.id, cliente:c.nombre, dia:diaClienteActual||c.dia, fechaKey:fechaActual,
       fecha:new Date().toLocaleString("es-AR"), detalle, pago, obs:obs||"", saldoAplicado:saldoAplicado||0,
       envPrest:(envPrest||[]).filter(e=>e.prod&&e.cant), envDev:(envDev||[]).filter(e=>e.prod&&e.cant),
       ...calc, repartidor:perfil.nombre}];
@@ -6423,8 +6424,8 @@ function AppRepartidor({uid, perfil}) {
     if(c2) saveClientes(clientes.map(x=>x.id===c2.id?{...x,saldo:c2.saldo-v.saldoDelta}:x));
   };
 
-  const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual);
-  const noVisHoy  = noVisitas.filter(v=>v.dia===diaActual&&v.fecha===fechaActual);
+  const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
+  const noVisHoy  = noVisitas.filter(v=>v.fecha===fechaActual);
 
   return (
     <div style={s.app}>
@@ -6443,7 +6444,7 @@ function AppRepartidor({uid, perfil}) {
             <input type="date" style={{...s.input,margin:0}} value={fechaActual} onChange={e=>setFechaActual(e.target.value)} />
           </div>
           <button style={{...s.btnPrimary,width:"100%",padding:16,fontSize:16,marginBottom:10,borderRadius:12}} onClick={()=>irA("clientes")}>
-            📋 Clientes del {diaActual}
+            📋 Clientes del reparto
           </button>
           <button style={{...s.btn,width:"100%",padding:14,fontSize:14,marginBottom:10}} onClick={()=>irA("planilla")}>
             📊 Planilla del día
@@ -6456,18 +6457,18 @@ function AppRepartidor({uid, perfil}) {
       {pantalla==="clientes"&&(
         <ListaClientes
           clientes={clientes}
-          dia={diaActual} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
-          onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}}
+          dia={""} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
+          onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia);irA("venta");}}
           onNuevoCliente={null} onVolver={()=>irA("inicio")}
           onReordenar={lista=>{
             const otros = todosClientes.filter(c=>!(c.dia===diaActual && (sectores.length===0||sectores.some(s=>(c.barrio||"").toLowerCase().includes(s.toLowerCase())))));
             saveClientes([...otros,...lista]);
           }}
           onRegistrarNoVisita={(cId,motivo)=>{
-            const nv=[...noVisitas.filter(v=>!(v.clienteId===cId&&v.dia===dia&&v.fecha===fechaActual)),{clienteId:cId,dia:diaActual,fecha:fechaActual,motivo}];
+            const nv=[...noVisitas.filter(v=>!(v.clienteId===cId&&v.fecha===fechaActual)),{clienteId:cId,dia:diaClienteActual,fecha:fechaActual,motivo}];
             saveNoVisitas(nv);
           }}
-          onQuitarNoVisita={(cId)=>saveNoVisitas(noVisitas.filter(v=>!(v.clienteId===cId&&v.dia===dia&&v.fecha===fechaActual)))}
+          onQuitarNoVisita={(cId)=>saveNoVisitas(noVisitas.filter(v=>!(v.clienteId===cId&&v.fecha===fechaActual)))}
           onConfirmarTransfer={null} prospectos={[]} recordatorios={[]}
         />
       )}
@@ -6490,15 +6491,15 @@ function AppRepartidor({uid, perfil}) {
         <NuevaVenta
           cliente={cliente} productos={productos} fecha={fechaActual}
           onNoEsta={()=>{
-            saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.dia===dia&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo:"noesta"}]);
+            saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noesta"}]);
             irA("clientes");
           }}
           onNoQuiere={()=>{
-            saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.dia===dia&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}]);
+            saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noquiso"}]);
             irA("clientes");
           }}
           onGuardar={(d,p,m,sa,ep,ed,obs,op)=>{registrarVenta(d,p,m,sa,ep,ed,obs,op);irA("clientes");}}
-          onVolver={()=>irA("detalleCliente")}
+          onVolver={()=>irA("clientes")}
         />
       )}
       {pantalla==="ventaLibreSeleccionar"&&(
