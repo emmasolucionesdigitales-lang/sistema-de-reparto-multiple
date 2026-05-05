@@ -73,6 +73,20 @@ self.addEventListener('fetch',e=>{
         firebase.initializeApp(firebaseConfig);
       }
       window.db = firebase.firestore(); window.firebaseDB = window.db;
+
+      // ── LICENCIAS: conecta al proyecto del Panel Admin (app-reparto-65035) ──
+      var licenciasApp = firebase.apps.find(function(a){ return a.name === "licencias"; });
+      if(!licenciasApp) {
+        licenciasApp = firebase.initializeApp({
+          apiKey: "AIzaSyDV1i35MLw74hjnSg6rRZgQFIAI8hsJllI",
+          authDomain: "app-reparto-65035.firebaseapp.com",
+          projectId: "app-reparto-65035",
+          storageBucket: "app-reparto-65035.firebasestorage.app",
+          messagingSenderId: "162304851374",
+          appId: "1:162304851374:web:0a60847807c8fe9a7a1c3f"
+        }, "licencias");
+      }
+      window.dbLicencias = licenciasApp.firestore();
       window.db.enablePersistence({synchronizeTabs:false}).catch(function(err){
         if(err.code==="failed-precondition"||err.code==="unimplemented") {
           console.warn("Offline persistence not available:", err.code);
@@ -1216,8 +1230,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       if (data.repartos?.length) { setRepartos(data.repartos); try{localStorage.setItem("cat_repartos_v1",JSON.stringify(data.repartos));}catch{} }
       // Refrescar logo desde licencia
       const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
-      if(lic?.codigo && window.db) {
-        window.db.collection("licencias").doc(lic.codigo).get().then(doc=>{
+      if(lic?.codigo && window.dbLicencias) {
+        window.dbLicencias.collection("licencias").doc(lic.codigo).get().then(doc=>{
           if(doc.exists) {
             const d = doc.data();
             if(d.logo !== undefined && d.logo !== lic.logo) {
@@ -1930,10 +1944,11 @@ function PantallaActivacion({onActivado}) {
     if(!codigo.trim()) { setError("Ingresá el código de activación"); return; }
     setCargando(true); setError("");
     try {
-      const doc = await window.db.collection("licencias").doc(codigo.trim().toUpperCase()).get();
+      const doc = await window.dbLicencias.collection("licencias").doc(codigo.trim().toUpperCase()).get();
       if(!doc.exists) { setError("Código inválido. Verificá que esté bien escrito."); setCargando(false); return; }
       const lic = doc.data();
       if(lic.estado === "inactivo") { setError("Esta licencia está desactivada. Contactá al soporte."); setCargando(false); return; }
+      if(lic.estado === "pendiente") { setError("Tu licencia está pendiente de activación por el administrador. Contactá a Emma Soluciones."); setCargando(false); return; }
       if(lic.estado === "usado" && lic.deviceId && lic.deviceId !== getDeviceId()) {
         setError("Este código ya fue usado en otro dispositivo."); setCargando(false); return;
       }
@@ -1948,10 +1963,10 @@ function PantallaActivacion({onActivado}) {
     setCargando(true); setError("");
     try {
       const codigoUp = codigo.trim().toUpperCase();
-      const doc = await window.db.collection("licencias").doc(codigoUp).get();
+      const doc = await window.dbLicencias.collection("licencias").doc(codigoUp).get();
       const lic = doc.data();
       const deviceId = getDeviceId();
-      await window.db.collection("licencias").doc(codigoUp).update({
+      await window.dbLicencias.collection("licencias").doc(codigoUp).update({
         estado: "usado", deviceId, celular: celular.trim(),
         email: email.trim(), negocio: negocio.trim(),
         activadoEn: new Date().toISOString()
@@ -7611,7 +7626,7 @@ async function comprimirLogoBase64(file, maxW=400, maxH=400, quality=0.75) {
 async function guardarLogoFirestore(codigo, logoB64) {
   if(!window.db || !codigo) return false;
   try {
-    await window.db.collection("licencias").doc(codigo).update({ logo: logoB64 });
+    await window.dbLicencias.collection("licencias").doc(codigo).update({ logo: logoB64 });
     // Actualizar localStorage también
     const lic = JSON.parse(localStorage.getItem("sr_licencia")||"null");
     if(lic) { lic.logo = logoB64; localStorage.setItem("sr_licencia", JSON.stringify(lic)); }
