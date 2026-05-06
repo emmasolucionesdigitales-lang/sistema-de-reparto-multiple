@@ -1649,6 +1649,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onToggleDark={()=>setDarkMode(!darkMode)}
         saveRepartos={saveRepartos}
         onOperarReparto={(rep)=>setOperandoReparto(rep)}
+        onTodosClientes={()=>irA("vistaClientesGeneral")}
       />}
       {pantalla==="diasReparto" && repartoActual && <MenuDias
         dias={DIAS}
@@ -1862,6 +1863,13 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
               saveClientes(clientes.map(x=>x.id===cliente.id?{...x,saldo:saldoDespues}:x));
             }
           }} />}
+      {pantalla==="vistaClientesGeneral" && <VistaClientesGeneral
+        clientes={clientes}
+        repartos={repartos}
+        ventas={ventas}
+        onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}}
+        onVolver={()=>irA("menu")}
+      />}
       {pantalla==="agenda" && <AgendaScreen
         recordatorios={recordatorios||[]}
         clientes={clientes}
@@ -2699,7 +2707,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
   );
 }
 
-function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,darkMode,onToggleDark,saveRepartos,onOperarReparto}) {
+function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,darkMode,onToggleDark,saveRepartos,onOperarReparto,onTodosClientes}) {
   const [modoNuevo, setModoNuevo] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState(null);
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
@@ -2850,7 +2858,7 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
       {/* Botones del menú */}
       <div style={s.divider} />
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,padding:"0 14px 20px"}}>
-        {[["📊","Resumen",onResumen],["📦","Stock",onStock],["📅","Agenda",onAgenda],["⚙️","Config",onConfig]].map(([ico,lbl,fn])=>(
+        {[["📊","Resumen",onResumen],["📦","Stock",onStock],["📅","Agenda",onAgenda],["👥","Clientes",onTodosClientes],["⚙️","Config",onConfig]].map(([ico,lbl,fn])=>(
           <button key={lbl} onClick={fn} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"14px 6px",borderRadius:12,cursor:"pointer",border:"2px solid transparent",background:"var(--color-background-tertiary)",boxShadow:"0 3px 6px rgba(0,0,0,0.3)",color:"var(--color-text-secondary)"}}>
             <span style={{fontSize:22}}>{ico}</span>
             <span style={{fontSize:11,fontWeight:500,color:"var(--color-text-primary)"}}>{lbl}</span>
@@ -8220,6 +8228,235 @@ function ConfigApariencia() {
     </div>
   );
 }
+
+// ── VistaClientesGeneral (dueño ve TODOS los clientes agrupados) ──
+function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onVolver}) {
+  const [busq, setBusq] = React.useState("");
+  const [repFiltro, setRepFiltro] = React.useState("todos");
+  const [diaFiltro, setDiaFiltro] = React.useState("todos");
+  const [abiertos, setAbiertos] = React.useState({});
+
+  const toggle = (key) => setAbiertos(o=>({...o,[key]:!o[key]}));
+
+  // Calcular saldo deudor para badge
+  const saldoCliente = (c) => c.saldo||0;
+
+  // Última venta por cliente
+  const ultimaVenta = React.useMemo(()=>{
+    const m={};
+    ventas.forEach(v=>{
+      if(!m[v.clienteId]||v.fechaKey>m[v.clienteId]) m[v.clienteId]=v.fechaKey;
+    });
+    return m;
+  },[ventas]);
+
+  // Filtrar clientes
+  const busqL = busq.toLowerCase();
+  const clientesFiltrados = clientes.filter(c=>{
+    if(repFiltro!=="todos" && c.repartoId!==repFiltro) return false;
+    if(diaFiltro!=="todos" && c.dia!==diaFiltro) return false;
+    if(busq && !c.nombre.toLowerCase().includes(busqL) &&
+       !(c.barrio||"").toLowerCase().includes(busqL) &&
+       !(c.telefono||"").includes(busq)) return false;
+    return true;
+  });
+
+  // Agrupar: repartidor → dia → clientes
+  const grupos = React.useMemo(()=>{
+    const repMap = {};
+    repartos.forEach(r=>{ repMap[r.id]=r; });
+
+    // Sin reparto asignado van a un grupo especial
+    const sinReparto = {id:"sin", repartidorNombre:"Sin reparto", numero:0};
+
+    const agrupado = {};
+    clientesFiltrados.forEach(c=>{
+      const repId = c.repartoId||"sin";
+      const rep = repMap[repId]||sinReparto;
+      if(!agrupado[repId]) agrupado[repId]={rep, dias:{}};
+      const dia = c.dia||"Sin día";
+      if(!agrupado[repId].dias[dia]) agrupado[repId].dias[dia]=[];
+      agrupado[repId].dias[dia].push(c);
+    });
+
+    // Ordenar por número de reparto
+    return Object.values(agrupado).sort((a,b)=>a.rep.numero-b.rep.numero);
+  },[clientesFiltrados, repartos]);
+
+  const totalClientes = clientesFiltrados.length;
+  const totalDeudores = clientesFiltrados.filter(c=>saldoCliente(c)<0).length;
+  const totalDeuda = clientesFiltrados.filter(c=>saldoCliente(c)<0).reduce((a,c)=>a+Math.abs(saldoCliente(c)),0);
+
+  return (
+    <div style={s.screen}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>Todos los clientes</span>
+      </div>
+
+      {/* Resumen general */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,padding:"10px 14px 6px"}}>
+        <div style={{...s.metricCard,textAlign:"center"}}>
+          <div style={{fontSize:20,fontWeight:700,color:"var(--color-text-primary)"}}>{totalClientes}</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Clientes</div>
+        </div>
+        <div style={{...s.metricCard,textAlign:"center"}}>
+          <div style={{fontSize:20,fontWeight:700,color:"#e05252"}}>{totalDeudores}</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Con deuda</div>
+        </div>
+        <div style={{...s.metricCard,textAlign:"center"}}>
+          <div style={{fontSize:16,fontWeight:700,color:"#e05252"}}>{fmt(totalDeuda)}</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Total deuda</div>
+        </div>
+      </div>
+
+      {/* Búsqueda */}
+      <div style={{padding:"0 14px 8px"}}>
+        <input style={s.input} placeholder="🔍 Buscar por nombre, barrio o teléfono..."
+          value={busq} onChange={e=>setBusq(e.target.value)} />
+      </div>
+
+      {/* Filtro por reparto */}
+      <div style={{padding:"0 14px 6px",overflowX:"auto"}}>
+        <div style={{display:"flex",gap:6,whiteSpace:"nowrap",paddingBottom:4}}>
+          <button style={{...s.btn,fontSize:11,padding:"4px 12px",flexShrink:0,
+            background:repFiltro==="todos"?"#185FA5":"var(--color-background-tertiary)",
+            color:repFiltro==="todos"?"#e2eaf4":"var(--color-text-secondary)"}}
+            onClick={()=>setRepFiltro("todos")}>Todos</button>
+          {repartos.sort((a,b)=>a.numero-b.numero).map(r=>(
+            <button key={r.id} style={{...s.btn,fontSize:11,padding:"4px 12px",flexShrink:0,
+              background:repFiltro===r.id?"#185FA5":"var(--color-background-tertiary)",
+              color:repFiltro===r.id?"#e2eaf4":"var(--color-text-secondary)"}}
+              onClick={()=>setRepFiltro(r.id)}>Rep.{r.numero} · {r.repartidorNombre.split(" ")[0]}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filtro por día */}
+      <div style={{padding:"0 14px 10px",overflowX:"auto"}}>
+        <div style={{display:"flex",gap:6,whiteSpace:"nowrap",paddingBottom:4}}>
+          {["todos",...DIAS].map(d=>(
+            <button key={d} style={{...s.btn,fontSize:11,padding:"3px 10px",flexShrink:0,
+              background:diaFiltro===d?"#0e7c6b":"var(--color-background-tertiary)",
+              color:diaFiltro===d?"#e2eaf4":"var(--color-text-secondary)"}}
+              onClick={()=>setDiaFiltro(d)}>
+              {d==="todos"?"Todos los días":d}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Lista agrupada */}
+      <div style={{padding:"0 14px 32px"}}>
+        {grupos.length===0 && (
+          <div style={{textAlign:"center",padding:"40px 0",color:"var(--color-text-tertiary)"}}>
+            <div style={{fontSize:36,marginBottom:8}}>🔍</div>
+            <div style={{fontSize:14}}>No se encontraron clientes</div>
+          </div>
+        )}
+
+        {grupos.map(({rep, dias})=>{
+          const repKey = "rep_"+rep.id;
+          const repAbierto = abiertos[repKey]!==false; // abierto por defecto
+          const totalRep = Object.values(dias).flat().length;
+          const deudaRep = Object.values(dias).flat().filter(c=>saldoCliente(c)<0).reduce((a,c)=>a+Math.abs(saldoCliente(c)),0);
+          const deudoresRep = Object.values(dias).flat().filter(c=>saldoCliente(c)<0).length;
+
+          return (
+            <div key={rep.id} style={{marginBottom:12}}>
+              {/* Header del repartidor */}
+              <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
+                background:"#185FA5",borderRadius:10,cursor:"pointer",marginBottom:repAbierto?6:0}}
+                onClick={()=>toggle(repKey)}>
+                <div style={{width:36,height:36,borderRadius:10,background:"rgba(255,255,255,0.2)",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:18,fontWeight:800,color:"#fff",flexShrink:0}}>
+                  {rep.numero||"?"}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>{rep.repartidorNombre}</div>
+                  <div style={{display:"flex",gap:6,marginTop:2,flexWrap:"wrap"}}>
+                    <span style={{fontSize:11,color:"rgba(255,255,255,0.75)"}}>{totalRep} clientes</span>
+                    {deudoresRep>0&&<span style={{fontSize:11,color:"#ffcc66",fontWeight:600}}>⚠️ {deudoresRep} deben {fmt(deudaRep)}</span>}
+                    {deudoresRep===0&&totalRep>0&&<span style={{fontSize:11,color:"#7de8c5"}}>✓ Sin deudas</span>}
+                  </div>
+                </div>
+                <span style={{color:"rgba(255,255,255,0.7)",fontSize:16}}>{repAbierto?"▲":"▼"}</span>
+              </div>
+
+              {/* Días del repartidor */}
+              {repAbierto && DIAS.filter(d=>dias[d]&&(diaFiltro==="todos"||d===diaFiltro)).map(dia=>{
+                const diaKey = "dia_"+rep.id+"_"+dia;
+                const diaAbierto = abiertos[diaKey]!==false; // abierto por defecto
+                const csDia = (dias[dia]||[]).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+                const deudoresDia = csDia.filter(c=>saldoCliente(c)<0).length;
+
+                return (
+                  <div key={dia} style={{marginBottom:6,marginLeft:8}}>
+                    {/* Header del día */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",
+                      background:"var(--color-background-tertiary)",
+                      borderRadius:8,cursor:"pointer",border:"0.5px solid var(--color-border-secondary)",
+                      marginBottom:diaAbierto?4:0}}
+                      onClick={()=>toggle(diaKey)}>
+                      <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>
+                        📅 {dia}
+                      </span>
+                      <span style={{fontSize:11,color:"var(--color-text-secondary)"}}>{csDia.length} clientes</span>
+                      {deudoresDia>0&&<span style={s.badge("danger")}>{deudoresDia} deben</span>}
+                      <span style={{color:"var(--color-text-tertiary)",fontSize:12,marginLeft:4}}>{diaAbierto?"▲":"▼"}</span>
+                    </div>
+
+                    {/* Clientes del día */}
+                    {diaAbierto && csDia.map(c=>{
+                      const saldo = saldoCliente(c);
+                      const ult = ultimaVenta[c.id];
+                      return (
+                        <div key={c.id}
+                          style={{display:"flex",alignItems:"center",gap:10,
+                            padding:"10px 12px",marginBottom:4,marginLeft:8,
+                            background:"var(--color-background-secondary)",
+                            borderRadius:8,cursor:"pointer",
+                            border:"0.5px solid "+(saldo<0?"rgba(220,80,80,0.3)":"var(--color-border-secondary)"),
+                            transition:"opacity 0.15s"}}
+                          onClick={()=>onVerDetalle(c)}>
+                          {/* Número de orden */}
+                          <div style={{width:24,height:24,borderRadius:6,
+                            background:"var(--color-background-tertiary)",
+                            display:"flex",alignItems:"center",justifyContent:"center",
+                            fontSize:10,fontWeight:700,color:"var(--color-text-tertiary)",flexShrink:0}}>
+                            {c.orden||"—"}
+                          </div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",
+                              whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                              {c.nombre}
+                            </div>
+                            <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:1}}>
+                              {c.barrio||""}{c.calle?` · ${c.calle} ${c.nro||""}`:c.manzana?` · Mz ${c.manzana} L ${c.lote}`:""}
+                            </div>
+                            {ult&&<div style={{fontSize:10,color:"var(--color-text-tertiary)",marginTop:1}}>Última venta: {ult}</div>}
+                          </div>
+                          <div style={{textAlign:"right",flexShrink:0}}>
+                            {saldo<0 && <div style={{fontSize:12,fontWeight:600,color:"#e05252"}}>−{fmt(Math.abs(saldo))}</div>}
+                            {saldo>0 && <div style={{fontSize:12,fontWeight:600,color:"#4dd9a0"}}>+{fmt(saldo)}</div>}
+                            {saldo===0 && <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>✓</div>}
+                            <span style={{fontSize:14,color:"var(--color-text-tertiary)"}}>→</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<ErrorBoundary><App /></ErrorBoundary>);
