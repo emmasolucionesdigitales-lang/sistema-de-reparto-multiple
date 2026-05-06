@@ -163,7 +163,8 @@ self.addEventListener('fetch',e=>{
           mantVeh: data.mantVeh || [],
           histPrecios: data.histPrecios || [],
           zonasReparto: data.zonasReparto || {},
-          negocio: data.negocio || {}
+          negocio: data.negocio || {},
+          repartos: data.repartos || []
         })
       ];
       var cl = data.clientes || [];
@@ -195,6 +196,7 @@ self.addEventListener('fetch',e=>{
         if(!data.histPrecios)    data.histPrecios = [];
         if(!data.zonasReparto)   data.zonasReparto = {};
         if(!data.negocio)        data.negocio = {};
+        if(!data.repartos)       data.repartos = [];
         var nc = cMeta.exists ? (cMeta.data().n||0) : 0;
         var vn = vMeta.exists ? (vMeta.data().n||0) : 0;
         var cFetches = []; for(var i=0;i<nc;i++) cFetches.push(col.doc("cl_"+i).get());
@@ -6355,8 +6357,6 @@ function OnboardingRoles({uid, email, onListo}) {
 // ── AppRepartidor ──────────────────────────────────────────────
 function AppRepartidor({uid, perfil}) {
   // Buscar el reparto que corresponde al código del repartidor
-  const todosRepartos = React.useMemo(()=>{ try{return JSON.parse(localStorage.getItem("cat_repartos_v1")||"[]");}catch{return [];} },[]);
-  const miReparto = todosRepartos.find(r=>r.codigo===perfil?.codigo) || null;
   const [pantalla,   setPantalla]   = React.useState("inicio");
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
   const [clienteId,  setClienteId]  = React.useState(null);
@@ -6372,11 +6372,17 @@ function AppRepartidor({uid, perfil}) {
 
   React.useEffect(()=>{
     cloudLoad(uid, perfil.negocioId).then(function(d){
-      setDatos(d||{clientes:[],ventas:[],productos:[],planillas:{},stock:{},noVisitas:[],prospectos:[],recordatorios:[]});
+      setDatos(d||{clientes:[],ventas:[],productos:[],planillas:{},stock:{},noVisitas:[],prospectos:[],recordatorios:[],repartos:[]});
     });
   },[]);
 
   if(!datos) return <Cargando texto="Cargando datos..." />;
+
+  // Leer repartos desde Firestore (datos descargados), con fallback a localStorage
+  const todosRepartos = datos.repartos && datos.repartos.length > 0
+    ? datos.repartos
+    : (() => { try{return JSON.parse(localStorage.getItem("cat_repartos_v1")||"[]");}catch{return [];} })();
+  const miReparto = todosRepartos.find(r=>r.codigo===perfil?.codigo) || null;
 
   const todosClientes = datos.clientes || [];
   const ventas        = datos.ventas   || [];
