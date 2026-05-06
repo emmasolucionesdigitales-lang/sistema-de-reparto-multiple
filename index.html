@@ -1061,6 +1061,7 @@ function App() {
 
 function AppPrincipal({uid, email: emailProp, perfil}) {
   const negocioId = perfil?.negocioId || uid;
+  const [operandoReparto, setOperandoReparto] = React.useState(null);
   const [pantalla, setPantalla]   = useState(()=>{
     const h = window.location.hash.slice(1)||"portada";
     const needsDia = ["diaPrincipal","selectorFechaClientes","selectorFechaPlanilla","inicioReparto","clientes","detalleCliente","venta","planilla"]; // historial does NOT need dia
@@ -1628,6 +1629,9 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
 
   return (
     <div style={{position:"relative"}}>
+    {operandoReparto ? (
+      <AppRepartidor uid={uid} perfil={{nombre:operandoReparto.repartidorNombre,codigo:operandoReparto.codigo,sectores:[],rol:"repartidor",negocioId}} onSalir={()=>setOperandoReparto(null)} />
+    ) : (<>
     <div style={{...s.app, zoom: SCALES[scaleIdx]}}>
       <SyncBar status={syncStatus} isOnline={isOnline} />
       {pantalla==="portada" && <Portada onIngresar={()=>irA("menu")} />}
@@ -1644,6 +1648,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         darkMode={darkMode}
         onToggleDark={()=>setDarkMode(!darkMode)}
         saveRepartos={saveRepartos}
+        onOperarReparto={(rep)=>setOperandoReparto(rep)}
       />}
       {pantalla==="diasReparto" && repartoActual && <MenuDias
         dias={DIAS}
@@ -1889,6 +1894,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       }}>
       {SCALE_LABELS[scaleIdx]}
     </button>
+    </>)}
     </div>
   );
 }
@@ -2693,7 +2699,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
   );
 }
 
-function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,darkMode,onToggleDark,saveRepartos}) {
+function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,darkMode,onToggleDark,saveRepartos,onOperarReparto}) {
   const [modoNuevo, setModoNuevo] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState(null);
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
@@ -2821,8 +2827,12 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
                   <span style={{color:"var(--color-text-tertiary)",fontSize:20}}>→</span>
                 </button>
               )}
-              {/* Botones editar/eliminar */}
+              {/* Botones editar/eliminar/operar */}
               <div style={{display:"flex",gap:6,marginTop:4,justifyContent:"flex-end"}}>
+                <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:"rgba(24,95,165,0.2)",color:"#5daaff",border:"1px solid rgba(93,170,255,0.4)"}}
+                  onClick={()=>onOperarReparto&&onOperarReparto(rep)}>
+                  🚐 Operar
+                </button>
                 <button style={{...s.btn,fontSize:11,padding:"4px 10px"}}
                   onClick={e=>{e.stopPropagation();setForm({numero:String(rep.numero),repartidorNombre:rep.repartidorNombre,codigo:rep.codigo});setEditandoId(rep.id);setModoNuevo(false);}}>
                   ✏️ Editar
@@ -6355,7 +6365,7 @@ function OnboardingRoles({uid, email, onListo}) {
 
 
 // ── AppRepartidor ──────────────────────────────────────────────
-function AppRepartidor({uid, perfil}) {
+function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   // Buscar el reparto que corresponde al código del repartidor
   const [pantalla,   setPantalla]   = React.useState("inicio");
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
@@ -6456,7 +6466,7 @@ function AppRepartidor({uid, perfil}) {
           fechaActual={fechaActual}
           setFechaActual={setFechaActual}
           clientes={clientes}
-          ventas={ventasHoy}
+          ventas={ventas}
           noVisitas={noVisHoy}
           recordatorios={datos.recordatorios||[]}
           onSaveRecordatorio={(r)=>{
@@ -6474,7 +6484,7 @@ function AppRepartidor({uid, perfil}) {
           onIrTodosClientes={()=>irA("todosClientes")}
           onIrAgenda={()=>irA("agendaRep")}
           onIrTransfers={()=>irA("confirmTransferRep")}
-          onSalir={()=>window.auth.signOut()}
+          onSalir={onSalirProp||(()=>window.auth.signOut())}
         />
       )}
       {pantalla==="cargaDia"&&(
@@ -7731,15 +7741,6 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
 
       {/* Botones principales */}
       <div style={{padding:"12px 14px 0",display:"flex",flexDirection:"column",gap:10}}>
-        <button style={{...s.btnPrimary,padding:"16px",fontSize:16,borderRadius:12,display:"flex",alignItems:"center",gap:10}}
-          onClick={onIrClientes}>
-          <span style={{fontSize:22}}>📋</span>
-          <div style={{textAlign:"left"}}>
-            <div>Clientes del día</div>
-            <div style={{fontSize:11,opacity:0.8}}>{pendHoy} pendientes de entregar</div>
-          </div>
-        </button>
-
         <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
           onClick={onIrCarga}>
           <span style={{fontSize:22}}>🚚</span>
@@ -7748,6 +7749,15 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
             <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Registrar envases que salís a repartir</div>
           </div>
           <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
+        </button>
+
+        <button style={{...s.btnPrimary,padding:"16px",fontSize:16,borderRadius:12,display:"flex",alignItems:"center",gap:10}}
+          onClick={onIrClientes}>
+          <span style={{fontSize:22}}>📋</span>
+          <div style={{textAlign:"left"}}>
+            <div>Reparto del día</div>
+            <div style={{fontSize:11,opacity:0.8}}>{pendHoy} pendientes de entregar</div>
+          </div>
         </button>
 
         <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
