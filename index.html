@@ -436,38 +436,7 @@ const PRODUCTOS_CONFIG = [
 ];
 const GASTOS_CATEGORIAS = ["propina","mercado","gnc","gaseosa","uber","inflado","frutas","otro"];
 
-const CLIENTES_INICIALES = [
-  {id:1001,nombre:"García María",dia:"Lunes",orden:1,barrio:"Lomas 600",manzana:"A",lote:"1",calle:"",nro:"",aclaracion:"Casa verde",telefono:"3816551001",maps:"",sifon:2,bidon10:0,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:1002,nombre:"Rodríguez Juan",dia:"Lunes",orden:2,barrio:"Lomas 600",manzana:"A",lote:"5",calle:"",nro:"",aclaracion:"",telefono:"3816551002",maps:"",sifon:0,bidon10:2,bidon20:0,dispenser:1,saldo:-500,notas:"Debe del mes pasado"},
-  {id:1003,nombre:"López Susana",dia:"Lunes",orden:3,barrio:"Lomas 600",manzana:"B",lote:"3",calle:"",nro:"",aclaracion:"Portón azul",telefono:"3816551003",maps:"",sifon:4,bidon10:0,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:1004,nombre:"Martínez Pedro",dia:"Lunes",orden:4,barrio:"Lomas 600",manzana:"B",lote:"8",calle:"",nro:"",aclaracion:"",telefono:"3816551004",maps:"",sifon:0,bidon10:0,bidon20:2,dispenser:0,saldo:1200,notas:"Saldo a favor"},
-  {id:1005,nombre:"Fernández Ana",dia:"Lunes",orden:5,barrio:"Lomas 600",manzana:"C",lote:"2",calle:"",nro:"",aclaracion:"Timbre roto - golpear",telefono:"3816551005",maps:"",sifon:6,bidon10:1,bidon20:0,dispenser:0,saldo:0,notas:"Timbre roto"},
-  {id:2001,nombre:"González Carlos",dia:"Martes",orden:1,barrio:"Barrio Norte",manzana:"1",lote:"4",calle:"",nro:"",aclaracion:"",telefono:"3816552001",maps:"",sifon:0,bidon10:3,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:2002,nombre:"Pérez Laura",dia:"Martes",orden:2,barrio:"Barrio Norte",manzana:"2",lote:"6",calle:"",nro:"",aclaracion:"Casa amarilla",telefono:"3816552002",maps:"",sifon:2,bidon10:0,bidon20:1,dispenser:1,saldo:-300,notas:""},
-  {id:2003,nombre:"Díaz Roberto",dia:"Martes",orden:3,barrio:"Barrio Norte",manzana:"3",lote:"1",calle:"",nro:"",aclaracion:"",telefono:"3816552003",maps:"",sifon:8,bidon10:0,bidon20:0,dispenser:0,saldo:0,notas:"Pide cajón completo"},
-  {id:2004,nombre:"Ruiz Patricia",dia:"Martes",orden:4,barrio:"Barrio Norte",manzana:"3",lote:"9",calle:"",nro:"",aclaracion:"Depto 2B",telefono:"3816552004",maps:"",sifon:0,bidon10:2,bidon20:2,dispenser:0,saldo:0,notas:""},
-  {id:2005,nombre:"Morales Diego",dia:"Martes",orden:5,barrio:"Barrio Norte",manzana:"4",lote:"5",calle:"",nro:"",aclaracion:"",telefono:"3816552005",maps:"",sifon:4,bidon10:1,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:3001,nombre:"Torres Silvia",dia:"Miércoles",orden:1,barrio:"Villa del Sol",calle:"San Martín",nro:"234",manzana:"",lote:"",aclaracion:"",telefono:"3816553001",maps:"",sifon:0,bidon10:4,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:3002,nombre:"Vargas Miguel",dia:"Miércoles",orden:2,barrio:"Villa del Sol",calle:"Belgrano",nro:"456",manzana:"",lote:"",aclaracion:"",telefono:"3816553002",maps:"",sifon:6,bidon10:0,bidon20:0,dispenser:0,saldo:-800,notas:""},
-  {id:3003,nombre:"Romero Elena",dia:"Miércoles",orden:3,barrio:"Villa del Sol",calle:"Rivadavia",nro:"102",manzana:"",lote:"",aclaracion:"Local comercial",telefono:"3816553003",maps:"",sifon:0,bidon10:0,bidon20:3,dispenser:2,saldo:0,notas:"Local - cobrar siempre"},
-  {id:3004,nombre:"Castro Hugo",dia:"Miércoles",orden:4,barrio:"Villa del Sol",calle:"San Martín",nro:"890",manzana:"",lote:"",aclaracion:"",telefono:"3816553004",maps:"",sifon:2,bidon10:2,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:3005,nombre:"Medina Rosa",dia:"Miércoles",orden:5,barrio:"Villa del Sol",calle:"Tucumán",nro:"67",manzana:"",lote:"",aclaracion:"Casa con rejas verdes",telefono:"3816553005",maps:"",sifon:4,bidon10:0,bidon20:1,dispenser:0,saldo:600,notas:""},
-  {id:4001,nombre:"Herrera Luis",dia:"Jueves",orden:1,barrio:"El Palomar",manzana:"D",lote:"3",calle:"",nro:"",aclaracion:"",telefono:"3816554001",maps:"",sifon:0,bidon10:5,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:4002,nombre:"Jiménez Carmen",dia:"Jueves",orden:2,barrio:"El Palomar",manzana:"D",lote:"7",calle:"",nro:"",aclaracion:"",telefono:"3816554002",maps:"",sifon:2,bidon10:0,bidon20:0,dispenser:1,saldo:0,notas:""},
-  {id:4003,nombre:"Álvarez Jorge",dia:"Jueves",orden:3,barrio:"El Palomar",manzana:"E",lote:"1",calle:"",nro:"",aclaracion:"",telefono:"3816554003",maps:"",sifon:0,bidon10:0,bidon20:2,dispenser:0,saldo:-1500,notas:"Deuda importante"},
-  {id:4004,nombre:"Ortega Marta",dia:"Jueves",orden:4,barrio:"El Palomar",manzana:"E",lote:"6",calle:"",nro:"",aclaracion:"Perro - llamar antes",telefono:"3816554004",maps:"",sifon:6,bidon10:2,bidon20:0,dispenser:0,saldo:0,notas:"Perro grande"},
-  {id:4005,nombre:"Molina Raúl",dia:"Jueves",orden:5,barrio:"El Palomar",manzana:"F",lote:"2",calle:"",nro:"",aclaracion:"",telefono:"3816554005",maps:"",sifon:0,bidon10:3,bidon20:1,dispenser:0,saldo:0,notas:""},
-  {id:5001,nombre:"Reyes Claudia",dia:"Viernes",orden:1,barrio:"Los Pinos",calle:"Avellaneda",nro:"321",manzana:"",lote:"",aclaracion:"",telefono:"3816555001",maps:"",sifon:4,bidon10:0,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:5002,nombre:"Cruz Fernando",dia:"Viernes",orden:2,barrio:"Los Pinos",calle:"Córdoba",nro:"555",manzana:"",lote:"",aclaracion:"Ferretería",telefono:"3816555002",maps:"",sifon:0,bidon10:0,bidon20:4,dispenser:3,saldo:0,notas:"Negocio - factura"},
-  {id:5003,nombre:"Vega Norma",dia:"Viernes",orden:3,barrio:"Los Pinos",calle:"Mendoza",nro:"78",manzana:"",lote:"",aclaracion:"",telefono:"3816555003",maps:"",sifon:2,bidon10:2,bidon20:0,dispenser:0,saldo:-400,notas:""},
-  {id:5004,nombre:"Cabrera Sergio",dia:"Viernes",orden:4,barrio:"Los Pinos",calle:"Jujuy",nro:"200",manzana:"",lote:"",aclaracion:"Casa esquina",telefono:"3816555004",maps:"",sifon:0,bidon10:4,bidon20:0,dispenser:1,saldo:0,notas:""},
-  {id:5005,nombre:"Flores Graciela",dia:"Viernes",orden:5,barrio:"Los Pinos",calle:"Salta",nro:"433",manzana:"",lote:"",aclaracion:"",telefono:"3816555005",maps:"",sifon:6,bidon10:0,bidon20:2,dispenser:0,saldo:800,notas:"Siempre efectivo"},
-  {id:6001,nombre:"Santos Ricardo",dia:"Sábado",orden:1,barrio:"Centro",calle:"25 de Mayo",nro:"100",manzana:"",lote:"",aclaracion:"",telefono:"3816556001",maps:"",sifon:0,bidon10:6,bidon20:0,dispenser:0,saldo:0,notas:""},
-  {id:6002,nombre:"Acosta Valeria",dia:"Sábado",orden:2,barrio:"Centro",calle:"Independencia",nro:"250",manzana:"",lote:"",aclaracion:"Piso 3 sin ascensor",telefono:"3816556002",maps:"",sifon:4,bidon10:0,bidon20:0,dispenser:0,saldo:-200,notas:"Piso 3"},
-  {id:6003,nombre:"Ramírez Alberto",dia:"Sábado",orden:3,barrio:"Centro",calle:"San Juan",nro:"380",manzana:"",lote:"",aclaracion:"",telefono:"3816556003",maps:"",sifon:0,bidon10:2,bidon20:2,dispenser:1,saldo:0,notas:""},
-  {id:6004,nombre:"Núñez Patricia",dia:"Sábado",orden:4,barrio:"Centro",calle:"Lavalle",nro:"90",manzana:"",lote:"",aclaracion:"Kiosco",telefono:"3816556004",maps:"",sifon:6,bidon10:4,bidon20:0,dispenser:0,saldo:0,notas:"Kiosco - mucho volumen"},
-  {id:6005,nombre:"Silva Ernesto",dia:"Sábado",orden:5,barrio:"Centro",calle:"Mitre",nro:"512",manzana:"",lote:"",aclaracion:"",telefono:"3816556005",maps:"",sifon:2,bidon10:0,bidon20:1,dispenser:0,saldo:300,notas:""},
-];
+const CLIENTES_INICIALES = [];
 const PRODUCTOS_INICIALES = [
   { id:1, nombre:"Sifón 1.5L", precio:800,  costo:133.33 },
   { id:2, nombre:"Bidón 10L",  precio:2500, costo:800 },
@@ -1157,52 +1126,11 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     ()=>!!localStorage.getItem("sr_offline_pending")
   );
   const [cloudSetup, setCloudSetup] = useState(false);
-  const [darkMode, setDarkMode]   = useLS("cat_darkmode", false);
   const [zonasReparto, setZonasReparto] = useLS("cat_zonas_v1", {});
   const [scaleIdx, setScaleIdx]   = useLS("cat_scale_v1", 1); // 0=S 1=M 2=L 3=XL
   const SCALES = [0.82, 1.0, 1.18, 1.36];
   const SCALE_LABELS = ["S","M","L","XL"];
 
-  // Apply dark/light mode toggle over base dark theme
-  React.useEffect(()=>{
-    if(!darkMode){
-      document.body.style.background = "#f0f4f8";
-      document.documentElement.style.setProperty("--color-background-primary","#ffffff");
-      document.documentElement.style.setProperty("--color-background-secondary","#f4f4f5");
-      document.documentElement.style.setProperty("--color-background-tertiary","#e8ecf0");
-      document.documentElement.style.setProperty("--color-text-primary","#18181b");
-      document.documentElement.style.setProperty("--color-text-secondary","#71717a");
-      document.documentElement.style.setProperty("--color-text-tertiary","#a1a1aa");
-      document.documentElement.style.setProperty("--color-text-info","#1d4ed8");
-      document.documentElement.style.setProperty("--color-text-success","#15803d");
-      document.documentElement.style.setProperty("--color-text-warning","#a16207");
-      document.documentElement.style.setProperty("--color-text-danger","#b91c1c");
-      document.documentElement.style.setProperty("--color-background-info","#dbeafe");
-      document.documentElement.style.setProperty("--color-background-success","#dcfce7");
-      document.documentElement.style.setProperty("--color-background-warning","#fef9c3");
-      document.documentElement.style.setProperty("--color-background-danger","#fee2e2");
-      document.documentElement.style.setProperty("--color-border-tertiary","rgba(0,0,0,0.10)");
-      document.documentElement.style.setProperty("--color-border-secondary","rgba(0,0,0,0.18)");
-    } else {
-      document.body.style.background = "#080f17";
-      document.documentElement.style.setProperty("--color-background-primary","#0f1923");
-      document.documentElement.style.setProperty("--color-background-secondary","#1a2b3c");
-      document.documentElement.style.setProperty("--color-background-tertiary","#253647");
-      document.documentElement.style.setProperty("--color-text-primary","#e2eaf4");
-      document.documentElement.style.setProperty("--color-text-secondary","#7a9ab8");
-      document.documentElement.style.setProperty("--color-text-tertiary","#4a6a85");
-      document.documentElement.style.setProperty("--color-text-info","#5daaff");
-      document.documentElement.style.setProperty("--color-text-success","#4dd9a0");
-      document.documentElement.style.setProperty("--color-text-warning","#f5b942");
-      document.documentElement.style.setProperty("--color-text-danger","#f07070");
-      document.documentElement.style.setProperty("--color-background-info","#1e3a5f");
-      document.documentElement.style.setProperty("--color-background-success","#0a2e1f");
-      document.documentElement.style.setProperty("--color-background-warning","#2e1f06");
-      document.documentElement.style.setProperty("--color-background-danger","#2e0a0a");
-      document.documentElement.style.setProperty("--color-border-tertiary","rgba(255,255,255,0.07)");
-      document.documentElement.style.setProperty("--color-border-secondary","rgba(255,255,255,0.13)");
-    }
-  },[darkMode]);
 
   // Al iniciar, si hay credenciales guardadas, cargar datos de la nube
   const { useEffect } = React;
@@ -1646,8 +1574,6 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onStock={()=>irA("stock")}
         onAgenda={()=>irA("agenda")}
         onVolver={()=>irA("portada")}
-        darkMode={darkMode}
-        onToggleDark={()=>setDarkMode(!darkMode)}
         saveRepartos={saveRepartos}
         onOperarReparto={(rep)=>setOperandoReparto(rep)}
         onTodosClientes={()=>irA("vistaClientesGeneral")}
@@ -1664,8 +1590,6 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onStock={()=>irA("stock")}
         onAgenda={()=>irA("agenda")}
         onVolver={()=>irA("menu")}
-        darkMode={darkMode}
-        onToggleDark={()=>setDarkMode(!darkMode)}
         clientes={clientes.filter(c=>c.repartoId===repartoActual.id)}
         ventas={ventas.filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return cl?.repartoId===repartoActual.id;})}
         stock={stockNorm}
@@ -2277,8 +2201,7 @@ function SelectorFecha({dia,planillas,ventas,noVisitas,onSeleccionar,onVolver}) 
     </div>
   );
 }
-
-function SetupScreen({onSetup}) {
+) {
   React.useEffect(()=>{ onSetup("firebase","firebase"); },[]);
   return <div style={{padding:40,textAlign:"center",color:"var(--color-text-secondary)"}}>Conectando con Firebase...</div>;
 }
@@ -2312,8 +2235,7 @@ function SyncBar({status, isOnline}) {
     </div>
   );
 }
-
-function SetupNube({onSetup}) {
+) {
   const [paso, setPaso] = useState(1);
   // No API config needed with Firebase
   const [cargando, setCargando] = useState(false);
@@ -2715,7 +2637,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
   );
 }
 
-function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,darkMode,onToggleDark,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes}) {
+function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes}) {
   const [tab, setTab] = React.useState("repartos");
   const [modoNuevo, setModoNuevo] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState(null);
@@ -2752,7 +2674,6 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
       <div style={s.header}>
         <button style={s.backBtn} onClick={onVolver}>← Volver</button>
         <span style={s.headerTitle}>Panel del dueño</span>
-        <button style={{...s.btn,padding:"5px 10px",fontSize:18,lineHeight:1}} onClick={onToggleDark}>{darkMode?"☀":"🌙"}</button>
       </div>
 
       {/* ── PESTAÑAS ── */}
@@ -2922,14 +2843,13 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
 }
 
 
-function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,darkMode,onToggleDark,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona}) {
+function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona}) {
   const [editandoZona, setEditandoZona] = React.useState(null);
   return (
     <div style={s.screen}>
       <div style={s.header}>
         <button style={s.backBtn} onClick={onVolver}>← Volver</button>
         <span style={s.headerTitle}>Sistema de Reparto 2026 · Multi</span>
-        <button style={{...s.btn,padding:"5px 10px",fontSize:18,lineHeight:1}} onClick={onToggleDark}>{darkMode?"☀":"🌙"}</button>
       </div>
       
       
@@ -3693,24 +3613,7 @@ function InicioReparto({dia,fecha,planilla,productos,cargasDia,stock,onGuardar,o
           }}>
           {yaIniciado?"Actualizar y continuar →":"🚀 Iniciar y descontar de sodería"}
         </button>
-        {!yaIniciado&&(
-          <button style={{...s.btn,width:"100%",padding:"12px",fontSize:13,borderRadius:10,marginTop:6}}
-            onClick={()=>{
-              const nuevaPlanilla = {
-                ...planilla,
-                iniciado:true,
-                productos: Object.fromEntries(
-                  Object.entries(cajones).map(([k,v])=>[k,{
-                    ...(planilla?.productos?.[k]||{}),
-                    llenos:v
-                  }])
-                )
-              };
-              onGuardar(nuevaPlanilla, false);
-            }}>
-            Iniciar sin descontar stock
-          </button>
-        )}
+
       </div>
       {/* Stock sodería */}
       {stock?.soderia&&(
@@ -6760,7 +6663,7 @@ function Login({onLogin}) {
 
 
 // ── Onboarding ──────────────────────────────────────────────
-function Onboarding({uid, onCompleto}) {
+) {
   const [paso, setPaso]         = React.useState(1);
   const [negocio, setNegocio]   = React.useState("");
   const [productos, setProductos] = React.useState([
@@ -6865,7 +6768,7 @@ function Onboarding({uid, onCompleto}) {
 
 
 // ── NuevaVentaLibre ──────────────────────────────────────────────
-function NuevaVentaLibre({cliente,productos,fechaInicial,onGuardar,onVolver}) {
+) {
   const [fechaKl,setFechaKl] = React.useState(fechaInicial||new Date().toISOString().slice(0,10));
   const [cantidades,setCantidades] = useState(()=>{const m={};productos.forEach(p=>{const k=p.nombre==="Sifón 1.5L"?"sifon":p.nombre==="Bidón 10L"?"bidon10":"bidon20";m[p.nombre]=cliente[k]||0;});return m;});
   const [pago,setPago] = useState("contado");
@@ -7081,7 +6984,7 @@ function RepartidoresPanel({negocioId, clientes}) {
 
 
 function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId}) {
-  const [tab,setTab]=useState("precios");
+  const [tab,setTab]=useState("stock");
   const [editandoId,setEditandoId]=useState(null);
   const [importando,setImportando]=useState(false);
   const [mantVeh,setMantVeh] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]");}catch{return [];}});
@@ -7094,9 +6997,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button><span style={s.headerTitle}>Configuración</span></div>
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
-          [["precios","💲","Precios"],["stock","📦","Stock"],["cargas","🚚","Cargas"],["historial","📋","Historial"]],
-          [["importar","📥","Importar"],["backup","💾","Backup"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
-          [["equipo","👥","Equipo"],["vincular","🔗","Vincular"]],
+          [["stock","📦","Stock"],["cargas","🚚","Cargas"],["historial","📋","Historial"],["backup","💾","Backup"]],
+          [["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"],["equipo","👥","Equipo"],["vincular","🔗","Vincular"]],
         ].map((fila,fi)=>(
           <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
             {fila.map(([id,ico,lbl])=>(
@@ -7118,7 +7020,12 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
           </div>
         ))}
       </div>
-      {tab==="precios"&&<div style={{padding:16}}>
+      {tab==="stock"&&(<>
+        <div style={{padding:16}}>
+          <div style={{...s.card,margin:"0 0 14px",background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",padding:"10px 14px"}}>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-info)"}}>💲 Precios y costos</span>
+          </div>
+          
         {/* Lista de artículos */}
         {productos.map(p=>{
           const editing = editandoId===p.id;
@@ -7281,64 +7188,12 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       );
     })}
   </div>
-)}
-      {tab==="cargas"&&(
-          <div style={{padding:16}}>
-            <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
-              Cantidades con las que salís cada día. Se usan como valores por defecto al iniciar el reparto.
-              Los sifones se ingresan en cajones (1 cajón = 6 sifones).
-            </p>
-            {DIAS.filter(d=>d!=="Lunes").map(function(dia){
-              var c = (cargasDia||CARGA_DIA_DEFAULT)[dia]||{soda:0,b10:0,b20:0};
-              var cajones = Math.floor((c.soda||0)/6);
-              return (
-                <div key={dia} style={{...s.card,margin:"0 0 12px"}}>
-                  <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>{dia}</div>
-                  <div style={s.grid3}>
-                    <div>
-                      <label style={{...s.label,textAlign:"center"}}>Cajones soda</label>
-                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                        value={cajones||""}
-                        placeholder="0"
-                        onChange={e=>{
-                          var caj=Number(e.target.value)||0;
-                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                          nuevo[dia]=Object.assign({},c,{soda:caj*6});
-                          setCargasDia(nuevo);
-                        }} />
-                      <div style={{fontSize:10,color:"var(--color-text-tertiary)",textAlign:"center",marginTop:2}}>{c.soda||0} unidades</div>
-                    </div>
-                    <div>
-                      <label style={{...s.label,textAlign:"center"}}>Bidón 10L</label>
-                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                        value={c.b10||""}
-                        placeholder="0"
-                        onChange={e=>{
-                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                          nuevo[dia]=Object.assign({},c,{b10:Number(e.target.value)||0});
-                          setCargasDia(nuevo);
-                        }} />
-                    </div>
-                    <div>
-                      <label style={{...s.label,textAlign:"center"}}>Bidón 20L</label>
-                      <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                        value={c.b20||""}
-                        placeholder="0"
-                        onChange={e=>{
-                          var nuevo=Object.assign({},cargasDia||CARGA_DIA_DEFAULT);
-                          nuevo[dia]=Object.assign({},c,{b20:Number(e.target.value)||0});
-                          setCargasDia(nuevo);
-                        }} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            <button style={s.btnPrimary} onClick={()=>{ setCargasDia(Object.assign({},cargasDia)); alert("Cargas guardadas"); }}>Guardar cargas</button>
+        </div>
+        <div style={{padding:"0 16px 16px"}}>
+          <div style={{...s.card,margin:"0 0 14px",background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",padding:"10px 14px"}}>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-info)"}}>📦 Stock en depósito</span>
           </div>
-        )}
-        {tab==="stock"&&(
-          <div style={{padding:16}}>
+          
             <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
               Control de stock en los 3 lugares. Al iniciar reparto el camión se carga desde la sodería automáticamente.
             </p>
@@ -7365,7 +7220,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             ))}
             <button style={s.btnPrimary} onClick={()=>{syncData({stock});alert("Stock guardado");}}>Guardar stock</button>
           </div>
-        )}
+        </div>
+      </>)}
         {tab==="historial"&&(
           <CargaHistorica
             clientes={clientes}
@@ -7375,8 +7231,12 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             enConfig={true}
           />
         )}
-        {tab==="importar"&&(
+        {tab==="backup"&&(
         <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{...s.card,margin:0,background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",padding:"10px 14px",marginBottom:12}}>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-info)"}}>📥 Importar clientes</span>
+          </div>
+          
           <div style={{...s.card,margin:0,borderLeft:"3px solid #185FA5"}}>
             <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:6}}>📥 Importar clientes desde planilla Excel</div>
             <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10,lineHeight:1.6}}>
@@ -7427,9 +7287,10 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             </div>
           )}
         </div>
-        )}
-        {tab==="backup"&&(
-        <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{...s.card,margin:0,background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-secondary)",padding:"10px 14px",marginBottom:12}}>
+            <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-primary)"}}>💾 Backup y sincronización</span>
+          </div>
+          
           {/* RECUPERACION DE EMERGENCIA */}
           {(()=>{
             const backupKeys = Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).sort().reverse();
@@ -7526,7 +7387,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             }
           </div>
         </div>
-      )}
+        </div>
+        )}
       {tab==="vehiculo"&&(
         <div style={{padding:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
