@@ -3241,11 +3241,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
                     <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>
                       {c?.nombre||"Cliente"}
                     </span>
-                    <span style={{fontSize:11,padding:"2px 8px",borderRadius:20,fontWeight:500,
-                      background:v.pago==="transferencia"?"rgba(24,95,165,0.2)":v.pago==="fiado"?"rgba(245,185,66,0.2)":"rgba(255,255,255,0.08)",
-                      color:v.pago==="transferencia"?"var(--color-text-info)":v.pago==="fiado"?"var(--color-text-warning)":"var(--color-text-secondary)"}}>
-                      {v.pago==="transferencia"?"🔵 Transferencia":v.pago==="fiado"?"📝 Fiado":"💵 Efectivo"}
-                    </span>
+
                   </div>
                   <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:8}}>Día habitual: {c?.dia||"—"}</div>
 
