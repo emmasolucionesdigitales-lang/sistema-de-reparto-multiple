@@ -3232,7 +3232,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
               const compra = v.neto||0;
               const abonoDeuda = Math.max(0, pagado - compra);
               const saldoAnterior = c ? Math.abs(Math.min(0, (c.saldo||0) + abonoDeuda)) : 0;
-              return (
+              return (<>
                 <div key={v.id} style={{marginBottom:10,padding:"10px 12px",background:"var(--color-background-tertiary)",borderRadius:10,borderLeft:`3px solid ${v.pago==="transferencia"?"var(--color-text-info)":v.pago==="fiado"?"var(--color-text-warning)":"var(--color-text-primary)"}`}}>
                   {/* Nombre + día + forma de pago */}
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
@@ -3284,8 +3284,8 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
               const totalEfec=ventasExtraDia.filter(v=>v.pago!=="transferencia"&&v.pago!=="fiado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
               const totalTrans=ventasExtraDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
               const totalCobrado=ventasExtraDia.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-              return (
-                <div style={{background:"var(--color-background-secondary)",borderRadius:8,padding:"10px 12px",marginTop:6}}>
+              return (<>                                                                                             
+                  <div style={{background:"var(--color-background-secondary)",borderRadius:8,padding:"10px 12px",marginTop:6}}>
                   <div style={{fontSize:11,fontWeight:600,color:"var(--color-text-secondary)",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Resumen otros días</div>
                   <div style={{display:"flex",justifyContent:"space-between",padding:"3px 0"}}>
                     <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Ventas (compras de hoy)</span>
