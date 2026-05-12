@@ -3221,37 +3221,118 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
         <div style={s.divider} />
         <span style={{...s.sectionTitle,padding:"0 0 10px"}}>Resumen del día</span>
 
-        {/* Ventas del día */}
-        <div style={{...s.card,margin:"0 0 8px",background:"var(--color-background-secondary)",padding:"14px 16px"}}>
-          <div style={{fontSize:12,fontWeight:500,color:"var(--color-text-secondary)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>Ventas registradas</div>
-          {[
-            ["Contado (efectivo)", fmt(cobEfectivo), "primary"],
-            ["Transferencias",     fmt(cobTransBruto), "info"],
-            ["Fiado del día",      fmt(cobFiado), "warning"],
-          ].map(([l,v,c])=>(
-            <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
-              <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{l}</span>
-              <span style={{fontSize:13,fontWeight:500,color:`var(--color-text-${c})`}}>{v}</span>
+        {/* ═══ RESUMEN DEL DÍA ═══ */}
+        {(()=>{
+          const abonoOtrosDiasEfec = (ventasExtraDia||[])
+            .filter(v=>v.pago!=="transferencia"&&v.pago!=="fiado")
+            .reduce((a,v)=>a+Math.max(0,(v.pagadoNum||0)-(v.neto||0)),0);
+          const abonoOtrosDiasTrans = (ventasExtraDia||[])
+            .filter(v=>v.pago==="transferencia")
+            .reduce((a,v)=>a+Math.max(0,(v.pagadoNum||0)-(v.neto||0)),0);
+          const totalAbonosOtrosDias = abonoOtrosDiasEfec + abonoOtrosDiasTrans;
+          const ventasEfec  = cobEfectivo  - abonoOtrosDiasEfec;
+          const ventasTrans = cobTransBruto - abonoOtrosDiasTrans;
+          const ventasFiado = cobFiado;
+          const totalVentas = ventasEfec + ventasTrans + ventasFiado;
+          const totalCobranzaDeuda = totalAbonosOtrosDias + cobSaldos;
+
+          return (<>
+
+          <div style={{...s.card,margin:"0 0 8px",background:"var(--color-background-secondary)",padding:"14px 16px",borderLeft:"3px solid #4dd9a0"}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#4dd9a0",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.05em"}}>🟢 Ventas del día</div>
+            {[
+              ["💵 Efectivo",      ventasEfec,  "primary"],
+              ["🔵 Transferencia", ventasTrans, "info"],
+              ["📝 Fiado",         ventasFiado, "warning"],
+            ].map(([l,v,c])=>(
+              <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{l}</span>
+                <span style={{fontSize:13,fontWeight:500,color:`var(--color-text-${c})`}}>{fmt(v)}</span>
+              </div>
+            ))}
+            {(ventasExtraDia||[]).length>0&&(
+              <div style={{marginTop:10,paddingTop:8,borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:6,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em"}}>
+                  Incluye clientes de otros días:
+                </div>
+                {ventasExtraDia.map(v=>{
+                  const c=(clientes||[]).find(x=>x.id===v.clienteId);
+                  return (
+                    <div key={v.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                      <div>
+                        <span style={{fontSize:12,fontWeight:500,color:"var(--color-text-primary)"}}>{c?.nombre||"Cliente"}</span>
+                        <span style={{fontSize:10,color:"var(--color-text-tertiary)"}}> · {c?.dia} · {v.pago==="transferencia"?"🔵 Transfer.":v.pago==="fiado"?"📝 Fiado":"💵 Efectivo"}</span>
+                      </div>
+                      <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-info)"}}>{fmt(v.neto||0)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div style={{display:"flex",justifyContent:"space-between",padding:"8px 0 2px",marginTop:4}}>
+              <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>Total ventas del día</span>
+              <span style={{fontSize:20,fontWeight:700,color:"#4dd9a0"}}>{fmt(totalVentas)}</span>
             </div>
-          ))}
-          {/* Cobros de deuda — separados por forma de pago */}
-          {cobSaldosEfec>0&&(
-            <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
-              <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>+ Cobro deuda · efectivo</span>
-              <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-success)"}}>{fmt(cobSaldosEfec)}</span>
-            </div>
-          )}
-          {cobSaldosTrans>0&&(
-            <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
-              <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>+ Cobro deuda · transferencia</span>
-              <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-info)"}}>{fmt(cobSaldosTrans)}</span>
-            </div>
-          )}
-          <div style={{display:"flex",justifyContent:"space-between",padding:"8px 0 2px"}}>
-            <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Total cobrado</span>
-            <span style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(cobEfectivo+cobTransBruto+cobSaldos)}</span>
           </div>
-        </div>
+
+          {totalCobranzaDeuda>0&&(
+            <div style={{...s.card,margin:"0 0 8px",background:"var(--color-background-secondary)",padding:"14px 16px",borderLeft:"3px solid #f5b942"}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#f5b942",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em"}}>💰 Cobros de deuda</div>
+              <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:10,lineHeight:1.5}}>
+                No es venta nueva — es plata recaudada de deudas anteriores
+              </div>
+              {ventasExtraDia.filter(v=>Math.max(0,(v.pagadoNum||0)-(v.neto||0))>0).map(v=>{
+                const c=(clientes||[]).find(x=>x.id===v.clienteId);
+                const abono=Math.max(0,(v.pagadoNum||0)-(v.neto||0));
+                return (
+                  <div key={v.id} style={{padding:"8px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{c?.nombre||"Cliente"}</span>
+                        <span style={{fontSize:11,color:"var(--color-text-tertiary)"}}> · {c?.dia}</span>
+                      </div>
+                      <span style={{fontSize:14,fontWeight:700,color:"#4dd9a0"}}>{fmt(abono)}</span>
+                    </div>
+                    <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:3}}>
+                      Pagó {fmt(v.pagadoNum||0)} {v.pago==="transferencia"?"(transfer.)":"(efectivo)"}
+                      {" · "}compra {fmt(v.neto||0)}
+                      {" · "}abono deuda {fmt(abono)}
+                    </div>
+                  </div>
+                );
+              })}
+              {cobSaldosEfec>0&&(
+                <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                  <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Cobro de deuda · efectivo</span>
+                  <span style={{fontSize:13,fontWeight:600,color:"#4dd9a0"}}>{fmt(cobSaldosEfec)}</span>
+                </div>
+              )}
+              {cobSaldosTrans>0&&(
+                <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                  <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Cobro de deuda · transferencia</span>
+                  <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)"}}>{fmt(cobSaldosTrans)}</span>
+                </div>
+              )}
+              <div style={{display:"flex",justifyContent:"space-between",padding:"8px 0 2px",marginTop:4}}>
+                <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>Total cobros de deuda</span>
+                <span style={{fontSize:20,fontWeight:700,color:"#f5b942"}}>{fmt(totalCobranzaDeuda)}</span>
+              </div>
+            </div>
+          )}
+
+          <div style={{...s.card,margin:"0 0 8px",padding:"14px 16px",background:"var(--color-background-secondary)"}}>
+            <div style={{fontSize:12,fontWeight:600,color:"var(--color-text-info)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>📊 Total recaudado hoy</div>
+            {ventasEfec>0&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0"}}><span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Ventas efectivo</span><span style={{fontSize:12,color:"var(--color-text-primary)"}}>{fmt(ventasEfec)}</span></div>}
+            {ventasTrans>0&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0"}}><span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Ventas transfer.</span><span style={{fontSize:12,color:"var(--color-text-info)"}}>{fmt(ventasTrans)}</span></div>}
+            {totalCobranzaDeuda>0&&<div style={{display:"flex",justifyContent:"space-between",padding:"3px 0"}}><span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Cobros de deuda</span><span style={{fontSize:12,color:"#f5b942"}}>{fmt(totalCobranzaDeuda)}</span></div>}
+            <div style={{display:"flex",justifyContent:"space-between",padding:"8px 0 2px",borderTop:"0.5px solid var(--color-border-tertiary)",marginTop:6}}>
+              <span style={{fontSize:15,fontWeight:700,color:"var(--color-text-primary)"}}>TOTAL RECAUDADO</span>
+              <span style={{fontSize:24,fontWeight:700,color:"var(--color-text-primary)"}}>{fmt(cobEfectivo+cobTransBruto+cobSaldos)}</span>
+            </div>
+          </div>
+
+          </>);
+        })()}
 
         {/* Ventas de clientes de otros días */}
         {ventasExtraDia.length>0&&(
