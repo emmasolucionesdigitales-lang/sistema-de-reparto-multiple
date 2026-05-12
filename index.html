@@ -3226,9 +3226,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
           <div style={{...s.card,margin:"0 0 8px",background:"var(--color-background-secondary)",padding:"14px 16px",borderLeft:"3px solid var(--color-border-info)"}}>
             <div style={{fontSize:12,fontWeight:500,color:"var(--color-text-info)",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.05em"}}>
               🔵 Clientes de otros días — atendidos hoy ({ventasExtraDia.length})
-            </div>
-
-            {ventasExtraDia.map(v=>{
+              {ventasExtraDia.map(v=>{
               const c=(clientes||[]).find(x=>x.id===v.clienteId);
               const pagado = v.pagadoNum||v.neto||0;
               const compra = v.neto||0;
