@@ -3336,7 +3336,8 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
             <span style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(cobEfectivo+cobTransBruto+cobSaldos)}</span>
           </div>
         </div>
-
+</>);
+        })()}
         {/* Ventas de clientes de otros días */}
         {ventasExtraDia.length>0&&(
           <div style={{...s.card,margin:"0 0 8px",background:"var(--color-background-secondary)",padding:"14px 16px",borderLeft:"3px solid var(--color-border-info)"}}>
