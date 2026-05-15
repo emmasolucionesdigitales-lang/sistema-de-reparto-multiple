@@ -2,6 +2,8 @@
 // ◆  01-temas.js — Paletas de temas · TEMAS · aplicarTema · getTemaActual
 // ════════════════════════════════════════════════════════════════════
 
+const { useState } = React;
+
 const TEMAS = {
   // MODO OSCURO
   "oscuro-azul": {
