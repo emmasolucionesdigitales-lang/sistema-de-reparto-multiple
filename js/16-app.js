@@ -713,8 +713,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const siguiente=clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
           if(siguiente){setClienteId(siguiente.id);irA("detalleCliente");}else irA("clientes");
         }}
-        onGuardar={(d,p,m,sa,ep,ed,obs,op)=>{
-  registrarVenta(d,p,m,sa,ep,ed,obs,op);
+        onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{
+  registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);
   // Auto-advance to next pending client (noesta = volver al final, no saltar a ellos)
   const clientesDia = clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
   const visitadosIds = new Set([

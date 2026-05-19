@@ -78,7 +78,12 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
             <div style={{display:"flex",gap:8,marginBottom:6}}>
               <div style={{flex:1}}>
                 <label style={s.label}>Efectivo $</label>
-                <input style={s.input} type="number" placeholder="0" value={montoEfec} onChange={e=>setMontoEfec(e.target.value)} />
+                <input style={s.input} type="number" placeholder="0" value={montoEfec} onChange={e=>{
+                  const ef = e.target.value;
+                  setMontoEfec(ef);
+                  const resto = aPagar - Number(ef||0);
+                  setMontoTrans(resto > 0 ? String(Math.round(resto)) : "0");
+                }} />
               </div>
               <div style={{flex:1}}>
                 <label style={s.label}>Transferencia $</label>
