@@ -141,14 +141,16 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   const irA = (p) => { setPantalla(p); window.scrollTo(0,0); };
 
-  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo) => {
+  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, mt2, sdOverride) => {
     const c = cliente;
     const calc = calcVenta(detalle, pago, montoPagado, saldoAplicado, productos);
+    const esMixto = opcionSaldo==="mixto_ef" || opcionSaldo==="mixto_tr";
+    const saldoDelta = esMixto && sdOverride!==undefined ? sdOverride : calc.saldoDelta;
     const nv = [...ventas, {id:Date.now(), clienteId:c.id, cliente:c.nombre, dia:diaClienteActual||c.dia, fechaKey:fechaActual,
       fecha:new Date().toLocaleString("es-AR"), detalle, pago, obs:obs||"", saldoAplicado:saldoAplicado||0,
       envPrest:(envPrest||[]).filter(e=>e.prod&&e.cant), envDev:(envDev||[]).filter(e=>e.prod&&e.cant),
-      ...calc, repartidor:perfil.nombre}];
-    const clientesActualizados = todosClientes.map(x=>x.id===c.id?{...x,saldo:(x.saldo||0)+calc.saldoDelta}:x);
+      mt2:mt2||0, ...calc, saldoDelta, repartidor:perfil.nombre}];
+    const clientesActualizados = todosClientes.map(x=>x.id===c.id?{...x,saldo:(x.saldo||0)+saldoDelta}:x);
     sync({...datos, ventas:nv, clientes:clientesActualizados});
   };
 
@@ -283,7 +285,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noquiso"}]);
             irA("clientes");
           }}
-          onGuardar={(d,p,m,sa,ep,ed,obs,op)=>{registrarVenta(d,p,m,sa,ep,ed,obs,op);irA("clientes");}}
+          onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);irA("clientes");}}
           onVolver={()=>irA("clientes")}
         />
       )}
