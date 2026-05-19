@@ -216,7 +216,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
   );
 }
 
-function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onEditar,onEliminarVenta,onEditarVenta,onEliminarCliente,onNoEstaCliente,onNoQuiereCliente,recordatorios,onGuardarRecordatorio,onConfirmarRecordatorio,onCobrarSaldo}) {
+function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onEditar,onEliminarVenta,onEditarVenta,onEliminarCliente,onNoEstaCliente,onNoQuiereCliente,recordatorios,onGuardarRecordatorio,onConfirmarRecordatorio,onCobrarSaldo,soloLectura=false}) {
   const [editandoCliente,setEditandoCliente] = useState(false);
   const [editandoVentaId,setEditandoVentaId] = useState(null);
   const [editandoSaldo,setEditandoSaldo] = useState(false);
@@ -248,9 +248,9 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
             🔔
             {recActivos.length>0&&<span style={{position:"absolute",top:-3,right:-3,background:"#f5b942",color:"#0f1923",borderRadius:"50%",width:16,height:16,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{recActivos.length}</span>}
           </button>
-          <button style={{...s.btn,fontSize:12,padding:"5px 10px"}} onClick={()=>{setEditandoCliente(!editandoCliente);setEditandoVentaId(null);}}>
+          {!soloLectura&&<button style={{...s.btn,fontSize:12,padding:"5px 10px"}} onClick={()=>{setEditandoCliente(!editandoCliente);setEditandoVentaId(null);}}>
             {editandoCliente?"Cancelar":"Editar"}
-          </button>
+          </button>}
         </div>
       </div>
       {mostrarPagoSaldo&&(
@@ -371,13 +371,13 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                   <div style={{fontSize:20,fontWeight:500,color:cliente.saldo<0?"var(--color-text-danger)":cliente.saldo>0?"#4dd9a0":"var(--color-text-tertiary)"}}>{fmt(Math.abs(cliente.saldo))}</div>
                 </div>
                 <div style={{display:"flex",gap:6}}>
-                  {cliente.saldo<0&&(
+                  {!soloLectura&&cliente.saldo<0&&(
                     <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:500,cursor:"pointer"}}
                       onClick={()=>setMostrarPagoSaldo(true)}>
                       💰 Cobrar
                     </button>
                   )}
-                  <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>setEditandoSaldo(true)}>Ajustar</button>
+                  {!soloLectura&&<button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>setEditandoSaldo(true)}>Ajustar</button>}
                 </div>
               </div>
             ):(
@@ -457,10 +457,10 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                     <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:6}}>
                       {v.pago}{v.desc>0?` · desc. ${fmt(v.desc)}`:""}{v.saldoAplicado>0?` · saldo ${fmt(v.saldoAplicado)}`:""}{v.obs?` · ${v.obs}`:""}
                     </div>
-                    <div style={{display:"flex",justifyContent:"flex-end",gap:6}}>
+                    {!soloLectura&&<div style={{display:"flex",justifyContent:"flex-end",gap:6}}>
                       <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>setEditandoVentaId(v.id)}>Editar</button>
                       <button style={{...s.btnDanger,fontSize:11,padding:"4px 10px"}} onClick={()=>{if(window.confirm(`¿Eliminar venta de ${fmt(v.neto)}?`))onEliminarVenta(v.id);}}>Eliminar</button>
-                    </div>
+                    </div>}
                   </div>
               }
             </div>
@@ -533,7 +533,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
           </details>
 
 
-          <div style={{...s.divider,marginTop:12}}/>
+          {!soloLectura&&<><div style={{...s.divider,marginTop:12}}/>
           <details style={{marginTop:4}}>
             <summary style={{fontSize:12,color:"var(--color-text-tertiary)",cursor:"pointer",padding:"4px 0",listStyle:"none",display:"flex",alignItems:"center",gap:4}}>
               ⚙ Opciones avanzadas
@@ -543,9 +543,9 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                 Eliminar cliente
               </button>
             </div>
-          </details>
+          </details></>}
         </>}
-        {editandoCliente && <EditCliente cliente={cliente} onGuardar={cambios=>{onEditar(cambios);setEditandoCliente(false);}} onEliminarCliente={onEliminarCliente} />}
+        {editandoCliente && !soloLectura && <EditCliente cliente={cliente} onGuardar={cambios=>{onEditar(cambios);setEditandoCliente(false);}} onEliminarCliente={onEliminarCliente} />}
       </div>
     </div>
   );

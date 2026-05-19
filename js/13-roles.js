@@ -87,6 +87,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const [clienteId,  setClienteId]  = React.useState(null);
   const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toISOString().slice(0,10));
   const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual);
+  const [origenDetalle, setOrigenDetalle] = React.useState("clientes");
   const [datos,      setDatos]      = React.useState(null);
 
   // Detectar día actual automáticamente
@@ -217,7 +218,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         <ListaClientes
           clientes={clientes}
           dia={""} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
-          onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);irA("venta");}}
+          onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("clientes");irA("detalleCliente");}}
           onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("inicio")}
           onReordenar={lista=>{
             const otros = todosClientes.filter(c=>!(c.dia===diaActual && (sectores.length===0||sectores.some(s=>(c.barrio||"").toLowerCase().includes(s.toLowerCase())))));
@@ -247,12 +248,17 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         <DetalleCliente
           cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)}
           dia={diaActual} fecha={fechaActual} productos={productos}
+          soloLectura={true}
           onVenta={()=>irA("venta")}
-          onVentaLibre={()=>{setVentaLibreFecha(new Date().toISOString().slice(0,10));irA("ventaLibre");}}
-          onVolver={()=>irA("clientes")}
-          onEditar={()=>{}} onEliminarVenta={eliminarVenta} onEditarVenta={()=>{}} onEliminarCliente={()=>{}}
+          onVentaLibre={null}
+          onVolver={()=>irA(origenDetalle)}
+          onEditar={()=>{}} onEliminarVenta={()=>{}} onEditarVenta={()=>{}} onEliminarCliente={()=>{}}
           onNoEstaCliente={()=>{
             const nv=[...noVisitas.filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
+            saveNoVisitas(nv);
+          }}
+          onNoQuiereCliente={()=>{
+            const nv=[...noVisitas.filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
             saveNoVisitas(nv);
           }}
           recordatorios={[]} onGuardarRecordatorio={()=>{}} onConfirmarRecordatorio={()=>{}} onCobrarSaldo={()=>{}}
@@ -290,7 +296,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         <TodosClientesRepartidor
           clientes={clientes}
           ventas={ventas}
-          onSeleccionar={(c)=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);irA("venta");}}
+          onSeleccionar={(c)=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("todosClientes");irA("detalleCliente");}}
           onNuevoCliente={()=>irA("nuevoCliente")}
           onVolver={()=>irA("inicio")}
         />
