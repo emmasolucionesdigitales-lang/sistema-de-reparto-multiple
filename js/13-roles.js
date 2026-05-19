@@ -261,7 +261,15 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
             const nv=[...noVisitas.filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
             saveNoVisitas(nv);
           }}
-          recordatorios={[]} onGuardarRecordatorio={()=>{}} onConfirmarRecordatorio={()=>{}} onCobrarSaldo={()=>{}}
+          recordatorios={[]} onGuardarRecordatorio={()=>{}} onConfirmarRecordatorio={()=>{}}
+          onCobrarSaldo={(monto, pago)=>{
+            const cobro={id:Date.now(),clienteId:cliente.id,cliente:cliente.nombre,
+              dia:diaActual,fechaKey:fechaActual,fecha:new Date().toLocaleString("es-AR"),
+              detalle:[],pago:pago,neto:monto,saldoDelta:monto,_esCobro:true,
+              repartidor:perfil.nombre};
+            const clientesActualizados=todosClientes.map(x=>x.id===cliente.id?{...x,saldo:(x.saldo||0)+monto}:x);
+            sync({...datos,ventas:[...ventas,cobro],clientes:clientesActualizados});
+          }}
         />
       )}
       {pantalla==="venta"&&cliente&&(

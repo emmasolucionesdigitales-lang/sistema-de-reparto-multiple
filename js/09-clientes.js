@@ -371,7 +371,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                   <div style={{fontSize:20,fontWeight:500,color:cliente.saldo<0?"var(--color-text-danger)":cliente.saldo>0?"#4dd9a0":"var(--color-text-tertiary)"}}>{fmt(Math.abs(cliente.saldo))}</div>
                 </div>
                 <div style={{display:"flex",gap:6}}>
-                  {!soloLectura&&cliente.saldo<0&&(
+                  {cliente.saldo<0&&(
                     <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:500,cursor:"pointer"}}
                       onClick={()=>setMostrarPagoSaldo(true)}>
                       💰 Cobrar
