@@ -218,7 +218,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           clientes={clientes}
           dia={""} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
           onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);irA("venta");}}
-          onNuevoCliente={null} onVolver={()=>irA("inicio")}
+          onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("inicio")}
           onReordenar={lista=>{
             const otros = todosClientes.filter(c=>!(c.dia===diaActual && (sectores.length===0||sectores.some(s=>(c.barrio||"").toLowerCase().includes(s.toLowerCase())))));
             saveClientes([...otros,...lista]);
@@ -229,6 +229,18 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           }}
           onQuitarNoVisita={(cId)=>saveNoVisitas(noVisitas.filter(v=>!(v.clienteId===cId&&v.fecha===fechaActual)))}
           onConfirmarTransfer={null} prospectos={[]} recordatorios={[]}
+        />
+      )}
+      {pantalla==="nuevoCliente"&&(
+        <NuevoClienteForm
+          sectores={sectores}
+          diaActual={diaActual}
+          onGuardar={(datosNuevo)=>{
+            const nuevoC = Object.assign({}, datosNuevo, {id:Date.now(), saldo:0, repartoId: miReparto ? miReparto.id : null});
+            saveClientes(todosClientes.concat([nuevoC]));
+            irA("clientes");
+          }}
+          onVolver={()=>irA("clientes")}
         />
       )}
       {pantalla==="detalleCliente"&&cliente&&(
@@ -279,6 +291,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           clientes={clientes}
           ventas={ventas}
           onSeleccionar={(c)=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);irA("venta");}}
+          onNuevoCliente={()=>irA("nuevoCliente")}
           onVolver={()=>irA("inicio")}
         />
       )}
@@ -534,3 +547,79 @@ function RepartidoresPanel({negocioId, clientes}) {
 
 
 
+
+// ── NuevoClienteForm ──────────────────────────────────────────────
+function NuevoClienteForm({sectores, diaActual, onGuardar, onVolver}) {
+  var diasOpc = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+  var init = {
+    nombre:"", dia:diaActual||"Lunes",
+    barrio: (sectores && sectores.length > 0) ? sectores[0] : "",
+    calle:"", nro:"", manzana:"", lote:"",
+    telefono:"", maps:"", notas:"",
+    sifon:0, bidon10:0, bidon20:0, dispenser:0, orden:9999
+  };
+  var state = React.useState(init);
+  var datos = state[0];
+  var setDatos = state[1];
+
+  var set = function(k,v){ setDatos(function(d){ var n=Object.assign({},d); n[k]=v; return n; }); };
+
+  var guardar = function() {
+    if(!datos.nombre || !datos.nombre.trim()){ alert("Ingresá el nombre del cliente"); return; }
+    onGuardar(datos);
+  };
+
+  var campos = [
+    ["barrio","Barrio"], ["calle","Calle"], ["nro","Número"],
+    ["manzana","Manzana"], ["lote","Lote"],
+    ["telefono","Teléfono (sin 0 ni 15)"], ["maps","Link Google Maps"]
+  ];
+
+  return React.createElement("div", {style: s.screen},
+    React.createElement("div", {style: s.header},
+      React.createElement("button", {style: s.backBtn, onClick: onVolver}, "← Volver"),
+      React.createElement("span", {style: s.headerTitle}, "Nuevo Cliente"),
+      React.createElement("div", null)
+    ),
+    React.createElement("div", {style: {padding:16, display:"flex", flexDirection:"column", gap:10}},
+      React.createElement("div", null,
+        React.createElement("label", {style: s.label}, "Nombre y apellido *"),
+        React.createElement("input", {style: s.input, value: datos.nombre, placeholder: "Ej: Juan García",
+          onChange: function(e){ set("nombre", e.target.value); }})
+      ),
+      React.createElement("div", null,
+        React.createElement("label", {style: s.label}, "Día de reparto"),
+        React.createElement("select", {style: s.select, value: datos.dia,
+          onChange: function(e){ set("dia", e.target.value); }},
+          diasOpc.map(function(d){ return React.createElement("option", {key:d, value:d}, d); })
+        )
+      ),
+      campos.map(function(par){
+        return React.createElement("div", {key: par[0]},
+          React.createElement("label", {style: s.label}, par[1]),
+          React.createElement("input", {style: s.input, value: datos[par[0]]||"", placeholder: par[1],
+            onChange: function(e){ set(par[0], e.target.value); }})
+        );
+      }),
+      React.createElement("div", null,
+        React.createElement("label", {style: s.label}, "Notas"),
+        React.createElement("input", {style: s.input, value: datos.notas||"", placeholder: "ej: timbre roto, cobrar $2000...",
+          onChange: function(e){ set("notas", e.target.value); }})
+      ),
+      React.createElement("div", {style: {display:"flex", gap:10}},
+        [["sifon","Sifón"],["bidon10","10L"],["bidon20","20L"]].map(function(par){
+          return React.createElement("div", {key:par[0], style:{flex:1}},
+            React.createElement("label", {style:{...s.label, textAlign:"center"}}, par[1]),
+            React.createElement("input", {style:{...s.input, textAlign:"center"}, type:"number", min:0,
+              value: datos[par[0]]||0,
+              onChange: function(e){ set(par[0], Number(e.target.value)); }})
+          );
+        })
+      ),
+      React.createElement("button", {
+        style: Object.assign({}, s.btnPrimary, {marginTop:8, padding:14, fontSize:15}),
+        onClick: guardar
+      }, "✓ Guardar cliente")
+    )
+  );
+}

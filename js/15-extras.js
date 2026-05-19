@@ -269,7 +269,7 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
 }
 
 // ── TodosClientesRepartidor ──────────────────────────────────
-function TodosClientesRepartidor({clientes,ventas,onSeleccionar,onVolver}) {
+function TodosClientesRepartidor({clientes,ventas,onSeleccionar,onNuevoCliente,onVolver}) {
   const [busq,setBusq] = React.useState("");
   const [diaFiltro,setDiaFiltro] = React.useState("todos");
   const filtrados = clientes
@@ -281,6 +281,7 @@ function TodosClientesRepartidor({clientes,ventas,onSeleccionar,onVolver}) {
       <div style={s.header}>
         <button style={s.backBtn} onClick={onVolver}>← Volver</button>
         <span style={s.headerTitle}>Todos los clientes</span>
+        <button style={{...s.btn,padding:"6px 12px",fontSize:13}} onClick={onNuevoCliente}>+ Nuevo</button>
       </div>
       <div style={{padding:"10px 14px 6px"}}>
         <input style={s.input} placeholder="Buscar cliente o barrio..." value={busq} onChange={e=>setBusq(e.target.value)} />
