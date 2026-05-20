@@ -81,7 +81,26 @@ function OnboardingRoles({uid, email, onListo}) {
 
 // ── AppRepartidor ──────────────────────────────────────────────
 function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
-  // Buscar el reparto que corresponde al código del repartidor
+  // ── Chequeo de bloqueo ────────────────────────────────
+  const [bloqueado, setBloqueado] = React.useState(null);
+  React.useEffect(()=>{
+    if(!window.db || !uid){ setBloqueado(false); return; }
+    window.db.collection("users").doc(uid).get()
+      .then(snap=>setBloqueado(!!(snap.exists&&snap.data().bloqueado===true)))
+      .catch(()=>setBloqueado(false));
+  },[uid]);
+
+  if(bloqueado===null) return <Cargando texto="Verificando acceso..." />;
+  if(bloqueado) return (
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,background:"var(--color-background-primary)",gap:16,textAlign:"center"}}>
+      <div style={{fontSize:54}}>🔒</div>
+      <h2 style={{color:"var(--color-text-danger)",margin:0}}>Acceso bloqueado</h2>
+      <p style={{color:"var(--color-text-secondary)",maxWidth:280,lineHeight:1.5}}>
+        Tu acceso fue desactivado por el administrador. Contactá al dueño del negocio.
+      </p>
+    </div>
+  );
+  // ── Buscar el reparto que corresponde al código del repartidor
   const [pantalla,   setPantalla]   = React.useState("inicio");
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
   const [clienteId,  setClienteId]  = React.useState(null);
@@ -341,8 +360,136 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 }
 
 
-// ── Login ──────────────────────────────────────────────
+// ── PantallaActivacionRM ──────────────────────────────────────────────
+function PantallaActivacionRM({onActivado}) {
+  const [codigo, setCodigo]   = React.useState("");
+  const [celular, setCelular] = React.useState("");
+  const [email, setEmail]     = React.useState("");
+  const [nombre, setNombre]   = React.useState("");
+  const [paso, setPaso]       = React.useState(1);
+  const [tipo, setTipo]       = React.useState(null); // "dueno" | "repartidor"
+  const [licData, setLicData] = React.useState(null);
+  const [error, setError]     = React.useState("");
+  const [cargando, setCargando] = React.useState(false);
+
+  const getDeviceId = () => {
+    let id = localStorage.getItem("sr_device_id");
+    if(!id){ id="dev_"+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem("sr_device_id",id); }
+    return id;
+  };
+
+  const verificarCodigo = async () => {
+    const cod = codigo.trim().toUpperCase();
+    if(!cod){ setError("Ingresá el código"); return; }
+    setCargando(true); setError("");
+    try {
+      // 6 letras = código de repartidor (invitación del dueño)
+      if(cod.length === 6 && !cod.includes("-")) {
+        const res = await canjearInvitacion(getDeviceId(), "", cod);
+        if(!res.ok){ setError(res.msg); setCargando(false); return; }
+        const profile = {
+          rol:"repartidor", negocioId:res.negocioId, nombre:res.nombre,
+          sectores:res.sectores||[], deviceId:getDeviceId(), codigo:cod, activado:true
+        };
+        localStorage.setItem("rm_licencia", JSON.stringify(profile));
+        onActivado(profile);
+        setCargando(false); return;
+      }
+      // Código de dueño (ej: RM-XXXX)
+      const snap = await window.dbLicencias.collection("licencias").doc(cod).get();
+      if(!snap.exists){ setError("Código inválido. Verificá que esté bien escrito."); setCargando(false); return; }
+      const lic = snap.data();
+      if(lic.app && lic.app !== "reparto-multi"){ setError("Este código no es para Reparto Multi."); setCargando(false); return; }
+      if(lic.estado === "inactivo"){ setError("Licencia desactivada. Contactá al soporte."); setCargando(false); return; }
+      if(lic.estado === "pendiente"){ setError("Licencia pendiente de activación. Contactá a Emma Soluciones."); setCargando(false); return; }
+      if(lic.estado === "usado" && lic.deviceId && lic.deviceId !== getDeviceId()){ setError("Este código ya fue usado en otro dispositivo."); setCargando(false); return; }
+      setTipo("dueno"); setLicData(lic); setPaso(2);
+    } catch(e){ setError("Error de conexión. Verificá tu internet."); }
+    setCargando(false);
+  };
+
+  const completarActivacion = async () => {
+    if(!nombre.trim()||!celular.trim()||!email.trim()){ setError("Completá todos los campos"); return; }
+    if(!/\S+@\S+\.\S+/.test(email)){ setError("Email inválido"); return; }
+    setCargando(true); setError("");
+    try {
+      const cod = codigo.trim().toUpperCase();
+      const deviceId = getDeviceId();
+      await window.dbLicencias.collection("licencias").doc(cod).update({
+        estado:"usado", deviceId, celular:celular.trim(), email:email.trim(),
+        negocio:nombre.trim(), activadoEn:new Date().toISOString()
+      });
+      const profile = {
+        rol:"dueño", negocioId:licData.negocioId||cod, pin:licData.pin,
+        nombre:nombre.trim(), email:email.trim(), celular:celular.trim(),
+        deviceId, codigo:cod, activado:true
+      };
+      localStorage.setItem("rm_licencia", JSON.stringify(profile));
+      if(window.enviarEmailBrevoRM) {
+        await window.enviarEmailBrevoRM({
+          to:email.trim(), toName:nombre.trim(),
+          subject:"✅ Tu Sistema de Reparto fue activado",
+          htmlContent:`<h2>¡Bienvenido, ${nombre.trim()}!</h2><p>Tu app <b>Sistema de Reparto Multi</b> fue activada correctamente.</p><p>Tu PIN de acceso es: <b>${licData.pin}</b></p><p>Guardalo en un lugar seguro.</p>`
+        });
+      }
+      onActivado(profile);
+    } catch(e){ setError("Error al activar. Intentá de nuevo."); }
+    setCargando(false);
+  };
+
+  const stInp = {...s.input};
+  const stBtn = {...s.btnPrimary, opacity:cargando?0.6:1};
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,minHeight:"100vh",gap:16,background:"var(--color-background-primary)"}}>
+      <div style={{width:70,height:70,borderRadius:"50%",background:"var(--color-background-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>💧</div>
+      <h1 style={{fontSize:22,fontWeight:600,color:"var(--color-text-primary)",textAlign:"center",margin:0}}>Sistema de Reparto</h1>
+
+      {paso===1&&<>
+        <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+          Ingresá el código de activación que recibiste.<br/>
+          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: código de 6 letras</span>
+        </p>
+        <div style={{width:"100%",maxWidth:320}}>
+          <label style={s.label}>Código de activación</label>
+          <input style={{...stInp,textAlign:"center",fontSize:18,letterSpacing:3,textTransform:"uppercase"}}
+            placeholder="RM-XXXX o código de 6 letras"
+            value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
+            onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
+        </div>
+        {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
+        <button style={{...stBtn,width:200}} disabled={cargando} onClick={verificarCodigo}>
+          {cargando?"Verificando...":"Continuar →"}
+        </button>
+      </>}
+
+      {paso===2&&<>
+        <p style={{fontSize:14,color:"var(--color-text-success)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+          ✓ Código válido. Completá tus datos para activar.
+        </p>
+        <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:10}}>
+          <div><label style={s.label}>Nombre del negocio *</label>
+            <input style={stInp} placeholder="Ej: Distribuidora La Catalina" value={nombre} onChange={e=>setNombre(e.target.value)} /></div>
+          <div><label style={s.label}>Número de celular *</label>
+            <input style={stInp} type="tel" placeholder="3816559001" value={celular} onChange={e=>setCelular(e.target.value)} /></div>
+          <div><label style={s.label}>Email *</label>
+            <input style={stInp} type="email" placeholder="tu@email.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
+        </div>
+        {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
+        <button style={{...stBtn,width:200}} disabled={cargando} onClick={completarActivacion}>
+          {cargando?"Activando...":"Activar app →"}
+        </button>
+      </>}
+    </div>
+  );
+}
+
+// ── Login (ya no se usa, reemplazado por PantallaActivacionRM) ──────────────────────────────────────────────
 function Login({onLogin}) {
+  return <PantallaActivacionRM onActivado={onLogin||function(){}} />;
+}
+
+
   const [modo, setModo]         = React.useState("login"); // "login" | "registro"
   const [email, setEmail]       = React.useState("");
   const [pass, setPass]         = React.useState("");

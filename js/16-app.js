@@ -3,25 +3,32 @@
 // ════════════════════════════════════════════════════════════════════
 
 function App() {
-  const [usuario, setUsuario] = React.useState(undefined);
-  const [perfil,  setPerfil]  = React.useState(undefined);
+  const [fase, setFase] = React.useState(()=>{
+    const lic = window.getLicenciaRM ? window.getLicenciaRM() : null;
+    if(!lic || !lic.activado) return "activacion";
+    if(lic.rol === "repartidor") return "app";
+    return "pin";
+  });
   const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("sr_tema"));
 
-  React.useEffect(()=>{
-    if(!window.auth){ setUsuario(null); setPerfil(null); return; }
-    return window.auth.onAuthStateChanged(function(u){
-      setUsuario(u||null);
-      if(!u){ setPerfil(null); return; }
-      getUserProfile(u.uid).then(function(p){ setPerfil(p||null); });
-    });
-  },[]);
+  if(fase === "activacion") {
+    return <PantallaActivacionRM onActivado={lic=>{
+      setFase(lic.rol === "repartidor" ? "app" : "pin");
+    }} />;
+  }
 
-  if(usuario===undefined||perfil===undefined) return <Cargando />;
-  if(!usuario) return <Login />;
+  const lic = window.getLicenciaRM ? window.getLicenciaRM() : null;
+
+  if(fase === "pin") {
+    return <PantallaPin pin={lic?.pin} onOk={()=>setFase("app")} />;
+  }
+
   if(!temaElegido) return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("sr_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
-  if(!perfil || !perfil.negocioId) return <OnboardingRoles uid={usuario.uid} email={usuario.email} onListo={(p)=>setPerfil(p)} />;
-  if(perfil.rol==="repartidor") return <AppRepartidor uid={usuario.uid} perfil={perfil} />;
-  return <AppPrincipal uid={usuario.uid} email={usuario.email} perfil={perfil} />;
+
+  if(!lic) return <PantallaActivacionRM onActivado={lic2=>{ setFase(lic2.rol==="repartidor"?"app":"pin"); }} />;
+
+  if(lic.rol === "repartidor") return <AppRepartidor uid={lic.deviceId} perfil={lic} />;
+  return <AppPrincipal uid={lic.deviceId||lic.negocioId} email={lic.email} perfil={lic} />;
 }
 
 function AppPrincipal({uid, email: emailProp, perfil}) {

@@ -75,7 +75,6 @@ self.addEventListener('fetch',e=>{
       }
       window.db = firebase.firestore(); window.firebaseDB = window.db;
 
-      // ── LICENCIAS: conecta al proyecto del Panel Admin (app-reparto-65035) ──
       var licenciasApp = firebase.apps.find(function(a){ return a.name === "licencias"; });
       if(!licenciasApp) {
         licenciasApp = firebase.initializeApp({
@@ -88,15 +87,28 @@ self.addEventListener('fetch',e=>{
         }, "licencias");
       }
       window.dbLicencias = licenciasApp.firestore();
-      window.db.enablePersistence({synchronizeTabs:false}).catch(function(err){
-        if(err.code==="failed-precondition"||err.code==="unimplemented") {
-          console.warn("Offline persistence not available:", err.code);
-        }
-      });
       window.auth = firebase.auth();
+      // Autenticación anónima para que las reglas de Firestore funcionen
+      window.auth.signInAnonymously().catch(function(){});
     } catch(e) { console.error("Firebase init error:", e); window.db = null; window.auth = null; }
 
-    // ── Funciones multi-usuario ──────────────────────────────────────
+    // ── Helpers licencia ─────────────────────────────────────────────
+    function getLicenciaRM() {
+      try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; }
+    }
+    window.getLicenciaRM = getLicenciaRM;
+
+    const BREVO_KEY_RM = "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";
+    window.enviarEmailBrevoRM = async function({to, toName, subject, htmlContent}) {
+      try {
+        await fetch("https://api.brevo.com/v3/smtp/email", {
+          method:"POST",
+          headers:{"Content-Type":"application/json","api-key":BREVO_KEY_RM},
+          body:JSON.stringify({sender:{name:"Sistema de Reparto · Emma Soluciones",email:"carabajalponce1980@gmail.com"},to:[{email:to,name:toName||to}],subject,htmlContent})
+        });
+      } catch(e) {}
+    };
+
     function getUserProfile(uid) {
       if(!window.db) return Promise.resolve(null);
       return window.db.collection("users").doc(uid).get()
