@@ -78,12 +78,12 @@ self.addEventListener('fetch',e=>{
       var licenciasApp = firebase.apps.find(function(a){ return a.name === "licencias"; });
       if(!licenciasApp) {
         licenciasApp = firebase.initializeApp({
-          apiKey: "AIzaSyDV1i35MLw74hjnSg6rRZgQFIAI8hsJllI",
-          authDomain: "app-reparto-65035.firebaseapp.com",
-          projectId: "app-reparto-65035",
-          storageBucket: "app-reparto-65035.firebasestorage.app",
-          messagingSenderId: "162304851374",
-          appId: "1:162304851374:web:0a60847807c8fe9a7a1c3f"
+          apiKey: "AIzaSyAFQ4ybqIoVV3rWe1FMjMVUZ-qzLNZbdBk",
+          authDomain: "app-control-de-apps.firebaseapp.com",
+          projectId: "app-control-de-apps",
+          storageBucket: "app-control-de-apps.firebasestorage.app",
+          messagingSenderId: "761424199819",
+          appId: "1:761424199819:web:513eeaf0e54f4e1401d48e"
         }, "licencias");
       }
       window.dbLicencias = licenciasApp.firestore();
