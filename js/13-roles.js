@@ -80,8 +80,7 @@ function OnboardingRoles({uid, email, onListo}) {
 
 
 // ── AppRepartidor ──────────────────────────────────────────────
-function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
-  // ── Chequeo de bloqueo ────────────────────────────────
+function AppRepartidorWrapper({uid, perfil, onSalir}) {
   const [bloqueado, setBloqueado] = React.useState(null);
   React.useEffect(()=>{
     if(!window.db || !uid){ setBloqueado(false); return; }
@@ -100,6 +99,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       </p>
     </div>
   );
+  return <AppRepartidor uid={uid} perfil={perfil} onSalir={onSalir} />;
+}
+
+function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   // ── Buscar el reparto que corresponde al código del repartidor
   const [pantalla,   setPantalla]   = React.useState("inicio");
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));

@@ -27,7 +27,7 @@ function App() {
 
   if(!lic) return <PantallaActivacionRM onActivado={lic2=>{ setFase(lic2.rol==="repartidor"?"app":"pin"); }} />;
 
-  if(lic.rol === "repartidor") return <AppRepartidor uid={lic.deviceId} perfil={lic} />;
+  if(lic.rol === "repartidor") return <AppRepartidorWrapper uid={lic.deviceId} perfil={lic} onSalir={()=>{localStorage.removeItem("rm_licencia");window.location.reload();}} />;
   return <AppPrincipal uid={lic.deviceId||lic.negocioId} email={lic.email} perfil={lic} />;
 }
 
