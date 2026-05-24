@@ -1,0 +1,32 @@
+name: Notificaciones Push
+
+on:
+  schedule:
+    # Hora Argentina UTC-3 → correr en UTC
+    - cron: '0 10 * * *'   # 07:00 ARG
+    - cron: '0 16 * * *'   # 13:00 ARG
+    - cron: '0 21 * * *'   # 18:00 ARG
+    - cron: '0 22 * * *'   # 19:00 ARG
+    - cron: '0 23 * * *'   # 20:00 ARG
+  workflow_dispatch:
+
+jobs:
+  notificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm install web-push firebase-admin
+
+      - name: Enviar notificaciones
+        env:
+          FIREBASE_SA:      ${{ secrets.FIREBASE_SA }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_EMAIL:      ${{ secrets.VAPID_EMAIL }}
+        run: node scripts/enviar-notif.js
