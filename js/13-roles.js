@@ -498,48 +498,12 @@ function RepartidoresPanel({negocioId, clientes}) {
   const [repartidores, setRepartidores] = React.useState([]);
   const [invitesPendientes, setInvitesPendientes] = React.useState([]);
   const [cargando, setCargando]         = React.useState(true);
-  const [nombre, setNombre]             = React.useState("");
-  const [sectorInput, setSectorInput]   = React.useState("");
-  const [sectores, setSectores]         = React.useState([]);
-  const [codigo, setCodigo]             = React.useState("");
-  const [generando, setGenerando]       = React.useState(false);
-  const [copiado, setCopiado]           = React.useState(false);
 
   React.useEffect(()=>{
     if(!negocioId) return;
     listarRepartidores(negocioId).then(r=>{ setRepartidores(r); setCargando(false); });
     listarInvitaciones(negocioId).then(inv=>setInvitesPendientes(inv));
   },[negocioId]);
-
-  const agregarSector = () => {
-    const s = sectorInput.trim();
-    if(!s || sectores.includes(s)) return;
-    setSectores([...sectores, s]);
-    setSectorInput("");
-  };
-
-  // Barrios disponibles en clientes
-  const barriosDisponibles = [...new Set((clientes||[]).map(c=>c.barrio).filter(Boolean))].sort();
-
-  const generarCodigo = async () => {
-    if(!nombre.trim()){ alert("Ingresá el nombre del repartidor"); return; }
-    if(sectores.length===0){ alert("Agregá al menos un sector/barrio"); return; }
-    setGenerando(true);
-    const cod = await crearInvitacion(negocioId, nombre.trim(), sectores);
-    setCodigo(cod);
-    setGenerando(false);
-  };
-
-  const copiarCodigo = () => {
-    const texto = `Te invito a usar Sistema de Reparto!\nTu código: ${codigo}\nDescargá la app e ingresá como repartidor.`;
-    if(navigator.share) {
-      navigator.share({ title:"Código de reparto", text:texto });
-    } else {
-      navigator.clipboard?.writeText(texto);
-      setCopiado(true);
-      setTimeout(()=>setCopiado(false), 2000);
-    }
-  };
 
   const eliminar = async (uid) => {
     if(!window.confirm("¿Eliminar este repartidor?")) return;
@@ -591,46 +555,13 @@ function RepartidoresPanel({negocioId, clientes}) {
         </div>
       )}
 
-      {/* Generar invitación */}
-      <div style={{...s.card,margin:0,borderLeft:"3px solid #5daaff"}}>
-        <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>➕ Agregar repartidor</div>
-        <label style={s.label}>Nombre del repartidor</label>
-        <input style={{...s.input,marginBottom:12}} placeholder="Ej: Juan Pérez" value={nombre} onChange={e=>{setNombre(e.target.value);setCodigo("");}} />
-        <label style={s.label}>Sectores / Barrios asignados</label>
-        {sectores.length>0&&(
-          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
-            {sectores.map(s=>(
-              <span key={s} style={{background:"#1e3a5f",color:"#5daaff",borderRadius:6,padding:"4px 10px",fontSize:12,display:"flex",alignItems:"center",gap:6}}>
-                {s}
-                <button style={{background:"none",border:"none",color:"#5daaff",cursor:"pointer",fontSize:14,padding:0,lineHeight:1}} onClick={()=>setSectores(sectores.filter(x=>x!==s))}>×</button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div style={{display:"flex",gap:6,marginBottom:12}}>
-          <input style={{...s.input,flex:2,margin:0}} placeholder="Escribí un barrio..." value={sectorInput}
-            onChange={e=>setSectorInput(e.target.value)}
-            onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();agregarSector();}}}
-            list="barrios-disponibles" />
-          <datalist id="barrios-disponibles">
-            {barriosDisponibles.filter(b=>!sectores.includes(b)).map(b=><option key={b} value={b}/>)}
-          </datalist>
-          <button style={{...s.btn,flex:1,padding:"8px"}} onClick={agregarSector}>+ Agregar</button>
+      {/* Mensaje: crear repartidores desde Panel del dueño */}
+      <div style={{...s.card,margin:0,background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)"}}>
+        <div style={{fontSize:13,color:"var(--color-text-info)",fontWeight:600,marginBottom:6}}>💡 ¿Cómo agregar un repartidor?</div>
+        <div style={{fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.6}}>
+          Andá a <b>Panel del dueño → + Nuevo reparto</b>, completá el nombre y el código se genera solo.<br/>
+          Compartí ese código con el repartidor para que entre a la app.
         </div>
-        <button style={{...s.btnPrimary,width:"100%",padding:12}} disabled={generando} onClick={generarCodigo}>
-          {generando?"Generando...":"🔑 Generar código de invitación"}
-        </button>
-
-        {codigo&&(
-          <div style={{marginTop:14,background:"var(--color-background-tertiary)",borderRadius:10,padding:14,textAlign:"center"}}>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:6}}>Código para {nombre} · {sectores.join(", ")}</div>
-            <div style={{fontSize:36,fontWeight:700,color:"#5daaff",letterSpacing:8,marginBottom:12}}>{codigo}</div>
-            <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:10}}>El repartidor lo ingresa al abrir la app por primera vez</div>
-            <button style={{...s.btnPrimary,width:"100%"}} onClick={copiarCodigo}>
-              {copiado?"✓ Copiado!":"📤 Compartir código"}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
