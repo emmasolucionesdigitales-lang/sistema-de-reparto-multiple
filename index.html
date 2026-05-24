@@ -110,7 +110,7 @@ self.addEventListener('notificationclick',e=>{
     }
     window.getLicenciaRM = getLicenciaRM;
 
-    const BREVO_KEY_RM = "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";
+    const BREVO_KEY_RM = "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";
     window.enviarEmailBrevoRM = async function({to, toName, subject, htmlContent}) {
       try {
         await fetch("https://api.brevo.com/v3/smtp/email", {
