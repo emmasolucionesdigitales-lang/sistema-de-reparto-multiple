@@ -247,6 +247,17 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
               Los productos, stock y repartos se conservan
             </div>
           </div>
+
+          {/* Soporte */}
+          <div style={{marginTop:16,textAlign:"center"}}>
+            <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
+              target="_blank" rel="noopener"
+              style={{display:"inline-flex",alignItems:"center",gap:8,padding:"12px 20px",
+                borderRadius:10,background:"#0a2e1f",border:"1px solid #4dd9a0",
+                color:"#4dd9a0",fontSize:13,fontWeight:600,textDecoration:"none"}}>
+              💬 Soporte por WhatsApp
+            </a>
+          </div>
         </div>
       )}
     </div>

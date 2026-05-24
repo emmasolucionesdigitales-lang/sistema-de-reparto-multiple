@@ -464,6 +464,12 @@ function PantallaActivacionRM({onActivado}) {
         <button style={{...stBtn,width:200}} disabled={cargando} onClick={verificarCodigo}>
           {cargando?"Verificando...":"Continuar →"}
         </button>
+        {/* Soporte */}
+        <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
+          target="_blank" rel="noopener"
+          style={{marginTop:8,fontSize:12,color:"var(--color-text-tertiary)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+          💬 ¿Necesitás ayuda? Escribinos por WhatsApp
+        </a>
       </>}
 
       {paso===2&&<>

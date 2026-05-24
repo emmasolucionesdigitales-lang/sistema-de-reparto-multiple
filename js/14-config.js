@@ -393,6 +393,27 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       {tab==="vincular"&&(
         <div style={{padding:16}}>
           <VincularEmmaControl />
+
+          {/* Soporte y contacto */}
+          <div style={{...s.card,margin:"16px 0 0",background:"var(--color-background-secondary)"}}>
+            <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>
+              💬 Soporte técnico
+            </div>
+            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:14,lineHeight:1.6}}>
+              ¿Tenés algún problema o consulta? Escribinos por WhatsApp y te respondemos a la brevedad.
+            </div>
+            <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
+              target="_blank" rel="noopener"
+              style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                padding:"13px",borderRadius:10,background:"#0a2e1f",
+                border:"1px solid #4dd9a0",color:"#4dd9a0",
+                fontSize:14,fontWeight:600,textDecoration:"none"}}>
+              💬 Abrir WhatsApp
+            </a>
+            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:8,textAlign:"center"}}>
+              Emma Soluciones Digitales · +54 9 381 339-9962
+            </div>
+          </div>
         </div>
       )}
     </div>
