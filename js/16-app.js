@@ -567,6 +567,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       <SyncBar status={syncStatus} isOnline={isOnline} />
       {pantalla==="portada" && <Portada onIngresar={()=>irA("menu")} />}
       {pantalla==="menu" && <MenuRepartos
+        negocioId={negocioId}
         repartos={repartos}
         clientes={clientes}
         ventas={ventas}

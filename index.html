@@ -137,13 +137,25 @@ self.addEventListener('notificationclick',e=>{
       return ref.set({ nombre:nombre, ownerId:uid, creadoEn:new Date().toISOString() })
         .then(function(){ return ref.id; });
     }
-    function crearInvitacion(negocioId, nombre, sectores) {
+    function crearInvitacion(negocioId, nombre, sectores, codigoParam) {
       if(!window.db) return Promise.resolve(null);
-      var codigo = Math.random().toString(36).slice(2,8).toUpperCase();
+      // Si viene un código ya generado (desde MenuRepartos) lo usa; si no genera uno nuevo
+      var codigo = codigoParam || Math.random().toString(36).slice(2,8).toUpperCase();
       return window.db.collection("negocios").doc(negocioId)
         .collection("invites").doc(codigo)
         .set({ nombre:nombre, sectores:sectores||[], usado:false, creadoEn:new Date().toISOString() })
         .then(function(){ return codigo; });
+    }
+    function listarInvitaciones(negocioId) {
+      if(!window.db) return Promise.resolve([]);
+      return window.db.collection("negocios").doc(negocioId)
+        .collection("invites").where("usado","==",false).get()
+        .then(function(snap){
+          var r=[];
+          snap.forEach(function(d){ r.push({codigo:d.id,...d.data()}); });
+          return r;
+        })
+        .catch(function(){ return []; });
     }
     function canjearInvitacion(uid, email, codigo) {
       if(!window.db) return Promise.resolve({ok:false, msg:"Sin conexión"});

@@ -496,6 +496,7 @@ function Login({onLogin}) {
 // ── Onboarding ──────────────────────────────────────────────
 function RepartidoresPanel({negocioId, clientes}) {
   const [repartidores, setRepartidores] = React.useState([]);
+  const [invitesPendientes, setInvitesPendientes] = React.useState([]);
   const [cargando, setCargando]         = React.useState(true);
   const [nombre, setNombre]             = React.useState("");
   const [sectorInput, setSectorInput]   = React.useState("");
@@ -507,6 +508,7 @@ function RepartidoresPanel({negocioId, clientes}) {
   React.useEffect(()=>{
     if(!negocioId) return;
     listarRepartidores(negocioId).then(r=>{ setRepartidores(r); setCargando(false); });
+    listarInvitaciones(negocioId).then(inv=>setInvitesPendientes(inv));
   },[negocioId]);
 
   const agregarSector = () => {
@@ -553,7 +555,7 @@ function RepartidoresPanel({negocioId, clientes}) {
         <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>👥 Repartidores activos</div>
         {cargando && <div style={{fontSize:13,color:"var(--color-text-tertiary)"}}>Cargando...</div>}
         {!cargando && repartidores.length===0 && (
-          <div style={{fontSize:13,color:"var(--color-text-tertiary)"}}>Aún no hay repartidores. Generá un código abajo.</div>
+          <div style={{fontSize:13,color:"var(--color-text-tertiary)"}}>Aún no hay repartidores activos.</div>
         )}
         {repartidores.map(r=>(
           <div key={r.uid} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
@@ -565,6 +567,29 @@ function RepartidoresPanel({negocioId, clientes}) {
           </div>
         ))}
       </div>
+
+      {/* Invitaciones pendientes (creadas desde Panel del dueño, aún no usadas) */}
+      {invitesPendientes.length>0&&(
+        <div style={{...s.card,margin:0,borderLeft:"3px solid #f5b942"}}>
+          <div style={{fontSize:14,fontWeight:500,color:"#f5b942",marginBottom:10}}>⏳ Invitaciones pendientes</div>
+          <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>
+            El repartidor aún no usó su código para ingresar.
+          </div>
+          {invitesPendientes.map(inv=>(
+            <div key={inv.codigo} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{inv.nombre}</div>
+                <div style={{fontFamily:"monospace",fontSize:16,fontWeight:700,color:"#f5b942",letterSpacing:"0.15em"}}>{inv.codigo}</div>
+              </div>
+              <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>{
+                const txt=`Código para ingresar a Sistema de Reparto: ${inv.codigo}`;
+                if(navigator.share){navigator.share({title:"Código de acceso",text:txt});}
+                else{navigator.clipboard?.writeText(txt);alert("Código copiado: "+inv.codigo);}
+              }}>📤 Compartir</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Generar invitación */}
       <div style={{...s.card,margin:0,borderLeft:"3px solid #5daaff"}}>

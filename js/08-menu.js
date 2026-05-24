@@ -2,7 +2,7 @@
 // ◆  08-menu.js — MenuRepartos · MenuDias · DiaPrincipal · PlanillaDelDia · InicioReparto
 // ════════════════════════════════════════════════════════════════════
 
-function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes}) {
+function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes}) {
   const [tab, setTab] = React.useState("repartos");
   const [modoNuevo, setModoNuevo] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState(null);
@@ -10,7 +10,7 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
 
   const genCodigo = () => {
     const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    return Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join("");
+    return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join("");
   };
 
   const guardarReparto = () => {
@@ -21,6 +21,8 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
     } else {
       const nuevo={id:Date.now(),numero:Number(form.numero),repartidorNombre:form.repartidorNombre.trim(),codigo:codUpper,nombre:`Reparto ${form.numero}`};
       saveRepartos([...repartos,nuevo].sort((a,b)=>a.numero-b.numero));
+      // ← Guardar el mismo código como invitación en Firestore para que el repartidor pueda ingresar
+      if(negocioId) crearInvitacion(negocioId, form.repartidorNombre.trim(), [], codUpper);
     }
     setModoNuevo(false);setEditandoId(null);setForm({numero:"",repartidorNombre:"",codigo:""});
   };
@@ -90,7 +92,7 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
             <label style={s.label}>Código de acceso del repartidor</label>
             <div style={{display:"flex",gap:8}}>
               <input style={{...s.input,fontFamily:"monospace",fontSize:18,fontWeight:700,letterSpacing:"0.15em",flex:1,textTransform:"uppercase"}}
-                placeholder="XXXX" maxLength={6} value={form.codigo}
+                placeholder="XXXXXX" maxLength={6} value={form.codigo}
                 onChange={e=>setForm(f=>({...f,codigo:e.target.value.toUpperCase()}))}/>
               <button style={{...s.btn,padding:"8px 12px",fontSize:12,whiteSpace:"nowrap"}}
                 onClick={()=>setForm(f=>({...f,codigo:genCodigo()}))}>🎲 Generar</button>
@@ -200,6 +202,50 @@ function MenuRepartos({repartos,clientes,ventas,onSeleccionar,onConfig,onResumen
                 </div>
               </button>
             ))}
+          </div>
+
+          {/* ── Zona peligrosa: Borrar datos ── */}
+          <div style={{marginTop:24,borderTop:"1px solid var(--color-border-secondary)",paddingTop:16}}>
+            <div style={{fontSize:11,color:"var(--color-text-danger)",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>⚠️ Zona peligrosa</div>
+            <button
+              onClick={async ()=>{
+                if(!window.confirm("⚠️ ¿Borrar TODOS los clientes, ventas y movimientos?\n\nEsto NO se puede deshacer.\n\nLos productos, stock y repartos se conservan.")) return;
+                // 1. Limpiar localStorage
+                ["cat_clientes_v3","cat_ventas_v3","cat_planillas_v1",
+                 "cat_novisitas_v1","cat_prospectos_v1","cat_recordatorios_v1",
+                 "lc_hist_precios","lc_ultimo_backup"]
+                  .forEach(k=>localStorage.removeItem(k));
+                Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).forEach(k=>localStorage.removeItem(k));
+                // 2. Limpiar Firestore
+                if(window.db && negocioId){
+                  try{
+                    const col=window.db.collection("negocios").doc(negocioId).collection("datos");
+                    const snap=await col.get();
+                    const ops=[];
+                    snap.forEach(doc=>{
+                      const id=doc.id;
+                      if(id.startsWith("cl_")||id.startsWith("vt_")||id==="clientes_meta"||id==="ventas_meta"){
+                        ops.push(doc.ref.delete());
+                      } else if(id==="config"){
+                        ops.push(doc.ref.update({
+                          planillas:{},noVisitas:[],recordatorios:[],
+                          prospectos:[],histPrecios:[],mantVeh:[]
+                        }));
+                      }
+                    });
+                    await Promise.all(ops);
+                  }catch(e){console.error("Error al limpiar Firestore:",e);}
+                }
+                window.location.reload();
+              }}
+              style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid var(--color-text-danger)",
+                background:"rgba(220,38,38,0.1)",color:"var(--color-text-danger)",
+                fontSize:13,fontWeight:600,cursor:"pointer"}}>
+              🗑️ Borrar clientes, ventas y movimientos
+            </button>
+            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6,textAlign:"center"}}>
+              Los productos, stock y repartos se conservan
+            </div>
           </div>
         </div>
       )}
