@@ -34,6 +34,7 @@ function App() {
 function AppPrincipal({uid, email: emailProp, perfil}) {
   const negocioId = perfil?.negocioId || uid;
   const [operandoReparto, setOperandoReparto] = React.useState(null);
+  const [tabConfig, setTabConfig] = React.useState("stock");
   const [pantalla, setPantalla]   = useState(()=>{
     const h = window.location.hash.slice(1)||"portada";
     const needsDia = ["diaPrincipal","selectorFechaClientes","selectorFechaPlanilla","inicioReparto","clientes","detalleCliente","venta","planilla"]; // historial does NOT need dia
@@ -572,7 +573,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         clientes={clientes}
         ventas={ventas}
         onSeleccionar={(rep)=>{setRepartoActual(rep);irA("diasReparto");}}
-        onConfig={()=>irA("config")}
+        onConfig={(tab)=>{setTabConfig(tab||"stock");irA("config");}}
         onResumen={()=>irA("resumen")}
         onStock={()=>irA("stock")}
         onAgenda={()=>irA("agenda")}
@@ -819,7 +820,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       />}
       {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} ventas={ventas} productos={productos} planillas={planillas} onVolver={()=>irA("menu")} />}
       {pantalla==="resumen"        && <Resumen ventas={ventas} clientes={clientes} productos={productos} planillas={planillas} noVisitas={noVisitas||[]} onVolver={()=>irA("menu")} />}
-      {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDia} setCargasDia={saveCargasDia} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} />}
+      {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDia} setCargasDia={saveCargasDia} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} tabInicial={tabConfig} />}
     </div>
     {/* Botón flotante de escala — fuera del zoom para que no se afecte */}
     <button

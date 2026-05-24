@@ -2,8 +2,8 @@
 // ◆  14-config.js — Config
 // ════════════════════════════════════════════════════════════════════
 
-function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId}) {
-  const [tab,setTab]=useState("stock");
+function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial}) {
+  const [tab,setTab]=useState(tabInicial||"stock");
   const [editandoId,setEditandoId]=useState(null);
   const [importando,setImportando]=useState(false);
   const [mantVeh,setMantVeh] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]");}catch{return [];}});
@@ -169,6 +169,42 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             <button style={s.btnPrimary} onClick={()=>{syncData({stock});alert("Stock guardado");}}>Guardar stock</button>
         </div>
       </>)}
+        {tab==="cargas"&&(
+          <div style={{padding:16}}>
+            <div style={{...s.card,margin:"0 0 14px",background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",padding:"10px 14px"}}>
+              <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-info)"}}>🚚 Carga del camión por día</span>
+            </div>
+            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
+              Cantidad que sale del depósito cada día. Se precarga automáticamente al iniciar el reparto.
+            </div>
+            {["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"].map(dia=>{
+              const c = cargasDia?.[dia] || {soda:0,b10:0,b20:0};
+              const upd = (k,v) => {
+                const nd = {...(cargasDia||{}), [dia]:{...c,[k]:Number(v)||0}};
+                setCargasDia(nd);
+              };
+              return (
+                <div key={dia} style={{...s.card,margin:"0 0 10px"}}>
+                  <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:10}}>{dia}</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                    {[["soda","🫧 Soda"],["b10","💧 Bidón 10L"],["b20","🫙 Bidón 20L"]].map(([k,lbl])=>(
+                      <div key={k}>
+                        <label style={{...s.label,textAlign:"center",fontSize:10}}>{lbl}</label>
+                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                          value={c[k]??0}
+                          onChange={e=>upd(k,e.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            <button style={s.btnPrimary} onClick={()=>{syncData({cargasDia});alert("✅ Cargas guardadas");}}>
+              Guardar cargas
+            </button>
+          </div>
+        )}
         {tab==="historial"&&(
           <CargaHistorica
             clientes={clientes}
@@ -180,106 +216,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
         )}
         {tab==="backup"&&(
         <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
-          <div style={{...s.card,margin:0,background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",padding:"10px 14px",marginBottom:12}}>
-            <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-info)"}}>📥 Importar clientes</span>
-          </div>
-          
-          <div style={{...s.card,margin:0,borderLeft:"3px solid #185FA5"}}>
-            <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:6}}>📥 Importar clientes desde planilla Excel</div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10,lineHeight:1.6}}>
-              Usá la planilla oficial <b>planilla_clientes_SR2026.xlsx</b> para cargar tus clientes en bloque. Los clientes importados se agregan a los existentes.
-            </div>
-            <div style={{...s.card,margin:"0 0 10px",background:"var(--color-background-tertiary)",padding:"10px 12px"}}>
-              <div style={{fontSize:12,fontWeight:500,color:"var(--color-text-warning)",marginBottom:6}}>⚠️ Antes de importar</div>
-              <div style={{fontSize:11,color:"var(--color-text-secondary)",lineHeight:1.7}}>
-                • Completá la planilla con los datos de tus clientes<br/>
-                • Verificá que los días de reparto sean válidos<br/>
-                • Cada cliente debe tener nombre, día y número de orden<br/>
-                • El saldo negativo significa que el cliente debe dinero
-              </div>
-            </div>
-            <input
-              type="file" accept=".xlsx"
-              style={{...s.input,marginBottom:10,padding:"8px",fontSize:13}}
-              onChange={e=>{
-                const f = e.target.files[0];
-                if(f) importarClientesPlanilla(f, clientes, (nuevos)=>{ setClientes(nuevos); syncData({clientes:nuevos}); });
-                e.target.value="";
-              }}
-            />
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>Solo archivos .xlsx — usa la planilla oficial del sistema</div>
-          </div>
 
-          {/* Resumen de clientes actuales */}
-          {clientes.length > 0 && (
-            <div style={{...s.card,margin:0}}>
-              <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)",marginBottom:8}}>
-                👥 Clientes actuales: <b>{clientes.length}</b>
-              </div>
-              {["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"].map(d=>{
-                const n = clientes.filter(c=>c.dia===d).length;
-                if(!n) return null;
-                return (
-                  <div key={d} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
-                    <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{d}</span>
-                    <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{n} clientes</span>
-                  </div>
-                );
-              })}
-              <button style={{...s.btnDanger,width:"100%",marginTop:10,fontSize:12}} onClick={()=>{
-                if(window.confirm(`¿Eliminar TODOS los ${clientes.length} clientes? Esta acción no se puede deshacer.`)){
-                  setClientes([]); syncData({clientes:[]});
-                }
-              }}>🗑 Borrar todos los clientes</button>
-            </div>
-          )}
-          <div style={{...s.card,margin:0,background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-secondary)",padding:"10px 14px",marginBottom:12}}>
-            <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-primary)"}}>💾 Backup y sincronización</span>
-          </div>
-          
-          {/* RECUPERACION DE EMERGENCIA */}
-          {(()=>{
-            const backupKeys = Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).sort().reverse();
-            if(backupKeys.length===0) return null;
-            return (
-              <div style={{...s.card,margin:0,borderLeft:"3px solid #4dd9a0",background:"#0a2e1f"}}>
-                <div style={{fontSize:14,fontWeight:600,color:"#4dd9a0",marginBottom:4}}>🔄 Recuperar clientes desde backup local</div>
-                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>Si perdiste clientes, podés restaurarlos desde un backup automático guardado en este dispositivo. <strong style={{color:"#f5b942"}}>Solo restaura los CLIENTES, sin tocar ventas ni planillas.</strong></div>
-                {backupKeys.map(key=>{
-                  let data=null;
-                  try{data=JSON.parse(localStorage.getItem(key));}catch(e){}
-                  if(!data) return null;
-                  const fecha=key.replace("lc_backup_","");
-                  const nClientes=(data.clientes||[]).length;
-                  const diasConClientes=[...new Set((data.clientes||[]).map(c=>c.dia))].join(", ");
-                  return (
-                    <div key={key} style={{...s.card,margin:"0 0 8px",background:"var(--color-background-tertiary)",padding:"10px 12px"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-                        <div>
-                          <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>📅 {fecha}</div>
-                          <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>{nClientes} clientes · {diasConClientes||"sin días"}</div>
-                        </div>
-                        <button
-                          style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer"}}
-                          onClick={()=>{
-                            if(window.confirm(`¿Restaurar ${nClientes} clientes desde el backup del ${fecha}?\n\nEsto reemplaza los clientes actuales (${clientes.length}) con los del backup.\nVentas y planillas NO se tocan.`)){
-                              setClientes(data.clientes||[]);
-                              syncData({clientes:data.clientes||[]});
-                              alert(`✅ ${nClientes} clientes restaurados desde ${fecha}`);
-                            }
-                          }}>
-                          Restaurar
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-          <div style={{...s.card,margin:0,background:"var(--color-background-secondary)"}}>
-            <div style={{fontSize:13,color:"var(--color-text-secondary)",lineHeight:1.7}}>Los datos se guardan en el teléfono. Hacé un backup periódico para no perderlos si cambiás de dispositivo o borrás el navegador.</div>
-          </div>
+          {/* Espacio utilizado */}
           <div style={{...s.card,margin:0}}>
             <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:8}}>💾 Espacio utilizado</div>
             {(()=>{
@@ -298,39 +236,92 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
                   <div style={{height:8,background:"var(--color-background-tertiary)",borderRadius:4,overflow:"hidden"}}>
                     <div style={{height:"100%",width:pct+"%",background:color,borderRadius:4,transition:"width 0.3s"}} />
                   </div>
-                  {fotos>0&&<div style={{fontSize:12,color:"var(--color-text-tertiary)",marginTop:6}}>📷 {fotos} fotos de domicilios guardadas</div>}
+                  {fotos>0&&<div style={{fontSize:12,color:"var(--color-text-tertiary)",marginTop:6}}>📷 {fotos} fotos guardadas</div>}
                   {pct>70&&<div style={{fontSize:12,color:"#e05c5c",marginTop:8}}>⚠️ Espacio alto. Eliminá fotos si la app deja de funcionar.</div>}
                 </div>
               );
             })()}
           </div>
+
+          {/* Recuperar desde backup automático */}
+          {(()=>{
+            const backupKeys = Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).sort().reverse();
+            if(backupKeys.length===0) return null;
+            return (
+              <div style={{...s.card,margin:0,borderLeft:"3px solid #4dd9a0",background:"#0a2e1f"}}>
+                <div style={{fontSize:14,fontWeight:600,color:"#4dd9a0",marginBottom:4}}>🔄 Recuperar desde backup automático</div>
+                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>Solo restaura CLIENTES. Ventas y planillas no se tocan.</div>
+                {backupKeys.slice(0,3).map(key=>{
+                  let data=null;
+                  try{data=JSON.parse(localStorage.getItem(key));}catch(e){}
+                  if(!data) return null;
+                  const fecha=key.replace("lc_backup_","");
+                  const nClientes=(data.clientes||[]).length;
+                  return (
+                    <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid rgba(255,255,255,0.1)"}}>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>📅 {fecha}</div>
+                        <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{nClientes} clientes</div>
+                      </div>
+                      <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer"}}
+                        onClick={()=>{
+                          if(window.confirm(`¿Restaurar ${nClientes} clientes desde ${fecha}?`)){
+                            setClientes(data.clientes||[]);
+                            syncData({clientes:data.clientes||[]});
+                            alert(`✅ ${nClientes} clientes restaurados`);
+                          }
+                        }}>Restaurar</button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Exportar */}
           <div style={{...s.card,margin:0}}>
             <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:4}}>📥 Exportar backup</div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>Descarga un Excel con clientes, ventas, planillas y saldos.</div>
-            <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:12}}>Clientes: {clientes.length} · Ventas: {ventas.length} · Planillas: {Object.keys(planillas).length}</div>
-            <button style={s.btnPrimary} onClick={()=>exportarExcel(clientes,ventas,productos,planillas)}>Descargar Excel</button>
+            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>
+              Descarga un Excel con todos tus datos. Guardalo en Drive como respaldo.
+            </div>
+            <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:12}}>
+              {clientes.length} clientes · {ventas.length} ventas · {Object.keys(planillas).length} planillas
+            </div>
+            <button style={s.btnPrimary} onClick={()=>exportarExcel(clientes,ventas,productos,planillas)}>
+              Descargar Excel
+            </button>
           </div>
-          <div style={{...s.card,margin:0,borderLeft:"3px solid #EF9F27"}}>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:4}}>🔄 Forzar sincronización</div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:12}}>Si en un dispositivo no aparecen los clientes, usá este botón desde el dispositivo donde SÍ se ven bien. Sube todos los datos actuales a la nube y los demás dispositivos los van a recibir al reabrir la app.</div>
-            <button style={{...s.btn,width:"100%",padding:"12px",fontSize:14,background:"#EF9F27",color:"#fff",border:"none"}} onClick={()=>{
-              if(window.confirm("¿Subir todos los datos actuales a la nube? Esto va a sobreescribir lo que haya guardado.")){
-                cloudSave({clientes,ventas,planillas,stock,productos,noVisitas:(noVisitas||[]),prospectos:(prospectos||[])}, uid, negocioId)
-                  .then(()=>alert("✅ Datos sincronizados. Cerrá y volvé a abrir la app en el otro dispositivo."))
-                  .catch(()=>alert("❌ Error al sincronizar. Verificá tu conexión."));
-              }
-            }}>Subir datos a la nube ahora</button>
-          </div>
+
+          {/* Importar backup */}
           <div style={{...s.card,margin:0}}>
             <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:4}}>📤 Importar backup</div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:12}}>Restaura datos desde un Excel generado por esta app. Reemplaza todo lo actual.</div>
+            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:12}}>
+              Restaura desde un Excel generado por esta app. Reemplaza todo lo actual.
+            </div>
             {!importando
               ?<button style={{...s.btn,width:"100%",padding:"12px",fontSize:14}} onClick={()=>setImportando(true)}>Seleccionar archivo Excel</button>
               :<div>
-                <input type="file" accept=".xlsx" style={{...s.input,marginBottom:8,padding:"6px"}} onChange={e=>{if(e.target.files[0]){if(window.confirm("¿Reemplazar todos los datos con el backup?")){importarBackup(e.target.files[0],setClientes,setVentas,setPlanillas);}setImportando(false);}}} />
+                <input type="file" accept=".xlsx" style={{...s.input,marginBottom:8,padding:"6px"}}
+                  onChange={e=>{if(e.target.files[0]){if(window.confirm("¿Reemplazar todos los datos con el backup?")){importarBackup(e.target.files[0],setClientes,setVentas,setPlanillas);}setImportando(false);}}} />
                 <button style={{...s.btn,width:"100%"}} onClick={()=>setImportando(false)}>Cancelar</button>
               </div>
             }
+          </div>
+
+          {/* Forzar sincronización */}
+          <div style={{...s.card,margin:0,borderLeft:"3px solid #EF9F27"}}>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:4}}>🔄 Forzar sincronización</div>
+            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:12}}>
+              Si en otro dispositivo no aparecen los datos, usá este botón desde el dispositivo donde SÍ se ven.
+            </div>
+            <button style={{...s.btn,width:"100%",padding:"12px",fontSize:14,background:"#EF9F27",color:"#fff",border:"none"}}
+              onClick={()=>{
+                if(window.confirm("¿Subir todos los datos actuales a la nube?")){
+                  cloudSave({clientes,ventas,planillas,stock,productos,noVisitas:(noVisitas||[]),prospectos:(prospectos||[])}, uid, negocioId)
+                    .then(()=>alert("✅ Datos sincronizados."))
+                    .catch(()=>alert("❌ Error. Verificá tu conexión."));
+                }
+              }}>Subir datos a la nube ahora</button>
           </div>
         </div>
         )}

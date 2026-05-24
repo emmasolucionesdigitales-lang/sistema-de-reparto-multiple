@@ -182,6 +182,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
               {ico:"👥",lbl:"Todos los clientes",sub:"Ver por repartidor y día",fn:onTodosClientes,color:"#0e7c6b"},
               {ico:"📦",lbl:"Stock",sub:"Inventario actual",fn:onStock,color:"#7c3aed"},
               {ico:"📅",lbl:"Agenda",sub:"Recordatorios",fn:onAgenda,color:"#c17a1a"},
+              {ico:"📋",lbl:"Historial",sub:"Cargar ventas pasadas",fn:()=>onConfig&&onConfig("historial"),color:"#1a5e7a"},
               {ico:"📥",lbl:"Importar clientes",sub:"Cargar desde Excel",fn:onImportarClientes,color:"#1a7a5e"},
               {ico:"⚙️",lbl:"Configuración",sub:"Productos y ajustes",fn:onConfig,color:"#555"},
             ].map(({ico,lbl,sub,fn,color})=>(
