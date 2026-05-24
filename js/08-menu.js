@@ -2,8 +2,9 @@
 // ◆  08-menu.js — MenuRepartos · MenuDias · DiaPrincipal · PlanillaDelDia · InicioReparto
 // ════════════════════════════════════════════════════════════════════
 
-function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes}) {
-  const [tab, setTab] = React.useState("repartos");
+function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,tabInicial,onTabChange}) {
+  const [tab, setTab] = React.useState(tabInicial||"repartos");
+  const cambiarTab = (t) => { setTab(t); if(onTabChange) onTabChange(t); };
   const [modoNuevo, setModoNuevo] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState(null);
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
@@ -46,7 +47,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
       {/* ── PESTAÑAS ── */}
       <div style={{display:"flex",borderBottom:"2px solid var(--color-border-secondary)"}}>
         {[["repartos","🚚  Repartos"],["herramientas","🛠  Herramientas"]].map(([id,lbl])=>(
-          <button key={id} onClick={()=>setTab(id)}
+          <button key={id} onClick={()=>cambiarTab(id)}
             style={{flex:1,padding:"11px 4px",fontSize:12,fontWeight:700,border:"none",cursor:"pointer",
               background:"transparent",
               color:tab===id?"#5daaff":"var(--color-text-tertiary)",
@@ -179,12 +180,9 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {[
               {ico:"📊",lbl:"Resumen",sub:"Ventas del período",fn:onResumen,color:"#185FA5"},
-              {ico:"👥",lbl:"Todos los clientes",sub:"Ver por repartidor y día",fn:onTodosClientes,color:"#0e7c6b"},
-              {ico:"📦",lbl:"Stock",sub:"Inventario actual",fn:onStock,color:"#7c3aed"},
+              {ico:"👥",lbl:"Todos los clientes",sub:"Ver y registrar por día",fn:onTodosClientes,color:"#0e7c6b"},
               {ico:"📅",lbl:"Agenda",sub:"Recordatorios",fn:onAgenda,color:"#c17a1a"},
-              {ico:"📋",lbl:"Historial",sub:"Cargar ventas pasadas",fn:()=>onConfig&&onConfig("historial"),color:"#1a5e7a"},
-              {ico:"📥",lbl:"Importar clientes",sub:"Cargar desde Excel",fn:onImportarClientes,color:"#1a7a5e"},
-              {ico:"⚙️",lbl:"Configuración",sub:"Productos y ajustes",fn:onConfig,color:"#555"},
+              {ico:"⚙️",lbl:"Configuración",sub:"Productos, stock, backup",fn:()=>onConfig&&onConfig("stock"),color:"#555"},
             ].map(({ico,lbl,sub,fn,color})=>(
               <button key={lbl} onClick={fn}
                 style={{display:"flex",alignItems:"center",gap:10,padding:"14px 12px",
@@ -203,50 +201,6 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                 </div>
               </button>
             ))}
-          </div>
-
-          {/* ── Zona peligrosa: Borrar datos ── */}
-          <div style={{marginTop:24,borderTop:"1px solid var(--color-border-secondary)",paddingTop:16}}>
-            <div style={{fontSize:11,color:"var(--color-text-danger)",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>⚠️ Zona peligrosa</div>
-            <button
-              onClick={async ()=>{
-                if(!window.confirm("⚠️ ¿Borrar TODOS los clientes, ventas y movimientos?\n\nEsto NO se puede deshacer.\n\nLos productos, stock y repartos se conservan.")) return;
-                // 1. Limpiar localStorage
-                ["cat_clientes_v3","cat_ventas_v3","cat_planillas_v1",
-                 "cat_novisitas_v1","cat_prospectos_v1","cat_recordatorios_v1",
-                 "lc_hist_precios","lc_ultimo_backup"]
-                  .forEach(k=>localStorage.removeItem(k));
-                Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).forEach(k=>localStorage.removeItem(k));
-                // 2. Limpiar Firestore
-                if(window.db && negocioId){
-                  try{
-                    const col=window.db.collection("negocios").doc(negocioId).collection("datos");
-                    const snap=await col.get();
-                    const ops=[];
-                    snap.forEach(doc=>{
-                      const id=doc.id;
-                      if(id.startsWith("cl_")||id.startsWith("vt_")||id==="clientes_meta"||id==="ventas_meta"){
-                        ops.push(doc.ref.delete());
-                      } else if(id==="config"){
-                        ops.push(doc.ref.update({
-                          planillas:{},noVisitas:[],recordatorios:[],
-                          prospectos:[],histPrecios:[],mantVeh:[]
-                        }));
-                      }
-                    });
-                    await Promise.all(ops);
-                  }catch(e){console.error("Error al limpiar Firestore:",e);}
-                }
-                window.location.reload();
-              }}
-              style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid var(--color-text-danger)",
-                background:"rgba(220,38,38,0.1)",color:"var(--color-text-danger)",
-                fontSize:13,fontWeight:600,cursor:"pointer"}}>
-              🗑️ Borrar clientes, ventas y movimientos
-            </button>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6,textAlign:"center"}}>
-              Los productos, stock y repartos se conservan
-            </div>
           </div>
 
           {/* Soporte */}

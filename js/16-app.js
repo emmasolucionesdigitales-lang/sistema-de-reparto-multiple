@@ -35,6 +35,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const negocioId = perfil?.negocioId || uid;
   const [operandoReparto, setOperandoReparto] = React.useState(null);
   const [tabConfig, setTabConfig] = React.useState("stock");
+  const [tabMenu, setTabMenu] = React.useState("repartos");
   const [pantalla, setPantalla]   = useState(()=>{
     const h = window.location.hash.slice(1)||"portada";
     const needsDia = ["diaPrincipal","selectorFechaClientes","selectorFechaPlanilla","inicioReparto","clientes","detalleCliente","venta","planilla"]; // historial does NOT need dia
@@ -582,6 +583,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onOperarReparto={(rep)=>setOperandoReparto(rep)}
         onTodosClientes={()=>irA("vistaClientesGeneral")}
         onImportarClientes={()=>irA("importarClientes")}
+        tabInicial={tabMenu}
+        onTabChange={setTabMenu}
       />}
       {pantalla==="diasReparto" && repartoActual && <MenuDias
         dias={DIAS}

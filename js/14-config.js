@@ -323,6 +323,43 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
                 }
               }}>Subir datos a la nube ahora</button>
           </div>
+
+          {/* Zona peligrosa */}
+          <div style={{borderTop:"1px solid var(--color-border-secondary)",paddingTop:16}}>
+            <div style={{fontSize:11,color:"var(--color-text-danger)",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>⚠️ Zona peligrosa</div>
+            <button
+              onClick={async ()=>{
+                if(!window.confirm("⚠️ ¿Borrar TODOS los clientes, ventas y movimientos?\n\nEsto NO se puede deshacer.\nLos productos, stock y repartos se conservan.")) return;
+                ["cat_clientes_v3","cat_ventas_v3","cat_planillas_v1","cat_novisitas_v1",
+                 "cat_prospectos_v1","cat_recordatorios_v1","lc_hist_precios","lc_ultimo_backup"]
+                  .forEach(k=>localStorage.removeItem(k));
+                Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).forEach(k=>localStorage.removeItem(k));
+                if(window.db && negocioId){
+                  try{
+                    const col=window.db.collection("negocios").doc(negocioId).collection("datos");
+                    const snap=await col.get();
+                    const ops=[];
+                    snap.forEach(doc=>{
+                      const id=doc.id;
+                      if(id.startsWith("cl_")||id.startsWith("vt_")||id==="clientes_meta"||id==="ventas_meta"){
+                        ops.push(doc.ref.delete());
+                      } else if(id==="config"){
+                        ops.push(doc.ref.update({planillas:{},noVisitas:[],recordatorios:[],prospectos:[],histPrecios:[],mantVeh:[]}));
+                      }
+                    });
+                    await Promise.all(ops);
+                  }catch(e){console.error(e);}
+                }
+                window.location.reload();
+              }}
+              style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid var(--color-text-danger)",
+                background:"rgba(220,38,38,0.1)",color:"var(--color-text-danger)",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+              🗑️ Borrar clientes, ventas y movimientos
+            </button>
+            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6,textAlign:"center"}}>
+              Los productos, stock y repartos se conservan
+            </div>
+          </div>
         </div>
         )}
       {tab==="vehiculo"&&(
