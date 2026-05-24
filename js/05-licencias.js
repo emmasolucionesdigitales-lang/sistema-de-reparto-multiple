@@ -24,6 +24,7 @@ async function enviarEmailBrevo({to, toName, subject, htmlContent}) {
 function PantallaActivacion({onActivado}) {
   const [codigo, setCodigo] = React.useState("");
   const [celular, setCelular] = React.useState("");
+  const [terminos, setTerminos] = React.useState(false);
   const [email, setEmail] = React.useState("");
   const [negocio, setNegocio] = React.useState("");
   const [paso, setPaso] = React.useState(1); // 1=código, 2=datos
@@ -50,15 +51,19 @@ function PantallaActivacion({onActivado}) {
   const completarActivacion = async () => {
     if(!celular.trim()||!email.trim()||!negocio.trim()) { setError("Completá todos los campos"); return; }
     if(!/\S+@\S+\.\S+/.test(email)) { setError("Email inválido"); return; }
+    if(!terminos) { setError("Debés aceptar los Términos y Condiciones para continuar"); return; }
     setCargando(true); setError("");
     try {
       const codigoUp = codigo.trim().toUpperCase();
       const doc = await window.dbLicencias.collection("licencias").doc(codigoUp).get();
       const lic = doc.data();
+      if(lic.email&&lic.email.trim().toLowerCase()!==email.trim().toLowerCase()){setError("El email no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
+      if(lic.celular&&lic.celular.trim()!==celular.trim()){setError("El celular no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
       const deviceId = getDeviceId();
       await window.dbLicencias.collection("licencias").doc(codigoUp).update({
         estado: "usado", deviceId, celular: celular.trim(),
         email: email.trim(), negocio: negocio.trim(),
+        aceptoTerminos: true, fechaAceptoTerminos: new Date().toISOString(),
         activadoEn: new Date().toISOString()
       });
       // Guardar en localStorage
@@ -106,6 +111,14 @@ function PantallaActivacion({onActivado}) {
           <div><label style={s.label}>Email (recibirás los informes aquí) *</label>
             <input style={s.input} type="email" placeholder="tu@email.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
         </div>
+        <label style={{display:"flex",alignItems:"flex-start",gap:10,maxWidth:320,cursor:"pointer",marginTop:4}}>
+          <input type="checkbox" checked={terminos} onChange={e=>setTerminos(e.target.checked)}
+            style={{marginTop:3,width:18,height:18,accentColor:"var(--color-accent)",flexShrink:0}} />
+          <span style={{fontSize:13,color:"var(--color-text-secondary)",lineHeight:1.5}}>
+            Acepto los <span style={{color:"var(--color-text-info)",fontWeight:600}}>Términos y Condiciones</span> del servicio.
+            La aplicación se contrata en modalidad mensual. El acceso se suspende si el pago no se realiza antes del día 11 de cada mes.
+          </span>
+        </label>
         {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center"}}>{error}</p>}
         <button style={{...s.btnPrimary,width:200,opacity:cargando?0.6:1}} disabled={cargando} onClick={completarActivacion}>
           {cargando?"Activando...":"Activar app →"}

@@ -1190,3 +1190,104 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
 }
 
 
+
+// ════════════════════════════════════════════════════════════════════
+// ◆  usarInformes — Envío de resúmenes por email via Brevo
+// ════════════════════════════════════════════════════════════════════
+function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
+
+  const getLic = () => { try{ return JSON.parse(localStorage.getItem("rm_licencia")||"{}"); }catch{ return {}; } };
+
+  const fmtPesos = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
+
+  const enviarDiario = async (fecha, dia) => {
+    const lic = getLic();
+    if(!lic.email || !window.enviarEmailBrevoRM) return false;
+    try {
+      const ventasDia = (ventas||[]).filter(v=>v.fechaKey===fecha&&v.dia===dia&&!v._esCobro&&!v._esAjuste);
+      const totalNeto = ventasDia.reduce((a,v)=>a+(v.neto||0),0);
+      const totalEfectivo = ventasDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+      const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+      const totalFiado = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
+      const noVisitasDia = (noVisitas||[]).filter(v=>v.fecha===fecha);
+      const htmlContent = `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
+          <h2 style="color:#185FA5;margin-bottom:4px">📋 Cierre del día · ${dia} ${fecha}</h2>
+          <p style="color:#666;font-size:13px;margin-bottom:20px">${lic.negocioNombre||lic.nombre||"Sistema de Reparto"}</p>
+          <div style="background:#f0f7ff;border-radius:10px;padding:16px;margin-bottom:16px">
+            <div style="font-size:28px;font-weight:700;color:#185FA5">${fmtPesos(totalNeto)}</div>
+            <div style="color:#666;font-size:13px">Total del día (${ventasDia.length} entregas)</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <tr><td style="padding:8px 0;color:#555">💵 Efectivo</td><td style="text-align:right;font-weight:600">${fmtPesos(totalEfectivo)}</td></tr>
+            <tr><td style="padding:8px 0;color:#555">📱 Transferencia</td><td style="text-align:right;font-weight:600">${fmtPesos(totalTransfer)}</td></tr>
+            <tr><td style="padding:8px 0;color:#555">📒 Fiado</td><td style="text-align:right;font-weight:600">${fmtPesos(totalFiado)}</td></tr>
+            <tr><td style="padding:8px 0;color:#555">🚫 No visitados</td><td style="text-align:right;font-weight:600">${noVisitasDia.length}</td></tr>
+          </table>
+          <p style="color:#999;font-size:11px;margin-top:20px;text-align:center">Sistema de Reparto · Emma Soluciones Digitales</p>
+        </div>`;
+      await window.enviarEmailBrevoRM({
+        to: lic.email, toName: lic.nombre||"",
+        subject: `📋 Cierre ${dia} ${fecha} · ${fmtPesos(totalNeto)}`,
+        htmlContent
+      });
+      return true;
+    } catch(e) { console.error("enviarDiario:", e); return false; }
+  };
+
+  const enviarSemanal = async (fecha) => {
+    const lic = getLic();
+    if(!lic.email || !window.enviarEmailBrevoRM) return false;
+    try {
+      const d = new Date(fecha+"T12:00:00");
+      const lunesPasado = new Date(d); lunesPasado.setDate(d.getDate()-6);
+      const desde = lunesPasado.toISOString().slice(0,10);
+      const ventasSem = (ventas||[]).filter(v=>v.fechaKey>=desde&&v.fechaKey<=fecha&&!v._esCobro&&!v._esAjuste);
+      const totalSem = ventasSem.reduce((a,v)=>a+(v.neto||0),0);
+      const htmlContent = `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
+          <h2 style="color:#7b3fc9">📊 Resumen semanal</h2>
+          <p style="color:#666;font-size:13px">${desde} al ${fecha}</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:16px;margin:16px 0">
+            <div style="font-size:28px;font-weight:700;color:#7b3fc9">${fmtPesos(totalSem)}</div>
+            <div style="color:#666;font-size:13px">${ventasSem.length} entregas en la semana</div>
+          </div>
+          <p style="color:#999;font-size:11px;text-align:center">Sistema de Reparto · Emma Soluciones Digitales</p>
+        </div>`;
+      await window.enviarEmailBrevoRM({
+        to: lic.email, toName: lic.nombre||"",
+        subject: `📊 Resumen semanal · ${fmtPesos(totalSem)}`,
+        htmlContent
+      });
+      return true;
+    } catch(e) { console.error("enviarSemanal:", e); return false; }
+  };
+
+  const enviarMensual = async (mes, anio) => {
+    const lic = getLic();
+    if(!lic.email || !window.enviarEmailBrevoRM) return false;
+    try {
+      const prefijo = `${anio}-${String(mes).padStart(2,"0")}`;
+      const ventasMes = (ventas||[]).filter(v=>(v.fechaKey||"").startsWith(prefijo)&&!v._esCobro&&!v._esAjuste);
+      const totalMes = ventasMes.reduce((a,v)=>a+(v.neto||0),0);
+      const meses = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+      const htmlContent = `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
+          <h2 style="color:#1a7a5e">📅 Resumen mensual · ${meses[mes]} ${anio}</h2>
+          <div style="background:#f0fff8;border-radius:10px;padding:16px;margin:16px 0">
+            <div style="font-size:28px;font-weight:700;color:#1a7a5e">${fmtPesos(totalMes)}</div>
+            <div style="color:#666;font-size:13px">${ventasMes.length} entregas en el mes</div>
+          </div>
+          <p style="color:#999;font-size:11px;text-align:center">Sistema de Reparto · Emma Soluciones Digitales</p>
+        </div>`;
+      await window.enviarEmailBrevoRM({
+        to: lic.email, toName: lic.nombre||"",
+        subject: `📅 Resumen ${meses[mes]} ${anio} · ${fmtPesos(totalMes)}`,
+        htmlContent
+      });
+      return true;
+    } catch(e) { console.error("enviarMensual:", e); return false; }
+  };
+
+  return { enviarDiario, enviarSemanal, enviarMensual };
+}
