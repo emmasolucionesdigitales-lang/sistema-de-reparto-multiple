@@ -42,6 +42,19 @@ self.addEventListener('fetch',e=>{
       return cached||net;
     })
   );
+});
+self.addEventListener('push',e=>{
+  const d=e.data?e.data.json():{};
+  e.waitUntil(self.registration.showNotification(d.title||'Notificación',{
+    body:d.body||'',tag:d.tag||'default',requireInteraction:!!d.requireInteraction
+  }));
+});
+self.addEventListener('notificationclick',e=>{
+  e.notification.close();
+  e.waitUntil(clients.matchAll({type:'window'}).then(cs=>{
+    if(cs.length>0){cs[0].focus();return;}
+    clients.openWindow('/');
+  }));
 });`;
       const blob = new Blob([sw],{type:'application/javascript'});
       const url = URL.createObjectURL(blob);
@@ -293,6 +306,58 @@ self.addEventListener('fetch',e=>{
     } catch(e) {}
   </script>
 
+<script>
+  // ── Push Notifications (solo dueño) ──────────────────────────────────
+  const VAPID_PUB_KEY = '7IE_7ydioqoBHDer9Yw2nryv3ChAt5IlVzFtW7VwdKicxz_8PjO_1vreFZ9xn8CXcm0YzHoD9cIq50jiZEbGxw';
+  function urlB64ToUint8(b){
+    const p='='.repeat((4-b.length%4)%4);
+    const s=(b+p).replace(/-/g,'+').replace(/_/g,'/');
+    const r=atob(s); const o=new Uint8Array(r.length);
+    for(let i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o;
+  }
+  function getLic(){ try{return JSON.parse(localStorage.getItem('rm_licencia')||'{}');}catch{return {};} }
+  async function guardarSub(sub){
+    if(!window.db) return;
+    const lic=getLic();
+    if(!lic.negocioId||lic.rol!=='dueño') return;
+    await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_sub').set({sub:JSON.stringify(sub),negocioId:lic.negocioId});
+  }
+  async function activarNotif(){
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){alert('Tu navegador no soporta notificaciones.');return false;}
+    const p=await Notification.requestPermission();
+    if(p!=='granted') return false;
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_PUB_KEY)});
+    await guardarSub(sub); return true;
+  }
+  async function desactivarNotif(){
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    if(sub) await sub.unsubscribe();
+    if(window.db){
+      const lic=getLic();
+      if(lic.negocioId) await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_sub').delete();
+    }
+  }
+  async function estadoNotif(){
+    if(!('PushManager' in window)) return false;
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    return !!sub;
+  }
+  window.addEventListener('load', async ()=>{
+    if(!('PushManager' in window)) return;
+    const lic=getLic();
+    if(lic.rol!=='dueño') return; // solo para dueños
+    const btn=document.createElement('button');
+    btn.id='btn-push-notif';
+    btn.style.cssText='position:fixed;bottom:80px;right:16px;z-index:9999;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.5);background:#1a2b3c;color:#fff;';
+    const upd=async()=>{const a=await estadoNotif();btn.textContent=a?'🔔':'🔕';btn.title=a?'Desactivar notificaciones':'Activar notificaciones';btn.style.opacity=a?'1':'0.5';};
+    btn.onclick=async()=>{const a=await estadoNotif();if(a){await desactivarNotif();}else{await activarNotif();}await upd();};
+    document.body.appendChild(btn);
+    await upd();
+  });
+  </script>
 <div id="root"></div>
 
 <script type="text/babel" src="js/01-temas.js"></script>
