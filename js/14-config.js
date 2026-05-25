@@ -17,7 +17,7 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
           [["stock","📦","Stock"],["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
-          [["x","",""],["x","",""],["x","",""],["x","","]],
+          [["x","",""],["x","",""],["x","",""],["x","",""]],
         ].map((fila,fi)=>(
           <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
             {fila.map(([id,ico,lbl])=>(
