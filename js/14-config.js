@@ -191,7 +191,6 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
           );
         })}
         <button style={s.btnPrimary} onClick={()=>{syncData({cargasDia});alert("✅ Cargas guardadas");}}>Guardar cargas</button>
-      </>}
         </div>
       </>)}
 
