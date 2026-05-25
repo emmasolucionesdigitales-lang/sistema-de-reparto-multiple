@@ -1205,36 +1205,85 @@ function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
     if(!lic.email || !window.enviarEmailBrevoRM) return false;
     try {
       const ventasDia = (ventas||[]).filter(v=>v.fechaKey===fecha&&v.dia===dia&&!v._esCobro&&!v._esAjuste);
-      const totalNeto = ventasDia.reduce((a,v)=>a+(v.neto||0),0);
-      const totalEfectivo = ventasDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-      const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-      const totalFiado = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
+      // Cobranza
+      const totalEfectivo  = ventasDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+      const totalTransfer  = ventasDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+      const totalFiado     = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
+      const totalNeto      = totalEfectivo + totalTransfer + totalFiado;
+      const retencion      = Math.round(totalTransfer * 0.025);
+      const transferNeto   = totalTransfer - retencion;
+      // Costo de llenado (desde ventas)
+      const costSifon = (productos||[]).find(p=>p.nombre==="Sifón 1.5L")?.costo || 133.33;
+      const costB10   = (productos||[]).find(p=>p.nombre==="Bidón 10L")?.costo   || 800;
+      const costB20   = (productos||[]).find(p=>p.nombre==="Bidón 20L")?.costo   || 1100;
+      let totalCosto = 0;
+      ventasDia.forEach(v=>(v.detalle||[]).forEach(d=>{
+        if(d.nombre==="Sifón 1.5L") totalCosto += (d.cantidad||0)*costSifon;
+        if(d.nombre==="Bidón 10L")  totalCosto += (d.cantidad||0)*costB10;
+        if(d.nombre==="Bidón 20L")  totalCosto += (d.cantidad||0)*costB20;
+      }));
+      // Planilla del día (gastos extras, etc.)
+      const planKey = `${dia}_${fecha}`;
+      const plan = (planillas||{})[planKey] || {};
+      const gastosExtras = (plan.gastos||[]).filter(g=>g.confirmado&&g.monto);
+      const totalGastos  = gastosExtras.reduce((a,g)=>a+Math.round(Number(g.monto)||0),0);
+      // Plata en mano = efectivo cobrado - costo de carga - gastos extras
+      const plataEnMano  = totalEfectivo - totalCosto - totalGastos;
+      // Ganancia neta = todo cobrado - costos - gastos
+      const gananciaNeta = (totalEfectivo + transferNeto) - totalCosto - totalGastos;
       const noVisitasDia = (noVisitas||[]).filter(v=>v.fecha===fecha);
+      const negocio = lic.negocio||lic.nombre||"Sistema de Reparto";
+      const fila = (l,v,color="") => `<tr><td style="padding:7px 0;color:#555;border-bottom:1px solid #eee">${l}</td><td style="text-align:right;font-weight:600;border-bottom:1px solid #eee;color:${color||"#222"}">${v}</td></tr>`;
+      const separador = (titulo) => `<tr><td colspan="2" style="padding:10px 0 4px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">${titulo}</td></tr>`;
       const htmlContent = `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
-          <h2 style="color:#185FA5;margin-bottom:4px">📋 Cierre del día · ${dia} ${fecha}</h2>
-          <p style="color:#666;font-size:13px;margin-bottom:20px">${lic.negocio||lic.negocioNombre||lic.nombre||"Sistema de Reparto"}</p>
-          <div style="background:#f0f7ff;border-radius:10px;padding:16px;margin-bottom:16px">
-            <div style="font-size:28px;font-weight:700;color:#185FA5">${fmtPesos(totalNeto)}</div>
-            <div style="color:#666;font-size:13px">Total del día (${ventasDia.length} entregas)</div>
+        <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#f9fafb">
+          <div style="background:#185FA5;border-radius:12px 12px 0 0;padding:20px 24px">
+            <h2 style="color:#fff;margin:0;font-size:18px">📋 Cierre del día · ${dia} ${fecha}</h2>
+            <p style="color:#c8dcf0;margin:4px 0 0;font-size:13px">${negocio}</p>
           </div>
-          <table style="width:100%;border-collapse:collapse;font-size:14px">
-            <tr><td style="padding:8px 0;color:#555">💵 Efectivo</td><td style="text-align:right;font-weight:600">${fmtPesos(totalEfectivo)}</td></tr>
-            <tr><td style="padding:8px 0;color:#555">📱 Transferencia</td><td style="text-align:right;font-weight:600">${fmtPesos(totalTransfer)}</td></tr>
-            <tr><td style="padding:8px 0;color:#555">📒 Fiado</td><td style="text-align:right;font-weight:600">${fmtPesos(totalFiado)}</td></tr>
-            <tr><td style="padding:8px 0;color:#555">🚫 No visitados</td><td style="text-align:right;font-weight:600">${noVisitasDia.length}</td></tr>
-          </table>
-          <p style="color:#999;font-size:11px;margin-top:20px;text-align:center">Sistema de Reparto · Emma Soluciones Digitales</p>
+          <div style="background:#fff;border-radius:0 0 12px 12px;padding:20px 24px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+
+            <!-- Total del día -->
+            <div style="background:#f0f7ff;border-radius:10px;padding:16px;margin-bottom:20px;text-align:center">
+              <div style="font-size:32px;font-weight:800;color:#185FA5">${fmtPesos(totalNeto)}</div>
+              <div style="color:#666;font-size:13px">${ventasDia.length} entregas · ${noVisitasDia.length} sin visita</div>
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;font-size:14px">
+              ${separador("💵 Cobranza")}
+              ${fila("Efectivo (contado)", fmtPesos(totalEfectivo))}
+              ${fila("Transferencias (bruto)", fmtPesos(totalTransfer))}
+              ${retencion>0 ? fila("&nbsp;&nbsp;Retención 2.5%", "−"+fmtPesos(retencion),"#e05c5c") : ""}
+              ${fila("Transferencias (neto)", fmtPesos(transferNeto),"#185FA5")}
+              ${totalFiado>0 ? fila("Fiado (pendiente de cobro)", fmtPesos(totalFiado),"#f5a623") : ""}
+
+              ${separador("📦 Costos")}
+              ${fila("Llenado de envases", "−"+fmtPesos(totalCosto),"#e05c5c")}
+
+              ${gastosExtras.length>0 ? separador("💸 Gastos extras (efectivo)") : ""}
+              ${gastosExtras.map(g=>{
+                const cat = g.cat||"Gasto";
+                const desc = g.desc ? ` · ${g.desc}` : "";
+                return fila(cat.charAt(0).toUpperCase()+cat.slice(1)+desc, "−"+fmtPesos(g.monto),"#e05c5c");
+              }).join("")}
+              ${gastosExtras.length>0 ? fila("<b>Total gastos</b>","−"+fmtPesos(totalGastos),"#e05c5c") : ""}
+
+              ${separador("💰 Resultado")}
+              ${fila("<b>💵 Plata en mano</b>","<b>"+fmtPesos(plataEnMano)+"</b>", plataEnMano>=0?"#0a7c3e":"#e05c5c")}
+              ${fila("<b>📊 Ganancia neta del día</b>","<b>"+fmtPesos(gananciaNeta)+"</b>", gananciaNeta>=0?"#0a7c3e":"#e05c5c")}
+            </table>
+
+          </div>
+          <p style="color:#aaa;font-size:11px;text-align:center;margin-top:16px">Sistema de Reparto · Emma Soluciones Digitales</p>
         </div>`;
       await window.enviarEmailBrevoRM({
         to: lic.email, toName: lic.negocio||lic.nombre||"",
-        subject: `📋 Cierre ${dia} ${fecha} · ${fmtPesos(totalNeto)}`,
+        subject: `📋 Cierre ${dia} ${fecha} · ${fmtPesos(totalNeto)} · En mano ${fmtPesos(plataEnMano)}`,
         htmlContent
       });
       return true;
     } catch(e) { console.error("enviarDiario:", e); return false; }
   };
-
   const enviarSemanal = async (fecha) => {
     const lic = getLic();
     if(!lic.email || !window.enviarEmailBrevoRM) return false;
