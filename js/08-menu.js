@@ -460,12 +460,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   totalesPorProd.soda.llenar  = sodaCajones * COSTO_CAJON_SODA;
   totalesPorProd.b10.llenar   = totalesPorProd.b10.vacios * costB10;
   totalesPorProd.b20.llenar   = totalesPorProd.b20.vacios * costB20;
-  // Peso y bultos desde productos CARGADOS (no desde ventas)
-  const cajonesLlenos = Math.floor((llenosCargados?.soda||0)/CAJON_SODA);
-  const b10Llenos = llenosCargados?.b10||0;
-  const b20Llenos = llenosCargados?.b20||0;
-  const pesoAuto = cajonesLlenos * 13 + b10Llenos * 10 + b20Llenos * 20;
-  const bultosAuto = cajonesLlenos + b10Llenos + b20Llenos;
+
   const totalVentaPlata  = Object.values(totalesPorProd).reduce((a,p)=>a+p.plata,0);
   const totalVentaLlenar = Object.values(totalesPorProd).reduce((a,p)=>a+p.llenar,0);
   // Totales ventas de otros días
@@ -485,14 +480,22 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   const cobSaldos      = cobSaldosEfec + cobSaldosTrans;
   const fiadoNeto      = cobFiado - cobSaldos;
 
-  const [datos,setDatos] = useState(()=>({
-    ...planilla,
-    peso:        planilla.peso        || (pesoAuto>0 ? String(pesoAuto) : ""),
-    bultos:      planilla.bultos      || (bultosAuto>0 ? String(bultosAuto) : ""),
-    efectivo:    planilla.efectivo    || (cobEfectivo>0   ? String(Math.round(cobEfectivo))   : ""),
-    fiado:       planilla.fiado       || (cobFiado>0      ? String(Math.round(cobFiado))      : ""),
-    retenciones: planilla.retenciones || (cobTransDesc>0  ? String(cobTransDesc)              : ""),
-  }));
+  const [datos,setDatos] = useState(()=>{
+    const _sLlenos = Number(planilla?.productos?.soda?.llenos||0);
+    const _b10Init = Number(planilla?.productos?.b10?.llenos||0);
+    const _b20Init = Number(planilla?.productos?.b20?.llenos||0);
+    const _cajInit = Math.floor(_sLlenos/(CAJON_SODA||6));
+    const _pesoInit  = _cajInit * 13 + _b10Init * 10 + _b20Init * 20;
+    const _bultosInit = _cajInit + _b10Init + _b20Init;
+    return {
+      ...planilla,
+      peso:        planilla.peso        || (_pesoInit>0   ? String(_pesoInit)                 : ""),
+      bultos:      planilla.bultos      || (_bultosInit>0 ? String(_bultosInit)               : ""),
+      efectivo:    planilla.efectivo    || (cobEfectivo>0   ? String(Math.round(cobEfectivo))   : ""),
+      fiado:       planilla.fiado       || (cobFiado>0      ? String(Math.round(cobFiado))      : ""),
+      retenciones: planilla.retenciones || (cobTransDesc>0  ? String(cobTransDesc)              : ""),
+    };
+  });
   const set = (k,v) => setDatos(d=>({...d,[k]:v}));
   const setProd=(pid,campo,v)=>setDatos(d=>({...d,productos:{...d.productos,[pid]:{...d.productos[pid],[campo]:v}}}));
   const setGasto=(i,campo,v)=>{const g=[...(datos.gastos||[])];g[i]={...g[i],[campo]:v};setDatos(d=>({...d,gastos:g}));};
@@ -511,6 +514,12 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   const [mostrarCierre, setMostrarCierre] = useState(false);
   const yaCerrado = !!planilla._diaCerrado;
   const llenosCargados = {soda:Number(datos.productos?.soda?.llenos||0),b10:Number(datos.productos?.b10?.llenos||0),b20:Number(datos.productos?.b20?.llenos||0)};
+  // Peso y bultos desde productos CARGADOS
+  const cajonesLlenos = Math.floor((llenosCargados.soda||0)/CAJON_SODA);
+  const b10Llenos = llenosCargados.b10||0;
+  const b20Llenos = llenosCargados.b20||0;
+  const pesoAuto = cajonesLlenos * 13 + b10Llenos * 10 + b20Llenos * 20;
+  const bultosAuto = cajonesLlenos + b10Llenos + b20Llenos;
   const vendidosDia = {soda:0,b10:0,b20:0};
   ventas.forEach(v=>v.detalle.forEach(d=>{const k=prodKey[d.nombre];if(k)vendidosDia[k]+=d.cantidad;}));
   const prestadosDia = {soda:0,b10:0,b20:0};
