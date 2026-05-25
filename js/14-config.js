@@ -16,8 +16,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button><span style={s.headerTitle}>Configuración</span></div>
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
-          [["stock","📦","Stock"],["cargas","🚚","Cargas"],["historial","📋","Historial"],["backup","💾","Backup"]],
-          [["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"],["equipo","👥","Equipo"],["vincular","🔗","Vincular"]],
+          [["stock","📦","Stock"],["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
+          [["equipo","👥","Equipo"],["x","",""],["x","",""],["x","",""]],
         ].map((fila,fi)=>(
           <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
             {fila.map(([id,ico,lbl])=>(
@@ -167,200 +167,167 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
               </div>
             ))}
             <button style={s.btnPrimary} onClick={()=>{syncData({stock});alert("Stock guardado");}}>Guardar stock</button>
+
+        {/* ── Carga diaria del camión ── */}
+        <div style={{...s.card,margin:"16px 0 14px",background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",padding:"10px 14px"}}>
+          <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-info)"}}>🚚 Carga diaria del camión</span>
+        </div>
+        {["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"].map(dia=>{
+          const c = cargasDia?.[dia] || {soda:0,b10:0,b20:0};
+          const upd = (k,v) => { const nd={...(cargasDia||{}),[dia]:{...c,[k]:Number(v)||0}};setCargasDia(nd); };
+          return (
+            <div key={dia} style={{...s.card,margin:"0 0 10px"}}>
+              <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:10}}>{dia}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                {[["soda","🫧 Soda"],["b10","💧 Bidón 10L"],["b20","🫙 Bidón 20L"]].map(([k,lbl])=>(
+                  <div key={k}>
+                    <label style={{...s.label,textAlign:"center",fontSize:10}}>{lbl}</label>
+                    <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
+                      value={c[k]??0} onChange={e=>upd(k,e.target.value)}/>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        <button style={s.btnPrimary} onClick={()=>{syncData({cargasDia});alert("✅ Cargas guardadas");}}>Guardar cargas</button>
+      </>}
         </div>
       </>)}
-        {tab==="cargas"&&(
-          <div style={{padding:16}}>
-            <div style={{...s.card,margin:"0 0 14px",background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",padding:"10px 14px"}}>
-              <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-info)"}}>🚚 Carga del camión por día</span>
-            </div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:16,lineHeight:1.6}}>
-              Cantidad que sale del depósito cada día. Se precarga automáticamente al iniciar el reparto.
-            </div>
-            {["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"].map(dia=>{
-              const c = cargasDia?.[dia] || {soda:0,b10:0,b20:0};
-              const upd = (k,v) => {
-                const nd = {...(cargasDia||{}), [dia]:{...c,[k]:Number(v)||0}};
-                setCargasDia(nd);
-              };
-              return (
-                <div key={dia} style={{...s.card,margin:"0 0 10px"}}>
-                  <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:10}}>{dia}</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                    {[["soda","🫧 Soda"],["b10","💧 Bidón 10L"],["b20","🫙 Bidón 20L"]].map(([k,lbl])=>(
-                      <div key={k}>
-                        <label style={{...s.label,textAlign:"center",fontSize:10}}>{lbl}</label>
-                        <input style={{...s.inputNum,textAlign:"center"}} type="number" min={0}
-                          value={c[k]??0}
-                          onChange={e=>upd(k,e.target.value)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-            <button style={s.btnPrimary} onClick={()=>{syncData({cargasDia});alert("✅ Cargas guardadas");}}>
-              Guardar cargas
-            </button>
-          </div>
-        )}
-        {tab==="historial"&&(
-          <CargaHistorica
-            clientes={clientes}
-            productos={productos}
-            onGuardar={(vts)=>{const nv=[...(ventas||[]),...vts];setVentas(nv);if(syncData)syncData({ventas:nv});}}
-            onVolver={null}
-            enConfig={true}
-          />
-        )}
-        {tab==="backup"&&(
-        <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
 
-          {/* Espacio utilizado */}
-          <div style={{...s.card,margin:0}}>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:8}}>💾 Espacio utilizado</div>
+        {tab==="datos"&&(
+          <div style={{padding:16,display:"flex",flexDirection:"column",gap:10}}>
+
+            {/* Espacio utilizado */}
             {(()=>{
               let total=0;
               try{for(let k in localStorage){if(localStorage.hasOwnProperty(k)){total+=((localStorage[k]||'').length*2);}}}catch(e){}
               const kb=Math.round(total/1024);
               const pct=Math.min(100,Math.round(kb/5120*100));
               const color=pct>80?"#e05c5c":pct>50?"#f5b942":"#4dd9a0";
-              const fotos=clientes.filter(c=>c.foto&&c.foto.startsWith('data:')).length;
               return (
-                <div>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                    <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{kb} KB de ~5.000 KB</span>
-                    <span style={{fontSize:13,fontWeight:600,color}}>{pct}%</span>
+                <div style={{...s.card,margin:0,padding:"10px 14px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>💾 Espacio: {kb} KB / 5.000 KB</span>
+                    <span style={{fontSize:12,fontWeight:600,color}}>{pct}%</span>
                   </div>
-                  <div style={{height:8,background:"var(--color-background-tertiary)",borderRadius:4,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:pct+"%",background:color,borderRadius:4,transition:"width 0.3s"}} />
+                  <div style={{height:6,background:"var(--color-background-tertiary)",borderRadius:4,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:pct+"%",background:color,borderRadius:4}}/>
                   </div>
-                  {fotos>0&&<div style={{fontSize:12,color:"var(--color-text-tertiary)",marginTop:6}}>📷 {fotos} fotos guardadas</div>}
-                  {pct>70&&<div style={{fontSize:12,color:"#e05c5c",marginTop:8}}>⚠️ Espacio alto. Eliminá fotos si la app deja de funcionar.</div>}
+                  {pct>70&&<div style={{fontSize:11,color:"#e05c5c",marginTop:4}}>⚠️ Espacio alto. Eliminá fotos si la app falla.</div>}
                 </div>
               );
             })()}
-          </div>
 
-          {/* Recuperar desde backup automático */}
-          {(()=>{
-            const backupKeys = Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).sort().reverse();
-            if(backupKeys.length===0) return null;
-            return (
-              <div style={{...s.card,margin:0,borderLeft:"3px solid #4dd9a0",background:"#0a2e1f"}}>
-                <div style={{fontSize:14,fontWeight:600,color:"#4dd9a0",marginBottom:4}}>🔄 Recuperar desde backup automático</div>
-                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>Solo restaura CLIENTES. Ventas y planillas no se tocan.</div>
-                {backupKeys.slice(0,3).map(key=>{
-                  let data=null;
-                  try{data=JSON.parse(localStorage.getItem(key));}catch(e){}
-                  if(!data) return null;
-                  const fecha=key.replace("lc_backup_","");
-                  const nClientes=(data.clientes||[]).length;
-                  return (
-                    <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid rgba(255,255,255,0.1)"}}>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>📅 {fecha}</div>
-                        <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{nClientes} clientes</div>
-                      </div>
-                      <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:500,cursor:"pointer"}}
-                        onClick={()=>{
-                          if(window.confirm(`¿Restaurar ${nClientes} clientes desde ${fecha}?`)){
-                            setClientes(data.clientes||[]);
-                            syncData({clientes:data.clientes||[]});
-                            alert(`✅ ${nClientes} clientes restaurados`);
-                          }
-                        }}>Restaurar</button>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
-
-          {/* Exportar */}
-          <div style={{...s.card,margin:0}}>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:4}}>📥 Exportar backup</div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>
-              Descarga un Excel con todos tus datos. Guardalo en Drive como respaldo.
-            </div>
-            <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:12}}>
-              {clientes.length} clientes · {ventas.length} ventas · {Object.keys(planillas).length} planillas
-            </div>
+            {/* Exportar datos */}
             <button style={s.btnPrimary} onClick={()=>exportarExcel(clientes,ventas,productos,planillas)}>
-              Descargar Excel
+              📥 Exportar todos los datos · {clientes.length} clientes · {ventas.length} ventas
             </button>
-          </div>
 
-          {/* Importar backup */}
-          <div style={{...s.card,margin:0}}>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:4}}>📤 Importar backup</div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:12}}>
-              Restaura desde un Excel generado por esta app. Reemplaza todo lo actual.
-            </div>
+            {/* Importar clientes */}
             {!importando
-              ?<button style={{...s.btn,width:"100%",padding:"12px",fontSize:14}} onClick={()=>setImportando(true)}>Seleccionar archivo Excel</button>
-              :<div>
-                <input type="file" accept=".xlsx" style={{...s.input,marginBottom:8,padding:"6px"}}
-                  onChange={e=>{if(e.target.files[0]){if(window.confirm("¿Reemplazar todos los datos con el backup?")){importarBackup(e.target.files[0],setClientes,setVentas,setPlanillas);}setImportando(false);}}} />
-                <button style={{...s.btn,width:"100%"}} onClick={()=>setImportando(false)}>Cancelar</button>
-              </div>
+              ?<button style={{...s.btn,width:"100%",padding:"11px",fontSize:13}}
+                 onClick={()=>setImportando(true)}>
+                 📤 Importar clientes desde Excel
+               </button>
+              :<div style={{...s.card,margin:0}}>
+                 <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8}}>Seleccioná el archivo Excel con los clientes:</div>
+                 <input type="file" accept=".xlsx" style={{...s.input,marginBottom:8,padding:"6px"}}
+                   onChange={e=>{
+                     if(e.target.files[0]){
+                       importarClientesPlanilla(e.target.files[0], clientes, (nuevos)=>{setClientes(nuevos);syncData({clientes:nuevos,negocioId});});
+                     }
+                     setImportando(false);
+                   }}
+                 />
+                 <button style={{...s.btn,width:"100%"}} onClick={()=>setImportando(false)}>Cancelar</button>
+               </div>
             }
-          </div>
 
-          {/* Forzar sincronización */}
-          <div style={{...s.card,margin:0,borderLeft:"3px solid #EF9F27"}}>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",marginBottom:4}}>🔄 Forzar sincronización</div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:12}}>
-              Si en otro dispositivo no aparecen los datos, usá este botón desde el dispositivo donde SÍ se ven.
-            </div>
-            <button style={{...s.btn,width:"100%",padding:"12px",fontSize:14,background:"#EF9F27",color:"#fff",border:"none"}}
-              onClick={()=>{
-                if(window.confirm("¿Subir todos los datos actuales a la nube?")){
-                  cloudSave({clientes,ventas,planillas,stock,productos,noVisitas:(noVisitas||[]),prospectos:(prospectos||[])}, uid, negocioId)
-                    .then(()=>alert("✅ Datos sincronizados."))
-                    .catch(()=>alert("❌ Error. Verificá tu conexión."));
-                }
-              }}>Subir datos a la nube ahora</button>
-          </div>
-
-          {/* Zona peligrosa */}
-          <div style={{borderTop:"1px solid var(--color-border-secondary)",paddingTop:16}}>
-            <div style={{fontSize:11,color:"var(--color-text-danger)",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>⚠️ Zona peligrosa</div>
-            <button
-              onClick={async ()=>{
-                if(!window.confirm("⚠️ ¿Borrar TODOS los clientes, ventas y movimientos?\n\nEsto NO se puede deshacer.\nLos productos, stock y repartos se conservan.")) return;
-                ["cat_clientes_v3","cat_ventas_v3","cat_planillas_v1","cat_novisitas_v1",
-                 "cat_prospectos_v1","cat_recordatorios_v1","lc_hist_precios","lc_ultimo_backup"]
-                  .forEach(k=>localStorage.removeItem(k));
-                Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).forEach(k=>localStorage.removeItem(k));
-                if(window.db && negocioId){
-                  try{
-                    const col=window.db.collection("negocios").doc(negocioId).collection("datos");
-                    const snap=await col.get();
-                    const ops=[];
-                    snap.forEach(doc=>{
-                      const id=doc.id;
-                      if(id.startsWith("cl_")||id.startsWith("vt_")||id==="clientes_meta"||id==="ventas_meta"){
-                        ops.push(doc.ref.delete());
-                      } else if(id==="config"){
-                        ops.push(doc.ref.update({planillas:{},noVisitas:[],recordatorios:[],prospectos:[],histPrecios:[],mantVeh:[]}));
-                      }
-                    });
-                    await Promise.all(ops);
-                  }catch(e){console.error(e);}
-                }
-                window.location.reload();
-              }}
-              style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid var(--color-text-danger)",
-                background:"rgba(220,38,38,0.1)",color:"var(--color-text-danger)",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-              🗑️ Borrar clientes, ventas y movimientos
+            {/* Forzar sincronización */}
+            <button style={{...s.btn,width:"100%",padding:"11px",background:"#EF9F27",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}
+              onClick={()=>{if(window.confirm("¿Subir todos los datos a la nube?")){
+                cloudSave({clientes,ventas,planillas,stock,productos,noVisitas:(noVisitas||[]),prospectos:(prospectos||[])},uid,negocioId)
+                  .then(()=>alert("✅ Datos sincronizados."))
+                  .catch(()=>alert("❌ Error. Verificá tu conexión."));
+              }}}>
+              🔄 Forzar sincronización
             </button>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6,textAlign:"center"}}>
-              Los productos, stock y repartos se conservan
+
+            {/* Enviar informe */}
+            <button style={{...s.btn,width:"100%",padding:"11px",background:"#185FA5",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}
+              onClick={async ()=>{
+                const lic=JSON.parse(localStorage.getItem("rm_licencia")||"{}");
+                if(!lic.email){alert("No hay email configurado en la licencia.");return;}
+                const total=ventas.reduce((a,v)=>a+(v.neto||0),0);
+                const hoy=new Date().toLocaleDateString("es-AR");
+                if(window.enviarEmailBrevoRM){
+                  await window.enviarEmailBrevoRM({
+                    to:lic.email, toName:lic.nombre||"",
+                    subject:`📊 Informe de repartos · ${hoy}`,
+                    htmlContent:`<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
+                      <h2 style="color:#185FA5">📊 Informe de repartos</h2>
+                      <p style="color:#666">${hoy}</p>
+                      <div style="background:#f0f7ff;border-radius:10px;padding:16px;margin:16px 0">
+                        <div style="font-size:28px;font-weight:700;color:#185FA5">$${total.toLocaleString("es-AR")}</div>
+                        <div style="color:#666">Total acumulado · ${ventas.length} ventas · ${clientes.length} clientes</div>
+                      </div>
+                      <p style="color:#999;font-size:11px">Sistema de Reparto · Emma Soluciones Digitales</p>
+                    </div>`
+                  });
+                  alert("✅ Informe enviado a "+lic.email);
+                } else { alert("❌ Servicio de email no disponible."); }
+              }}>
+              📊 Enviar informe por email
+            </button>
+
+            {/* Vincular Emma Control */}
+            <div style={{borderTop:"1px solid var(--color-border-secondary)",paddingTop:10}}>
+              <VincularEmmaControl />
+            </div>
+
+            {/* WhatsApp */}
+            <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
+              target="_blank" rel="noopener"
+              style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                padding:"12px",borderRadius:10,background:"#0a2e1f",
+                border:"1px solid #4dd9a0",color:"#4dd9a0",fontSize:13,fontWeight:600,textDecoration:"none"}}>
+              💬 Soporte por WhatsApp
+            </a>
+
+            {/* Zona peligrosa */}
+            <div style={{borderTop:"1px solid var(--color-border-secondary)",paddingTop:12}}>
+              <button style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid var(--color-text-danger)",
+                background:"rgba(220,38,38,0.1)",color:"var(--color-text-danger)",fontSize:13,fontWeight:600,cursor:"pointer"}}
+                onClick={async ()=>{
+                  if(!window.confirm("⚠️ ¿Borrar TODOS los clientes, ventas y movimientos?\n\nLos productos, stock y repartos se conservan.")) return;
+                  ["cat_clientes_v3","cat_ventas_v3","cat_planillas_v1","cat_novisitas_v1",
+                   "cat_prospectos_v1","cat_recordatorios_v1","lc_hist_precios","lc_ultimo_backup"]
+                    .forEach(k=>localStorage.removeItem(k));
+                  Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).forEach(k=>localStorage.removeItem(k));
+                  if(window.db && negocioId){
+                    try{
+                      const col=window.db.collection("negocios").doc(negocioId).collection("datos");
+                      const snap=await col.get();
+                      const ops=[];
+                      snap.forEach(doc=>{
+                        const id=doc.id;
+                        if(id.startsWith("cl_")||id.startsWith("vt_")||id==="clientes_meta"||id==="ventas_meta"){
+                          ops.push(doc.ref.delete());
+                        } else if(id==="config"){
+                          ops.push(doc.ref.update({planillas:{},noVisitas:[],recordatorios:[],prospectos:[],histPrecios:[],mantVeh:[]}));
+                        }
+                      });
+                      await Promise.all(ops);
+                    }catch(e){console.error(e);}
+                  }
+                  window.location.reload();
+                }}>
+                🗑️ Borrar clientes, ventas y movimientos
+              </button>
+              <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6,textAlign:"center"}}>Los productos, stock y repartos se conservan</div>
             </div>
           </div>
-        </div>
         )}
       {tab==="vehiculo"&&(
         <div style={{padding:16}}>
@@ -418,32 +385,7 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
           <RepartidoresPanel negocioId={negocioId} clientes={clientes} />
         </div>
       )}
-      {tab==="vincular"&&(
-        <div style={{padding:16}}>
-          <VincularEmmaControl />
 
-          {/* Soporte y contacto */}
-          <div style={{...s.card,margin:"16px 0 0",background:"var(--color-background-secondary)"}}>
-            <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>
-              💬 Soporte técnico
-            </div>
-            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:14,lineHeight:1.6}}>
-              ¿Tenés algún problema o consulta? Escribinos por WhatsApp y te respondemos a la brevedad.
-            </div>
-            <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
-              target="_blank" rel="noopener"
-              style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                padding:"13px",borderRadius:10,background:"#0a2e1f",
-                border:"1px solid #4dd9a0",color:"#4dd9a0",
-                fontSize:14,fontWeight:600,textDecoration:"none"}}>
-              💬 Abrir WhatsApp
-            </a>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:8,textAlign:"center"}}>
-              Emma Soluciones Digitales · +54 9 381 339-9962
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
