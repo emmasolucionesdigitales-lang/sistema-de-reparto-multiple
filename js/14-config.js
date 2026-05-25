@@ -345,11 +345,11 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             </div>
           )}
           {[...mantVeh].reverse().map((m,i)=>(
-            <div key={i} style={{...s.card,margin:"0 0 10px",borderLeft:`3px solid ${m.tipo==="aceite"?"#f5b942":m.tipo==="preventivo"?"#4dd9a0":m.tipo==="embrague"?"#e05c5c":m.tipo==="reparacion"?"#5daaff":"#a0aec0"}`}}>
+            <div key={i} style={{...s.card,margin:"0 0 10px",borderLeft:`3px solid ${m.tipo==="aceite"?"#f5b942":m.tipo==="preventivo"?"#4dd9a0":m.tipo==="embrague"?"#e05c5c":m.tipo==="reparacion"?"#5daaff":m.tipo==="gnc"?"#22c55e":m.tipo==="vtv"?"#3b82f6":"#a0aec0"}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                 <div style={{flex:1}}>
                   <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>
-                    {m.tipo==="aceite"?"🛢 Cambio de aceite":m.tipo==="preventivo"?"🔩 Mantenimiento preventivo":m.tipo==="embrague"?"⚙️ Cambio de embrague":m.tipo==="reparacion"?"🛠 Reparación":"📋 "+m.tipo}
+                    {m.tipo==="aceite"?"🛢 Cambio de aceite":m.tipo==="preventivo"?"🔩 Mantenimiento preventivo":m.tipo==="embrague"?"⚙️ Cambio de embrague":m.tipo==="reparacion"?"🛠 Reparación":m.tipo==="gnc"?"🟢 Oblea GNC":m.tipo==="vtv"?"🔵 VTV":m.tipo==="otro"?"📋 "+(m.otroDetalle||"Otro"):"📋 "+m.tipo}
                   </div>
                   {m.descripcion&&<div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:4}}>{m.descripcion}</div>}
                   <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap"}}>

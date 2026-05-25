@@ -678,6 +678,7 @@ function EditVenta({venta,productos,onGuardar,onCancelar}) { // onGuardar(detall
 
 function VehiculoMantModal({onGuardar,onCerrar}) {
   const [tipo,setTipo] = React.useState("aceite");
+  const [otroDetalle,setOtroDetalle] = React.useState("");
   const [descripcion,setDescripcion] = React.useState("");
   const [km,setKm] = React.useState("");
   const [costo,setCosto] = React.useState("");
@@ -686,11 +687,13 @@ function VehiculoMantModal({onGuardar,onCerrar}) {
   const [fechaISO,setFechaISO] = React.useState(new Date().toISOString().slice(0,10));
   const fechaDisplay = fechaISO ? new Date(fechaISO+'T12:00:00').toLocaleDateString("es-AR") : "";
   const tipos = [
-    {id:"aceite",    label:"🛢 Cambio de aceite",           color:"#f5b942"},
-    {id:"preventivo",label:"🔩 Mantenimiento preventivo",   color:"#4dd9a0"},
-    {id:"embrague",  label:"⚙️ Cambio de embrague",        color:"#e05c5c"},
-    {id:"reparacion",label:"🛠 Reparación",                 color:"#5daaff"},
-    {id:"otro",      label:"📋 Otro",                       color:"#a0aec0"},
+    {id:"aceite",    label:"🛢 Cambio de aceite",         color:"#f5b942"},
+    {id:"preventivo",label:"🔩 Mantenimiento preventivo", color:"#4dd9a0"},
+    {id:"embrague",  label:"⚙️ Cambio de embrague",      color:"#e05c5c"},
+    {id:"reparacion",label:"🛠 Reparación",               color:"#5daaff"},
+    {id:"gnc",       label:"🟢 Oblea GNC",                color:"#22c55e"},
+    {id:"vtv",       label:"🔵 VTV",                      color:"#3b82f6"},
+    {id:"otro",      label:"📋 Otro",                     color:"#a0aec0"},
   ];
   return (
     <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:1200,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
@@ -713,8 +716,15 @@ function VehiculoMantModal({onGuardar,onCerrar}) {
             ))}
           </div>
         </div>
+        {tipo==="otro"&&(
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:12,color:"var(--color-text-secondary)",display:"block",marginBottom:4}}>¿Qué es? (detalle del "Otro")</label>
+            <input style={{width:"100%",background:"var(--color-background-tertiary)",border:"2px solid #a0aec0",borderRadius:8,padding:"8px 10px",color:"var(--color-text-primary)",fontSize:14,boxSizing:"border-box",fontWeight:500}}
+              placeholder="Ej: Cambio de gomas, batería, luces..." value={otroDetalle} onChange={e=>setOtroDetalle(e.target.value)} />
+          </div>
+        )}
         <div style={{marginBottom:10}}>
-          <label style={{fontSize:12,color:"var(--color-text-secondary)",display:"block",marginBottom:4}}>Descripción / detalle</label>
+          <label style={{fontSize:12,color:"var(--color-text-secondary)",display:"block",marginBottom:4}}>Descripción / detalle adicional</label>
           <textarea style={{width:"100%",background:"var(--color-background-tertiary)",border:"1px solid var(--color-border-secondary)",borderRadius:8,padding:"8px 10px",color:"var(--color-text-primary)",fontSize:13,resize:"none",boxSizing:"border-box",minHeight:60}} placeholder="Ej: Cambio aceite 10W-40 + filtro..." value={descripcion} onChange={e=>setDescripcion(e.target.value)} />
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
@@ -736,7 +746,7 @@ function VehiculoMantModal({onGuardar,onCerrar}) {
           <input type="date" style={{width:"100%",background:"var(--color-background-tertiary)",border:"1px solid var(--color-border-secondary)",borderRadius:8,padding:"8px 10px",color:"var(--color-text-primary)",fontSize:13,boxSizing:"border-box"}} value={proximaFechaISO} onChange={e=>setProximaFechaISO(e.target.value)} />
           {!proximaFechaISO && <p style={{fontSize:11,color:"var(--color-text-tertiary)",margin:"4px 0 0"}}>Opcional — si completás, te avisamos 3 días antes</p>}
         </div>
-        <button style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:"#185FA5",color:"#e2eaf4",fontSize:15,fontWeight:600,cursor:"pointer"}} onClick={()=>{if(!tipo)return;onGuardar({tipo,descripcion,km,costo,proximo,proximaFechaISO,fecha:fechaDisplay,fechaISO});}}>
+        <button style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:"#185FA5",color:"#e2eaf4",fontSize:15,fontWeight:600,cursor:"pointer"}} onClick={()=>{if(!tipo)return;onGuardar({tipo,descripcion,km,costo,proximo,proximaFechaISO,fecha:fechaDisplay,fechaISO,otroDetalle:tipo==="otro"?otroDetalle:""});}}>
           Guardar registro
         </button>
       </div>
