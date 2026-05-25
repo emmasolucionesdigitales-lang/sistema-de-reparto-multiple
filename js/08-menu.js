@@ -574,8 +574,8 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
         {/* Desglose de peso y bultos */}
         {(pesoAuto>0||bultosAuto>0)&&(
           <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:10,lineHeight:1.7,background:"var(--color-background-tertiary)",borderRadius:8,padding:"6px 10px"}}>
-            {bultosAuto>0&&<div>📦 <b>Bultos auto:</b> {cajonesCargados||cajonesLlenos||0} cajones soda + {b10Cargados||b10Llenos||0} bid.10L + {b20Cargados||b20Llenos||0} bid.20L = <b>{bultosAuto}</b></div>}
-            {pesoAuto>0&&<div>⚖️ <b>Peso auto:</b> {cajonesCargados||cajonesLlenos||0}×13kg + {b10Cargados||b10Llenos||0}×10kg + {b20Cargados||b20Llenos||0}×20kg = <b>{pesoAuto} kg</b></div>}
+            {bultosAuto>0&&<div>📦 <b>Bultos auto:</b> {cajonesLlenos} cajones soda + {b10Llenos} bid.10L + {b20Llenos} bid.20L = <b>{bultosAuto}</b></div>}
+            {pesoAuto>0&&<div>⚖️ <b>Peso auto:</b> {cajonesLlenos}×13kg + {b10Llenos}×10kg + {b20Llenos}×20kg = <b>{pesoAuto} kg</b></div>}
           </div>
         )}
 
