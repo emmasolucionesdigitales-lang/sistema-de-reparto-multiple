@@ -17,7 +17,7 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
           [["stock","📦","Stock"],["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
-          [["equipo","👥","Equipo"],["x","",""],["x","",""],["x","",""]],
+          [["x","",""],["x","",""],["x","",""],["x","","]],
         ].map((fila,fi)=>(
           <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
             {fila.map(([id,ico,lbl])=>(
@@ -377,11 +377,6 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       {tab==="apariencia"&&(
         <div style={{padding:16}}>
           <ConfigApariencia />
-        </div>
-      )}
-      {tab==="equipo"&&(
-        <div style={{padding:16}}>
-          <RepartidoresPanel negocioId={negocioId} clientes={clientes} />
         </div>
       )}
 
