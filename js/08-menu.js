@@ -537,6 +537,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
     syncData({stock:s});
     onGuardar({...datos,_diaCerrado:true,_stockActualizado:true});
     setMostrarCierre(false);
+    if(onCerrarDia) setTimeout(()=>onCerrarDia(), 800);
   };
 
   return (

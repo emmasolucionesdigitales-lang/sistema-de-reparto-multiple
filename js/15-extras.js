@@ -1196,7 +1196,7 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
 // ════════════════════════════════════════════════════════════════════
 function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
 
-  const getLic = () => { try{ return JSON.parse(localStorage.getItem("rm_licencia")||"{}"); }catch{ return {}; } };
+  const getLic = () => { try{ return JSON.parse(localStorage.getItem("sr_licencia")||"{}"); }catch{ return {}; } };
 
   const fmtPesos = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
 
@@ -1213,7 +1213,7 @@ function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
       const htmlContent = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
           <h2 style="color:#185FA5;margin-bottom:4px">📋 Cierre del día · ${dia} ${fecha}</h2>
-          <p style="color:#666;font-size:13px;margin-bottom:20px">${lic.negocioNombre||lic.nombre||"Sistema de Reparto"}</p>
+          <p style="color:#666;font-size:13px;margin-bottom:20px">${lic.negocio||lic.negocioNombre||lic.nombre||"Sistema de Reparto"}</p>
           <div style="background:#f0f7ff;border-radius:10px;padding:16px;margin-bottom:16px">
             <div style="font-size:28px;font-weight:700;color:#185FA5">${fmtPesos(totalNeto)}</div>
             <div style="color:#666;font-size:13px">Total del día (${ventasDia.length} entregas)</div>
@@ -1227,7 +1227,7 @@ function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
           <p style="color:#999;font-size:11px;margin-top:20px;text-align:center">Sistema de Reparto · Emma Soluciones Digitales</p>
         </div>`;
       await window.enviarEmailBrevoRM({
-        to: lic.email, toName: lic.nombre||"",
+        to: lic.email, toName: lic.negocio||lic.nombre||"",
         subject: `📋 Cierre ${dia} ${fecha} · ${fmtPesos(totalNeto)}`,
         htmlContent
       });
@@ -1255,7 +1255,7 @@ function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
           <p style="color:#999;font-size:11px;text-align:center">Sistema de Reparto · Emma Soluciones Digitales</p>
         </div>`;
       await window.enviarEmailBrevoRM({
-        to: lic.email, toName: lic.nombre||"",
+        to: lic.email, toName: lic.negocio||lic.nombre||"",
         subject: `📊 Resumen semanal · ${fmtPesos(totalSem)}`,
         htmlContent
       });
@@ -1281,7 +1281,7 @@ function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
           <p style="color:#999;font-size:11px;text-align:center">Sistema de Reparto · Emma Soluciones Digitales</p>
         </div>`;
       await window.enviarEmailBrevoRM({
-        to: lic.email, toName: lic.nombre||"",
+        to: lic.email, toName: lic.negocio||lic.nombre||"",
         subject: `📅 Resumen ${meses[mes]} ${anio} · ${fmtPesos(totalMes)}`,
         htmlContent
       });
