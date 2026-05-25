@@ -744,7 +744,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           if(orden&&clientes.some(c=>c.dia===datos.dia&&(c.orden||0)===Number(orden))){
             base=clientes.map(c=>c.dia===datos.dia&&(c.orden||0)>=Number(orden)?{...c,orden:(c.orden||0)+1}:c);
           }
-          const nc=[...base,{...datos,id:Date.now(),saldo:0,dispenser:datos.dispenser||0}]
+          const nc=[...base,{...datos,id:Date.now(),saldo:0,dispenser:datos.dispenser||0,repartoId:repartoActual?.id||null}]
             .sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
           saveClientes(nc);irA("clientes");
         }} onVolver={()=>irA("clientes")} />}

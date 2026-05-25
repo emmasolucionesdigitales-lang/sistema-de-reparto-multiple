@@ -2,7 +2,7 @@
 // ◆  12-gestion.js — GestionClientes · FormCliente · Resumen · exportar · importar · Calculadora
 // ════════════════════════════════════════════════════════════════════
 
-function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReordenarTodo,onRegistrarVenta,onVerDetalle,ventas}) {
+function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReordenarTodo,onRegistrarVenta,onVerDetalle,ventas,repartos}) {
   const [fotoClienteId,setFotoClienteId] = React.useState(null);
   const fotoCliente = fotoClienteId ? clientes.find(c=>c.id===fotoClienteId) : null;
   const [busqueda,setBusqueda]   = useState("");
@@ -85,6 +85,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
           <FormCliente
             inicial={{nombre:"",dia:"Martes",barrio:"",manzana:"",lote:"",sector:"",calle:"",nro:"",aclaracion:"",telefono:"",maps:"",notas:"",sifon:0,bidon10:0,bidon20:0,orden:""}}
             onGuardar={(datos)=>{onNuevo(datos);setModoNuevo(false);}}
+            repartos={repartos}
           />
         </div>
       )}
@@ -101,6 +102,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
               <FormCliente
                 inicial={c}
                 onGuardar={(datos)=>{onEditar(c.id,datos);setEditandoId(null);}}
+                repartos={repartos}
               />
               {/* Ajuste de envases EXTRA prestados (editable) */}
               {(()=>{
@@ -224,11 +226,25 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
   );
 }
 
-function FormCliente({inicial,onGuardar}) {
+function FormCliente({inicial,onGuardar,repartos}) {
   const [datos,setDatos] = useState({...inicial});
   const set = (k,v) => setDatos(d=>({...d,[k]:v}));
   return (
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      {/* Repartidor */}
+      {repartos&&repartos.length>0&&(
+        <div>
+          <label style={{...s.label,fontWeight:600,color:"var(--color-text-info)"}}>🚚 Repartidor asignado</label>
+          <select style={{...s.select,border:"1.5px solid var(--color-text-info)"}}
+            value={datos.repartoId||""}
+            onChange={e=>set("repartoId",e.target.value?Number(e.target.value)||e.target.value:null)}>
+            <option value="">— Sin asignar —</option>
+            {repartos.map(r=>(
+              <option key={r.id} value={r.id}>{r.numero}. {r.repartidorNombre}</option>
+            ))}
+          </select>
+        </div>
+      )}
       <div style={s.grid2}>
         <div>
           <label style={s.label}>Día de reparto</label>
