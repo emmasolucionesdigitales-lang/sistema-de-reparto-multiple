@@ -460,7 +460,12 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   totalesPorProd.soda.llenar  = sodaCajones * COSTO_CAJON_SODA;
   totalesPorProd.b10.llenar   = totalesPorProd.b10.vacios * costB10;
   totalesPorProd.b20.llenar   = totalesPorProd.b20.vacios * costB20;
-  const pesoAuto = Math.round(sodaCajones*10.8 + totalesPorProd.b10.vacios*10.5 + totalesPorProd.b20.vacios*20.5);
+  // Peso y bultos desde productos CARGADOS (no desde ventas)
+  const cajonesLlenos = Math.floor((llenosCargados?.soda||0)/CAJON_SODA);
+  const b10Llenos = llenosCargados?.b10||0;
+  const b20Llenos = llenosCargados?.b20||0;
+  const pesoAuto = cajonesLlenos * 13 + b10Llenos * 10 + b20Llenos * 20;
+  const bultosAuto = cajonesLlenos + b10Llenos + b20Llenos;
   const totalVentaPlata  = Object.values(totalesPorProd).reduce((a,p)=>a+p.plata,0);
   const totalVentaLlenar = Object.values(totalesPorProd).reduce((a,p)=>a+p.llenar,0);
   // Totales ventas de otros días
@@ -483,6 +488,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   const [datos,setDatos] = useState(()=>({
     ...planilla,
     peso:        planilla.peso        || (pesoAuto>0 ? String(pesoAuto) : ""),
+    bultos:      planilla.bultos      || (bultosAuto>0 ? String(bultosAuto) : ""),
     efectivo:    planilla.efectivo    || (cobEfectivo>0   ? String(Math.round(cobEfectivo))   : ""),
     fiado:       planilla.fiado       || (cobFiado>0      ? String(Math.round(cobFiado))      : ""),
     retenciones: planilla.retenciones || (cobTransDesc>0  ? String(cobTransDesc)              : ""),
@@ -555,6 +561,13 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
             </div>
           ))}
         </div>
+        {/* Desglose de peso y bultos */}
+        {(pesoAuto>0||bultosAuto>0)&&(
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:10,lineHeight:1.7,background:"var(--color-background-tertiary)",borderRadius:8,padding:"6px 10px"}}>
+            {bultosAuto>0&&<div>📦 <b>Bultos auto:</b> {cajonesCargados||cajonesLlenos||0} cajones soda + {b10Cargados||b10Llenos||0} bid.10L + {b20Cargados||b20Llenos||0} bid.20L = <b>{bultosAuto}</b></div>}
+            {pesoAuto>0&&<div>⚖️ <b>Peso auto:</b> {cajonesCargados||cajonesLlenos||0}×13kg + {b10Cargados||b10Llenos||0}×10kg + {b20Cargados||b20Llenos||0}×20kg = <b>{pesoAuto} kg</b></div>}
+          </div>
+        )}
 
         {/* Llenos — ingreso manual, vacios/plata/llenar auto desde ventas */}
         <span style={{...s.sectionTitle,padding:"12px 0 8px"}}>Envases cargados (solo ingresá los llenos)</span>
@@ -623,7 +636,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
               <div style={{display:"flex",gap:6}}>
                 <button style={{flex:1,padding:"7px",borderRadius:8,border:"none",background:"#0a2e1f",color:"#4dd9a0",fontSize:12,fontWeight:500,cursor:"pointer",opacity:!g.monto?0.5:1}}
                   disabled={!g.monto}
-                  onClick={()=>{setGasto(i,"confirmado",true);setTimeout(()=>onGuardar({...datos,gastos:datos.gastos.map((x,j)=>j===i?{...x,confirmado:true}:x)}),50);}}>
+                  onClick={()=>setGasto(i,"confirmado",true)}>
                   ✓ Confirmar y guardar
                 </button>
                 <button style={s.btnDanger} onClick={()=>delGasto(i)}>✕</button>
