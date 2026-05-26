@@ -220,8 +220,16 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
 }
 
 
-function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona}) {
+function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona,onDiaHoy,onDiaResumen,noVisitas}) {
   const [editandoZona, setEditandoZona] = React.useState(null);
+  const hoyDiaNombre = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][new Date().getDay()];
+  const hoyFechaKey = new Date().toISOString().slice(0,10);
+  const hoyLabel = new Date().toLocaleDateString("es-AR",{day:"numeric",month:"short"});
+  const clientesHoy = (clientes||[]).filter(c=>c.dia===hoyDiaNombre);
+  const ventasHoyIds = new Set((ventas||[]).filter(v=>v.fechaKey===hoyFechaKey).map(v=>v.clienteId));
+  const noVisitasHoyIds = new Set((noVisitas||[]).filter(v=>v.fecha===hoyFechaKey).map(v=>v.clienteId));
+  const visitadosHoy = clientesHoy.filter(c=>ventasHoyIds.has(c.id)||noVisitasHoyIds.has(c.id));
+  const diaCompleto = clientesHoy.length>0 && visitadosHoy.length>=clientesHoy.length;
   return (
     <div style={s.screen}>
       <div style={s.header}>
@@ -274,7 +282,8 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
           const totalClientes = (clientes||[]).filter(c=>c.dia===d).length;
           const zona = (zonasReparto||{})[d] || "";
           return (<React.Fragment key={d}>
-          <button style={{...s.card,margin:0,textAlign:"left",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}} onClick={()=>onDia(d)}>
+          <div style={{display:"flex",gap:6,alignItems:"stretch"}}>
+          <button style={{...s.card,margin:0,flex:1,textAlign:"left",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}} onClick={()=>onDia(d)}>
             <div style={{flex:1,minWidth:0}}>
               {/* Línea 1: Día · Zona */}
               <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
@@ -296,6 +305,22 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
             </div>
             <span style={{color:"var(--color-text-tertiary)",fontSize:18,marginLeft:10}}>→</span>
           </button>
+          {d===hoyDiaNombre&&onDiaHoy&&(
+            <button
+              style={{background:diaCompleto?"#0a5c3a":"#185FA5",borderRadius:12,padding:"8px 10px",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                gap:2,minWidth:56,border:diaCompleto?"1.5px solid #4dd9a0":"none",cursor:"pointer",flexShrink:0}}
+              onClick={()=>diaCompleto?(onDiaResumen&&onDiaResumen(d,hoyFechaKey)):onDiaHoy(d,hoyFechaKey)}>
+              <span style={{fontSize:16}}>{diaCompleto?"✅":"📅"}</span>
+              <span style={{fontSize:9,color:diaCompleto?"#4dd9a0":"#e2eaf4",fontWeight:500,textAlign:"center",lineHeight:1.3}}>
+                {diaCompleto?"Listo":"Hoy"}
+              </span>
+              <span style={{fontSize:9,color:diaCompleto?"#9FE1CB":"#b5d4f4",lineHeight:1}}>
+                {diaCompleto?`${visitadosHoy.length}/${clientesHoy.length}`:hoyLabel}
+              </span>
+            </button>
+          )}
+          </div>
           {/* Modal inline editar zona */}
           {editandoZona===d&&(
             <div style={{background:"var(--color-background-secondary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,padding:"10px 14px",marginTop:2}} onClick={e=>e.stopPropagation()}>
@@ -435,6 +460,95 @@ function DiaPrincipal({dia,onIrClientes,onIrPlanilla,onVolver,onVerConfirmacione
           <span style={{color:"var(--color-text-tertiary)",fontSize:20}}>→</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+function DetalleTransferencias({ventas, ventasPendTrans}) {
+  const [abierto, setAbierto] = React.useState(false);
+  const pendientes = (ventasPendTrans||[]).length;
+  return (
+    <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
+      <button style={{width:"100%",background:"none",border:"none",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"2px 0"}}
+        onClick={()=>setAbierto(o=>!o)}>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontSize:11,color:"var(--color-text-secondary)",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.05em"}}>Detalle de transferencias</span>
+          {pendientes>0&&<span style={{fontSize:10,padding:"1px 6px",borderRadius:4,background:"var(--color-background-warning)",color:"#f5b942",fontWeight:600}}>🔴 {pendientes} pend.</span>}
+        </div>
+        <span style={{fontSize:13,color:"var(--color-text-tertiary)",display:"inline-block",transform:abierto?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+      </button>
+      {abierto&&(
+        <div style={{marginTop:6}}>
+          {ventas.map(v=>{
+            const confirmada=!!v.transConfirmada;
+            return (
+              <div key={v.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                <div style={{flex:1}}>
+                  <span style={{fontSize:12,color:"var(--color-text-primary)",fontWeight:500}}>{v.cliente}</span>
+                  <span style={{marginLeft:6,fontSize:10,padding:"1px 6px",borderRadius:4,
+                    background:confirmada?"var(--color-background-success)":"var(--color-background-warning)",
+                    color:confirmada?"var(--color-text-success)":"#f5b942",fontWeight:600}}>
+                    {confirmada?"✅ Confirmada":"🔴 Pendiente"}
+                  </span>
+                </div>
+                <span style={{fontSize:13,fontWeight:500,color:confirmada?"var(--color-text-success)":"#f5b942"}}>{fmt(v.pagadoNum||v.neto||0)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetalleVentasDia({ventas}) {
+  const [abierto, setAbierto] = React.useState(false);
+  return (
+    <div style={{margin:"0 0 8px",borderRadius:12,overflow:"hidden",border:"1.5px solid #185FA5",background:"var(--color-background-info)"}}>
+      <button
+        style={{width:"100%",padding:"12px 16px",background:"none",border:"none",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",textAlign:"left"}}
+        onClick={()=>setAbierto(o=>!o)}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>📋</span>
+          <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-info)"}}>Detalle de ventas del día</span>
+          <span style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{ventas.length} venta{ventas.length>1?"s":""}</span>
+        </div>
+        <span style={{color:"var(--color-text-info)",fontSize:14,display:"inline-block",transform:abierto?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+      </button>
+      {abierto&&(
+        <div style={{borderTop:"0.5px solid var(--color-border-tertiary)",background:"var(--color-background-primary)"}}>
+          {ventas.map((v,idx)=>{
+            const pagoBadge={
+              contado:{bg:"var(--color-background-success)",color:"var(--color-text-success)",txt:"Contado"},
+              transferencia:{bg:v.transConfirmada?"var(--color-background-success)":"var(--color-background-warning)",color:v.transConfirmada?"var(--color-text-success)":"#f5b942",txt:v.transConfirmada?"Transfer. ✅":"Transfer. 🔴"},
+              fiado:{bg:"var(--color-background-warning)",color:"var(--color-text-warning)",txt:"Fiado"},
+            }[v.pago]||{bg:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",txt:v.pago};
+            return (
+              <div key={v.id} style={{padding:"10px 16px",borderBottom:idx<ventas.length-1?"0.5px solid var(--color-border-tertiary)":"none"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
+                  <div style={{flex:1}}>
+                    <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{v.cliente}</span>
+                    <span style={{marginLeft:6,fontSize:10,padding:"1px 6px",borderRadius:4,background:pagoBadge.bg,color:pagoBadge.color,fontWeight:600}}>{pagoBadge.txt}</span>
+                  </div>
+                  <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(v.neto||0)}</span>
+                </div>
+                {(v.detalle||[]).map((d,di)=>(
+                  <div key={di} style={{display:"flex",justifyContent:"space-between",padding:"2px 0 2px 8px"}}>
+                    <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{d.nombre} × {d.cantidad}</span>
+                    <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{fmt(d.total)}</span>
+                  </div>
+                ))}
+                {(v.saldoAplicado>0||((v.pagadoNum||0)-(v.neto||0))>0)&&(
+                  <div style={{display:"flex",gap:10,padding:"3px 0 0 8px",marginTop:2,borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                    {v.saldoAplicado>0&&<span style={{fontSize:11,color:"var(--color-text-success)"}}>Saldo aplicado: −{fmt(v.saldoAplicado)}</span>}
+                    {((v.pagadoNum||0)-(v.neto||0))>0&&<span style={{fontSize:11,color:"var(--color-text-success)"}}>Pagó de más: +{fmt((v.pagadoNum||0)-(v.neto||0))}</span>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -708,6 +822,14 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
         <div style={s.divider} />
         <span style={{...s.sectionTitle,padding:"0 0 10px"}}>Resumen del día</span>
 
+        {/* Detalle de ventas — recuadrado azul, colapsable */}
+        {ventasPropias.length>0
+          ? <DetalleVentasDia ventas={ventasPropias} />
+          : <div style={{...s.card,margin:"0 0 8px",padding:"12px 16px",background:"var(--color-background-tertiary)"}}>
+              <span style={{fontSize:13,color:"var(--color-text-tertiary)"}}>📋 Sin ventas registradas para este día</span>
+            </div>
+        }
+
         {/* Ventas del día */}
         <div style={{...s.card,margin:"0 0 8px",background:"var(--color-background-secondary)",padding:"14px 16px"}}>
           <div style={{fontSize:12,fontWeight:500,color:"var(--color-text-secondary)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>Ventas registradas</div>
@@ -798,18 +920,10 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
               <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Neto a acreditar</span>
               <span style={{fontSize:16,fontWeight:500,color:"var(--color-text-info)"}}>{fmt(cobTransNeto)}</span>
             </div>
-            {/* Transferencias pendientes de confirmar */}
-            {ventasPendTrans.length>0&&(
-              <div style={{marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
-                <div style={{fontSize:11,color:"#f5b942",marginBottom:6,fontWeight:500}}>🔴 {ventasPendTrans.length} sin confirmar</div>
-                {ventasPendTrans.map(v=>(
-                  <div key={v.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:12}}>
-                    <span style={{color:"var(--color-text-secondary)"}}>{v.cliente}</span>
-                    <span style={{color:"#f5b942",fontWeight:500}}>{fmt(v.pagadoNum||v.neto||0)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <DetalleTransferencias
+              ventas={ventasPropias.filter(v=>v.pago==="transferencia")}
+              ventasPendTrans={ventasPendTrans}
+            />
           </div>
         )}
 
