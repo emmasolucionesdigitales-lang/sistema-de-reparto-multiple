@@ -166,30 +166,22 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                       const docRef = window.dbLicencias.collection("repartidores").doc(rep.codigo);
                       const snap = await docRef.get();
                       if(snap.exists) {
-                        // Documento existe → resetear estado y deviceId
-                        await docRef.update({
-                          deviceId: null,
-                          activado: false,
-                          estado: "disponible",
-                          uid: null,
-                        });
+                        await docRef.update({deviceId:null, activado:false, estado:"disponible", uid:null});
                       } else {
-                        // Documento NO existe → crearlo desde cero
                         await docRef.set({
-                          codigo: rep.codigo,
-                          negocioId: negocioId,
-                          nombre: rep.repartidorNombre,
-                          sectores: rep.sectores || [],
-                          estado: "disponible",
-                          deviceId: null,
-                          activado: false,
-                          uid: null,
-                          creadoEn: new Date().toISOString(),
+                          codigo:rep.codigo, negocioId, nombre:rep.repartidorNombre,
+                          sectores:rep.sectores||[], estado:"disponible",
+                          deviceId:null, activado:false, uid:null,
+                          creadoEn:new Date().toISOString(),
                         });
                       }
-                      alert(`✅ Listo. "${rep.repartidorNombre}" puede activar la app con el código ${rep.codigo} en cualquier teléfono.`);
+                      alert(`✅ Listo. "${rep.repartidorNombre}" puede activar con el código ${rep.codigo} en cualquier teléfono.`);
                     } catch(e) {
-                      alert("Error al resetear: " + e.message);
+                      if(e.message&&(e.message.includes("offline")||e.message.includes("network")||e.message.includes("unavailable"))) {
+                        alert("Sin conexión a internet.\n\nVerificá tu conexión y volvé a intentar.");
+                      } else {
+                        alert("Error al resetear: " + e.message);
+                      }
                     }
                   }}>
                   🔄 Reset
