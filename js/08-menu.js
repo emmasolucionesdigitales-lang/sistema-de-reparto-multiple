@@ -150,7 +150,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                 </button>
               )}
               {/* Botones editar/eliminar/operar */}
-              <div style={{display:"flex",gap:6,marginTop:4,justifyContent:"flex-end"}}>
+              <div style={{display:"flex",gap:6,marginTop:4,justifyContent:"flex-end",flexWrap:"wrap"}}>
                 <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:"rgba(24,95,165,0.2)",color:"#5daaff",border:"1px solid rgba(93,170,255,0.4)"}}
                   onClick={()=>onOperarReparto&&onOperarReparto(rep)}>
                   🚐 Operar
@@ -158,6 +158,29 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                 <button style={{...s.btn,fontSize:11,padding:"4px 10px"}}
                   onClick={e=>{e.stopPropagation();setForm({numero:String(rep.numero),repartidorNombre:rep.repartidorNombre,codigo:rep.codigo});setEditandoId(rep.id);setModoNuevo(false);}}>
                   ✏️ Editar
+                </button>
+                <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:"rgba(245,185,66,0.15)",color:"#f5b942",border:"1px solid rgba(245,185,66,0.4)"}}
+                  onClick={async()=>{
+                    if(!window.confirm(`¿Resetear dispositivo de "${rep.repartidorNombre}"?\n\nPodrá activar la app de nuevo con el código ${rep.codigo} en un teléfono nuevo.`)) return;
+                    try {
+                      // Buscar por código en colección repartidores
+                      const snap = await window.dbLicencias.collection("repartidores")
+                        .where("codigo","==",rep.codigo).get();
+                      if(!snap.empty) {
+                        await snap.docs[0].ref.update({deviceId:null, activado:false});
+                      } else {
+                        // Fallback: buscar por negocioId y código
+                        const snap2 = await window.dbLicencias.collection("repartidores")
+                          .where("negocioId","==",negocioId).where("codigo","==",rep.codigo).get();
+                        if(!snap2.empty) await snap2.docs[0].ref.update({deviceId:null, activado:false});
+                        else throw new Error("No se encontró el registro del repartidor.");
+                      }
+                      alert(`✅ Dispositivo de "${rep.repartidorNombre}" reseteado.\nYa puede activar con el código ${rep.codigo} en un teléfono nuevo.`);
+                    } catch(e) {
+                      alert("Error al resetear: " + e.message);
+                    }
+                  }}>
+                  🔄 Reset
                 </button>
                 <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:"rgba(220,38,38,0.15)",color:"var(--color-text-danger)"}}
                   onClick={()=>eliminarReparto(rep.id)}>
