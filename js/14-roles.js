@@ -243,7 +243,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           clientes={clientes}
           dia={""} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
           onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("clientes");irA("detalleCliente");}}
-          onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("inicio")}
+          onNuevoCliente={null} onVolver={()=>irA("inicio")}
           onReordenar={lista=>{
             const otros = todosClientes.filter(c=>!(c.dia===diaActual && (sectores.length===0||sectores.some(s=>(c.barrio||"").toLowerCase().includes(s.toLowerCase())))));
             saveClientes([...otros,...lista]);
@@ -256,7 +256,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           onConfirmarTransfer={null} prospectos={[]} recordatorios={[]}
         />
       )}
-      {pantalla==="nuevoCliente"&&(
+      {pantalla==="nuevoCliente"&&false&&(
         <NuevoClienteForm
           sectores={sectores}
           diaActual={diaActual}
@@ -298,6 +298,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="venta"&&cliente&&(
         <NuevaVenta
+          key={clienteId}
           cliente={cliente} productos={productos} fecha={fechaActual}
           onNoEsta={()=>{
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noesta"}]);
@@ -307,7 +308,28 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noquiso"}]);
             irA("clientes");
           }}
-          onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);irA("clientes");}}
+          onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{
+            registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);
+            // Avanzar al siguiente cliente pendiente
+            const visitadosIds=new Set([
+              ...ventasHoy.map(v=>v.clienteId),
+              ...noVisHoy.map(v=>v.clienteId)
+            ]);
+            visitadosIds.add(clienteId);
+            const siguiente=clientes.find(cc=>!visitadosIds.has(cc.id)&&cc.id!==clienteId);
+            if(siguiente){setClienteId(siguiente.id);setDiaClienteActual(siguiente.dia||diaActual);}
+            else irA("clientes");
+          }}
+          onSaltar={()=>{
+            saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),
+              {clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"salteado"}]);
+            irA("clientes");
+          }}
+          progressData={(()=>{
+            const visitadosIds=new Set([...ventasHoy.map(v=>v.clienteId),...noVisHoy.map(v=>v.clienteId)]);
+            const montoHoy=ventasHoy.reduce((a,v)=>a+(v.neto||0),0);
+            return {visitados:visitadosIds.size,total:clientes.length,montoHoy,stock:null};
+          })()}
           onVolver={()=>irA("clientes")}
         />
       )}
@@ -329,7 +351,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           clientes={clientes}
           ventas={ventas}
           onSeleccionar={(c)=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("todosClientes");irA("detalleCliente");}}
-          onNuevoCliente={()=>irA("nuevoCliente")}
+          onNuevoCliente={null}
           onVolver={()=>irA("inicio")}
         />
       )}
@@ -517,6 +539,24 @@ function RepartidoresPanel({negocioId, clientes}) {
     setRepartidores(r=>r.filter(x=>x.uid!==uid));
   };
 
+  const resetearDispositivo = async (uid, nombre) => {
+    if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
+    try {
+      const snap = await window.dbLicencias.collection("repartidores")
+        .where("uid","==",uid).get();
+      if(!snap.empty) {
+        await snap.docs[0].ref.update({deviceId:null, activado:false});
+      } else {
+        await window.dbLicencias.collection("negocios").doc(negocioId)
+          .collection("repartidores").doc(uid).update({deviceId:null, activado:false});
+      }
+      alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar en un teléfono nuevo con su código.`);
+      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+    } catch(e) {
+      alert("Error al resetear: " + e.message);
+    }
+  };
+
   return (
     <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
 
@@ -533,7 +573,14 @@ function RepartidoresPanel({negocioId, clientes}) {
               <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{r.nombre}</div>
               <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{(r.sectores||[]).join(", ")||"Sin sectores"} · {r.email}</div>
             </div>
-            <button style={{...s.btnDanger,fontSize:11,padding:"4px 10px"}} onClick={()=>eliminar(r.uid)}>Eliminar</button>
+            <div style={{display:"flex",gap:6}}>
+              <button
+                style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:"0.5px solid #f5b942",background:"rgba(245,185,66,0.12)",color:"#f5b942",cursor:"pointer",fontWeight:500}}
+                onClick={()=>resetearDispositivo(r.uid,r.nombre)}>
+                🔄 Reset dispositivo
+              </button>
+              <button style={{...s.btnDanger,fontSize:11,padding:"4px 10px"}} onClick={()=>eliminar(r.uid)}>Eliminar</button>
+            </div>
           </div>
         ))}
       </div>
