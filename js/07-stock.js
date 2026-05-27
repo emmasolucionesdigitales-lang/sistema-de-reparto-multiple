@@ -57,12 +57,23 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
   };
 
   // Envases en clientes
-  const envC = {sifon:0,bidon10:0,bidon20:0};
-  clientes.forEach(c=>{envC.sifon+=(c.sifon||0);envC.bidon10+=(c.bidon10||0);envC.bidon20+=(c.bidon20||0);});
-  ventas.forEach(v=>{
-    (v.envPrest||[]).forEach(e=>{const k=e.prod==="Sifón 1.5L"?"sifon":e.prod==="Bidón 10L"?"bidon10":e.prod==="Bidón 20L"?"bidon20":null;if(k)envC[k]+=Number(e.cant)||0;});
-    (v.envDev||[]).forEach(e=>{const k=e.prod==="Sifón 1.5L"?"sifon":e.prod==="Bidón 10L"?"bidon10":e.prod==="Bidón 20L"?"bidon20":null;if(k)envC[k]-=Number(e.cant)||0;});
+  const envC = {sifon:0,bidon10:0,bidon20:0,dispenser:0};
+  clientes.forEach(c=>{
+    envC.sifon+=(c.sifon||0);
+    envC.bidon10+=(c.bidon10||0);
+    envC.bidon20+=(c.bidon20||0);
+    envC.dispenser+=(c.dispenser||0);
   });
+  ventas.forEach(v=>{
+    (v.envPrest||[]).forEach(e=>{const k=e.prod==="Sifón 1.5L"?"sifon":e.prod==="Bidón 10L"?"bidon10":e.prod==="Bidón 20L"?"bidon20":e.prod==="Dispenser"?"dispenser":null;if(k)envC[k]+=Number(e.cant)||0;});
+    (v.envDev||[]).forEach(e=>{const k=e.prod==="Sifón 1.5L"?"sifon":e.prod==="Bidón 10L"?"bidon10":e.prod==="Bidón 20L"?"bidon20":e.prod==="Dispenser"?"dispenser":null;if(k)envC[k]-=Number(e.cant)||0;});
+  });
+  const totalCtrl = {
+    sifon:  (stock?.soderia?.sifon||0)+(stock?.casa?.sifon||0)+envC.sifon,
+    bidon10:(stock?.soderia?.bidon10||0)+(stock?.casa?.bidon10||0)+envC.bidon10,
+    bidon20:(stock?.soderia?.bidon20||0)+(stock?.casa?.bidon20||0)+envC.bidon20,
+    dispenser:(stock?.soderia?.dispenser||0)+(stock?.casa?.dispenser||0)+envC.dispenser,
+  };
 
   const guardar = () => {
     setStock({soderia:base.soderia, soderia_vacios:base.soderia_vacios, casa:base.casa, camion:stock?.camion||{sifon:0,bidon10:0,bidon20:0}});
@@ -96,6 +107,25 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
 
       <div style={{padding:14,overflowY:"auto"}}>
       {tab==="stock"&&(<>
+                {/* Total controlado */}
+        <div style={{...s.card,margin:"0 0 10px",background:"var(--color-background-info)",border:"1.5px solid #185FA5"}}>
+          <div style={{fontSize:11,fontWeight:500,color:"var(--color-text-info)",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>📦 Total controlado</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            {[["Soda",Math.floor(totalCtrl.sifon/CAJON),"caj",totalCtrl.sifon+" un"],["10L",totalCtrl.bidon10,"un",null],["20L",totalCtrl.bidon20,"un",null],["Disp",totalCtrl.dispenser,"un",null]].map(([l,v,u,sub])=>(
+              <div key={l} style={{background:"var(--color-background-primary)",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                <div style={{fontSize:10,color:"var(--color-text-tertiary)",marginBottom:2}}>{l}</div>
+                <div style={{fontSize:20,fontWeight:500,color:"var(--color-text-info)"}}>{v}</div>
+                <div style={{fontSize:10,color:"var(--color-text-tertiary)"}}>{u}{sub?` (${sub})`:""}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
+            {[["🏭 Sodería",Math.floor((stock?.soderia?.sifon||0)/CAJON),(stock?.soderia?.bidon10||0),(stock?.soderia?.bidon20||0)],["📦 Depósito",Math.floor((stock?.casa?.sifon||0)/CAJON),(stock?.casa?.bidon10||0),(stock?.casa?.bidon20||0)],["👥 Clientes",Math.floor(envC.sifon/CAJON),envC.bidon10,envC.bidon20]].map(([lugar,caj,b10,b20])=>(
+              <div key={lugar} style={{fontSize:10,color:"var(--color-text-secondary)"}}>{lugar}: {caj}caj · {b10} 10L · {b20} 20L</div>
+            ))}
+          </div>
+        </div>
+
         {/* Estado actual calculado */}
         <div style={{...s.card,margin:"0 0 12px",background:"var(--color-background-secondary)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -133,7 +163,7 @@ function StockGeneral({stock,setStock,clientes,ventas,productos,planillas,onVolv
         </div>
 
         {/* Stock base editable — se setea una vez */}
-        {[["soderia","🏭 Sodería (stock base llenos)"],["soderia_vacios","📦 Sodería (vacíos en depósito)"],["casa","🏠 Casa / Depósito"]].map(([lugar,titulo])=>(
+        {[["soderia","🏭 Sodería (stock base llenos)"],["soderia_vacios","📦 Sodería (vacíos en depósito)"],["casa","📦 Depósito (promociones)"]].map(([lugar,titulo])=>(
           <div key={lugar} style={{...s.card,margin:"0 0 12px"}}>
             <div style={{marginBottom:10}}>
               <div style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>{titulo}</div>

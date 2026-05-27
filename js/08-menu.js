@@ -220,10 +220,10 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
 }
 
 
-function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona,onDiaHoy,onDiaResumen,noVisitas}) {
+function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona,onDiaHoy,onDiaResumen,noVisitas,onFiados}) {
   const [editandoZona, setEditandoZona] = React.useState(null);
   const hoyDiaNombre = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][new Date().getDay()];
-  const hoyFechaKey = new Date().toISOString().slice(0,10);
+  const hoyFechaKey = (()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
   const hoyLabel = new Date().toLocaleDateString("es-AR",{day:"numeric",month:"short"});
   const clientesHoy = (clientes||[]).filter(c=>c.dia===hoyDiaNombre);
   const ventasHoyIds = new Set((ventas||[]).filter(v=>v.fechaKey===hoyFechaKey).map(v=>v.clienteId));
@@ -406,6 +406,7 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
             ["🚀","Promoción",onPromocion],
             ["📅","Agenda",onAgenda],
             ["📊","Resumen",onResumen],
+            ["💰","Fiados",onFiados],
             ["⚙️","Config",onConfig],
           ].map(([ico,lbl,fn])=>(
             <button key={lbl} onClick={fn} style={{
@@ -626,6 +627,8 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   const planKeyToStockKey = {"soda":"sifon","b10":"bidon10","b20":"bidon20"};
   const PROD_LABEL = {soda:"Sifones",b10:"Bidón 10L",b20:"Bidón 20L"};
   const [mostrarCierre, setMostrarCierre] = useState(false);
+  const [realesLlenos, setRealesLlenos] = useState({soda:"",b10:"",b20:""});
+  const [realesVacios, setRealesVacios] = useState({soda:"",b10:"",b20:""});
   const yaCerrado = !!planilla._diaCerrado;
   const llenosCargados = {soda:Number(datos.productos?.soda?.llenos||0),b10:Number(datos.productos?.b10?.llenos||0),b20:Number(datos.productos?.b20?.llenos||0)};
   // Peso y bultos desde productos CARGADOS
@@ -644,21 +647,27 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   });
   const sobrantes={},vaciosRec={};
   ["soda","b10","b20"].forEach(pk=>{
-    sobrantes[pk]=Math.max(0,llenosCargados[pk]-vendidosDia[pk]-prestadosDia[pk]);
-    vaciosRec[pk]=vendidosDia[pk]+devueltosDia[pk];
+    sobrantes[pk]=Math.max(0,llenosCargados[pk]-vendidosDia[pk]);
+    vaciosRec[pk]=Math.max(0,vendidosDia[pk]+devueltosDia[pk]-prestadosDia[pk]);
   });
   const confirmarCierre = () => {
     const s = JSON.parse(JSON.stringify(stock));
     if(!s.soderia_vacios) s.soderia_vacios={sifon:0,bidon10:0,bidon20:0};
+    const diffs={};
     ["soda","b10","b20"].forEach(pk=>{
       const sk=planKeyToStockKey[pk];
-      s.soderia[sk]        =(s.soderia[sk]||0)+sobrantes[pk];
-      s.soderia_vacios[sk] =(s.soderia_vacios[sk]||0)+vaciosRec[pk];
+      const CAJON_F=pk==="soda"?CAJON_SODA:1;
+      const llenReal=realesLlenos[pk]!==""?Number(realesLlenos[pk])*CAJON_F:sobrantes[pk];
+      const vacReal=realesVacios[pk]!==""?Number(realesVacios[pk])*CAJON_F:vaciosRec[pk];
+      const dl=llenReal-sobrantes[pk]; const dv=vacReal-vaciosRec[pk];
+      if(dl!==0||dv!==0) diffs[pk]={llenos:dl,vacios:dv};
+      s.soderia[sk]        =(s.soderia[sk]||0)+llenReal;
+      s.soderia_vacios[sk] =(s.soderia_vacios[sk]||0)+vacReal;
       s.camion[sk]         =0;
     });
     setStock(s);
     syncData({stock:s});
-    onGuardar({...datos,_diaCerrado:true,_stockActualizado:true});
+    onGuardar({...datos,_diaCerrado:true,_stockActualizado:true,...(Object.keys(diffs).length>0?{_cierreDiffs:diffs}:{})});
     setMostrarCierre(false);
     if(onCerrarDia) setTimeout(()=>onCerrarDia(), 800);
   };
@@ -1000,13 +1009,28 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
                 </div>
                 {["soda","b10","b20"].map(pk=>{
                   const esSoda=pk==="soda";
-                  const llLabel=esSoda?`${Math.floor(sobrantes[pk]/CAJON_SODA)} caj (${sobrantes[pk]} un)`:String(sobrantes[pk]);
-                  const vacLabel=esSoda?`${Math.floor(vaciosRec[pk]/CAJON_SODA)} caj (${vaciosRec[pk]} un)`:String(vaciosRec[pk]);
+                  const calcLl=esSoda?Math.floor(sobrantes[pk]/CAJON_SODA):sobrantes[pk];
+                  const calcVac=esSoda?Math.floor(vaciosRec[pk]/CAJON_SODA):vaciosRec[pk];
+                  const realLl=realesLlenos[pk]!==""?Number(realesLlenos[pk]):calcLl;
+                  const realVac=realesVacios[pk]!==""?Number(realesVacios[pk]):calcVac;
+                  const diffLl=realLl-calcLl; const diffVac=realVac-calcVac;
                   return (
-                    <div key={pk} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"10px 12px",borderBottom:"0.5px solid var(--color-border-tertiary)",alignItems:"center"}}>
+                    <div key={pk} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"10px 12px",borderBottom:"0.5px solid var(--color-border-tertiary)",alignItems:"center",gap:4}}>
                       <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{PROD_LABEL[pk]}</div>
-                      <div style={{textAlign:"center",fontSize:14,fontWeight:600,color:"#4dd9a0"}}>{llLabel}</div>
-                      <div style={{textAlign:"center",fontSize:14,fontWeight:600,color:"#f5b942"}}>{vacLabel}</div>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:10,color:"#4dd9a0",marginBottom:2}}>App: {calcLl} {esSoda?"caj":"un"}</div>
+                        <input type="number" min={0} value={realesLlenos[pk]} placeholder={String(calcLl)}
+                          style={{width:"100%",padding:"4px",borderRadius:6,border:"0.5px solid #4dd9a0",background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",fontSize:14,textAlign:"center"}}
+                          onChange={e=>setRealesLlenos(r=>({...r,[pk]:e.target.value}))}/>
+                        {diffLl!==0&&<div style={{fontSize:10,color:diffLl<0?"var(--color-text-danger)":"var(--color-text-warning)",marginTop:1}}>{diffLl>0?"+":""}{diffLl}</div>}
+                      </div>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:10,color:"#f5b942",marginBottom:2}}>App: {calcVac} {esSoda?"caj":"un"}</div>
+                        <input type="number" min={0} value={realesVacios[pk]} placeholder={String(calcVac)}
+                          style={{width:"100%",padding:"4px",borderRadius:6,border:"0.5px solid #f5b942",background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",fontSize:14,textAlign:"center"}}
+                          onChange={e=>setRealesVacios(r=>({...r,[pk]:e.target.value}))}/>
+                        {diffVac!==0&&<div style={{fontSize:10,color:diffVac<0?"var(--color-text-danger)":"var(--color-text-warning)",marginTop:1}}>{diffVac>0?"+":""}{diffVac}</div>}
+                      </div>
                     </div>
                   );
                 })}

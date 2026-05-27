@@ -421,7 +421,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                   {ventaHoy.detalle.map(d=>`${d.nombre} ×${d.cantidad}`).join(" · ")} · {ventaHoy.pago}
                 </div>
               </div>
-            : <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+                        : <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
                 <button style={{background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"1px solid var(--color-border-warning)",borderRadius:10,padding:"12px 0",fontSize:13,cursor:"pointer",fontWeight:500,flex:1,minWidth:90}}
                   onClick={()=>{onNoEstaCliente&&onNoEstaCliente();}}>
                   🔄 No está
@@ -435,6 +435,14 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                 </button>
               </div>
           }
+          {/* Cobrar deuda rápido */}
+          {cliente.saldo<0&&!ventaHoy&&(
+            <button
+              style={{width:"100%",background:"#0a2e1f",color:"#4dd9a0",border:"1.5px solid #4dd9a0",borderRadius:10,padding:"12px",fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
+              onClick={()=>setMostrarPagoSaldo(true)}>
+              💰 Cobrar deuda · {fmt(Math.abs(cliente.saldo))}
+            </button>
+          )}
 
           {/* Historial colapsable */}
           <details style={{marginTop:4}}>
@@ -871,3 +879,58 @@ function CobroDeudaPanel({saldo,onCobrar}) {
   );
 }
 
+
+function FiadosPendientes({clientes,onCobrar,onVolver}) {
+  const [pagando,setPagando]=React.useState(null);
+  const [monto,setMonto]=React.useState('');
+  const [pago,setPago]=React.useState('contado');
+  const conDeuda=clientes.filter(c=>c.saldo<0).sort((a,b)=>a.saldo-b.saldo);
+  const totalDeuda=conDeuda.reduce((a,c)=>a+Math.abs(c.saldo),0);
+  return (
+    <div style={s.screen}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <div style={{flex:1}}>
+          <div style={s.headerTitle}>💰 Fiados pendientes</div>
+          <div style={{fontSize:11,color:'var(--color-text-danger)'}}>{conDeuda.length} clientes · {fmt(totalDeuda)} total</div>
+        </div>
+      </div>
+      {conDeuda.length===0&&<div style={{padding:40,textAlign:'center',color:'var(--color-text-success)',fontSize:15}}>✅ Sin fiados pendientes</div>}
+      {conDeuda.map(c=>(
+        <div key={c.id} style={{...s.card,margin:'6px 14px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:500,color:'var(--color-text-primary)'}}>{c.nombre}</div>
+              <div style={{fontSize:11,color:'var(--color-text-tertiary)'}}>{c.dia}{c.barrio?' · '+c.barrio:''}</div>
+            </div>
+            <span style={{fontSize:16,fontWeight:700,color:'var(--color-text-danger)'}}>{fmt(Math.abs(c.saldo))}</span>
+          </div>
+          {pagando===c.id?(
+            <div style={{display:'flex',flexDirection:'column',gap:8,paddingTop:8,borderTop:'0.5px solid var(--color-border-tertiary)'}}>
+              <div style={{display:'flex',gap:6}}>
+                {['contado','transferencia'].map(p=>(
+                  <button key={p} style={{flex:1,padding:'7px',fontSize:12,borderRadius:8,border:'0.5px solid var(--color-border-secondary)',background:pago===p?'#185FA5':'var(--color-background-tertiary)',color:pago===p?'#e2eaf4':'var(--color-text-secondary)',cursor:'pointer',fontWeight:pago===p?600:400}}
+                    onClick={()=>setPago(p)}>{p==='contado'?'💵 Efectivo':'💳 Transfer.'}</button>
+                ))}
+              </div>
+              <input style={{...s.input}} type='number' placeholder={fmt(Math.abs(c.saldo))+' (total)'} value={monto} onChange={e=>setMonto(e.target.value)} />
+              <div style={{display:'flex',gap:6}}>
+                <button style={{...s.btn,flex:1}} onClick={()=>{setPagando(null);setMonto('');}}>Cancelar</button>
+                <button style={{...s.btnPrimary,flex:2,padding:'9px'}} onClick={()=>{
+                  const m=Number(monto)||Math.abs(c.saldo);
+                  onCobrar(c.id,m,pago);
+                  setPagando(null);setMonto('');
+                }}>✓ Confirmar cobro</button>
+              </div>
+            </div>
+          ):(
+            <button style={{width:'100%',padding:'9px',background:'#0a2e1f',color:'#4dd9a0',border:'1px solid #4dd9a0',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}}
+              onClick={()=>{setPagando(c.id);setMonto(String(Math.abs(c.saldo)));setPago('contado');}}>
+              💰 Cobrar deuda
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

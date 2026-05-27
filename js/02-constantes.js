@@ -25,6 +25,7 @@ const PRODUCTOS_INICIALES = [
   { id:1, nombre:"Sifón 1.5L", precio:800,  costo:133.33 },
   { id:2, nombre:"Bidón 10L",  precio:2500, costo:800 },
   { id:3, nombre:"Bidón 20L",  precio:5000, costo:800 },
+  { id:4, nombre:"Dispenser",  precio:0,    costo:15000, esDispenser:true },
 ];
 
 const planillaDiaVacia = () => ({
