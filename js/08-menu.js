@@ -163,22 +163,23 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                   onClick={async()=>{
                     if(!window.confirm(`¿Resetear dispositivo de "${rep.repartidorNombre}"?\n\nPodrá activar la app de nuevo con el código ${rep.codigo} en un teléfono nuevo.`)) return;
                     try {
-                      const docRef = window.dbLicencias.collection("repartidores").doc(rep.codigo);
-                      const snap = await docRef.get();
-                      if(snap.exists) {
-                        await docRef.update({deviceId:null, activado:false, estado:"disponible", uid:null});
-                      } else {
-                        await docRef.set({
-                          codigo:rep.codigo, negocioId, nombre:rep.repartidorNombre,
-                          sectores:rep.sectores||[], estado:"disponible",
-                          deviceId:null, activado:false, uid:null,
-                          creadoEn:new Date().toISOString(),
-                        });
-                      }
+                      // set con merge:true → crea si no existe, actualiza si existe
+                      // sin necesitar leer primero (evita el error "offline")
+                      await window.dbLicencias.collection("repartidores").doc(rep.codigo).set({
+                        codigo: rep.codigo,
+                        negocioId: negocioId,
+                        nombre: rep.repartidorNombre,
+                        sectores: rep.sectores||[],
+                        estado: "disponible",
+                        deviceId: null,
+                        activado: false,
+                        uid: null,
+                        resetadoEn: new Date().toISOString(),
+                      }, {merge: true});
                       alert(`✅ Listo. "${rep.repartidorNombre}" puede activar con el código ${rep.codigo} en cualquier teléfono.`);
                     } catch(e) {
                       if(e.message&&(e.message.includes("offline")||e.message.includes("network")||e.message.includes("unavailable"))) {
-                        alert("Sin conexión a internet.\n\nVerificá tu conexión y volvé a intentar.");
+                        alert("Sin conexión a Firebase.\n\nRecargá la página e intentá de nuevo con conexión estable.");
                       } else {
                         alert("Error al resetear: " + e.message);
                       }
