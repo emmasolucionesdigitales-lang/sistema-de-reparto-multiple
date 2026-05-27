@@ -163,19 +163,31 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                   onClick={async()=>{
                     if(!window.confirm(`¿Resetear dispositivo de "${rep.repartidorNombre}"?\n\nPodrá activar la app de nuevo con el código ${rep.codigo} en un teléfono nuevo.`)) return;
                     try {
-                      // Buscar por código en colección repartidores
-                      const snap = await window.dbLicencias.collection("repartidores")
-                        .where("codigo","==",rep.codigo).get();
-                      if(!snap.empty) {
-                        await snap.docs[0].ref.update({deviceId:null, activado:false});
+                      const docRef = window.dbLicencias.collection("repartidores").doc(rep.codigo);
+                      const snap = await docRef.get();
+                      if(snap.exists) {
+                        // Documento existe → resetear estado y deviceId
+                        await docRef.update({
+                          deviceId: null,
+                          activado: false,
+                          estado: "disponible",
+                          uid: null,
+                        });
                       } else {
-                        // Fallback: buscar por negocioId y código
-                        const snap2 = await window.dbLicencias.collection("repartidores")
-                          .where("negocioId","==",negocioId).where("codigo","==",rep.codigo).get();
-                        if(!snap2.empty) await snap2.docs[0].ref.update({deviceId:null, activado:false});
-                        else throw new Error("No se encontró el registro del repartidor.");
+                        // Documento NO existe → crearlo desde cero
+                        await docRef.set({
+                          codigo: rep.codigo,
+                          negocioId: negocioId,
+                          nombre: rep.repartidorNombre,
+                          sectores: rep.sectores || [],
+                          estado: "disponible",
+                          deviceId: null,
+                          activado: false,
+                          uid: null,
+                          creadoEn: new Date().toISOString(),
+                        });
                       }
-                      alert(`✅ Dispositivo de "${rep.repartidorNombre}" reseteado.\nYa puede activar con el código ${rep.codigo} en un teléfono nuevo.`);
+                      alert(`✅ Listo. "${rep.repartidorNombre}" puede activar la app con el código ${rep.codigo} en cualquier teléfono.`);
                     } catch(e) {
                       alert("Error al resetear: " + e.message);
                     }
