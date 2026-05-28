@@ -62,6 +62,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [fechaActual, setFechaActual] = useLS("cat_fecha_actual", ""); // ISO date key YYYY-MM-DD
   const [fechaObj, setFechaObj]   = useState(null);
   const [clienteId, setClienteId] = useState(null);
+  const [initCierre, setInitCierre] = useState(false);
   const [noVisitas, setNoVisitas] = useLS("cat_novisitas_v1", []);
   const [prospectos, setProspectos] = useLS("cat_prospectos_v1", []);
   const [recordatorios, setRecordatorios] = useLS("cat_recordatorios_v1", []);
@@ -475,38 +476,29 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     }
     const envPrestFinal = [...(envPrest||[]).filter(e=>e.prod&&e.cant), ...envAutoDetect.filter(e=>!(envPrest||[]).some(ep=>ep.prod===e.prod))];
 
-    // Pago mixto: guardamos pago real según opción
-    const pagoReal = opcionSaldo==="mixto_ef"?"contado":opcionSaldo==="mixto_tr"?"transferencia":pago;
-    const obsExtra = montoTrans2>0?` [Mixto: ef $${montoPagado} + tr $${montoTrans2}]`:"";
+    // Pago mixto: UNA sola venta con ambos montos
+    const esMixto = opcionSaldo==="mixto_ef" || opcionSaldo==="mixto_tr";
+    const pagoReal = esMixto?"mixto":pago;
+    const ef = esMixto?(opcionSaldo==="mixto_ef"?Number(montoPagado):Number(montoTrans2||0)):0;
+    const tr = esMixto?(opcionSaldo==="mixto_ef"?Number(montoTrans2||0):Number(montoPagado)):0;
+    const totalMixto = esMixto ? ef+tr : 0;
+    const montoFinalCalc = esMixto ? String(totalMixto) : montoPagado;
+    const obsExtra = esMixto&&totalMixto>0?` [Mixto: ef $${ef} + tr $${tr}]`:"";
 
-    const calc = calcVenta(detalle, pagoReal, montoPagado, saldoAplicado, productos);
+    const calc = calcVenta(detalle, pagoReal, montoFinalCalc, saldoAplicado, productos);
     const nuevaVenta = {
       id:Date.now(), clienteId:c.id, cliente:c.nombre,
       dia:diaActual, fechaKey:fechaActual, fecha:new Date().toLocaleString("es-AR"),
       detalle, pago:pagoReal, obs:(obs||"")+obsExtra, saldoAplicado:saldoAplicado||0,
       envPrest:envPrestFinal,
       envDev:(envDev||[]).filter(e=>e.prod&&e.cant), ...calc,
-      montoTrans:montoTrans2||0, montoEfec:opcionSaldo==="mixto_ef"?Number(montoPagado):0,
+      montoTrans:esMixto?tr:(montoTrans2||0),
+      montoEfec:esMixto?ef:0,
     };
 
-    // Si es pago mixto, también guardamos la parte de transferencia como venta separada
+    // UNA sola venta — sin duplicar
     let nuevasVentas = [...ventas, nuevaVenta];
     let saldoExtra = calc.saldoDelta;
-    if(montoTrans2>0 && opcionSaldo==="mixto_ef") {
-      // Registrar transferencia como venta separada vinculada
-      const nTr = nuevaVenta.neto; // mismo neto para no duplicar
-      const ventaTr = {
-        id:Date.now()+2, clienteId:c.id, cliente:c.nombre,
-        dia:diaActual, fechaKey:fechaActual, fecha:new Date().toLocaleString("es-AR"),
-        detalle:[{nombre:"Pago mixto · transferencia",cantidad:1,precio:montoTrans2,total:montoTrans2}],
-        pago:"transferencia", obs:"[Parte transfer. de pago mixto]", saldoAplicado:0,
-        neto:montoTrans2, bruto:montoTrans2, desc:0, costo:0, ganancia:montoTrans2,
-        pagadoNum:montoTrans2, saldoDelta:montoTrans2, // suma al saldo del cliente
-        envPrest:[], envDev:[],
-      };
-      nuevasVentas = [...nuevasVentas, ventaTr];
-      saldoExtra += montoTrans2; // la transferencia abona al saldo
-    }
 
     saveVentas(nuevasVentas);
     const nuevosClientes = clientes.map(c2=>c2.id===c.id?{...c2,saldo:c.saldo+saldoExtra}:c2);
@@ -620,7 +612,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         zonasReparto={zonasReparto}
         onSetZona={(dia,zona)=>{const nz={...zonasReparto,[dia]:zona};setZonasReparto(nz);syncData({zonasReparto:nz});}}
         onDiaHoy={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));irA("inicioReparto");}}
-        onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setModalResumenDia({dia,fechaKey});}}
+        onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setInitCierre(!planillas[`${dia}_${fechaKey}`]?._diaCerrado);irA("planilla");}}
         noVisitas={noVisitas||[]}
         onFiados={()=>irA("fiadosPendientes")} />}
       {pantalla==="confirmacionesDia" && <ConfirmacionesDia
@@ -631,7 +623,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           onVolver={()=>irA("menu")} />}
       {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&v.pago==="transferencia"&&!v.transConfirmada).length} />}
       {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
-      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("selectorFechaPlanilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={()=>cerrarDia(fechaActual,diaActual)} />}
+      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("selectorFechaPlanilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={()=>cerrarDia(fechaActual,diaActual)} initCierre={initCierre} />}
       {pantalla==="selectorFechaClientes" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("inicioReparto");}} onVolver={()=>irA("diaPrincipal")} />}
       {pantalla==="inicioReparto"  && <InicioReparto dia={diaActual} fecha={fechaActual} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} cargasDia={cargasDia} stock={stockNorm}
         onGuardar={(p,descontar)=>{
@@ -887,9 +879,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       }}>
       {SCALE_LABELS[scaleIdx]}
     </button>
-    </>)}
-      {/* Modal resumen del día */}
-      {modalResumenDia&&(()=>{
+    </>)}{modalResumenDia&&(()=>{
         const {dia,fechaKey}=modalResumenDia;
         const vDia=ventas.filter(v=>v.fechaKey===fechaKey&&v.dia===dia&&!v._esCobro&&!v._esAjuste);
         const ef=vDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
