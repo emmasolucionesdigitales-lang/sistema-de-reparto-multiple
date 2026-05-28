@@ -1,4 +1,98 @@
 // ════════════════════════════════════════════════════════════════════
+// ◆  Funciones de invitaciones/repartidores (Firebase helpers)
+// ════════════════════════════════════════════════════════════════════
+
+// Canjeamos una invitación de 6 caracteres para el repartidor
+async function canjearInvitacion(deviceId, email, codigo) {
+  const db = window.dbLicencias || window.db;
+  if(!db) return {ok:false, msg:"Base de datos no disponible"};
+  try {
+    // Buscar la invitación por código en la colección global
+    const snap = await db.collection("invitaciones").doc(codigo).get();
+    if(!snap.exists) {
+      // Fallback: buscar en repartos del negocio por código
+      const snap2 = await db.collection("invitaciones")
+        .where("codigo","==",codigo).limit(1).get();
+      if(snap2.empty) return {ok:false, msg:"Código inválido. Pedile al dueño que comparta el código correcto."};
+      const inv2 = snap2.docs[0].data();
+      if(inv2.deviceId && inv2.deviceId !== deviceId)
+        return {ok:false, msg:"Este código ya fue usado en otro dispositivo. Pedile al dueño que resetee el acceso."};
+      await snap2.docs[0].ref.update({deviceId, activado:true, estado:"usado", usadoEn:new Date().toISOString()});
+      return {ok:true, negocioId:inv2.negocioId, nombre:inv2.nombre||"Repartidor", sectores:inv2.sectores||[]};
+    }
+    const inv = snap.data();
+    if(inv.estado === "inactivo") return {ok:false, msg:"Este código fue desactivado. Contactá al dueño."};
+    if(inv.deviceId && inv.deviceId !== deviceId)
+      return {ok:false, msg:"Este código ya fue usado en otro dispositivo. Pedile al dueño que resetee el acceso."};
+    await snap.ref.update({deviceId, activado:true, estado:"usado", usadoEn:new Date().toISOString()});
+    return {ok:true, negocioId:inv.negocioId, nombre:inv.nombre||"Repartidor", sectores:inv.sectores||[]};
+  } catch(e) { return {ok:false, msg:"Error de conexión: "+e.message}; }
+}
+
+// Lista los repartidores activos de un negocio
+async function listarRepartidores(negocioId) {
+  const db = window.dbLicencias || window.db;
+  if(!db) return [];
+  try {
+    const snap = await db.collection("invitaciones")
+      .where("negocioId","==",negocioId)
+      .where("estado","==","usado").get();
+    return snap.docs.map(d=>({...d.data(), codigo:d.id, uid:d.data().deviceId||d.id}));
+  } catch(e) { console.warn("listarRepartidores:",e); return []; }
+}
+
+// Lista las invitaciones pendientes (no usadas aún)
+async function listarInvitaciones(negocioId) {
+  const db = window.dbLicencias || window.db;
+  if(!db) return [];
+  try {
+    const snap = await db.collection("invitaciones")
+      .where("negocioId","==",negocioId).get();
+    return snap.docs
+      .filter(d=>d.data().estado !== "usado" && d.data().estado !== "eliminado")
+      .map(d=>({...d.data(), codigo:d.id}));
+  } catch(e) { return []; }
+}
+
+// Elimina/desactiva un repartidor
+async function eliminarRepartidor(uid) {
+  const db = window.dbLicencias || window.db;
+  if(!db) return;
+  try {
+    const snap = await db.collection("invitaciones").where("deviceId","==",uid).get();
+    if(!snap.empty){
+      await Promise.all(snap.docs.map(d=>d.ref.update({estado:"eliminado",activado:false})));
+      return;
+    }
+    // Fallback: buscar por uid como doc id
+    const snap2 = await db.collection("invitaciones").doc(uid).get();
+    if(snap2.exists) await snap2.ref.update({estado:"eliminado",activado:false});
+  } catch(e) { console.error("eliminarRepartidor:",e); }
+}
+
+// Sincroniza los repartos con la colección de invitaciones en dbLicencias
+// Llamar cuando el dueño crea o modifica repartos
+async function sincronizarInvitaciones(repartos, negocioId) {
+  const db = window.dbLicencias || window.db;
+  if(!db || !repartos || !negocioId) return;
+  try {
+    await Promise.all(repartos.filter(r=>r.codigo&&r.codigo.length===6).map(async r=>{
+      const ref = db.collection("invitaciones").doc(r.codigo);
+      const snap = await ref.get();
+      const data = {
+        negocioId, codigo:r.codigo,
+        nombre: r.repartidorNombre||r.nombre||"Repartidor",
+        sectores: r.sectores||[],
+        numero: r.numero||1,
+      };
+      if(!snap.exists) await ref.set({...data, estado:"pendiente", creadoEn:new Date().toISOString()});
+      else if(snap.data().estado !== "usado")
+        await ref.update({nombre:data.nombre, sectores:data.sectores});
+    }));
+  } catch(e) { console.warn("sincronizarInvitaciones:",e); }
+}
+
+// ════════════════════════════════════════════════════════════════════
 // ◆  15-extras.js — VincularEmma · InicioRepartidor · TodosClientes · Agenda · ConfigApariencia · VistaClientes · ImportarExcel
 // ════════════════════════════════════════════════════════════════════
 

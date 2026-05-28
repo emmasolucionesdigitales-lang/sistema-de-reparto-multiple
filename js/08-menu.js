@@ -704,6 +704,12 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
     b10:  Number(datos.productos?.b10?.llenos||0),
     b20:  Number(datos.productos?.b20?.llenos||0),
   };
+  // Peso y bultos calculados desde los productos cargados
+  const cajonesLlenos = Math.floor((llenosCargados.soda||0)/CAJON_SODA);
+  const b10Llenos = llenosCargados.b10||0;
+  const b20Llenos = llenosCargados.b20||0;
+  const pesoAuto   = cajonesLlenos*13 + b10Llenos*10 + b20Llenos*20;
+  const bultosAuto = cajonesLlenos + b10Llenos + b20Llenos;
   const vendidosDia={soda:0,b10:0,b20:0};
   const prestadosDia={soda:0,b10:0,b20:0};
   const devueltosDia={soda:0,b10:0,b20:0};

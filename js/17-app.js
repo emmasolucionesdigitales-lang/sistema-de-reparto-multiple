@@ -54,7 +54,14 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [repartos, setRepartos]     = useLS("cat_repartos_v1", []);
   const [repartoActual, setRepartoActual] = useLS("cat_reparto_actual_v1", null);
   // repartos: [{id, numero, nombre, repartidorNombre, codigo}]
-  const saveRepartos = (v) => { setRepartos(v); syncData({repartos:v}); };
+  const saveRepartos = (v) => {
+    setRepartos(v);
+    syncData({repartos:v});
+    // Sincronizar códigos de acceso en dbLicencias para que los repartidores puedan activar
+    if(typeof sincronizarInvitaciones === "function"){
+      sincronizarInvitaciones(v, negocioId).catch(()=>{});
+    }
+  };
   // Reset diaActual when it's invalid
   React.useEffect(()=>{
     if(diaActual && !DIAS.includes(diaActual)) setDiaActual("");
