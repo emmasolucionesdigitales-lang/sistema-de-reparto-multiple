@@ -272,20 +272,83 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
   );
 }
 
-function exportarExcel(clientes,ventas,productos,planillas){
+function exportarExcel(clientes,ventas,productos,planillas,repartos,filtroReparto){
   const wb=XLSX.utils.book_new();
-  const wsC=XLSX.utils.json_to_sheet(clientes.map(c=>({ID:c.id,Nombre:c.nombre,"Día":c.dia,Barrio:c.barrio,Manzana:c.manzana,Lote:c.lote,"Teléfono":c.telefono,Maps:c.maps,"Sifón":c.sifon,"Bidón 10L":c.bidon10,"Bidón 20L":c.bidon20,Saldo:c.saldo})));
+  const fecha=new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
+
+  // Helper: nombre del repartidor de un cliente
+  const getNombreRep=(c)=>{
+    if(!repartos||!repartos.length) return "";
+    const r=repartos.find(x=>x.id===c.repartoId);
+    return r?(r.repartidorNombre||r.nombre||""):"Sin asignar";
+  };
+
+  // Filtrar según la selección
+  const clientesFilt = (!filtroReparto||filtroReparto==="todos")
+    ? clientes
+    : clientes.filter(c=>c.repartoId===filtroReparto);
+  const clienteIds = new Set(clientesFilt.map(c=>c.id));
+  const ventasFilt = (!filtroReparto||filtroReparto==="todos")
+    ? ventas
+    : ventas.filter(v=>clienteIds.has(v.clienteId));
+
+  // Nombre del reparto seleccionado (para el nombre del archivo)
+  const nomRep = (!filtroReparto||filtroReparto==="todos")
+    ? "todos"
+    : ((repartos||[]).find(r=>r.id===filtroReparto)?.repartidorNombre||"reparto").replace(/\s+/g,"_");
+
+  // Hoja Clientes — con columna Repartidor
+  const wsC=XLSX.utils.json_to_sheet(clientesFilt.map(c=>({
+    Repartidor:getNombreRep(c),
+    ID:c.id, Nombre:c.nombre, "Día":c.dia, Orden:c.orden||"",
+    Barrio:c.barrio, Manzana:c.manzana, Lote:c.lote, Calle:c.calle, "N°":c.nro,
+    "Teléfono":c.telefono, Maps:c.maps,
+    "Sifón":c.sifon, "Bidón 10L":c.bidon10, "Bidón 20L":c.bidon20,
+    Dispenser:c.dispenser||0, Saldo:c.saldo, Notas:c.notas||""
+  })));
   XLSX.utils.book_append_sheet(wb,wsC,"Clientes");
+
+  // Hoja Ventas — con columna Repartidor
   const fv=[];
-  ventas.forEach(v=>v.detalle.forEach(d=>fv.push({ID:v.id,Fecha:v.fecha,"Día":v.dia,Cliente:v.cliente,Producto:d.nombre,Cantidad:d.cantidad,"Precio Unit":d.precio,"Total Prod":d.total,"Forma Pago":v.pago,Bruto:v.bruto,Descuento:v.desc,Neto:v.neto,Costo:v.costo,Ganancia:v.ganancia,Pagado:v.pagadoNum,"Saldo Aplic":v.saldoAplicado||0,Obs:v.obs||""})));
+  ventasFilt.forEach(v=>{
+    const cl=clientes.find(c=>c.id===v.clienteId);
+    const repNom=cl?getNombreRep(cl):"";
+    v.detalle.forEach(d=>fv.push({
+      Repartidor:repNom,
+      ID:v.id, Fecha:v.fechaKey||v.fecha, "Día":v.dia, Cliente:v.cliente,
+      Producto:d.nombre, Cantidad:d.cantidad, "Precio Unit":d.precio, "Total Prod":d.total,
+      "Forma Pago":v.pago, Bruto:v.bruto, Neto:v.neto, Costo:v.costo, Ganancia:v.ganancia,
+      Pagado:v.pagadoNum, "Saldo Aplic":v.saldoAplicado||0, Obs:v.obs||""
+    }));
+  });
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fv.length?fv:[{}]),"Ventas");
+
+  // Hoja Planillas
   const fp=[];
   Object.entries(planillas).forEach(([dia,p])=>fp.push({"Día":dia,Fecha:p.fecha||"",Peso:p.peso||"",Bultos:p.bultos||"","10L Llenos":p.productos?.b10?.llenos||0,"10L Vacíos":p.productos?.b10?.vacios||0,"10L Plata":p.productos?.b10?.plata||0,"10L Llenar":p.productos?.b10?.llenar||0,"20L Llenos":p.productos?.b20?.llenos||0,"20L Vacíos":p.productos?.b20?.vacios||0,"20L Plata":p.productos?.b20?.plata||0,"20L Llenar":p.productos?.b20?.llenar||0,"Soda Llenos":p.productos?.soda?.llenos||0,"Soda Vacíos":p.productos?.soda?.vacios||0,"Soda Plata":p.productos?.soda?.plata||0,"Soda Llenar":p.productos?.soda?.llenar||0,Efectivo:p.efectivo||0,Fiado:p.fiado||0,Retenciones:p.retenciones||0,Gastos:(p.gastos||[]).map(g=>`${g.cat}: $${g.monto}`).join(" | "),"Total Gastos":(p.gastos||[]).reduce((a,g)=>a+(Number(g.monto)||0),0),Obs:p.obs||""}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fp.length?fp:[{}]),"Planillas");
-  const fs=clientes.filter(c=>c.saldo!==0).map(c=>({Nombre:c.nombre,"Día":c.dia,Saldo:c.saldo,Estado:c.saldo<0?"Debe":"A favor"}));
+
+  // Hoja Saldos — con columna Repartidor
+  const fs=clientesFilt.filter(c=>c.saldo!==0).map(c=>({Repartidor:getNombreRep(c),Nombre:c.nombre,"Día":c.dia,Saldo:c.saldo,Estado:c.saldo<0?"Debe":"A favor"}));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fs.length?fs:[{}]),"Saldos");
-  const fecha=new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
-  XLSX.writeFile(wb,`backup_reparto-app_${fecha}.xlsx`);
+
+  // Hoja resumen por repartidor (solo si se exportan todos)
+  if(!filtroReparto||filtroReparto==="todos"){
+    const resumen={};
+    clientes.forEach(c=>{
+      const k=getNombreRep(c)||"Sin asignar";
+      if(!resumen[k])resumen[k]={Repartidor:k,Clientes:0,"10L en calle":0,"20L en calle":0,"Soda en calle":0,"Deben":0};
+      resumen[k].Clientes++;
+      resumen[k]["10L en calle"]+=c.bidon10||0;
+      resumen[k]["20L en calle"]+=c.bidon20||0;
+      resumen[k]["Soda en calle"]+=(c.sifon||0);
+      if((c.saldo||0)<0) resumen[k]["Deben"]+=Math.abs(c.saldo);
+    });
+    const fres=Object.values(resumen);
+    if(fres.length>0) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fres),"Por Repartidor");
+  }
+
+  XLSX.writeFile(wb,`backup_reparto_${nomRep}_${fecha}.xlsx`);
 }
 
 function descargarPlantillaClientes(){

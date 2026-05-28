@@ -103,20 +103,21 @@ function AppRepartidorWrapper({uid, perfil, onSalir}) {
 }
 
 function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
-  // ── Buscar el reparto que corresponde al código del repartidor
+  // ── Calcular diaActual PRIMERO para poder usarlo en useState ────────
+  // IMPORTANTE: debe ir antes de cualquier useState que lo use
+  const _diasSemana = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  const diaActual = _diasSemana[new Date().getDay()];
+
+  // ── Estado del repartidor ───────────────────────────────────────────
   const [pantalla,   setPantalla]   = React.useState("inicio");
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
   const [clienteId,  setClienteId]  = React.useState(null);
   const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toISOString().slice(0,10));
-  const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual);
+  const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual); // ahora sí está definido
   const [origenDetalle, setOrigenDetalle] = React.useState("clientes");
   const [datos,      setDatos]      = React.useState(null);
 
-  // Detectar día actual automáticamente
-  const diaHoy = () => {
-    const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-    return dias[new Date().getDay()];
-  };
+  const diaHoy = () => diaActual; // mantener compatibilidad
 
   React.useEffect(()=>{
     cloudLoad(uid, perfil.negocioId).then(function(d){
@@ -140,12 +141,6 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   // Sectores del repartidor (barrios asignados)
   const sectores = perfil.sectores || [];
-
-  // Día actual del reparto (puede ajustarse manualmente)
-  const diaActual = (() => {
-    const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-    return dias[new Date().getDay()];
-  })();
 
   // Clientes de este repartidor = su reparto (TODOS los días)
   const clientes = todosClientes.filter(c =>
@@ -541,16 +536,53 @@ function RepartidoresPanel({negocioId, clientes}) {
 
   const resetearDispositivo = async (uid, nombre) => {
     if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
+    const db = window.dbLicencias;
+    if(!db){ alert("Error: base de datos no disponible."); return; }
+    let reseteado = false;
     try {
-      const snap = await window.dbLicencias.collection("repartidores")
-        .where("uid","==",uid).get();
-      if(!snap.empty) {
-        await snap.docs[0].ref.update({deviceId:null, activado:false});
-      } else {
-        await window.dbLicencias.collection("negocios").doc(negocioId)
-          .collection("repartidores").doc(uid).update({deviceId:null, activado:false});
+      // Intento 1: colección global "repartidores" por uid
+      const snap1 = await db.collection("repartidores").where("uid","==",uid).get();
+      if(!snap1.empty){
+        await Promise.all(snap1.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
+        reseteado = true;
       }
-      alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar en un teléfono nuevo con su código.`);
+      // Intento 2: sub-colección del negocio
+      try {
+        await db.collection("negocios").doc(negocioId)
+          .collection("repartidores").doc(uid).update({deviceId:null, activado:false});
+        reseteado = true;
+      } catch(_){}
+      // Intento 3: colección "invitaciones" por uid
+      try {
+        const snap3 = await db.collection("invitaciones").where("uid","==",uid).get();
+        if(!snap3.empty){
+          await Promise.all(snap3.docs.map(d=>d.ref.update({deviceId:null,activado:false,estado:"pendiente"})));
+          reseteado = true;
+        }
+      } catch(_){}
+      // Intento 4: colección "invitaciones" por deviceId
+      try {
+        const repartidor = repartidores.find(r=>r.uid===uid);
+        if(repartidor?.codigo){
+          const snap4 = await db.collection("invitaciones").doc(repartidor.codigo).get();
+          if(snap4.exists) await snap4.ref.update({deviceId:null,activado:false,estado:"pendiente"});
+          reseteado = true;
+        }
+      } catch(_){}
+      // Intento 5: colección "codigos" por uid (variante)
+      try {
+        const snap5 = await db.collection("codigos").where("uid","==",uid).get();
+        if(!snap5.empty){
+          await Promise.all(snap5.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
+          reseteado = true;
+        }
+      } catch(_){}
+
+      if(reseteado){
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar la app de nuevo con su código en cualquier teléfono.`);
+      } else {
+        alert(`⚠️ Reset ejecutado pero no se encontró el registro del dispositivo en la base de datos.\n${nombre} puede intentar activar de nuevo — si falla con "código ya usado", contactá soporte.`);
+      }
       setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
     } catch(e) {
       alert("Error al resetear: " + e.message);

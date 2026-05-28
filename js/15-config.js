@@ -2,7 +2,7 @@
 // ◆  14-config.js — Config
 // ════════════════════════════════════════════════════════════════════
 
-function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial}) {
+function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial,repartos}) {
   const [tab,setTab]=useState(tabInicial||"stock");
   const [editandoId,setEditandoId]=useState(null);
   const [importando,setImportando]=useState(false);
@@ -219,8 +219,41 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
             })()}
 
             {/* Exportar datos */}
-            <button style={s.btnPrimary} onClick={()=>exportarExcel(clientes,ventas,productos,planillas)}>
-              📥 Exportar todos los datos · {clientes.length} clientes · {ventas.length} ventas
+            {(repartos||[]).length > 1 && (
+              <div style={{...s.card,margin:0,padding:"10px 14px"}}>
+                <label style={{...s.label,marginBottom:6}}>📦 Exportar datos de:</label>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  <button
+                    style={{...s.btn,padding:"6px 14px",fontSize:12,
+                      background:filtroReparto==="todos"?"#185FA5":"var(--color-background-tertiary)",
+                      color:filtroReparto==="todos"?"#e2eaf4":"var(--color-text-secondary)",
+                      border:filtroReparto==="todos"?"none":"0.5px solid var(--color-border-secondary)"}}
+                    onClick={()=>setFiltroReparto("todos")}>
+                    Todos los repartidores
+                  </button>
+                  {(repartos||[]).map(r=>(
+                    <button key={r.id}
+                      style={{...s.btn,padding:"6px 14px",fontSize:12,
+                        background:filtroReparto===r.id?"#185FA5":"var(--color-background-tertiary)",
+                        color:filtroReparto===r.id?"#e2eaf4":"var(--color-text-secondary)",
+                        border:filtroReparto===r.id?"none":"0.5px solid var(--color-border-secondary)"}}
+                      onClick={()=>setFiltroReparto(r.id)}>
+                      {r.repartidorNombre||r.nombre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button style={s.btnPrimary} onClick={()=>exportarExcel(clientes,ventas,productos,planillas,repartos||[],filtroReparto)}>
+              {(()=>{
+                const n = filtroReparto==="todos"
+                  ? clientes.length
+                  : clientes.filter(c=>c.repartoId===filtroReparto).length;
+                const rep = filtroReparto==="todos"
+                  ? "todos"
+                  : ((repartos||[]).find(r=>r.id===filtroReparto)?.repartidorNombre||"");
+                return `📥 Exportar datos · ${n} clientes${rep!=="todos"?` · ${rep}`:""}`;
+              })()}
             </button>
 
             {/* Importar clientes */}
