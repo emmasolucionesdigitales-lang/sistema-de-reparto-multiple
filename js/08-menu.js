@@ -582,7 +582,7 @@ function DetalleVentasDia({ventas}) {
   );
 }
 
-function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia}) {
+function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre}) {
   // Separar ventas del día propio vs ventas de clientes de otro día
   const clientesDia = new Set((clientes||[]).filter(c=>c.dia===dia).map(c=>c.id));
   const ventasPropias  = ventas.filter(v=>clientesDia.has(v.clienteId));
@@ -650,6 +650,73 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   const sobrante=efectivo-(totalVentaPlata-fiado);
   const ganancia=(cobEfectivo+cobTransBruto+cobFiado+cobSaldos)-totalVentaLlenar-totalGastos;
   const totalLlenosIngresados=PRODUCTOS_CONFIG.reduce((a,p)=>a+num(datos.productos[p.id]?.llenos),0);
+
+
+  // ── Cierre del día: estados y cálculos ───────────────────────────
+  const [mostrarCierre, setMostrarCierre] = useState(!!(initCierre && !planilla._diaCerrado));
+  const [realesLlenos, setRealesLlenos] = useState({soda:"",b10:"",b20:""});
+  const [realesVacios, setRealesVacios] = useState({soda:"",b10:"",b20:""});
+  const yaCerrado = !!planilla._diaCerrado;
+
+  const llenosCargados = {
+    soda: Number(datos.productos?.soda?.llenos||0),
+    b10:  Number(datos.productos?.b10?.llenos||0),
+    b20:  Number(datos.productos?.b20?.llenos||0),
+  };
+  const vendidosDia={soda:0,b10:0,b20:0};
+  const prestadosDia={soda:0,b10:0,b20:0};
+  const devueltosDia={soda:0,b10:0,b20:0};
+  ventas.forEach(v=>{
+    v.detalle.forEach(d=>{const k=prodKey[d.nombre];if(!k)return;vendidosDia[k]+=d.cantidad;});
+    (v.envPrest||[]).forEach(e=>{const k=prodKey[e.prod||""];if(k)prestadosDia[k]+=Number(e.cant)||0;});
+    (v.envDev||[]).forEach(e=>{const k=prodKey[e.prod||""];if(k)devueltosDia[k]+=Number(e.cant)||0;});
+  });
+  const sobrantes={
+    soda:Math.max(0,llenosCargados.soda-vendidosDia.soda),
+    b10: Math.max(0,llenosCargados.b10-vendidosDia.b10),
+    b20: Math.max(0,llenosCargados.b20-vendidosDia.b20),
+  };
+  const vaciosRec={
+    soda:Math.max(0,vendidosDia.soda+devueltosDia.soda-prestadosDia.soda),
+    b10: Math.max(0,vendidosDia.b10+devueltosDia.b10-prestadosDia.b10),
+    b20: Math.max(0,vendidosDia.b20+devueltosDia.b20-prestadosDia.b20),
+  };
+
+  const confirmarCierre = () => {
+    const realesL={
+      soda: realesLlenos.soda!==""?Number(realesLlenos.soda)*CAJON_SODA:sobrantes.soda,
+      b10:  realesLlenos.b10!==""?Number(realesLlenos.b10):sobrantes.b10,
+      b20:  realesLlenos.b20!==""?Number(realesLlenos.b20):sobrantes.b20,
+    };
+    const realesV={
+      soda: realesVacios.soda!==""?Number(realesVacios.soda)*CAJON_SODA:vaciosRec.soda,
+      b10:  realesVacios.b10!==""?Number(realesVacios.b10):vaciosRec.b10,
+      b20:  realesVacios.b20!==""?Number(realesVacios.b20):vaciosRec.b20,
+    };
+    const diffs={};
+    ["soda","b10","b20"].forEach(pk=>{
+      const calcL=pk==="soda"?Math.floor(sobrantes[pk]/CAJON_SODA):sobrantes[pk];
+      const calcV=pk==="soda"?Math.floor(vaciosRec[pk]/CAJON_SODA):vaciosRec[pk];
+      const realL=realesLlenos[pk]!==""?Number(realesLlenos[pk]):calcL;
+      const realV=realesVacios[pk]!==""?Number(realesVacios[pk]):calcV;
+      if(realL!==calcL)diffs[`llenos_${pk}`]={calc:calcL,real:realL};
+      if(realV!==calcV)diffs[`vacios_${pk}`]={calc:calcV,real:realV};
+    });
+    const s=JSON.parse(JSON.stringify(stock));
+    if(!s.soderia)s.soderia={sifon:0,bidon10:0,bidon20:0};
+    if(!s.soderia_vacios)s.soderia_vacios={sifon:0,bidon10:0,bidon20:0};
+    const conv={soda:"sifon",b10:"bidon10",b20:"bidon20"};
+    ["soda","b10","b20"].forEach(pk=>{
+      const sk=conv[pk];
+      s.soderia[sk]=(s.soderia[sk]||0)+realesL[pk];
+      s.soderia_vacios[sk]=(s.soderia_vacios[sk]||0)+realesV[pk];
+    });
+    s.camion={sifon:0,bidon10:0,bidon20:0};
+    setStock(s);syncData({stock:s});
+    onGuardar({...datos,_diaCerrado:true,_stockActualizado:true,...(Object.keys(diffs).length>0?{_cierreDiffs:diffs}:{})});
+    setMostrarCierre(false);
+    if(onCerrarDia)setTimeout(()=>onCerrarDia(),800);
+  };
 
   // ── Early return: pantalla de cierre ─────────────────────────────
   if(mostrarCierre){

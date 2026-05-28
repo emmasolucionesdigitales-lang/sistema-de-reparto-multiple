@@ -56,6 +56,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [fechaActual, setFechaActual] = useLS("cat_fecha_actual", ""); // ISO date key YYYY-MM-DD
   const [fechaObj, setFechaObj]   = useState(null);
   const [clienteId, setClienteId] = useState(null);
+  const [prospectoId, setProspectoId] = useState(null);
+  const [initCierre, setInitCierre] = useState(false);
   const [noVisitas, setNoVisitas] = useLS("cat_novisitas_v1", []);
   const [prospectos, setProspectos] = useLS("cat_prospectos_v1", []);
   const [recordatorios, setRecordatorios] = useLS("cat_recordatorios_v1", []);
@@ -382,6 +384,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const saveProspectos=(v)=>{ setProspectos(v); try{localStorage.setItem("cat_prospectos_v1",JSON.stringify(v));}catch{} syncData({prospectos:v}); };
 
   const cliente = clientes.find(c=>c.id===clienteId)||null;
+  const prospecto = (prospectos||[]).find(p=>p.id===prospectoId)||null;
   const irA = (p) => {
     const needsDia = ["diaPrincipal","selectorFechaClientes","selectorFechaPlanilla","inicioReparto","clientes","detalleCliente","venta","planilla"]; // historial does NOT need dia
     if(needsDia.includes(p) && !diaActual) { setPantalla("menu"); window.history.pushState({pantalla:"menu"},'','#menu'); window.scrollTo(0,0); return; }
@@ -614,7 +617,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         zonasReparto={zonasReparto}
         onSetZona={(dia,zona)=>{const nz={...zonasReparto,[dia]:zona};setZonasReparto(nz);syncData({zonasReparto:nz});}}
         onDiaHoy={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));irA("inicioReparto");}}
-        onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setModalResumenDia({dia,fechaKey});}}
+        onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setInitCierre(!planillas[`${dia}_${fechaKey}`]?._diaCerrado);irA("planilla");}}
         noVisitas={noVisitas||[]}
         onFiados={()=>irA("fiadosPendientes")} />}
       {pantalla==="confirmacionesDia" && <ConfirmacionesDia
@@ -625,7 +628,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           onVolver={()=>irA("menu")} />}
       {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&v.pago==="transferencia"&&!v.transConfirmada).length} />}
       {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
-      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("selectorFechaPlanilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={()=>cerrarDia(fechaActual,diaActual)} />}
+      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("selectorFechaPlanilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={()=>cerrarDia(fechaActual,diaActual)} initCierre={initCierre} />}
       {pantalla==="selectorFechaClientes" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("inicioReparto");}} onVolver={()=>irA("diaPrincipal")} />}
       {pantalla==="inicioReparto"  && <InicioReparto dia={diaActual} fecha={fechaActual} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} cargasDia={cargasDia} stock={stockNorm}
         onGuardar={(p,descontar)=>{
@@ -667,6 +670,11 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
           saveNoVisitas(nv);
         }}
+        onNoQuiereProspecto={(id)=>{
+          const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
+          saveNoVisitas(nv);
+        }}
+        onVerProspecto={(p)=>{setProspectoId(p.id);irA("detalleProspecto");}}
         />}
       {pantalla==="detalleCliente" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual} fecha={fechaActual} productos={productos} onVenta={()=>irA("venta")} onVolver={()=>irA("clientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>eliminarCliente(cliente.id)}
           onNoEstaCliente={()=>{
@@ -757,7 +765,17 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),
             {clienteId,dia:diaActual,fecha:fechaActual,motivo:"salteado"}];
           saveNoVisitas(nv);
-          irA("clientes");
+          const clientesDia=clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id)).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+          const nvMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{nvMap[v.clienteId]=v.motivo;});
+          const terminados=new Set([
+            ...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),
+            ...nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2")).map(v=>v.clienteId)
+          ]);
+          const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&nvMap[c.id]!=="noesta"&&nvMap[c.id]!=="salteado"&&c.id!==clienteId);
+          const noestaPend=clientesDia.filter(c=>nvMap[c.id]==="noesta"&&!terminados.has(c.id)&&c.id!==clienteId);
+          const saltadosPend=clientesDia.filter(c=>nvMap[c.id]==="salteado"&&c.id!==clienteId);
+          const sig=normalPend[0]||noestaPend[0]||saltadosPend[0];
+          if(sig){setClienteId(sig.id);irA("detalleCliente");}else irA("clientes");
         }}
         onVolver={()=>irA("detalleCliente")} />}
       {pantalla==="nuevoCliente"   && <NuevoCliente diaActual={diaActual} repartoActual={repartoActual} onGuardar={(datos)=>{
@@ -777,6 +795,24 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         saveProspectos(prospectos.map(x=>x.id===p.id?{...x,estado:"convertido"}:x));
         irA("promocion");
       }} onVolver={()=>irA("menu")} />}
+      {pantalla==="detalleProspecto" && prospecto && (()=>{
+        const vProsp=ventas.filter(v=>v.clienteId===prospecto.id);
+        const noVProsp=(noVisitas||[]).filter(v=>v.clienteId===prospecto.id);
+        const visitadoHoy=!!(noVProsp.find(v=>v.fecha===fechaActual)||vProsp.find(v=>v.fechaKey===fechaActual));
+        const comprasCount=vProsp.filter(v=>!v._esCobro).length;
+        const semanasCount=[...new Set([...vProsp,...noVProsp].map(x=>x.fechaKey||x.fecha).filter(Boolean))].length;
+        const listo=!!(vProsp.find(v=>v.fechaKey===fechaActual)||noVProsp.find(v=>v.fecha===fechaActual&&v.motivo==="noquiso"));
+        return <PromoDetalle
+          prospecto={prospecto} listo={listo} comprasCount={comprasCount} semanasCount={semanasCount} visitadoHoy={visitadoHoy}
+          onRegistrar={()=>{ setClienteId(prospecto.id); irA("venta"); }}
+          onComodato={()=>{}}
+          onConvertir={(p)=>{ const nuevo={...p,id:Date.now(),saldo:0,sifon:0,bidon10:1,bidon20:0,repartoId:repartoActual?.id||null}; saveClientes([...clientes,nuevo]); saveProspectos(prospectos.map(x=>x.id===p.id?{...x,estado:"convertido"}:x)); irA("clientes"); }}
+          onEliminar={()=>{ if(window.confirm("¿Eliminar prospecto?")){ saveProspectos(prospectos.filter(x=>x.id!==prospecto.id)); setProspectoId(null); irA("clientes"); } }}
+          onEditar={(cambios)=>{ saveProspectos(prospectos.map(x=>x.id===prospecto.id?{...x,...cambios}:x)); }}
+          onActualizarEnvases={(pid,cambios)=>{ saveProspectos(prospectos.map(x=>x.id===pid?{...x,...cambios}:x)); }}
+          onVolver={()=>{setProspectoId(null);irA("clientes");}}
+        />;
+      })()}
       {pantalla==="gestionClientes" && <GestionClientes clientes={clientes} repartos={repartos} repartoActual={repartoActual} onReordenarTodo={(lista)=>saveClientes(lista)} onEditar={(id,cambios)=>{saveClientes(clientes.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={(id)=>{
         if(window.confirm("¿Eliminar cliente?")){
           const eliminado=clientes.find(c=>c.id===id);
@@ -872,35 +908,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       {SCALE_LABELS[scaleIdx]}
     </button>
     </>)}
-      {/* Modal resumen del día */}
-      {modalResumenDia&&(()=>{
-        const {dia,fechaKey}=modalResumenDia;
-        const vDia=ventas.filter(v=>v.fechaKey===fechaKey&&v.dia===dia&&!v._esCobro&&!v._esAjuste);
-        const ef=vDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-        const tr=vDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-        const trP=tr-vDia.filter(v=>v.pago==="transferencia"&&v.transConfirmada).reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-        const fi=vDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
-        return (
-          <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-            <div style={{background:"var(--color-background-primary)",borderRadius:16,padding:24,width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:14}}>
-              <div style={{textAlign:"center"}}><div style={{fontSize:36}}>✅</div><div style={{fontSize:17,fontWeight:600,color:"var(--color-text-primary)"}}>Día completado</div><div style={{fontSize:12,color:"var(--color-text-tertiary)",textTransform:"capitalize"}}>{dia} · {new Date(fechaKey+"T12:00:00").toLocaleDateString("es-AR",{day:"numeric",month:"long"})}</div></div>
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {[["💵 Efectivo",ef,"success"],["💳 Transferencias",tr,"info"],...(trP>0?[["  🔴 Pendientes",trP,"warning"]]:[]),["📋 Fiado nuevo",fi,"warning"]].map(([l,v,cl])=>(
-                  <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,background:"var(--color-background-secondary)"}}>
-                    <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{l}</span><span style={{fontSize:14,fontWeight:500,color:`var(--color-text-${cl})`}}>{fmt(v)}</span>
-                  </div>
-                ))}
-                <div style={{display:"flex",justifyContent:"space-between",padding:"10px 12px",borderRadius:8,background:"var(--color-background-tertiary)"}}>
-                  <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>Total del día</span>
-                  <span style={{fontSize:17,fontWeight:700,color:"var(--color-text-success)"}}>{fmt(ef+tr+fi)}</span>
-                </div>
-              </div>
-              <button style={{...s.btnPrimary}} onClick={()=>{setModalResumenDia(null);irA("planilla");}}>Ver planilla completa →</button>
-              <button style={{...s.btn,textAlign:"center"}} onClick={()=>setModalResumenDia(null)}>Cerrar</button>
-            </div>
-          </div>
-        );
-      })()}
+
     </div>
   );
 }

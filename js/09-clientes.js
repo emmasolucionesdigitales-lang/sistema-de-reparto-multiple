@@ -2,7 +2,7 @@
 // ◆  09-clientes.js — ListaClientes · DetalleCliente · EditCliente · EditVenta · Modals
 // ════════════════════════════════════════════════════════════════════
 
-function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onConfirmarTransfer}) {
+function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto}) {
   const [busqueda,setBusqueda] = useState("");
   const [editandoOrden,setEditandoOrden] = useState(null);
   const [ordenTemp,setOrdenTemp] = useState("");
@@ -182,8 +182,8 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
             <div key={p.id} style={{...s.card,borderLeft:"3px solid #f5b942",opacity:visitadosProspectos.has(p.id)?0.7:1}}>
               <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
                 <div style={{width:34,height:34,borderRadius:8,background:"#2e1f06",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#f5b942",flexShrink:0}}>P</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:500,fontSize:14,color:"var(--color-text-primary)"}}>{p.nombre}</div>
+                <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>onVerProspecto&&onVerProspecto(p)}>
+                  <div style={{fontWeight:500,fontSize:14,color:"var(--color-text-primary)"}}>{p.nombre} <span style={{fontSize:10,color:"var(--color-text-tertiary)"}}>→ ver perfil</span></div>
                   <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>
                     {p.barrio}{p.calle?` · ${p.calle} ${p.nro||""}`:p.manzana?` · Mz ${p.manzana} L ${p.lote}`:""}
                   </div>
