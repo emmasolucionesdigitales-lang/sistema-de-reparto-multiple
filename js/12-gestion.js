@@ -677,75 +677,124 @@ function importarClientesPlanilla(file, clientesActuales, onImportado) {
   reader.onload = (e) => {
     try {
       const wb = XLSX.read(e.target.result, {type:"array"});
-      // Buscar hoja "Clientes"
-      const hoja = wb.Sheets["Clientes"];
-      if(!hoja) { alert("No se encontró la hoja 'Clientes' en el archivo."); return; }
-      const rows = XLSX.utils.sheet_to_json(hoja, {defval:""});
-      if(!rows.length) { alert("La planilla está vacía."); return; }
+
+      // Buscar hoja "Clientes" o la primera hoja
+      const hoja = wb.Sheets["Clientes"] || wb.Sheets[wb.SheetNames[0]];
+      if(!hoja) { alert("No se encontró ninguna hoja en el archivo."); return; }
+
+      // Leer en modo raw para detectar la fila de encabezados
+      const rawRows = XLSX.utils.sheet_to_json(hoja, {header:1, defval:""});
+      if(!rawRows.length) { alert("El archivo está vacío."); return; }
+
+      // Buscar la fila que contiene "nombre" (puede ser fila 1, 2 o 3)
+      let headerIdx = -1;
+      for(let i=0; i<Math.min(rawRows.length,10); i++){
+        if(rawRows[i].some(c=>String(c).toLowerCase().trim().includes("nombre"))){
+          headerIdx = i; break;
+        }
+      }
+      if(headerIdx === -1){ alert("No se encontró la fila de encabezados. El archivo debe tener una columna 'Nombre'."); return; }
+
+      // Construir mapa de columnas (flexible con mayúsculas, acentos y nombres alternativos)
+      const headers = rawRows[headerIdx].map(h=>String(h).toLowerCase().trim().normalize("NFD").replace(/\p{Mn}/gu,""));
+      const col = (...keys) => {
+        for(const k of keys){
+          const kn = k.toLowerCase().normalize("NFD").replace(/\p{Mn}/gu,"");
+          const idx = headers.findIndex(h=>h.includes(kn)||kn.includes(h));
+          if(idx !== -1) return idx;
+        }
+        return -1;
+      };
+      const C = {
+        nombre:    col("nombre","apellido"),
+        dia:       col("dia","día","day","jornada","reparto"),
+        orden:     col("orden","n° orden","order","n orden"),
+        barrio:    col("barrio","zona","neighborhood"),
+        calle:     col("calle","street","direccion","dirección"),
+        nro:       col("numero","número","n°","nro","number"),
+        manzana:   col("manzana","mz"),
+        lote:      col("lote","lt"),
+        sector:    col("sector"),
+        aclaracion:col("aclaracion","aclaración","casa","piso","depto"),
+        telefono:  col("telefono","teléfono","tel","phone","celular","sin 0"),
+        maps:      col("maps","google maps","ubicacion","link"),
+        sifon:     col("sifon","sifón","sifones","sifones 1.5"),
+        bidon10:   col("10l","bidon 10","bidón 10","bidones 10","b10"),
+        bidon20:   col("20l","bidon 20","bidón 20","bidones 20","b20"),
+        dispenser: col("dispenser","dispensador"),
+        saldo:     col("saldo"),
+        notas:     col("notas","nota","rapidas","rápidas","comentario"),
+      };
 
       const DIAS_VALIDOS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
       const errores = [];
-      const nuevos = [];
+      const nuevos  = [];
+      const SKIP    = ["▼","instrucciones","sistema de reparto","completá","clientes"];
 
-      rows.forEach((row, i) => {
-        const fila = i + 4; // la data empieza en fila 4 (fila 8 real, pero xlsx es 0-indexed)
-        const nombre = String(row["Nombre y Apellido *"]||"").trim();
-        const dia    = String(row["Día de Reparto *"]||"").trim();
-        const orden  = Number(row["N° Orden *"]||0);
+      const dataRows = rawRows.slice(headerIdx + 1);
+      dataRows.forEach((r, i) => {
+        const fila  = headerIdx + i + 2; // nro de fila real en el Excel
+        const get   = (idx) => idx !== -1 ? String(r[idx]||"").trim() : "";
+        const getN  = (idx) => idx !== -1 ? Number(r[idx])||0 : 0;
 
-        if(!nombre) { errores.push(`Fila ${fila}: falta nombre`); return; }
-        if(!DIAS_VALIDOS.includes(dia)) { errores.push(`Fila ${fila} (${nombre}): día inválido "${dia}"`); return; }
-        if(!orden) { errores.push(`Fila ${fila} (${nombre}): falta número de orden`); return; }
+        const nombre = get(C.nombre);
+        if(!nombre || SKIP.some(p=>nombre.toLowerCase().includes(p))) return;
 
-        // Calcular saldo inicial
-        let saldo = 0;
-        const saldoRaw = row["Saldo Inicial ($)\n+ a favor / - debe"] || row["Saldo Inicial ($)"] || 0;
-        saldo = Number(saldoRaw) || 0;
+        const diaRaw = get(C.dia);
+        const dia = DIAS_VALIDOS.find(d=>d.toLowerCase()===diaRaw.toLowerCase()) ||
+                    DIAS_VALIDOS.find(d=>diaRaw.toLowerCase().includes(d.toLowerCase().slice(0,4)));
+
+        if(!dia){ errores.push(`Fila ${fila} (${nombre}): día inválido "${diaRaw}"`); return; }
 
         nuevos.push({
-          id: Date.now() + i,
-          nombre,
-          dia,
-          orden,
-          barrio:      String(row["Barrio"]||"").trim(),
-          calle:       String(row["Calle"]||"").trim(),
-          nro:         String(row["Número"]||"").trim(),
-          manzana:     String(row["Manzana"]||"").trim(),
-          lote:        String(row["Lote"]||"").trim(),
-          sector:      String(row["Sector"]||"").trim(),
-          aclaracion:  String(row["Aclaración / Casa"]||"").trim(),
-          telefono:    String(row["Teléfono (sin 0/15)"]||"").trim(),
-          maps:        String(row["Link Google Maps"]||"").trim(),
-          sifon:       Number(row["Sifones"]||0),
-          bidon10:     Number(row["Bidones 10L"]||0),
-          bidon20:     Number(row["Bidones 20L"]||0),
-          dispenser:   Number(row["Dispenser"]||0),
-          saldo,
-          notas:       String(row["Notas rápidas"]||"").trim(),
+          id:         Date.now() + i,
+          nombre, dia,
+          orden:      getN(C.orden),
+          barrio:     get(C.barrio),
+          calle:      get(C.calle),
+          nro:        get(C.nro),
+          manzana:    get(C.manzana),
+          lote:       get(C.lote),
+          sector:     get(C.sector),
+          aclaracion: get(C.aclaracion),
+          telefono:   get(C.telefono),
+          maps:       get(C.maps),
+          sifon:      getN(C.sifon),
+          bidon10:    getN(C.bidon10),
+          bidon20:    getN(C.bidon20),
+          dispenser:  getN(C.dispenser),
+          saldo:      getN(C.saldo),
+          notas:      get(C.notas),
         });
       });
 
-      if(errores.length > 0) {
-        const msg = `Se encontraron ${errores.length} error(es):\n\n${errores.slice(0,5).join("\n")}${errores.length>5?`\n... y ${errores.length-5} más`:""}\n\n¿Importar igualmente los ${nuevos.length} clientes válidos?`;
-        if(!window.confirm(msg)) return;
+      if(errores.length > 0){
+        const errMsg = `⚠️ ${errores.length} fila${errores.length!==1?"s":""} con error:\n\n`+
+          errores.slice(0,5).join("\n")+(errores.length>5?`\n... y ${errores.length-5} más`:"");
+        alert(errMsg);
       }
 
-      if(nuevos.length === 0) { alert("No hay clientes válidos para importar."); return; }
+      if(nuevos.length === 0){ alert("No se encontraron clientes válidos. Verificá que el archivo tenga datos debajo de la fila de encabezados."); return; }
 
-      // Confirmar si hay clientes existentes
-      const msg2 = clientesActuales.length > 0
-        ? `Se van a agregar ${nuevos.length} clientes a los ${clientesActuales.length} existentes.\n¿Confirmás?`
-        : `Se van a importar ${nuevos.length} clientes. ¿Confirmás?`;
-      if(!window.confirm(msg2)) return;
+      // Vista previa + confirmación
+      const dias = [...new Set(nuevos.map(c=>c.dia))].join(", ");
+      const resumen = `📋 Vista previa del import:\n\n` +
+        `✅ ${nuevos.length} clientes encontrados\n` +
+        `📅 Días: ${dias}\n\n` +
+        (clientesActuales.length > 0
+          ? `Los ${nuevos.length} clientes se van a AGREGAR a los ${clientesActuales.length} existentes.\n\n`
+          : "") +
+        `¿Confirmar la importación?`;
 
-      // Ordenar por día y orden
+      if(!window.confirm(resumen)) return;
+
       const DIAS_ORD = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-      const todos = [...clientesActuales, ...nuevos].sort((a,b)=>
+      const todos = [...clientesActuales,...nuevos].sort((a,b)=>
         DIAS_ORD.indexOf(a.dia)-DIAS_ORD.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
 
       onImportado(todos);
       alert(`✅ ${nuevos.length} clientes importados correctamente.`);
-    } catch(err) { alert("Error al leer el archivo: "+err.message); }
+    } catch(err){ alert("Error al leer el archivo: "+err.message); }
   };
   reader.readAsArrayBuffer(file);
 }
