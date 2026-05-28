@@ -57,9 +57,9 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const saveRepartos = (v) => {
     setRepartos(v);
     syncData({repartos:v});
-    // Sincronizar códigos de acceso en dbLicencias para que los repartidores puedan activar
+    // Sincronizar en licencias del dueño para que los repartidores puedan activar
     if(typeof sincronizarInvitaciones === "function"){
-      sincronizarInvitaciones(v, negocioId).catch(()=>{});
+      sincronizarInvitaciones(v, negocioId, perfil?.codigo).catch(()=>{});
     }
   };
   // Reset diaActual when it's invalid

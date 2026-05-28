@@ -536,6 +536,16 @@ function RepartidoresPanel({negocioId, clientes}) {
 
   const resetearDispositivo = async (uid, nombre) => {
     if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
+    // Intento 0: usar función principal via licencia (el método correcto)
+    const reparto = repartidores.find(r=>r.uid===uid);
+    if(typeof resetearDispositivoEnLicencia === "function") {
+      const ok = await resetearDispositivoEnLicencia(uid, reparto?.codigo||"");
+      if(ok) {
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar la app de nuevo con su código en cualquier teléfono.`);
+        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+        return;
+      }
+    }
     const db = window.dbLicencias;
     if(!db){ alert("Error: base de datos no disponible."); return; }
     let reseteado = false;
