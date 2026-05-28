@@ -185,6 +185,8 @@ function Promocion({prospectos,onSave,onConvertir,onVolver}) {
   const [diaActivo,setDiaActivo] = useState("");
   const [subVista,setSubVista]   = useState("menu"); // menu | dia | detalle | nuevo | comodato
   const [selId,setSelId]         = useState(null);
+  const [importMsg,setImportMsg]  = useState(null); // {tipo:"ok"|"error", txt, n}
+  const importRef = React.useRef(null);
 
   const hoyISO = new Date().toISOString().slice(0,10);
 
@@ -207,6 +209,76 @@ function Promocion({prospectos,onSave,onConvertir,onVolver}) {
 
   const guardarComodato = (id,cmd) => {
     onSave(prospectos.map(p=>p.id===id?{...p,comodato:{...cmd,fecha:new Date().toLocaleDateString("es-AR")}}:p));
+  };
+
+  const importarDesdeExcel = (file) => {
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        if(typeof XLSX === "undefined") {
+          setImportMsg({tipo:"error", txt:"SheetJS no está disponible. Verificá que el script de XLSX esté cargado en el HTML."});
+          return;
+        }
+        const wb = XLSX.read(e.target.result, {type:"array"});
+        // Buscar hoja que se llame "Prospectos" o usar la segunda, o la primera
+        let sheet = wb.Sheets["Prospectos"] || wb.Sheets[wb.SheetNames[1]] || wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+        if(!rows.length){ setImportMsg({tipo:"error",txt:"La hoja está vacía o no tiene encabezados reconocibles."}); return; }
+
+        // Mapeo flexible de columnas (acepta variantes de nombre)
+        const get = (row, ...keys) => {
+          for(const k of keys){
+            const found = Object.keys(row).find(rk=>rk.toLowerCase().trim()===k.toLowerCase().trim());
+            if(found && row[found]!==undefined && row[found]!=="") return String(row[found]).trim();
+          }
+          return "";
+        };
+        const getNum = (row, ...keys) => { const v=get(row,...keys); return isNaN(Number(v))?0:Number(v)||0; };
+
+        const nuevos = [];
+        const hoy = new Date().toISOString().slice(0,10);
+        rows.forEach((row,i)=>{
+          const nombre = get(row,"nombre","name","cliente");
+          if(!nombre) return; // saltar filas sin nombre
+          const dia = get(row,"día","dia","day","jornada") || "Lunes";
+          const diaValido = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"].find(
+            d=>d.toLowerCase()===dia.toLowerCase()
+          ) || dia;
+          nuevos.push({
+            id: Date.now() + i,
+            estado: "activo",
+            fechaInicio: hoy,
+            visitas: [],
+            listoConvertir: false,
+            nombre,
+            dia: diaValido,
+            barrio:   get(row,"barrio","neighborhood","colonia"),
+            manzana:  get(row,"manzana","mz","manzana"),
+            lote:     get(row,"lote","lt","lote"),
+            sector:   get(row,"sector"),
+            calle:    get(row,"calle","calle","street","dirección"),
+            nro:      get(row,"n°","nro","número","numero","number"),
+            aclaracion: get(row,"aclaración","aclaracion","piso/depto","acl"),
+            telefono: get(row,"teléfono","telefono","tel","phone","celular"),
+            maps:     get(row,"link google maps","maps","google maps","ubicación"),
+            notas:    get(row,"notas / motivo de interés","notas","motivo","notes","comentario"),
+            sifon:    getNum(row,"sifón 1.5l","sifon","sifón","sifones"),
+            bidon10:  getNum(row,"bidón 10l","bidon10","bidón 10l","b10","10l"),
+            bidon20:  getNum(row,"bidón 20l","bidon20","bidón 20l","b20","20l"),
+            dispenser:getNum(row,"dispenser","dispensador"),
+          });
+        });
+
+        if(!nuevos.length){ setImportMsg({tipo:"error",txt:"No se encontraron filas con nombre válido en la hoja."}); return; }
+        onSave([...prospectos,...nuevos]);
+        setImportMsg({tipo:"ok", txt:`${nuevos.length} prospecto${nuevos.length!==1?"s":""} importado${nuevos.length!==1?"s":""}`, n:nuevos.length});
+        setTimeout(()=>setImportMsg(null), 4000);
+      } catch(err) {
+        setImportMsg({tipo:"error", txt:"Error al leer el archivo: "+err.message});
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   const agregarProspecto = (datos) => {
@@ -345,6 +417,39 @@ function Promocion({prospectos,onSave,onConvertir,onVolver}) {
         <div style={{...s.card,margin:"0 14px 6px",background:"#0a2e1f",border:"0.5px solid #4dd9a0"}}>
           <div style={{fontSize:13,color:"#4dd9a0",fontWeight:500}}>✓ {listos} listo{listos>1?"s":""} para convertir</div>
           <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>Entrá al día para agregarlos como clientes</div>
+        </div>
+      )}
+      {/* Botones de acción rápida */}
+      <div style={{display:"flex",gap:8,padding:"4px 14px 2px"}}>
+        <button
+          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+            padding:"13px 10px",background:"#185FA5",color:"#e2eaf4",border:"none",
+            borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer"}}
+          onClick={()=>setSubVista("nuevo")}>
+          <span style={{fontSize:18,lineHeight:1}}>➕</span>
+          Agregar prospecto
+        </button>
+        <button
+          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+            padding:"13px 10px",background:"var(--color-background-secondary)",
+            color:"var(--color-text-secondary)",border:"1.5px solid var(--color-border-secondary)",
+            borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer"}}
+          onClick={()=>importRef.current?.click()}>
+          <span style={{fontSize:18,lineHeight:1}}>📥</span>
+          Importar Excel
+        </button>
+      </div>
+      <input ref={importRef} type="file" accept=".xlsx,.xls" style={{display:"none"}}
+        onChange={e=>{importarDesdeExcel(e.target.files?.[0]);e.target.value="";}} />
+      {importMsg&&(
+        <div style={{margin:"4px 14px 0",padding:"10px 14px",borderRadius:10,
+          background:importMsg.tipo==="ok"?"var(--color-background-success)":"var(--color-background-danger)",
+          border:"0.5px solid "+(importMsg.tipo==="ok"?"var(--color-text-success)":"var(--color-text-danger)"),
+          display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>{importMsg.tipo==="ok"?"✅":"⚠️"}</span>
+          <span style={{fontSize:13,color:importMsg.tipo==="ok"?"var(--color-text-success)":"var(--color-text-danger)",fontWeight:500}}>
+            {importMsg.txt}
+          </span>
         </div>
       )}
       <span style={s.sectionTitle}>Seleccionar día</span>
