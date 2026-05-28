@@ -221,20 +221,48 @@ function Promocion({prospectos,onSave,onConvertir,onVolver}) {
           return;
         }
         const wb = XLSX.read(e.target.result, {type:"array"});
-        // Buscar hoja que se llame "Prospectos" o usar la segunda, o la primera
+        // Buscar hoja "Prospectos", luego segunda hoja, luego primera
         let sheet = wb.Sheets["Prospectos"] || wb.Sheets[wb.SheetNames[1]] || wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
-        if(!rows.length){ setImportMsg({tipo:"error",txt:"La hoja está vacía o no tiene encabezados reconocibles."}); return; }
+        if(!sheet){ setImportMsg({tipo:"error",txt:"No se encontró ninguna hoja válida en el archivo."}); return; }
 
-        // Mapeo flexible de columnas (acepta variantes de nombre)
+        // Leer en modo raw (header:1) para encontrar la fila de encabezados
+        // (el Excel puede tener 1, 2 o 3 filas de título antes de los datos)
+        const rawRows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""});
+        if(!rawRows.length){ setImportMsg({tipo:"error",txt:"La hoja está vacía."}); return; }
+
+        // Normalizar string: minúsculas + sin acentos
+        const norm = (str) => String(str||"").toLowerCase().trim()
+          .normalize("NFD").replace(/[̀-ͯ]/g,"");
+
+        // Buscar la fila que tiene "nombre" en alguna celda
+        let headerIdx = -1;
+        for(let i=0; i<Math.min(rawRows.length,10); i++){
+          if(rawRows[i].some(c=>norm(c).includes("nombre"))){ headerIdx=i; break; }
+        }
+        if(headerIdx===-1){
+          setImportMsg({tipo:"error",txt:"No se encontró la fila de encabezados. El archivo debe tener una columna 'Nombre'."});
+          return;
+        }
+
+        // Construir array de objetos usando la fila de headers encontrada
+        const headers = rawRows[headerIdx].map(h=>norm(h));
+        const dataRows = rawRows.slice(headerIdx+1).map(r=>{
+          const obj={};
+          headers.forEach((h,i)=>{ if(h) obj[h]=r[i]!==undefined?r[i]:""; });
+          return obj;
+        });
+
+        // Mapeo flexible: busca la primera columna que incluya alguna de las claves
         const get = (row, ...keys) => {
           for(const k of keys){
-            const found = Object.keys(row).find(rk=>rk.toLowerCase().trim()===k.toLowerCase().trim());
-            if(found && row[found]!==undefined && row[found]!=="") return String(row[found]).trim();
+            const kn = norm(k);
+            const found = Object.keys(row).find(rk=>rk.includes(kn)||kn.includes(rk));
+            if(found!==undefined && row[found]!=="" && row[found]!==undefined) return String(row[found]).trim();
           }
           return "";
         };
         const getNum = (row, ...keys) => { const v=get(row,...keys); return isNaN(Number(v))?0:Number(v)||0; };
+        const rows = dataRows; // alias para el código de abajo
 
         const nuevos = [];
         const hoy = new Date().toISOString().slice(0,10);

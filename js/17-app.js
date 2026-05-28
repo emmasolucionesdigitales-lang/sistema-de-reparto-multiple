@@ -736,7 +736,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...(nv).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
           visitadosIds.add(clienteId);
           const siguiente=clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
-          if(siguiente){setClienteId(siguiente.id);irA("detalleCliente");}else irA("clientes");
+          if(siguiente){setClienteId(siguiente.id);irA("venta");}else irA("clientes");
         }}
         onNoQuiere={()=>{
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
@@ -745,7 +745,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
           visitadosIds.add(clienteId);
           const siguiente=clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
-          if(siguiente){setClienteId(siguiente.id);irA("detalleCliente");}else irA("clientes");
+          if(siguiente){setClienteId(siguiente.id);irA("venta");}else irA("clientes");
         }}
         onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{
   registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);
@@ -763,7 +763,17 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),
             {clienteId,dia:diaActual,fecha:fechaActual,motivo:"salteado"}];
           saveNoVisitas(nv);
-          irA("clientes");
+          const clientesDia=clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id)).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+          const nvMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{nvMap[v.clienteId]=v.motivo;});
+          const terminados=new Set([
+            ...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),
+            ...nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2")).map(v=>v.clienteId)
+          ]);
+          const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&nvMap[c.id]!=="noesta"&&nvMap[c.id]!=="salteado"&&c.id!==clienteId);
+          const noestaPend=clientesDia.filter(c=>nvMap[c.id]==="noesta"&&!terminados.has(c.id)&&c.id!==clienteId);
+          const saltadosPend=clientesDia.filter(c=>nvMap[c.id]==="salteado"&&c.id!==clienteId);
+          const sig=normalPend[0]||noestaPend[0]||saltadosPend[0];
+          if(sig){setClienteId(sig.id);irA("venta");}else irA("clientes");
         }}
         onVolver={()=>irA("detalleCliente")} />}
       {pantalla==="nuevoCliente"   && <NuevoCliente diaActual={diaActual} repartoActual={repartoActual} onGuardar={(datos)=>{
