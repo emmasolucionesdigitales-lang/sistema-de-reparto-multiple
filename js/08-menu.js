@@ -704,7 +704,6 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
     b10:  Number(datos.productos?.b10?.llenos||0),
     b20:  Number(datos.productos?.b20?.llenos||0),
   };
-  const prodKey = {"Sifón 1.5L":"soda","Bidón 10L":"b10","Bidón 20L":"b20"};
   const vendidosDia={soda:0,b10:0,b20:0};
   const prestadosDia={soda:0,b10:0,b20:0};
   const devueltosDia={soda:0,b10:0,b20:0};
