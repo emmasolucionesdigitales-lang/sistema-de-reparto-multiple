@@ -152,6 +152,8 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                     {c.dia} · {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
                   </div>
                   {c.notas&&<div style={{fontSize:11,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
+                  {/* Badge repartidor asignado */}
+                  {c.repartoId&&repartos&&(()=>{const rep=repartos.find(r=>r.id===c.repartoId||String(r.id)===String(c.repartoId));return rep?<div style={{fontSize:11,color:"var(--color-text-info)",marginTop:2}}>🚚 {rep.repartidorNombre}</div>:null;})()}
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
                     {/* Saldo */}
                     {c.saldo<0&&<span style={s.badge("danger")}>Debe {fmt(Math.abs(c.saldo))}</span>}
@@ -183,8 +185,9 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
                 <button style={{...s.btnDanger,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();onEliminar(c.id);}}>Eliminar</button>
-                <div style={{display:"flex",gap:6}}>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   {onRegistrarVenta&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={e=>{e.stopPropagation();onRegistrarVenta(c);}}>📦 Venta</button>}
+                  {repartos&&repartos.length>0&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"rgba(93,170,255,0.15)",color:"var(--color-text-info)",border:"1px solid rgba(93,170,255,0.4)",fontWeight:500}} onClick={e=>{e.stopPropagation();setReasignandoId(c.id);}}>↔ Reasignar</button>}
                   <button style={{...s.btn,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();setEditandoId(c.id);}}>Editar</button>
                 </div>
               </div>
@@ -199,6 +202,65 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
         </div>
       )}
     </div>
+
+    {/* Modal reasignar reparto */}
+    {reasignandoId&&repartos&&(()=>{
+      const cli=filtrados.find(x=>x.id===reasignandoId)||clientes.find(x=>x.id===reasignandoId);
+      if(!cli) return null;
+      const repActual=repartos.find(r=>r.id===cli.repartoId||String(r.id)===String(cli.repartoId));
+      return (
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.8)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}
+          onClick={()=>setReasignandoId(null)}>
+          <div style={{background:"var(--color-background-primary)",borderRadius:16,padding:20,width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:12}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)"}}>↔ Reasignar reparto</div>
+            <div style={{fontSize:13,color:"var(--color-text-secondary)"}}>
+              <b>{cli.nombre}</b><br/>
+              {repActual?`Actualmente: ${repActual.repartidorNombre}`:"Sin reparto asignado"}
+            </div>
+            {/* Selector de día */}
+            <div>
+              <label style={{...s.label,fontWeight:500}}>Día de visita</label>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {DIAS.map(d=>(
+                  <button key={d}
+                    style={{padding:"6px 12px",borderRadius:8,fontSize:12,border:"1px solid var(--color-border-secondary)",cursor:"pointer",
+                      background:cli.dia===d?"#185FA5":"var(--color-background-tertiary)",
+                      color:cli.dia===d?"#e2eaf4":"var(--color-text-secondary)",fontWeight:cli.dia===d?600:400}}
+                    onClick={()=>{ onEditar(cli.id,{dia:d}); setReasignandoId(null); }}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Selector de repartidor */}
+            <div>
+              <label style={{...s.label,fontWeight:500}}>Repartidor</label>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <button
+                  style={{padding:"10px 14px",borderRadius:10,fontSize:13,border:"1px solid var(--color-border-secondary)",cursor:"pointer",textAlign:"left",
+                    background:!cli.repartoId?"rgba(93,170,255,0.15)":"var(--color-background-tertiary)",
+                    color:!cli.repartoId?"var(--color-text-info)":"var(--color-text-secondary)"}}
+                  onClick={()=>{ onEditar(cli.id,{repartoId:null}); setReasignandoId(null); }}>
+                  — Sin asignar
+                </button>
+                {repartos.map(r=>(
+                  <button key={r.id}
+                    style={{padding:"10px 14px",borderRadius:10,fontSize:13,border:"1px solid var(--color-border-secondary)",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center",
+                      background:(cli.repartoId===r.id||String(cli.repartoId)===String(r.id))?"rgba(93,170,255,0.2)":"var(--color-background-tertiary)",
+                      color:(cli.repartoId===r.id||String(cli.repartoId)===String(r.id))?"var(--color-text-info)":"var(--color-text-primary)"}}
+                    onClick={()=>{ onEditar(cli.id,{repartoId:r.id}); setReasignandoId(null); }}>
+                    <span><b>{r.numero}.</b> {r.repartidorNombre}</span>
+                    {(cli.repartoId===r.id||String(cli.repartoId)===String(r.id))&&<span style={{fontSize:16}}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button style={{...s.btn,textAlign:"center"}} onClick={()=>setReasignandoId(null)}>Cancelar</button>
+          </div>
+        </div>
+      );
+    })()}
     {/* Modal foto domicilio */}
     {fotoClienteId&&(
       <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.92)",zIndex:2000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setFotoClienteId(null)}>
