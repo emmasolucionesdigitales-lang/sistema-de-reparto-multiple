@@ -4,6 +4,7 @@
 
 function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReordenarTodo,onRegistrarVenta,onVerDetalle,ventas,repartos}) {
   const [fotoClienteId,setFotoClienteId] = React.useState(null);
+  const [reasignandoId,setReasignandoId] = useState(null);
   const fotoCliente = fotoClienteId ? clientes.find(c=>c.id===fotoClienteId) : null;
   const [busqueda,setBusqueda]   = useState("");
   const [filtroDia,setFiltroDia] = useState("todos");
