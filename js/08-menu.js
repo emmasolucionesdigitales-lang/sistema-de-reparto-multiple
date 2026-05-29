@@ -10,8 +10,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
 
   const genCodigo = () => {
-    const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join("");
+    return String(Math.floor(1000 + Math.random() * 9000));
   };
 
   const guardarReparto = () => {
@@ -90,7 +89,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
             </div>
           </div>
           <div style={{marginBottom:12}}>
-            <label style={s.label}>Código de acceso del repartidor</label>
+            <label style={s.label}>PIN de acceso del repartidor (4 números)</label>
             <div style={{display:"flex",gap:8}}>
               <input style={{...s.input,fontFamily:"monospace",fontSize:18,fontWeight:700,letterSpacing:"0.15em",flex:1,textTransform:"uppercase"}}
                 placeholder="XXXXXX" maxLength={6} value={form.codigo}
@@ -161,28 +160,21 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                 </button>
                 <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:"rgba(245,185,66,0.15)",color:"#f5b942",border:"1px solid rgba(245,185,66,0.4)"}}
                   onClick={async()=>{
-                    if(!window.confirm(`¿Resetear dispositivo de "${rep.repartidorNombre}"?\n\nPodrá activar la app de nuevo con el código ${rep.codigo} en un teléfono nuevo.`)) return;
+                    if(!window.confirm(`¿Resetear PIN de "${rep.repartidorNombre}"?\n\nPodrá ingresar de nuevo con su PIN: ${rep.codigo}`)) return;
                     try {
-                      // set con merge:true → crea si no existe, actualiza si existe
-                      // sin necesitar leer primero (evita el error "offline")
-                      await window.dbLicencias.collection("repartidores").doc(rep.codigo).set({
+                      await window.db.collection("repartidores").doc(rep.codigo).set({
                         codigo: rep.codigo,
                         negocioId: negocioId,
                         nombre: rep.repartidorNombre,
                         sectores: rep.sectores||[],
-                        estado: "disponible",
-                        deviceId: null,
+                        activo: true,
+                        deviceId: "",
                         activado: false,
-                        uid: null,
                         resetadoEn: new Date().toISOString(),
                       }, {merge: true});
-                      alert(`✅ Listo. "${rep.repartidorNombre}" puede activar con el código ${rep.codigo} en cualquier teléfono.`);
+                      alert(`✅ PIN reseteado. "${rep.repartidorNombre}" puede ingresar de nuevo con PIN: ${rep.codigo}`);
                     } catch(e) {
-                      if(e.message&&(e.message.includes("offline")||e.message.includes("network")||e.message.includes("unavailable"))) {
-                        alert("Sin conexión a Firebase.\n\nRecargá la página e intentá de nuevo con conexión estable.");
-                      } else {
-                        alert("Error al resetear: " + e.message);
-                      }
+                      alert("Error al resetear: " + e.message);
                     }
                   }}>
                   🔄 Reset
