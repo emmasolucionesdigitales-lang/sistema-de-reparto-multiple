@@ -529,19 +529,18 @@ function RepartidoresPanel({negocioId, clientes}) {
 
   const resetearDispositivo = async (uid, nombre) => {
     if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
-    // Reset via window.db._codigos
     const reparto = repartidores.find(r=>r.uid===uid)||{};
-    if(window.db && reparto.codigo) {
-      try {
-        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null,activado:false});
-        alert(`✅ Dispositivo de ${nombre} reseteado.\nCompartile el enlace 📤 para que active de nuevo.`);
-        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
-        return;
-      } catch(_) {}
+    if(!window.db || !reparto.codigo) {
+      alert("Error: no se encontró el código del repartidor.");
+      return;
     }
-    // Si falla Firestore, informar que use el enlace
-    alert(`✅ Reset registrado localmente.\n\nCompartile el enlace 📤 Compartir al repartidor para que pueda volver a activar la app.`);
-    setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+    try {
+      await window.db.collection("repartidores").doc(reparto.codigo).update({deviceId:null, activado:false});
+      alert(`✅ Dispositivo de ${nombre} reseteado correctamente.\nYa puede ingresar de nuevo con su código: ${reparto.codigo}`);
+      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+    } catch(e) {
+      alert("❌ Error al resetear: " + e.message + "\n\nVerificá las reglas de Firestore.");
+    }
     return;
     if(false) { // bloque original desactivado — ya no se necesita
     // Si no hay función o falló, intentar directamente con window.db
