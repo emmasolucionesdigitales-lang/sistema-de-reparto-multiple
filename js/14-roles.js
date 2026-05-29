@@ -535,11 +535,11 @@ function RepartidoresPanel({negocioId, clientes}) {
       return;
     }
     try {
-      await window.db.collection("repartidores").doc(reparto.codigo).update({deviceId:null, activado:false});
-      alert(`✅ Dispositivo de ${nombre} reseteado correctamente.\nYa puede ingresar de nuevo con su código: ${reparto.codigo}`);
-      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+      await window.db.collection("repartidores").doc(reparto.codigo).update({deviceId:"", activado:false});
+      alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede ingresar de nuevo con su código: ${reparto.codigo}`);
+      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:""}:x));
     } catch(e) {
-      alert("❌ Error al resetear: " + e.message + "\n\nVerificá las reglas de Firestore.");
+      alert("❌ Error al resetear: " + e.message);
     }
     return;
     if(false) { // bloque original desactivado — ya no se necesita

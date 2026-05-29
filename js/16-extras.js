@@ -30,7 +30,7 @@ async function canjearInvitacion(deviceId, email, codigo) {
     if(!snap.exists) return {ok:false, msg:"Código no encontrado. Pedile al dueño que abra su app — el código se activa automáticamente."};
     const d = snap.data();
     if(!d.activo) return {ok:false, msg:"Este reparto fue desactivado."};
-    if(d.deviceId && d.deviceId !== deviceId) return {ok:false, msg:"Este código ya está en uso en otro dispositivo. El dueño puede resetearlo."};
+    if(d.deviceId && d.deviceId !== "" && d.deviceId !== deviceId) return {ok:false, msg:"Este código ya está en uso en otro dispositivo. El dueño puede resetearlo."};
     await snap.ref.update({deviceId, activado:true, usadoEn:new Date().toISOString()});
     return {ok:true, negocioId:d.negocioId, nombre:d.nombre||"Repartidor", sectores:d.sectores||[]};
   } catch(e) { return {ok:false, msg:"Error de conexión: "+e.message}; }
