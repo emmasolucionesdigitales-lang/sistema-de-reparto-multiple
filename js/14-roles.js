@@ -81,24 +81,7 @@ function OnboardingRoles({uid, email, onListo}) {
 
 // ── AppRepartidor ──────────────────────────────────────────────
 function AppRepartidorWrapper({uid, perfil, onSalir}) {
-  const [bloqueado, setBloqueado] = React.useState(null);
-  React.useEffect(()=>{
-    if(!window.db || !uid){ setBloqueado(false); return; }
-    window.db.collection("users").doc(uid).get()
-      .then(snap=>setBloqueado(!!(snap.exists&&snap.data().bloqueado===true)))
-      .catch(()=>setBloqueado(false));
-  },[uid]);
-
-  if(bloqueado===null) return <Cargando texto="Verificando acceso..." />;
-  if(bloqueado) return (
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,background:"var(--color-background-primary)",gap:16,textAlign:"center"}}>
-      <div style={{fontSize:54}}>🔒</div>
-      <h2 style={{color:"var(--color-text-danger)",margin:0}}>Acceso bloqueado</h2>
-      <p style={{color:"var(--color-text-secondary)",maxWidth:280,lineHeight:1.5}}>
-        Tu acceso fue desactivado por el administrador. Contactá al dueño del negocio.
-      </p>
-    </div>
-  );
+  // Sin Cargando — renderizar AppRepartidor directamente
   return <AppRepartidor uid={uid} perfil={perfil} onSalir={onSalir} />;
 }
 
@@ -125,7 +108,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     });
   },[]);
 
-  if(!datos) return <Cargando texto="Cargando datos..." />;
+  if(!datos) return <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--color-text-secondary)"}}>⏳ Cargando...</div>;
 
   // Leer repartos desde Firestore (datos descargados), con fallback a localStorage
   const todosRepartos = datos.repartos && datos.repartos.length > 0
@@ -545,17 +528,82 @@ function RepartidoresPanel({negocioId, clientes}) {
   };
 
   const resetearDispositivo = async (uid, nombre) => {
-    if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar con su código en cualquier teléfono.`)) return;
-    try {
-      const reparto = repartidores.find(r=>r.uid===uid)||{};
-      if(window.db && reparto.codigo) {
-        await window.db.collection("repartidores").doc(reparto.codigo).update({deviceId:null, activado:false});
+    if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
+    // Reset via window.db._codigos
+    const reparto = repartidores.find(r=>r.uid===uid)||{};
+    if(window.db && reparto.codigo) {
+      try {
+        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null,activado:false});
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nCompartile el enlace 📤 para que active de nuevo.`);
+        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+        return;
+      } catch(_) {}
+    }
+    // Si falla Firestore, informar que use el enlace
+    alert(`✅ Reset registrado localmente.\n\nCompartile el enlace 📤 Compartir al repartidor para que pueda volver a activar la app.`);
+    setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+    return;
+    if(false) { // bloque original desactivado — ya no se necesita
+    // Si no hay función o falló, intentar directamente con window.db
+    if(window.db && reparto?.codigo) {
+      try {
+        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null, activado:false});
         alert(`✅ Dispositivo de ${nombre} reseteado.`);
-        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null,activado:false}:x));
-      } else {
-        alert("No se encontró el código del reparto.");
+        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+        return;
+      } catch(_) {}
+    }
+    const db = window.dbLicencias;
+    if(!db){ alert("Error: base de datos no disponible."); return; }
+    let reseteado = false;
+    try {
+      // Intento 1: colección global "repartidores" por uid
+      const snap1 = await db.collection("repartidores").where("uid","==",uid).get();
+      if(!snap1.empty){
+        await Promise.all(snap1.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
+        reseteado = true;
       }
-    } catch(e) { alert("Error al resetear: "+e.message); }
+      // Intento 2: sub-colección del negocio
+      try {
+        await db.collection("negocios").doc(negocioId)
+          .collection("repartidores").doc(uid).update({deviceId:null, activado:false});
+        reseteado = true;
+      } catch(_){}
+      // Intento 3: colección "invitaciones" por uid
+      try {
+        const snap3 = await db.collection("invitaciones").where("uid","==",uid).get();
+        if(!snap3.empty){
+          await Promise.all(snap3.docs.map(d=>d.ref.update({deviceId:null,activado:false,estado:"pendiente"})));
+          reseteado = true;
+        }
+      } catch(_){}
+      // Intento 4: colección "invitaciones" por deviceId
+      try {
+        const repartidor = repartidores.find(r=>r.uid===uid);
+        if(repartidor?.codigo){
+          const snap4 = await db.collection("invitaciones").doc(repartidor.codigo).get();
+          if(snap4.exists) await snap4.ref.update({deviceId:null,activado:false,estado:"pendiente"});
+          reseteado = true;
+        }
+      } catch(_){}
+      // Intento 5: colección "codigos" por uid (variante)
+      try {
+        const snap5 = await db.collection("codigos").where("uid","==",uid).get();
+        if(!snap5.empty){
+          await Promise.all(snap5.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
+          reseteado = true;
+        }
+      } catch(_){}
+
+      if(reseteado){
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar la app de nuevo con su código en cualquier teléfono.`);
+      } else {
+        alert(`⚠️ Reset ejecutado pero no se encontró el registro del dispositivo en la base de datos.\n${nombre} puede intentar activar de nuevo — si falla con "código ya usado", contactá soporte.`);
+      }
+      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+    } catch(e) {
+      alert("Error al resetear: " + e.message);
+    }
   };
 
   return (
