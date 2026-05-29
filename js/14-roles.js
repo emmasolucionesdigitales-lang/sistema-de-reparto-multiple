@@ -539,7 +539,18 @@ function RepartidoresPanel({negocioId, clientes}) {
       alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede ingresar de nuevo con su código: ${reparto.codigo}`);
       setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:""}:x));
     } catch(e) {
-      alert("❌ Error al resetear: " + e.message);
+      // Si el documento no existe aún en esta colección, lo creamos
+      try {
+        await window.db.collection("repartidores").doc(reparto.codigo).set({
+          negocioId, nombre:reparto.nombre||nombre, sectores:reparto.sectores||[],
+          activo:true, activado:false, deviceId:"",
+          creadoEn:new Date().toISOString()
+        }, {merge:true});
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede ingresar de nuevo con su código: ${reparto.codigo}`);
+        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:""}:x));
+      } catch(e2) {
+        alert("❌ Error al resetear: " + e2.message);
+      }
     }
     return;
     if(false) { // bloque original desactivado — ya no se necesita
