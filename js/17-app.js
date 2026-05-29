@@ -3,10 +3,24 @@
 // ════════════════════════════════════════════════════════════════════
 
 function App() {
-  // Fallback: si getLicenciaRM no está definido, leer directo de localStorage
+  // Lee la licencia revisando TODAS las ubicaciones posibles
   const _leerLicencia = () => {
-    if(window.getLicenciaRM) return window.getLicenciaRM();
-    try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; }
+    // 1. getLicenciaRM del HTML (puede leer sr_licencia del dueño)
+    if(window.getLicenciaRM) {
+      const v = window.getLicenciaRM();
+      if(v && v.activado) return v;
+    }
+    // 2. rm_licencia — donde guarda PantallaActivacionRM (repartidor)
+    try {
+      const rm = JSON.parse(localStorage.getItem("rm_licencia")||"null");
+      if(rm && rm.activado) return rm;
+    } catch {}
+    // 3. sr_licencia — donde guarda PantallaActivacion (dueño)
+    try {
+      const sr = JSON.parse(localStorage.getItem("sr_licencia")||"null");
+      if(sr && sr.activado) return sr;
+    } catch {}
+    return null;
   };
 
   const [fase, setFase] = React.useState(()=>{
