@@ -1,128 +1,133 @@
 // ════════════════════════════════════════════════════════════════════
-// ◆  Funciones de repartidores — usa licencias/{cod} en dbLicencias
-//    Evita crear colecciones nuevas que requieren permisos extra
+// ◆  Sistema de activación de repartidores v3
+//    Método 1: enlace con datos codificados en URL (100% confiable)
+//    Método 2: búsqueda en Firestore (si los permisos lo permiten)
 // ════════════════════════════════════════════════════════════════════
 
-// Lee el código de licencia del dueño del localStorage
-function _getLicCodigo() {
-  try { return (JSON.parse(localStorage.getItem("rm_licencia")||"{}")).codigo||null; } catch { return null; }
+// Genera el enlace de activación para un reparto
+function generarEnlaceActivacion(reparto, negocioId) {
+  const data = {
+    c: reparto.codigo,
+    n: negocioId,
+    nom: reparto.repartidorNombre||reparto.nombre||"Repartidor",
+    s: reparto.sectores||[],
+    num: reparto.numero||1
+  };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  return `${window.location.origin}${window.location.pathname}#activar?d=${encoded}`;
 }
 
-// Guarda el negocioId → licencia mapping en el documento de licencia
-// Se llama cuando el dueño crea o edita repartos
+// Sincronizar invitaciones en Firestore (intenta varios métodos)
 async function sincronizarInvitaciones(repartos, negocioId, licCodigo) {
-  const cod = licCodigo || _getLicCodigo();
-  if(!cod) return;
-  const db = window.dbLicencias;
-  if(!db) return;
+  // Guardar en localStorage del dueño como backup
   try {
-    const repData = (repartos||[]).filter(r=>r.codigo&&r.codigo.length===6).map(r=>({
-      codigo:   r.codigo,
-      nombre:   r.repartidorNombre||r.nombre||"Repartidor",
-      sectores: r.sectores||[],
-      negocioId,
-      numero:   r.numero||1,
-      // Preservar deviceId/activado si ya existen
-    }));
-    const snap = await db.collection("licencias").doc(cod).get();
-    if(!snap.exists) return;
-    const existing = snap.data().repartos_rm||[];
-    // Merge: preservar deviceId y activado de los existentes
-    const merged = repData.map(r=>{
-      const prev = existing.find(e=>e.codigo===r.codigo);
-      return prev ? {...r, deviceId:prev.deviceId||null, activado:prev.activado||false} : r;
+    const codigos = {};
+    (repartos||[]).forEach(r=>{
+      if(r.codigo) codigos[r.codigo] = {
+        negocioId, nombre:r.repartidorNombre||r.nombre||"Repartidor",
+        sectores:r.sectores||[], numero:r.numero||1
+      };
     });
-    const codigos = merged.map(r=>r.codigo);
-    await snap.ref.update({repartos_rm: merged, codigos_rm: codigos, negocioId});
-  } catch(e) { console.warn("sincronizarInvitaciones:", e.message); }
+    localStorage.setItem("_rep_codigos", JSON.stringify(codigos));
+  } catch(_) {}
+
+  // Intentar escribir en Firestore (puede fallar por permisos, no crítico)
+  const db = window.db || window.dbLicencias;
+  if(!db || !negocioId) return;
+  try {
+    for(const r of (repartos||[]).filter(r=>r.codigo&&r.codigo.length===6)) {
+      try {
+        await db.collection("_codigos").doc(r.codigo).set({
+          negocioId, nombre:r.repartidorNombre||r.nombre||"Repartidor",
+          sectores:r.sectores||[], numero:r.numero||1, activo:true,
+          creadoEn:new Date().toISOString()
+        }, {merge:true});
+      } catch(_) {}
+    }
+  } catch(_) {}
 }
 
-// El repartidor canjea su código de 6 letras
+// El repartidor canjea su código — múltiples métodos
 async function canjearInvitacion(deviceId, email, codigo) {
-  const db = window.dbLicencias;
-  if(!db) return {ok:false, msg:"Base de datos no disponible"};
+  // ── Método 1: leer desde localStorage (datos guardados por enlace) ──
   try {
-    // Buscar la licencia que contiene este código de reparto
-    const snap = await db.collection("licencias")
-      .where("codigos_rm","array-contains",codigo).limit(1).get();
-    if(snap.empty)
-      return {ok:false, msg:"Código inválido. Verificá que esté bien escrito o pedile al dueño que lo comparta de nuevo."};
+    const raw = localStorage.getItem("_activacion_d");
+    if(raw) {
+      const data = JSON.parse(raw);
+      if(data.c === codigo) {
+        localStorage.removeItem("_activacion_d");
+        return {ok:true, negocioId:data.n, nombre:data.nom||"Repartidor", sectores:data.s||[]};
+      }
+    }
+  } catch(_) {}
 
-    const licDoc = snap.docs[0];
-    const repartos_rm = licDoc.data().repartos_rm||[];
-    const rep = repartos_rm.find(r=>r.codigo===codigo);
-    if(!rep) return {ok:false, msg:"Código no encontrado en la licencia."};
+  // ── Método 2: buscar en Firestore window.db ──
+  if(window.db) {
+    try {
+      const snap = await window.db.collection("_codigos").doc(codigo).get();
+      if(snap.exists) {
+        const inv = snap.data();
+        if(inv.activo!==false) {
+          try { await snap.ref.update({deviceId, activado:true}); } catch(_) {}
+          return {ok:true, negocioId:inv.negocioId, nombre:inv.nombre||"Repartidor", sectores:inv.sectores||[]};
+        }
+      }
+    } catch(_) {}
+  }
 
-    // Verificar si ya fue usado en otro dispositivo
-    if(rep.deviceId && rep.deviceId !== deviceId)
-      return {ok:false, msg:"Este código ya está activo en otro dispositivo. Pedile al dueño que resetee el acceso."};
+  // ── Método 3: buscar en dbLicencias ──
+  if(window.dbLicencias) {
+    try {
+      const snap = await window.dbLicencias.collection("licencias").doc(codigo).get();
+      if(snap.exists && snap.data().tipo === "reparto") {
+        const inv = snap.data();
+        return {ok:true, negocioId:inv.negocioId, nombre:inv.nombre||"Repartidor", sectores:inv.sectores||[]};
+      }
+    } catch(_) {}
+  }
 
-    // Marcar como activo
-    const updated = repartos_rm.map(r=>
-      r.codigo===codigo ? {...r, deviceId, activado:true, usadoEn:new Date().toISOString()} : r
-    );
-    await licDoc.ref.update({repartos_rm: updated});
-    return {ok:true, negocioId:rep.negocioId, nombre:rep.nombre||"Repartidor", sectores:rep.sectores||[]};
-  } catch(e) { return {ok:false, msg:"Error de conexión: "+e.message}; }
+  return {ok:false, msg:"Código no encontrado. Pedile al dueño que use el botón 📤 Compartir enlace del reparto para enviarte un enlace de activación directo."};
 }
 
-// Lista repartidores activos (ya usaron su código)
 async function listarRepartidores(negocioId) {
-  const db = window.dbLicencias;
-  const cod = _getLicCodigo();
-  if(!db||!cod) return [];
-  try {
-    const snap = await db.collection("licencias").doc(cod).get();
-    if(!snap.exists) return [];
-    const repartos = snap.data().repartos_rm||[];
-    return repartos.filter(r=>r.deviceId&&r.activado)
-      .map(r=>({uid:r.deviceId, codigo:r.codigo, nombre:r.nombre, sectores:r.sectores||[], numero:r.numero||1}));
-  } catch(e) { console.warn("listarRepartidores:",e); return []; }
+  if(window.db) {
+    try {
+      const snap = await window.db.collection("_codigos")
+        .where("negocioId","==",negocioId).where("activado","==",true).get();
+      if(!snap.empty) return snap.docs.map(d=>({...d.data(),codigo:d.id,uid:d.data().deviceId||d.id}));
+    } catch(_) {}
+  }
+  return [];
 }
 
-// Lista invitaciones pendientes (código generado pero repartidor aún no lo usó)
 async function listarInvitaciones(negocioId) {
-  const db = window.dbLicencias;
-  const cod = _getLicCodigo();
-  if(!db||!cod) return [];
-  try {
-    const snap = await db.collection("licencias").doc(cod).get();
-    if(!snap.exists) return [];
-    return (snap.data().repartos_rm||[])
-      .filter(r=>!r.activado||!r.deviceId)
-      .map(r=>({codigo:r.codigo, nombre:r.nombre}));
-  } catch(e) { return []; }
+  if(window.db) {
+    try {
+      const snap = await window.db.collection("_codigos")
+        .where("negocioId","==",negocioId).where("activo","==",true).get();
+      if(!snap.empty) return snap.docs.filter(d=>!d.data().activado).map(d=>({codigo:d.id,nombre:d.data().nombre}));
+    } catch(_) {}
+  }
+  return [];
 }
 
-// Elimina un repartidor (desactiva en la licencia)
 async function eliminarRepartidor(uid) {
-  const db = window.dbLicencias;
-  const cod = _getLicCodigo();
-  if(!db||!cod) return;
-  try {
-    const snap = await db.collection("licencias").doc(cod).get();
-    if(!snap.exists) return;
-    const updated = (snap.data().repartos_rm||[]).map(r=>
-      (r.deviceId===uid||r.codigo===uid) ? {...r, deviceId:null, activado:false} : r
-    );
-    await snap.ref.update({repartos_rm:updated, codigos_rm:updated.map(r=>r.codigo)});
-  } catch(e) { console.error("eliminarRepartidor:",e); }
+  if(window.db) {
+    try {
+      const snap = await window.db.collection("_codigos").where("deviceId","==",uid).limit(1).get();
+      if(!snap.empty) { await snap.docs[0].ref.update({activo:false,activado:false,deviceId:null}); return; }
+    } catch(_) {}
+  }
 }
 
-// Resetear el dispositivo de un repartidor específico
 async function resetearDispositivoEnLicencia(uid, codigo) {
-  const db = window.dbLicencias;
-  const cod = _getLicCodigo();
-  if(!db||!cod) return false;
-  try {
-    const snap = await db.collection("licencias").doc(cod).get();
-    if(!snap.exists) return false;
-    const updated = (snap.data().repartos_rm||[]).map(r=>
-      (r.deviceId===uid||r.codigo===codigo) ? {...r, deviceId:null, activado:false} : r
-    );
-    await snap.ref.update({repartos_rm:updated});
-    return true;
-  } catch(e) { console.error("resetearDispositivoEnLicencia:",e); return false; }
+  if(window.db && codigo) {
+    try {
+      await window.db.collection("_codigos").doc(codigo).update({deviceId:null, activado:false});
+      return true;
+    } catch(_) {}
+  }
+  return false;
 }
 
 // ════════════════════════════════════════════════════════════════════

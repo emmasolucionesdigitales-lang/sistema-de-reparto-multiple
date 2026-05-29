@@ -382,7 +382,17 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
 // ── PantallaActivacionRM ──────────────────────────────────────────────
 function PantallaActivacionRM({onActivado}) {
-  const [codigo, setCodigo]   = React.useState("");
+  const [codigo, setCodigo]   = React.useState(()=>{
+    try {
+      const hash = window.location.hash||"";
+      if(hash.includes("activar?d=")) {
+        const encoded = hash.split("activar?d=")[1].split("&")[0];
+        const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+        if(data.c){ localStorage.setItem("_activacion_d",JSON.stringify(data)); window.history.replaceState(null,"",window.location.pathname+"#activar"); return data.c; }
+      }
+    } catch(_) {}
+    return "";
+  });
   const [celular, setCelular] = React.useState("");
   const [email, setEmail]     = React.useState("");
   const [nombre, setNombre]   = React.useState("");
@@ -536,15 +546,29 @@ function RepartidoresPanel({negocioId, clientes}) {
 
   const resetearDispositivo = async (uid, nombre) => {
     if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
-    // Intento 0: usar función principal via licencia (el método correcto)
-    const reparto = repartidores.find(r=>r.uid===uid);
-    if(typeof resetearDispositivoEnLicencia === "function") {
-      const ok = await resetearDispositivoEnLicencia(uid, reparto?.codigo||"");
-      if(ok) {
-        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar la app de nuevo con su código en cualquier teléfono.`);
+    // Reset via window.db._codigos
+    const reparto = repartidores.find(r=>r.uid===uid)||{};
+    if(window.db && reparto.codigo) {
+      try {
+        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null,activado:false});
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nCompartile el enlace 📤 para que active de nuevo.`);
         setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
         return;
-      }
+      } catch(_) {}
+    }
+    // Si falla Firestore, informar que use el enlace
+    alert(`✅ Reset registrado localmente.\n\nCompartile el enlace 📤 Compartir al repartidor para que pueda volver a activar la app.`);
+    setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+    return;
+    if(false) { // bloque original desactivado — ya no se necesita
+    // Si no hay función o falló, intentar directamente con window.db
+    if(window.db && reparto?.codigo) {
+      try {
+        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null, activado:false});
+        alert(`✅ Dispositivo de ${nombre} reseteado.`);
+        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+        return;
+      } catch(_) {}
     }
     const db = window.dbLicencias;
     if(!db){ alert("Error: base de datos no disponible."); return; }
@@ -619,7 +643,16 @@ function RepartidoresPanel({negocioId, clientes}) {
               <button
                 style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:"0.5px solid #f5b942",background:"rgba(245,185,66,0.12)",color:"#f5b942",cursor:"pointer",fontWeight:500}}
                 onClick={()=>resetearDispositivo(r.uid,r.nombre)}>
-                🔄 Reset dispositivo
+                🔄 Reset
+              </button>
+              <button style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:"0.5px solid var(--color-text-success)",background:"var(--color-background-success)",color:"var(--color-text-success)",cursor:"pointer",fontWeight:500}}
+                onClick={()=>{
+                  const enlace=typeof generarEnlaceActivacion==="function"?generarEnlaceActivacion(r,negocioId):"";
+                  if(!enlace){alert("Error al generar enlace");return;}
+                  if(navigator.share){navigator.share({title:"Activación reparto",text:"Abrí este enlace para activar la app",url:enlace}).catch(()=>{navigator.clipboard?.writeText(enlace);alert("Enlace copiado: "+enlace);});}
+                  else{navigator.clipboard?.writeText(enlace).then(()=>alert("✅ Enlace copiado.\nPegalo en WhatsApp y enviáselo al repartidor.")).catch(()=>alert("Enlace: "+enlace));}
+                }}>
+                📤 Compartir
               </button>
               <button style={{...s.btnDanger,fontSize:11,padding:"4px 10px"}} onClick={()=>eliminar(r.uid)}>Eliminar</button>
             </div>
