@@ -188,6 +188,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     if(c2) saveClientes(clientes.map(x=>x.id===c2.id?{...x,saldo:c2.saldo-v.saldoDelta}:x));
   };
 
+  const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
+  const noVisHoy  = noVisitas.filter(v=>v.fecha===fechaActual);
+
   const irAlSiguiente = () => {
     const visitadosIds = new Set([
       ...ventasHoy.map(v=>v.clienteId),
@@ -213,9 +216,6 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     // Terminó todo
     irA("clientes");
   };
-
-  const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
-  const noVisHoy  = noVisitas.filter(v=>v.fecha===fechaActual);
 
   return (
     <div style={s.app}>
