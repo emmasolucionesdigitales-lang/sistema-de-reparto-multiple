@@ -66,7 +66,7 @@ function OnboardingRoles({uid, email, onListo}) {
       <div style={{width:"100%",maxWidth:380}}>
         <button style={{...s.btn,marginBottom:16,fontSize:13}} onClick={()=>setModo("")}>← Volver</button>
         <div style={{fontSize:18,fontWeight:600,color:"var(--color-text-primary)",marginBottom:8}}>🚐 Unirme como repartidor</div>
-        <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:20}}>El dueño te tiene que dar un código de 6 letras.</div>
+        <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:20}}>El dueño te tiene que dar un PIN de 4 números.</div>
         <label style={s.label}>Código de invitación</label>
         <input style={{...s.input,marginBottom:20,textTransform:"uppercase",letterSpacing:"0.15em",fontSize:18,textAlign:"center"}} placeholder="XXXXXX" maxLength={6} value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())} />
         {error&&<div style={{color:"var(--color-text-danger)",fontSize:13,marginBottom:12}}>{error}</div>}
@@ -396,8 +396,8 @@ function PantallaActivacionRM({onActivado}) {
     if(!cod){ setError("Ingresá el código"); return; }
     setCargando(true); setError("");
     try {
-      // 6 letras = código de repartidor (invitación del dueño)
-      if(cod.length === 6 && !cod.includes("-")) {
+      // 4 dígitos = PIN de repartidor
+      if(/^\d{4}$/.test(cod)) {
         const res = await canjearInvitacion(getDeviceId(), "", cod);
         if(!res.ok){ setError(res.msg); setCargando(false); return; }
         const profile = {
@@ -461,12 +461,12 @@ function PantallaActivacionRM({onActivado}) {
       {paso===1&&<>
         <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
           Ingresá el código de activación que recibiste.<br/>
-          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: código de 6 letras</span>
+          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: PIN de 4 números</span>
         </p>
         <div style={{width:"100%",maxWidth:320}}>
           <label style={s.label}>Código de activación</label>
           <input style={{...stInp,textAlign:"center",fontSize:18,letterSpacing:3,textTransform:"uppercase"}}
-            placeholder="RM-XXXX o código de 6 letras"
+            placeholder="RM-XXXX o PIN de 4 números"
             value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
             onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
         </div>
@@ -528,92 +528,30 @@ function RepartidoresPanel({negocioId, clientes}) {
   };
 
   const resetearDispositivo = async (uid, nombre) => {
-    if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
+    if(!window.confirm(`¿Resetear PIN de ${nombre}?\n\nPodrá volver a entrar con su PIN de 4 números.`)) return;
     const reparto = repartidores.find(r=>r.uid===uid)||{};
     if(!window.db || !reparto.codigo) {
-      alert("Error: no se encontró el código del repartidor.");
+      alert("Error: no se encontró el PIN del repartidor.");
       return;
     }
     try {
       await window.db.collection("repartidores").doc(reparto.codigo).update({deviceId:"", activado:false});
-      alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede ingresar de nuevo con su código: ${reparto.codigo}`);
+      alert(`✅ PIN de ${nombre} reseteado.\nYa puede ingresar de nuevo con su PIN: ${reparto.codigo}`);
       setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:""}:x));
     } catch(e) {
-      // Si el documento no existe aún en esta colección, lo creamos
       try {
         await window.db.collection("repartidores").doc(reparto.codigo).set({
           negocioId, nombre:reparto.nombre||nombre, sectores:reparto.sectores||[],
           activo:true, activado:false, deviceId:"",
           creadoEn:new Date().toISOString()
         }, {merge:true});
-        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede ingresar de nuevo con su código: ${reparto.codigo}`);
+        alert(`✅ PIN de ${nombre} reseteado.\nYa puede ingresar de nuevo con su PIN: ${reparto.codigo}`);
         setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:""}:x));
       } catch(e2) {
         alert("❌ Error al resetear: " + e2.message);
       }
     }
     return;
-    if(false) { // bloque original desactivado — ya no se necesita
-    // Si no hay función o falló, intentar directamente con window.db
-    if(window.db && reparto?.codigo) {
-      try {
-        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null, activado:false});
-        alert(`✅ Dispositivo de ${nombre} reseteado.`);
-        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
-        return;
-      } catch(_) {}
-    }
-    const db = window.dbLicencias;
-    if(!db){ alert("Error: base de datos no disponible."); return; }
-    let reseteado = false;
-    try {
-      // Intento 1: colección global "repartidores" por uid
-      const snap1 = await db.collection("repartidores").where("uid","==",uid).get();
-      if(!snap1.empty){
-        await Promise.all(snap1.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
-        reseteado = true;
-      }
-      // Intento 2: sub-colección del negocio
-      try {
-        await db.collection("negocios").doc(negocioId)
-          .collection("repartidores").doc(uid).update({deviceId:null, activado:false});
-        reseteado = true;
-      } catch(_){}
-      // Intento 3: colección "invitaciones" por uid
-      try {
-        const snap3 = await db.collection("invitaciones").where("uid","==",uid).get();
-        if(!snap3.empty){
-          await Promise.all(snap3.docs.map(d=>d.ref.update({deviceId:null,activado:false,estado:"pendiente"})));
-          reseteado = true;
-        }
-      } catch(_){}
-      // Intento 4: colección "invitaciones" por deviceId
-      try {
-        const repartidor = repartidores.find(r=>r.uid===uid);
-        if(repartidor?.codigo){
-          const snap4 = await db.collection("invitaciones").doc(repartidor.codigo).get();
-          if(snap4.exists) await snap4.ref.update({deviceId:null,activado:false,estado:"pendiente"});
-          reseteado = true;
-        }
-      } catch(_){}
-      // Intento 5: colección "codigos" por uid (variante)
-      try {
-        const snap5 = await db.collection("codigos").where("uid","==",uid).get();
-        if(!snap5.empty){
-          await Promise.all(snap5.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
-          reseteado = true;
-        }
-      } catch(_){}
-
-      if(reseteado){
-        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar la app de nuevo con su código en cualquier teléfono.`);
-      } else {
-        alert(`⚠️ Reset ejecutado pero no se encontró el registro del dispositivo en la base de datos.\n${nombre} puede intentar activar de nuevo — si falla con "código ya usado", contactá soporte.`);
-      }
-      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
-    } catch(e) {
-      alert("Error al resetear: " + e.message);
-    }
   };
 
   return (
@@ -656,20 +594,20 @@ function RepartidoresPanel({negocioId, clientes}) {
       {/* Invitaciones pendientes (creadas desde Panel del dueño, aún no usadas) */}
       {invitesPendientes.length>0&&(
         <div style={{...s.card,margin:0,borderLeft:"3px solid #f5b942"}}>
-          <div style={{fontSize:14,fontWeight:500,color:"#f5b942",marginBottom:10}}>⏳ Invitaciones pendientes</div>
+          <div style={{fontSize:14,fontWeight:500,color:"#f5b942",marginBottom:10}}>⏳ PINs pendientes de uso</div>
           <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>
-            El repartidor aún no usó su código para ingresar.
+            El repartidor aún no usó su PIN para ingresar.
           </div>
           {invitesPendientes.map(inv=>(
             <div key={inv.codigo} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
               <div>
                 <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{inv.nombre}</div>
-                <div style={{fontFamily:"monospace",fontSize:16,fontWeight:700,color:"#f5b942",letterSpacing:"0.15em"}}>{inv.codigo}</div>
+                <div style={{fontFamily:"monospace",fontSize:20,fontWeight:700,color:"#f5b942",letterSpacing:"0.2em"}}>PIN: {inv.codigo}</div>
               </div>
               <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>{
-                const txt=`Código para ingresar a Sistema de Reparto: ${inv.codigo}`;
-                if(navigator.share){navigator.share({title:"Código de acceso",text:txt});}
-                else{navigator.clipboard?.writeText(txt);alert("Código copiado: "+inv.codigo);}
+                const txt=`Tu PIN para ingresar a Sistema de Reparto: ${inv.codigo}`;
+                if(navigator.share){navigator.share({title:"PIN de acceso",text:txt});}
+                else{navigator.clipboard?.writeText(txt);alert("PIN copiado: "+inv.codigo);}
               }}>📤 Compartir</button>
             </div>
           ))}
@@ -680,8 +618,8 @@ function RepartidoresPanel({negocioId, clientes}) {
       <div style={{...s.card,margin:0,background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)"}}>
         <div style={{fontSize:13,color:"var(--color-text-info)",fontWeight:600,marginBottom:6}}>💡 ¿Cómo agregar un repartidor?</div>
         <div style={{fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.6}}>
-          Andá a <b>Panel del dueño → + Nuevo reparto</b>, completá el nombre y el código se genera solo.<br/>
-          Compartí ese código con el repartidor para que entre a la app.
+          Andá a <b>Panel del dueño → + Nuevo reparto</b>, completá el nombre y el PIN se genera automáticamente.<br/>
+          Compartí ese PIN con el repartidor para que entre a la app.
         </div>
       </div>
     </div>

@@ -139,20 +139,21 @@ self.addEventListener('notificationclick',e=>{
     }
     function crearInvitacion(negocioId, nombre, sectores, codigoParam) {
       if(!window.db) return Promise.resolve(null);
-      // Si viene un código ya generado (desde MenuRepartos) lo usa; si no genera uno nuevo
-      var codigo = codigoParam || Math.random().toString(36).slice(2,8).toUpperCase();
-      return window.db.collection("negocios").doc(negocioId)
-        .collection("invites").doc(codigo)
-        .set({ nombre:nombre, sectores:sectores||[], usado:false, creadoEn:new Date().toISOString() })
-        .then(function(){ return codigo; });
+      var pin = String(Math.floor(1000 + Math.random() * 9000));
+      var codigo = codigoParam || pin;
+      return window.db.collection("repartidores").doc(codigo).set({
+        negocioId: negocioId, nombre: nombre, sectores: sectores||[],
+        activo: true, activado: false, deviceId: "",
+        creadoEn: new Date().toISOString()
+      }).then(function(){ return {codigo: codigo, pin: pin}; });
     }
     function listarInvitaciones(negocioId) {
       if(!window.db) return Promise.resolve([]);
-      return window.db.collection("negocios").doc(negocioId)
-        .collection("invites").where("usado","==",false).get()
+      return window.db.collection("repartidores")
+        .where("negocioId","==",negocioId).where("activo","==",true).get()
         .then(function(snap){
           var r=[];
-          snap.forEach(function(d){ r.push({codigo:d.id,...d.data()}); });
+          snap.forEach(function(d){ if(!d.data().activado) r.push({codigo:d.id,...d.data()}); });
           return r;
         })
         .catch(function(){ return []; });
@@ -160,13 +161,12 @@ self.addEventListener('notificationclick',e=>{
     function canjearInvitacion(uid, email, codigo) {
       if(!window.db) return Promise.resolve({ok:false, msg:"Sin conexión"});
       return window.db.collection("repartidores").doc(codigo).get().then(function(snap){
-        if(!snap.exists) return {ok:false, msg:"Código no encontrado. Pedile al dueño que abra su app."};
+        if(!snap.exists) return {ok:false, msg:"PIN inválido. Pedile al dueño que verifique tu PIN."};
         var d = snap.data();
-        if(!d.activo) return {ok:false, msg:"Este reparto fue desactivado."};
-        if(d.deviceId && d.deviceId !== "" && d.deviceId !== uid) return {ok:false, msg:"Este código ya está en uso en otro dispositivo. El dueño puede resetearlo."};
-        return snap.ref.update({deviceId:uid, activado:true, usadoEn:new Date().toISOString()})
+        if(!d.activo) return {ok:false, msg:"Este acceso fue desactivado por el dueño."};
+        return snap.ref.update({deviceId: uid, activado: true, usadoEn: new Date().toISOString()})
           .then(function(){
-            return {ok:true, negocioId:d.negocioId, nombre:d.nombre||"Repartidor", sectores:d.sectores||[]};
+            return {ok:true, negocioId: d.negocioId, nombre: d.nombre||"Repartidor", sectores: d.sectores||[]};
           });
       }).catch(function(e){ return {ok:false, msg:"Error: "+e.message}; });
     }
