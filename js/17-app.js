@@ -43,11 +43,14 @@ function App() {
     return <PantallaPin pin={lic?.pin} onOk={()=>setFase("app")} />;
   }
 
+  // ── Repartidor: antes de cualquier pantalla de dueño ──────────────
+  if(lic?.rol === "repartidor") return <AppRepartidorWrapper uid={lic.deviceId} perfil={lic} onSalir={()=>{localStorage.removeItem("rm_licencia");window.location.reload();}} />;
+
+  // ── Dueño: selección de tema (primera vez) ──────────────────────
   if(!temaElegido) return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("sr_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
 
-  if(!lic) return <PantallaActivacionRM onActivado={lic2=>{ setFase(lic2.rol==="repartidor"?"app":"pin"); }} />; // no hay licencia
+  if(!lic) return <PantallaActivacionRM onActivado={lic2=>{ setFase(lic2.rol==="repartidor"?"app":"pin"); }} />;
 
-  if(lic.rol === "repartidor") return <AppRepartidorWrapper uid={lic.deviceId} perfil={lic} onSalir={()=>{localStorage.removeItem("rm_licencia");window.location.reload();}} />;
   return <AppPrincipal uid={lic.deviceId||lic.negocioId} email={lic.email} perfil={lic} />;
 }
 
@@ -71,10 +74,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const saveRepartos = (v) => {
     setRepartos(v);
     syncData({repartos:v});
-    // Sincronizar en licencias del dueño para que los repartidores puedan activar
-    if(typeof sincronizarInvitaciones === "function"){
-      sincronizarInvitaciones(v, negocioId, perfil?.codigo).catch(()=>{});
-    }
+    sincronizarInvitaciones(v, negocioId, perfil?.codigo).catch(()=>{});
   };
   // Reset diaActual when it's invalid
   React.useEffect(()=>{
