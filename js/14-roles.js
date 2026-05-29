@@ -66,7 +66,7 @@ function OnboardingRoles({uid, email, onListo}) {
       <div style={{width:"100%",maxWidth:380}}>
         <button style={{...s.btn,marginBottom:16,fontSize:13}} onClick={()=>setModo("")}>← Volver</button>
         <div style={{fontSize:18,fontWeight:600,color:"var(--color-text-primary)",marginBottom:8}}>🚐 Unirme como repartidor</div>
-        <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:20}}>El dueño te tiene que dar un PIN de 4 números.</div>
+        <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:20}}>El dueño te tiene que dar un código de 6 letras.</div>
         <label style={s.label}>Código de invitación</label>
         <input style={{...s.input,marginBottom:20,textTransform:"uppercase",letterSpacing:"0.15em",fontSize:18,textAlign:"center"}} placeholder="XXXXXX" maxLength={6} value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())} />
         {error&&<div style={{color:"var(--color-text-danger)",fontSize:13,marginBottom:12}}>{error}</div>}
@@ -125,11 +125,17 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   // Sectores del repartidor (barrios asignados)
   const sectores = perfil.sectores || [];
 
-  // Clientes de este repartidor = su reparto (TODOS los días)
+  // Clientes de este repartidor del día de HOY
   const clientes = todosClientes.filter(c =>
+    c.dia === diaActual &&
     (!miReparto || c.repartoId === miReparto.id) &&
     (sectores.length === 0 || sectores.some(s => (c.barrio||"").toLowerCase().includes(s.toLowerCase())))
-  ).sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
+  ).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+
+  // Prospectos asignados a este repartidor
+  const prospectos = (datos.prospectos||[]).filter(p=>
+    !p.repartoId || !miReparto || p.repartoId === miReparto.id
+  );
 
   const cliente = todosClientes.find(c=>c.id===clienteId)||null;
 
@@ -143,13 +149,23 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, mt2, sdOverride) => {
     const c = cliente;
-    const calc = calcVenta(detalle, pago, montoPagado, saldoAplicado, productos);
     const esMixto = opcionSaldo==="mixto_ef" || opcionSaldo==="mixto_tr";
+    const pagoReal = esMixto?"mixto":pago;
+    const ef = esMixto?(opcionSaldo==="mixto_ef"?Number(montoPagado):Number(mt2||0)):0;
+    const tr = esMixto?(opcionSaldo==="mixto_ef"?Number(mt2||0):Number(montoPagado)):0;
+    const totalMixto = esMixto ? ef+tr : 0;
+    const montoFinalCalc = esMixto ? String(totalMixto) : montoPagado;
+    const obsExtra = esMixto&&totalMixto>0?` [Mixto: ef $${ef} + tr $${tr}]`:"";
+    const calc = calcVenta(detalle, pagoReal, montoFinalCalc, saldoAplicado, productos);
     const saldoDelta = esMixto && sdOverride!==undefined ? sdOverride : calc.saldoDelta;
-    const nv = [...ventas, {id:Date.now(), clienteId:c.id, cliente:c.nombre, dia:diaClienteActual||c.dia, fechaKey:fechaActual,
-      fecha:new Date().toLocaleString("es-AR"), detalle, pago, obs:obs||"", saldoAplicado:saldoAplicado||0,
-      envPrest:(envPrest||[]).filter(e=>e.prod&&e.cant), envDev:(envDev||[]).filter(e=>e.prod&&e.cant),
-      mt2:mt2||0, ...calc, saldoDelta, repartidor:perfil.nombre}];
+    const nv = [...ventas, {
+      id:Date.now(), clienteId:c.id, cliente:c.nombre, dia:diaClienteActual||c.dia, fechaKey:fechaActual,
+      fecha:new Date().toLocaleString("es-AR"), detalle, pago:pagoReal, obs:(obs||"")+obsExtra,
+      saldoAplicado:saldoAplicado||0, envPrest:(envPrest||[]).filter(e=>e.prod&&e.cant),
+      envDev:(envDev||[]).filter(e=>e.prod&&e.cant), mt2:mt2||0, ...calc, saldoDelta,
+      montoTrans:esMixto?tr:(mt2||0), montoEfec:esMixto?ef:0,
+      repartidor:perfil.nombre
+    }];
     const clientesActualizados = todosClientes.map(x=>x.id===c.id?{...x,saldo:(x.saldo||0)+saldoDelta}:x);
     sync({...datos, ventas:nv, clientes:clientesActualizados});
   };
@@ -170,6 +186,32 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     saveVentas(ventas.filter(x=>x.id!==ventaId));
     const c2=clientes.find(x=>x.id===v.clienteId);
     if(c2) saveClientes(clientes.map(x=>x.id===c2.id?{...x,saldo:c2.saldo-v.saldoDelta}:x));
+  };
+
+  const irAlSiguiente = () => {
+    const visitadosIds = new Set([
+      ...ventasHoy.map(v=>v.clienteId),
+      ...noVisHoy.map(v=>v.clienteId)
+    ]);
+    visitadosIds.add(clienteId);
+    // Buscar siguiente cliente del día
+    const sigCliente = clientes.find(cc=>!visitadosIds.has(cc.id));
+    if(sigCliente){
+      setClienteId(sigCliente.id);
+      setDiaClienteActual(sigCliente.dia||diaActual);
+      irA("venta");
+      return;
+    }
+    // Si no hay más clientes, pasar a prospectos
+    const visitadosProsp = new Set(ventasHoy.filter(v=>v._esProspecto).map(v=>v.clienteId));
+    const sigProspecto = prospectos.find(p=>!visitadosProsp.has(p.id));
+    if(sigProspecto){
+      setClienteId(sigProspecto.id);
+      irA("venta");
+      return;
+    }
+    // Terminó todo
+    irA("clientes");
   };
 
   const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
@@ -231,7 +273,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
             saveNoVisitas(nv);
           }}
           onQuitarNoVisita={(cId)=>saveNoVisitas(noVisitas.filter(v=>!(v.clienteId===cId&&v.fecha===fechaActual)))}
-          onConfirmarTransfer={null} prospectos={[]} recordatorios={[]}
+          onConfirmarTransfer={null} prospectos={prospectos} recordatorios={[]}
         />
       )}
       {pantalla==="nuevoCliente"&&false&&(
@@ -280,28 +322,20 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           cliente={cliente} productos={productos} fecha={fechaActual}
           onNoEsta={()=>{
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noesta"}]);
-            irA("clientes");
+            irAlSiguiente();
           }}
           onNoQuiere={()=>{
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noquiso"}]);
-            irA("clientes");
+            irAlSiguiente();
           }}
           onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{
             registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);
-            // Avanzar al siguiente cliente pendiente
-            const visitadosIds=new Set([
-              ...ventasHoy.map(v=>v.clienteId),
-              ...noVisHoy.map(v=>v.clienteId)
-            ]);
-            visitadosIds.add(clienteId);
-            const siguiente=clientes.find(cc=>!visitadosIds.has(cc.id)&&cc.id!==clienteId);
-            if(siguiente){setClienteId(siguiente.id);setDiaClienteActual(siguiente.dia||diaActual);}
-            else irA("clientes");
+            irAlSiguiente();
           }}
           onSaltar={()=>{
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),
               {clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"salteado"}]);
-            irA("clientes");
+            irAlSiguiente();
           }}
           progressData={(()=>{
             const visitadosIds=new Set([...ventasHoy.map(v=>v.clienteId),...noVisHoy.map(v=>v.clienteId)]);
@@ -396,8 +430,8 @@ function PantallaActivacionRM({onActivado}) {
     if(!cod){ setError("Ingresá el código"); return; }
     setCargando(true); setError("");
     try {
-      // 4 dígitos = PIN de repartidor
-      if(/^\d{4}$/.test(cod)) {
+      // 6 letras = código de repartidor (invitación del dueño)
+      if(cod.length === 6 && !cod.includes("-")) {
         const res = await canjearInvitacion(getDeviceId(), "", cod);
         if(!res.ok){ setError(res.msg); setCargando(false); return; }
         const profile = {
@@ -461,12 +495,12 @@ function PantallaActivacionRM({onActivado}) {
       {paso===1&&<>
         <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
           Ingresá el código de activación que recibiste.<br/>
-          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: PIN de 4 números</span>
+          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: código de 6 letras</span>
         </p>
         <div style={{width:"100%",maxWidth:320}}>
           <label style={s.label}>Código de activación</label>
           <input style={{...stInp,textAlign:"center",fontSize:18,letterSpacing:3,textTransform:"uppercase"}}
-            placeholder="RM-XXXX o PIN de 4 números"
+            placeholder="RM-XXXX o código de 6 letras"
             value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
             onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
         </div>
@@ -528,30 +562,82 @@ function RepartidoresPanel({negocioId, clientes}) {
   };
 
   const resetearDispositivo = async (uid, nombre) => {
-    if(!window.confirm(`¿Resetear PIN de ${nombre}?\n\nPodrá volver a entrar con su PIN de 4 números.`)) return;
+    if(!window.confirm(`¿Resetear dispositivo de ${nombre}?\n\nPodrá activar la app de nuevo con su código en cualquier teléfono.`)) return;
+    // Reset via window.db._codigos
     const reparto = repartidores.find(r=>r.uid===uid)||{};
-    if(!window.db || !reparto.codigo) {
-      alert("Error: no se encontró el PIN del repartidor.");
-      return;
-    }
-    try {
-      await window.db.collection("repartidores").doc(reparto.codigo).update({deviceId:"", activado:false});
-      alert(`✅ PIN de ${nombre} reseteado.\nYa puede ingresar de nuevo con su PIN: ${reparto.codigo}`);
-      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:""}:x));
-    } catch(e) {
+    if(window.db && reparto.codigo) {
       try {
-        await window.db.collection("repartidores").doc(reparto.codigo).set({
-          negocioId, nombre:reparto.nombre||nombre, sectores:reparto.sectores||[],
-          activo:true, activado:false, deviceId:"",
-          creadoEn:new Date().toISOString()
-        }, {merge:true});
-        alert(`✅ PIN de ${nombre} reseteado.\nYa puede ingresar de nuevo con su PIN: ${reparto.codigo}`);
-        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:""}:x));
-      } catch(e2) {
-        alert("❌ Error al resetear: " + e2.message);
-      }
+        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null,activado:false});
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nCompartile el enlace 📤 para que active de nuevo.`);
+        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+        return;
+      } catch(_) {}
     }
+    // Si falla Firestore, informar que use el enlace
+    alert(`✅ Reset registrado localmente.\n\nCompartile el enlace 📤 Compartir al repartidor para que pueda volver a activar la app.`);
+    setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
     return;
+    if(false) { // bloque original desactivado — ya no se necesita
+    // Si no hay función o falló, intentar directamente con window.db
+    if(window.db && reparto?.codigo) {
+      try {
+        await window.db.collection("_codigos").doc(reparto.codigo).update({deviceId:null, activado:false});
+        alert(`✅ Dispositivo de ${nombre} reseteado.`);
+        setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+        return;
+      } catch(_) {}
+    }
+    const db = window.dbLicencias;
+    if(!db){ alert("Error: base de datos no disponible."); return; }
+    let reseteado = false;
+    try {
+      // Intento 1: colección global "repartidores" por uid
+      const snap1 = await db.collection("repartidores").where("uid","==",uid).get();
+      if(!snap1.empty){
+        await Promise.all(snap1.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
+        reseteado = true;
+      }
+      // Intento 2: sub-colección del negocio
+      try {
+        await db.collection("negocios").doc(negocioId)
+          .collection("repartidores").doc(uid).update({deviceId:null, activado:false});
+        reseteado = true;
+      } catch(_){}
+      // Intento 3: colección "invitaciones" por uid
+      try {
+        const snap3 = await db.collection("invitaciones").where("uid","==",uid).get();
+        if(!snap3.empty){
+          await Promise.all(snap3.docs.map(d=>d.ref.update({deviceId:null,activado:false,estado:"pendiente"})));
+          reseteado = true;
+        }
+      } catch(_){}
+      // Intento 4: colección "invitaciones" por deviceId
+      try {
+        const repartidor = repartidores.find(r=>r.uid===uid);
+        if(repartidor?.codigo){
+          const snap4 = await db.collection("invitaciones").doc(repartidor.codigo).get();
+          if(snap4.exists) await snap4.ref.update({deviceId:null,activado:false,estado:"pendiente"});
+          reseteado = true;
+        }
+      } catch(_){}
+      // Intento 5: colección "codigos" por uid (variante)
+      try {
+        const snap5 = await db.collection("codigos").where("uid","==",uid).get();
+        if(!snap5.empty){
+          await Promise.all(snap5.docs.map(d=>d.ref.update({deviceId:null,activado:false})));
+          reseteado = true;
+        }
+      } catch(_){}
+
+      if(reseteado){
+        alert(`✅ Dispositivo de ${nombre} reseteado.\nYa puede activar la app de nuevo con su código en cualquier teléfono.`);
+      } else {
+        alert(`⚠️ Reset ejecutado pero no se encontró el registro del dispositivo en la base de datos.\n${nombre} puede intentar activar de nuevo — si falla con "código ya usado", contactá soporte.`);
+      }
+      setRepartidores(r=>r.map(x=>x.uid===uid?{...x,deviceId:null}:x));
+    } catch(e) {
+      alert("Error al resetear: " + e.message);
+    }
   };
 
   return (
@@ -594,20 +680,20 @@ function RepartidoresPanel({negocioId, clientes}) {
       {/* Invitaciones pendientes (creadas desde Panel del dueño, aún no usadas) */}
       {invitesPendientes.length>0&&(
         <div style={{...s.card,margin:0,borderLeft:"3px solid #f5b942"}}>
-          <div style={{fontSize:14,fontWeight:500,color:"#f5b942",marginBottom:10}}>⏳ PINs pendientes de uso</div>
+          <div style={{fontSize:14,fontWeight:500,color:"#f5b942",marginBottom:10}}>⏳ Invitaciones pendientes</div>
           <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:10}}>
-            El repartidor aún no usó su PIN para ingresar.
+            El repartidor aún no usó su código para ingresar.
           </div>
           {invitesPendientes.map(inv=>(
             <div key={inv.codigo} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
               <div>
                 <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{inv.nombre}</div>
-                <div style={{fontFamily:"monospace",fontSize:20,fontWeight:700,color:"#f5b942",letterSpacing:"0.2em"}}>PIN: {inv.codigo}</div>
+                <div style={{fontFamily:"monospace",fontSize:16,fontWeight:700,color:"#f5b942",letterSpacing:"0.15em"}}>{inv.codigo}</div>
               </div>
               <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>{
-                const txt=`Tu PIN para ingresar a Sistema de Reparto: ${inv.codigo}`;
-                if(navigator.share){navigator.share({title:"PIN de acceso",text:txt});}
-                else{navigator.clipboard?.writeText(txt);alert("PIN copiado: "+inv.codigo);}
+                const txt=`Código para ingresar a Sistema de Reparto: ${inv.codigo}`;
+                if(navigator.share){navigator.share({title:"Código de acceso",text:txt});}
+                else{navigator.clipboard?.writeText(txt);alert("Código copiado: "+inv.codigo);}
               }}>📤 Compartir</button>
             </div>
           ))}
@@ -618,8 +704,8 @@ function RepartidoresPanel({negocioId, clientes}) {
       <div style={{...s.card,margin:0,background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)"}}>
         <div style={{fontSize:13,color:"var(--color-text-info)",fontWeight:600,marginBottom:6}}>💡 ¿Cómo agregar un repartidor?</div>
         <div style={{fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.6}}>
-          Andá a <b>Panel del dueño → + Nuevo reparto</b>, completá el nombre y el PIN se genera automáticamente.<br/>
-          Compartí ese PIN con el repartidor para que entre a la app.
+          Andá a <b>Panel del dueño → + Nuevo reparto</b>, completá el nombre y el código se genera solo.<br/>
+          Compartí ese código con el repartidor para que entre a la app.
         </div>
       </div>
     </div>
