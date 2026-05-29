@@ -159,17 +159,15 @@ self.addEventListener('notificationclick',e=>{
     }
     function canjearInvitacion(uid, email, codigo) {
       if(!window.db) return Promise.resolve({ok:false, msg:"Sin conexión"});
-      return window.db.collectionGroup("invites").get().then(function(snap){
-        var found = null;
-        snap.forEach(function(doc){ if(doc.id===codigo && !doc.data().usado) found=doc; });
-        if(!found) return {ok:false, msg:"Código inválido o ya usado"};
-        var inv = found.data();
-        var negocioId = found.ref.parent.parent.id;
-        return found.ref.update({usado:true, uid:uid})
+      return window.db.collection("repartidores").doc(codigo).get().then(function(snap){
+        if(!snap.exists) return {ok:false, msg:"Código no encontrado. Pedile al dueño que abra su app."};
+        var d = snap.data();
+        if(!d.activo) return {ok:false, msg:"Este reparto fue desactivado."};
+        if(d.deviceId && d.deviceId !== "" && d.deviceId !== uid) return {ok:false, msg:"Este código ya está en uso en otro dispositivo. El dueño puede resetearlo."};
+        return snap.ref.update({deviceId:uid, activado:true, usadoEn:new Date().toISOString()})
           .then(function(){
-            return saveUserProfile(uid, { rol:"repartidor", negocioId:negocioId, nombre:inv.nombre, sectores:inv.sectores||[], email:email });
-          })
-          .then(function(){ return {ok:true, negocioId:negocioId, nombre:inv.nombre, sectores:inv.sectores||[]}; });
+            return {ok:true, negocioId:d.negocioId, nombre:d.nombre||"Repartidor", sectores:d.sectores||[]};
+          });
       }).catch(function(e){ return {ok:false, msg:"Error: "+e.message}; });
     }
     function listarRepartidores(negocioId) {
