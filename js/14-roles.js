@@ -589,6 +589,8 @@ function PantallaActivacionRM({onActivado}) {
   const [celular, setCelular] = React.useState("");
   const [email, setEmail]     = React.useState("");
   const [nombre, setNombre]   = React.useState("");
+  const [pinIngresado, setPinIngresado] = React.useState("");
+  const [terminos, setTerminos] = React.useState(false);
   const [paso, setPaso]       = React.useState(1);
   const [tipo, setTipo]       = React.useState(null); // "dueno" | "repartidor"
   const [licData, setLicData] = React.useState(null);
@@ -632,12 +634,17 @@ function PantallaActivacionRM({onActivado}) {
   };
 
   const completarActivacion = async () => {
-    if(!nombre.trim()||!celular.trim()||!email.trim()){ setError("Completá todos los campos"); return; }
+    if(!nombre.trim()||!celular.trim()||!email.trim()||!pinIngresado.trim()){ setError("Completá todos los campos"); return; }
     if(!/\S+@\S+\.\S+/.test(email)){ setError("Email inválido"); return; }
+    if(!terminos){ setError("Debés aceptar los Términos y Condiciones para continuar"); return; }
     setCargando(true); setError("");
     try {
       const cod = codigo.trim().toUpperCase();
       const deviceId = getDeviceId();
+      // Verificar email y celular contra los del admin
+      if(licData.email&&licData.email.trim().toLowerCase()!==email.trim().toLowerCase()){setError("El email no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
+      if(licData.celular&&licData.celular.trim()!==celular.trim()){setError("El celular no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
+      if(String(licData.pin)!==pinIngresado.trim()){setError("El PIN no es correcto. Revisá el que te enviaron.");setCargando(false);return;}
       // Buscar negocioId en app-reparto-multiple
       let negocioId = licData.negocioId || cod;
       try {
@@ -710,7 +717,17 @@ function PantallaActivacionRM({onActivado}) {
             <input style={stInp} type="tel" placeholder="3816559001" value={celular} onChange={e=>setCelular(e.target.value)} /></div>
           <div><label style={s.label}>Email *</label>
             <input style={stInp} type="email" placeholder="tu@email.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
+          <div><label style={s.label}>PIN de activación *</label>
+            <input style={{...stInp,textAlign:"center",letterSpacing:6,fontSize:18}} type="number" placeholder="1234" value={pinIngresado} onChange={e=>setPinIngresado(e.target.value)} /></div>
         </div>
+        <label style={{display:"flex",alignItems:"flex-start",gap:10,maxWidth:320,cursor:"pointer",marginTop:4}}>
+          <input type="checkbox" checked={terminos} onChange={e=>setTerminos(e.target.checked)}
+            style={{marginTop:3,width:18,height:18,accentColor:"var(--color-accent)",flexShrink:0}} />
+          <span style={{fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.5}}>
+            Acepto los <span style={{color:"var(--color-text-info)",fontWeight:600}}>Términos y Condiciones</span> del servicio.
+            La aplicación se contrata mensualmente. El acceso se suspende si el pago no se realiza antes del día 11 de cada mes.
+          </span>
+        </label>
         {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
         <button style={{...stBtn,width:200}} disabled={cargando} onClick={completarActivacion}>
           {cargando?"Activando...":"Activar app →"}
