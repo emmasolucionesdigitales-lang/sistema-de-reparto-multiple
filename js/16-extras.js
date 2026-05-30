@@ -202,153 +202,144 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
   const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
   const noVisHoy  = (noVisitas||[]).filter(v=>v.fecha===fechaActual);
   const planKey   = `${diaActual}_${fechaActual}`;
-  const plan      = (planillas||{})[planKey] || planillaDiaVacia();
+  const cargaHecha = !!(planillas||{})[planKey];
   const totalEntregados = ventasHoy.length;
   const totalPend = clientes.filter(c=>!ventasHoy.find(v=>v.clienteId===c.id)&&!noVisHoy.find(v=>v.clienteId===c.id)).length;
   const recorrido = totalEntregados+noVisHoy.length >= clientes.length && clientes.length > 0;
-  const cargaHecha = !!(planillas||{})[planKey]?.productos;
-
-  // Paso actual del flujo
-  const paso = !cargaHecha ? "carga" : !recorrido ? "reparto" : "planilla";
-
-  const pasos = [
-    {id:"carga",    num:1, label:"Carga del día",    ok:cargaHecha},
-    {id:"reparto",  num:2, label:"Reparto del día",  ok:recorrido},
-    {id:"planilla", num:3, label:"Cierre y envío",   ok:false},
-  ];
-
-  const fmtP = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
+  const recActivos = (recordatorios||[]).filter(r=>!r.confirmado);
+  const hoy = new Date().toISOString().slice(0,10);
+  const recHoy = recActivos.filter(r=>r.fecha===hoy||r.fecha===fechaActual);
+  const fmtP = (n)=>"$"+Math.round(Number(n)||0).toLocaleString("es-AR");
   const totalEfectivo = ventasHoy.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
   const totalTransfer = ventasHoy.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-  const totalFiado    = ventasHoy.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
-  const totalNeto     = totalEfectivo+totalTransfer+totalFiado;
+  const totalNeto = totalEfectivo+totalTransfer+ventasHoy.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
+
+  const estadoReparto = !cargaHecha ? "pendiente" : recorrido ? "terminado" : "activo";
 
   return (
     <div style={{...s.screen,paddingBottom:40}}>
-      {/* Header */}
       <div style={{...s.header,padding:"12px 14px"}}>
         <div style={{flex:1}}>
-          <div style={{fontSize:16,fontWeight:700,color:"var(--color-text-primary)"}}>{"\u{1F690} "+perfil.nombre}</div>
-          <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual} · {fechaActual}</div>
+          <div style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)"}}>{"\u{1F690} "+perfil.nombre}</div>
+          <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual+" · "+fechaActual}</div>
         </div>
         <button style={{...s.btn,fontSize:11,padding:"6px 10px"}} onClick={onSalir}>Salir</button>
       </div>
 
-      {/* Barra de progreso de pasos */}
-      <div style={{display:"flex",padding:"12px 14px",gap:4}}>
-        {pasos.map((p,i)=>(
-          <div key={p.id} style={{flex:1,textAlign:"center"}}>
-            <div style={{
-              height:4,borderRadius:4,
-              background: p.ok?"#4dd9a0": paso===p.id?"#185FA5":"var(--color-border-tertiary)",
-              marginBottom:4
-            }}/>
-            <div style={{fontSize:9,color:p.ok?"#4dd9a0":paso===p.id?"#5daaff":"var(--color-text-tertiary)",fontWeight:p.ok||paso===p.id?600:400}}>
-              {p.ok?"✓ ":""}{p.label}
-            </div>
+      {recHoy.length>0&&(
+        <button style={{margin:"10px 14px 0",background:"var(--color-background-warning)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,width:"calc(100% - 28px)",cursor:"pointer",textAlign:"left"}}
+          onClick={onIrAgenda}>
+          <span style={{fontSize:18}}>{"\u{1F514}"}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-warning)"}}>{recHoy.length} recordatorio{recHoy.length!==1?"s":""} para hoy</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Tocar para ver la agenda</div>
           </div>
-        ))}
-      </div>
+          <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
+        </button>
+      )}
 
-      {/* PASO 1: Carga del día */}
-      {!cargaHecha&&(
-        <div style={{padding:"0 14px"}}>
-          <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #5daaff"}}>
-            <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>{"\u{1F69A} Paso 1: Carga del día"}</div>
-            <div style={{fontSize:13,color:"var(--color-text-secondary)"}}>Registrá los envases que salís a repartir antes de empezar.</div>
-          </div>
-          <button style={{...s.btnPrimary,padding:"16px",fontSize:15,display:"flex",alignItems:"center",gap:10,justifyContent:"center"}}
+      <div style={{padding:"12px 14px 0",display:"flex",flexDirection:"column",gap:8}}>
+
+        {/* BOTON PRINCIPAL: Iniciar/Continuar reparto */}
+        {estadoReparto==="pendiente"&&(
+          <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:10,padding:"16px 14px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",textAlign:"left"}}
             onClick={onIrCarga}>
-            {"\u{1F4CB} Registrar carga del día →"}
-          </button>
-        </div>
-      )}
-
-      {/* PASO 2: Reparto */}
-      {cargaHecha&&!recorrido&&(
-        <div style={{padding:"0 14px"}}>
-          <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #185FA5"}}>
-            <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>{"\u{1F4CB} Paso 2: Reparto del día"}</div>
-            <div style={{display:"flex",gap:12,marginTop:8}}>
-              <div style={{textAlign:"center",flex:1}}>
-                <div style={{fontSize:24,fontWeight:700,color:"#4dd9a0"}}>{totalEntregados}</div>
-                <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Entregados</div>
-              </div>
-              <div style={{textAlign:"center",flex:1}}>
-                <div style={{fontSize:24,fontWeight:700,color:"#f5b942"}}>{totalPend}</div>
-                <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Pendientes</div>
-              </div>
-              <div style={{textAlign:"center",flex:1}}>
-                <div style={{fontSize:24,fontWeight:700,color:"var(--color-text-primary)"}}>{fmtP(totalNeto)}</div>
-                <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Cobrado</div>
-              </div>
+            <span style={{fontSize:26}}>{"\u{1F69A}"}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:500}}>Iniciar reparto del dia</div>
+              <div style={{fontSize:11,opacity:0.8}}>Cargar cantidades y salir a repartir</div>
             </div>
-          </div>
-          <button style={{...s.btnPrimary,padding:"16px",fontSize:15,display:"flex",alignItems:"center",gap:10,justifyContent:"center"}}
+            <span style={{opacity:0.7}}>{"\u2192"}</span>
+          </button>
+        )}
+
+        {estadoReparto==="activo"&&(
+          <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:10,padding:"14px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",textAlign:"left"}}
             onClick={onIrClientes}>
-            {"\u{1F4CB} Continuar reparto →"}
+            <span style={{fontSize:22}}>{"\u{1F4CB}"}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:500}}>Continuar reparto</div>
+              <div style={{fontSize:11,opacity:0.8}}>{totalPend+" pendientes · "+fmtP(totalNeto)+" cobrado"}</div>
+            </div>
+            <span style={{opacity:0.7}}>{"\u2192"}</span>
           </button>
-          <div style={{marginTop:8}}>
-            <button style={{...s.card,margin:0,cursor:"pointer",width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"12px"}}
-              onClick={onIrTodosClientes}>
-              <span>{"\u{1F465}"}</span>
-              <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Ver todos los clientes</span>
-              <span style={{marginLeft:"auto"}}>→</span>
-            </button>
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* PASO 3: Planilla y cierre */}
-      {cargaHecha&&recorrido&&(
-        <div style={{padding:"0 14px"}}>
-          <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #4dd9a0"}}>
-            <div style={{fontSize:15,fontWeight:600,color:"#4dd9a0",marginBottom:8}}>{"\u2705 Recorrido completo"}</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              <div style={s.metricCard}>
-                <div style={s.metricLabel}>Entregas</div>
-                <div style={{...s.metricVal,color:"#4dd9a0"}}>{totalEntregados}</div>
-              </div>
-              <div style={s.metricCard}>
-                <div style={s.metricLabel}>Total cobrado</div>
-                <div style={{...s.metricVal}}>{fmtP(totalNeto)}</div>
-              </div>
-              <div style={s.metricCard}>
-                <div style={s.metricLabel}>Efectivo</div>
-                <div style={{...s.metricVal,color:"#4dd9a0"}}>{fmtP(totalEfectivo)}</div>
-              </div>
-              <div style={s.metricCard}>
-                <div style={s.metricLabel}>Transferencias</div>
-                <div style={{...s.metricVal,color:"#5daaff"}}>{fmtP(totalTransfer)}</div>
-              </div>
+        {estadoReparto==="terminado"&&(
+          <button style={{background:"#1a5c2e",color:"#e2eaf4",border:"none",borderRadius:10,padding:"14px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",textAlign:"left"}}
+            onClick={onIrPlanilla}>
+            <span style={{fontSize:22}}>{"\u2705"}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:500}}>Reparto terminado</div>
+              <div style={{fontSize:11,opacity:0.8}}>{totalEntregados+" entregas · "+fmtP(totalNeto)+" cobrado · Ir a planilla"}</div>
+            </div>
+            <span style={{opacity:0.7}}>{"\u2192"}</span>
+          </button>
+        )}
+
+        {/* Fila de stats cuando hay actividad */}
+        {estadoReparto!=="pendiente"&&(
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+            <div style={{...s.metricCard,textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:500,color:"#4dd9a0"}}>{totalEntregados}</div>
+              <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Entregados</div>
+            </div>
+            <div style={{...s.metricCard,textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:500,color:"#f5b942"}}>{totalPend}</div>
+              <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Pendientes</div>
+            </div>
+            <div style={{...s.metricCard,textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:500}}>{fmtP(totalNeto)}</div>
+              <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Cobrado</div>
             </div>
           </div>
+        )}
 
-          {/* Gastos extras */}
-          <GastosRepartidor
-            plan={plan}
-            onSave={(nuevosPlan)=>savePlanilla&&savePlanilla(planKey, nuevosPlan)}
-          />
+        <div style={s.divider}/>
 
-          <div style={{marginTop:12}}>
-            <button style={{...s.btnPrimary,background:"#1a5c2e",padding:"14px",fontSize:14,display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}
-              onClick={onEnviarInforme}>
-              {"\u{1F4E7} Finalizar y enviar informe al dueño"}
-            </button>
+        {/* Planilla del dia */}
+        <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px"}}
+          onClick={onIrPlanilla}>
+          <span style={{fontSize:20}}>{"\u{1F4CA}"}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Planilla del dia</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Gastos, transferencias y cierre</div>
           </div>
-          <div style={{marginTop:8}}>
-            <button style={{...s.card,margin:0,cursor:"pointer",width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"12px"}}
-              onClick={onIrClientes}>
-              <span>{"\u{1F4CB}"}</span>
-              <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Ver lista de clientes del día</span>
-              <span style={{marginLeft:"auto"}}>→</span>
-            </button>
+          <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
+        </button>
+
+        {/* Todos los clientes */}
+        <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px"}}
+          onClick={onIrTodosClientes}>
+          <span style={{fontSize:20}}>{"\u{1F465}"}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Todos los clientes</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Ventas y cobros de cualquier dia</div>
           </div>
-        </div>
-      )}
+          <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
+        </button>
+
+        {/* Agenda */}
+        <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px",
+          background:recActivos.length>0?"var(--color-background-info)":undefined,
+          border:recActivos.length>0?"0.5px solid var(--color-border-info)":undefined}}
+          onClick={onIrAgenda}>
+          <span style={{fontSize:20}}>{"\u{1F4C5}"}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>
+              Agenda
+              {recActivos.length>0&&<span style={{...s.badge("info"),fontSize:10,marginLeft:6}}>{recActivos.length}</span>}
+            </div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Recordatorios y visitas programadas</div>
+          </div>
+          <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
+        </button>
+
+      </div>
     </div>
   );
 }
+
 
 // ── GastosRepartidor ─────────────────────────────────────────────────────────
 function GastosRepartidor({plan, onSave}) {
@@ -468,7 +459,7 @@ function TodosClientesRepartidor({clientes,ventas,onSeleccionar,onNuevoCliente,o
 }
 
 // ── AgendaRepartidor ─────────────────────────────────────────
-function AgendaRepartidor({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onIrCliente,onVolver}) {
+function AgendaRepartidor({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onIrCliente,onVolver,negocioId,repartidorNombre}) {
   const [mostrarNuevo,setMostrarNuevo] = React.useState(false);
   const hoy = new Date().toISOString().slice(0,10);
   const pendientes = [...(recordatorios||[])].filter(r=>!r.confirmado).sort((a,b)=>a.fecha.localeCompare(b.fecha));

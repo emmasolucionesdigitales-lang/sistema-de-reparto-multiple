@@ -215,8 +215,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       irA("clientes"); // volver a lista para que el usuario elija el prospecto
       return;
     }
-    // Terminó todo
-    irA("clientes");
+    // Terminó todo — ir a planilla del día
+    irA("planilla");
   };
 
   const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
@@ -254,13 +254,34 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           onIrTransfers={()=>irA("confirmTransferRep")}
           onSalir={onSalirProp||(()=>window.auth.signOut())}
           onEnviarInforme={async ()=>{
-            if(typeof usarInformes==="function"){
+            if(typeof usarInformes!=="function"){ alert("Función de informe no disponible."); return; }
+            try {
+              // Buscar email del dueño desde Firestore
+              let emailDueno = "";
+              if(window.db && perfil.negocioId) {
+                const negSnap = await window.db.collection("negocios").doc(perfil.negocioId).get();
+                if(negSnap.exists) emailDueno = negSnap.data().ownerEmail || negSnap.data().email || "";
+                // Si no está en negocios, buscar en licencias
+                if(!emailDueno) {
+                  const licSnap = await window.dbLicencias.collection("licencias")
+                    .where("negocioId","==",perfil.negocioId).limit(1).get();
+                  if(!licSnap.empty) emailDueno = licSnap.docs[0].data().email || "";
+                }
+              }
+              if(!emailDueno){ alert("No se encontró el email del dueño. Contactá al soporte."); return; }
+              // Guardar email temporalmente en sr_licencia para que usarInformes lo encuentre
+              const licTemp = {email:emailDueno, negocio:perfil.nombre||"Reparto"};
+              const prevLic = localStorage.getItem("sr_licencia");
+              localStorage.setItem("sr_licencia", JSON.stringify(licTemp));
               const inf = usarInformes({ventas,clientes,planillas,noVisitas,productos});
               const ok = await inf.enviarDiario(fechaActual, diaActual);
-              if(ok) alert("\u2705 Informe enviado al dueño correctamente.");
+              // Restaurar licencia original
+              if(prevLic) localStorage.setItem("sr_licencia", prevLic);
+              else localStorage.removeItem("sr_licencia");
+              if(ok) alert("\u2705 Informe enviado al dueño (" + emailDueno + ") correctamente.");
               else   alert("\u26A0\uFE0F Error al enviar. Verificá la conexión.");
-            } else {
-              alert("Función de informe no disponible.");
+            } catch(e) {
+              alert("Error: " + e.message);
             }
           }}
         />
@@ -311,8 +332,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="clientes"&&ventasHoy.length+noVisHoy.length>=clientes.length&&clientes.length>0&&(
         <div style={{padding:"0 14px 16px"}}>
-          <button style={{...s.btnPrimary,background:"#1a8a4a"}} onClick={()=>irA("inicio")}>
-            {"\u2705 Recorrido terminado — Volver al inicio"}
+          <button style={{...s.btnPrimary,background:"#1a8a4a"}} onClick={()=>irA("planilla")}>
+            {"\u2705 Recorrido terminado \u2014 Ir a planilla del d\u00eda"}
           </button>
         </div>
       )}
@@ -411,16 +432,24 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       {pantalla==="agendaRep"&&(
         <AgendaRepartidor
           recordatorios={datos.recordatorios||[]}
-          clientes={clientes}
-          onConfirmar={(id)=>{const l=(datos.recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r);sync({...datos,recordatorios:l});}}
-          onEliminar={(id)=>{const l=(datos.recordatorios||[]).filter(r=>r.id!==id);sync({...datos,recordatorios:l});}}
-          onNuevo={(datos2)=>{
-            const c=clientes.find(x=>x.id===datos2.clienteId);
-            if(!c){alert("Seleccioná un cliente");return;}
-            const l=[...(datos.recordatorios||[]),{...datos2,id:Date.now(),clienteId:c.id,clienteNombre:c.nombre,dia:c.dia,confirmado:false}];
+          clientes={todosClientes}
+          negocioId={perfil.negocioId}
+          repartidorNombre={perfil.nombre}
+          onConfirmar={async (id)=>{
+            const l=(datos.recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r);
             sync({...datos,recordatorios:l});
           }}
-          onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(clientes.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
+          onEliminar={async (id)=>{
+            const l=(datos.recordatorios||[]).filter(r=>r.id!==id);
+            sync({...datos,recordatorios:l});
+          }}
+          onNuevo={async (datos2)=>{
+            const c=todosClientes.find(x=>x.id===datos2.clienteId);
+            const nuevo={...datos2,id:Date.now(),clienteId:c?.id||null,clienteNombre:c?.nombre||datos2.clienteNombre||"Sin cliente",dia:c?.dia||"",confirmado:false,creadoPor:perfil.nombre,creadoEn:new Date().toISOString()};
+            const l=[...(datos.recordatorios||[]),nuevo];
+            sync({...datos,recordatorios:l});
+          }}
+          onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(todosClientes.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
           onVolver={()=>irA("inicio")}
         />
       )}
