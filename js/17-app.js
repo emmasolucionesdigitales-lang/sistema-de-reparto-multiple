@@ -584,6 +584,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onOperarReparto={(rep)=>setOperandoReparto(rep)}
         onTodosClientes={()=>irA("vistaClientesGeneral")}
         onImportarClientes={()=>irA("importarClientes")}
+        onMapaClientes={()=>irA("mapaClientes")}
         tabInicial={tabMenu}
         onTabChange={setTabMenu}
       />}
@@ -832,6 +833,15 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         repartos={repartos}
         clientes={clientes}
         onGuardar={(nuevos)=>{saveClientes([...clientes,...nuevos]);irA("menu");}}
+        onVolver={()=>irA("menu")}
+      />}
+      {pantalla==="mapaClientes" && <MapaClientes
+        clientes={clientes}
+        dia={diaActual}
+        fecha={fechaActual}
+        ventas={ventas}
+        noVisitas={noVisitas}
+        onSeleccionar={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}}
         onVolver={()=>irA("menu")}
       />}
       {pantalla==="vistaClientesGeneral" && <VistaClientesGeneral

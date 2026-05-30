@@ -2,7 +2,7 @@
 // ◆  08-menu.js — MenuRepartos · MenuDias · DiaPrincipal · PlanillaDelDia · InicioReparto
 // ════════════════════════════════════════════════════════════════════
 
-function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,tabInicial,onTabChange}) {
+function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,tabInicial,onTabChange}) {
   const [tab, setTab] = React.useState(tabInicial||"repartos");
   const cambiarTab = (t) => { setTab(t); if(onTabChange) onTabChange(t); };
   const [modoNuevo, setModoNuevo] = React.useState(false);
@@ -217,6 +217,8 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
             {[
               {ico:"📊",lbl:"Resumen",sub:"Ventas del período",fn:onResumen,color:"#185FA5"},
               {ico:"👥",lbl:"Todos los clientes",sub:"Ver y registrar por día",fn:onTodosClientes,color:"#0e7c6b"},
+              {ico:"🗺",lbl:"Mapa de clientes",sub:"Ver clientes en el mapa",fn:onMapaClientes,color:"#065f46"},
+              {ico:"📥",lbl:"Importar clientes",sub:"Cargar desde Excel",fn:onImportarClientes,color:"#7c3aed"},
               {ico:"📅",lbl:"Agenda",sub:"Recordatorios",fn:onAgenda,color:"#c17a1a"},
               {ico:"⚙️",lbl:"Configuración",sub:"Productos, stock, backup",fn:()=>onConfig&&onConfig("stock"),color:"#555"},
             ].map(({ico,lbl,sub,fn,color})=>(

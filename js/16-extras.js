@@ -1103,51 +1103,55 @@ function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onVolve
 
 // ── ImportarClientesExcel ──────────────────────────────────────────────────
 function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
-  const [fase, setFase] = React.useState("inicio"); // inicio | preview | importando | listo
+  const [fase, setFase] = React.useState("inicio");
   const [filas, setFilas] = React.useState([]);
   const [errores, setErrores] = React.useState([]);
   const [importados, setImportados] = React.useState(0);
   const fileRef = React.useRef();
 
   const DIAS_MAP = {
-    "lunes":"Lunes","martes":"Martes","miercoles":"Miércoles","miércoles":"Miércoles",
-    "jueves":"Jueves","viernes":"Viernes","sabado":"Sábado","sábado":"Sábado"
+    "lunes":"Lunes","martes":"Martes","miercoles":"Miercoles","miercoles":"Miercoles",
+    "jueves":"Jueves","viernes":"Viernes","sabado":"Sabado","sabado":"Sabado","domingo":"Domingo"
   };
   const normDia = (d) => {
     if(!d) return null;
-    return DIAS_MAP[(d+"").toLowerCase().trim()] || null;
+    const k = (d+"").toLowerCase().trim().normalize("NFD").replace(/[^a-z]/g,"");
+    return DIAS_MAP[k] || null;
+  };
+
+  // Extraer lat/lng del link de Google Maps
+  const extractCoords = (url) => {
+    if(!url) return {lat:null, lng:null};
+    // Formato: @lat,lng o ll=lat,lng o q=lat,lng
+    let m = url.match(/@(-?[0-9.]+),(-?[0-9.]+)/);
+    if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
+    m = url.match(/[?&]ll=(-?[0-9.]+),(-?[0-9.]+)/);
+    if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
+    m = url.match(/[?&]q=(-?[0-9.]+),(-?[0-9.]+)/);
+    if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
+    return {lat:null, lng:null};
   };
 
   const procesarExcel = async (file) => {
-    // Leer el archivo como ArrayBuffer y parsearlo con SheetJS (cargado inline)
     const buf = await file.arrayBuffer();
-    let XLSX;
-    try {
-      XLSX = window.XLSX;
-      if(!XLSX) throw new Error("no XLSX");
-    } catch(e) {
-      alert("Cargando librería Excel, por favor esperá unos segundos y volvé a intentar.");
-      return;
-    }
+    let XLSX = window.XLSX;
+    if(!XLSX){ alert("Cargando libreria Excel, esperá unos segundos y volvé a intentar."); return; }
     const wb = XLSX.read(buf, {type:"array"});
-    // Buscar hoja de clientes
     const sheetName = wb.SheetNames.find(n=>n.includes("Clientes")||n.includes("clientes")) || wb.SheetNames[0];
     const ws = wb.Sheets[sheetName];
     const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
 
-    // Detectar fila de encabezado (la que tiene "nombre" o "cliente")
+    // Detectar fila de encabezado
     let headerRow = -1;
     for(let i=0;i<Math.min(10,raw.length);i++){
       const r = raw[i].map(c=>(c+"").toLowerCase());
-      if(r.some(c=>c.includes("nombre") || c.includes("cliente"))){
-        headerRow = i; break;
-      }
+      if(r.some(c=>c.includes("nombre")||c.includes("apellido"))){ headerRow=i; break; }
     }
-    if(headerRow < 0){ alert("No encontré la fila de encabezados en el Excel. Asegurate de usar la plantilla."); return; }
+    if(headerRow<0){ alert("No encontre la fila de encabezados. Usa la plantilla oficial."); return; }
 
-    const headers = raw[headerRow].map(c=>(c+"").toLowerCase().trim());
-    const colIdx = (keywords) => {
-      for(const kw of keywords){
+    const headers = raw[headerRow].map(c=>(c+"").toLowerCase().normalize("NFD").replace(/[^a-z0-9 ]/g,"").trim());
+    const colIdx = (...kws) => {
+      for(const kw of kws){
         const i = headers.findIndex(h=>h.includes(kw));
         if(i>=0) return i;
       }
@@ -1155,61 +1159,60 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
     };
 
     const CI = {
-      repNum:   colIdx(["repartidor","reparto","rep"]),
-      dia:      colIdx(["día","dia","visita"]),
-      orden:    colIdx(["orden","ruta"]),
-      nombre:   colIdx(["nombre"]),
-      calle:    colIdx(["calle","dirección","direccion"]),
-      nro:      colIdx(["n° puerta","puerta","número","numero","nro"]),
-      barrio:   colIdx(["barrio"]),
-      telefono: colIdx(["teléfono","telefono","tel"]),
-      sifon:    colIdx(["sifon","sifón","1.5"]),
-      bidon10:  colIdx(["bidon 10","bidón 10","10l","10 l"]),
-      bidon20:  colIdx(["bidon 20","bidón 20","20l","20 l"]),
-      obs:      colIdx(["observ"]),
+      nombre:   colIdx("nombre","apellido"),
+      dia:      colIdx("dia","visita"),
+      orden:    colIdx("orden","ruta","n orden"),
+      barrio:   colIdx("barrio"),
+      calle:    colIdx("calle","direccion"),
+      nro:      colIdx("numero","nro","n puerta"),
+      manzana:  colIdx("manzana"),
+      lote:     colIdx("lote"),
+      sector:   colIdx("sector"),
+      acl:      colIdx("aclaracion","casa","ref"),
+      telefono: colIdx("telefono","tel"),
+      maps:     colIdx("maps","google","link"),
+      sifon:    colIdx("sifon","1.5"),
+      bidon10:  colIdx("bidon 10","10l","10 l"),
+      bidon20:  colIdx("bidon 20","20l","20 l"),
+      dispenser:colIdx("dispenser"),
+      saldo:    colIdx("saldo"),
+      notas:    colIdx("nota","observ"),
     };
-
-    const repMap = {};
-    repartos.forEach(r=>{ repMap[String(r.numero)] = r.id; });
 
     const validas = [], errs = [];
     for(let i=headerRow+1; i<raw.length; i++){
       const row = raw[i];
-      // Saltar fila ejemplo y filas vacías
-      if(!row || row.every(c=>c===""||c==null)) continue;
+      if(!row||row.every(c=>c===""||c==null)) continue;
       const nombre = CI.nombre>=0 ? (row[CI.nombre]||"").toString().trim() : "";
-      if(!nombre || nombre.toLowerCase().includes("ej→") || nombre.toLowerCase().includes("ejemplo")) continue;
+      if(!nombre||nombre.toLowerCase().includes("ejemplo")||nombre.startsWith("▼")) continue;
+      const diaRaw = CI.dia>=0 ? (row[CI.dia]||"").toString().trim() : "";
+      const dia = normDia(diaRaw);
+      if(!dia){ errs.push({fila:i+1,nombre:nombre||"(sin nombre)",problemas:[`Dia "${diaRaw}" no reconocido`]}); continue; }
 
-      const repNumStr = CI.repNum>=0 ? (row[CI.repNum]||"").toString().trim() : "";
-      const diaRaw    = CI.dia>=0    ? (row[CI.dia]||"").toString().trim()    : "";
-      const dia       = normDia(diaRaw);
-      const calle     = CI.calle>=0  ? (row[CI.calle]||"").toString().trim()  : "";
-
-      const lineaErrs = [];
-      if(!repNumStr) lineaErrs.push("falta nro repartidor");
-      if(!repMap[repNumStr]) lineaErrs.push(`repartidor ${repNumStr} no existe en la app`);
-      if(!dia) lineaErrs.push(`día "${diaRaw}" no reconocido`);
-      if(!nombre) lineaErrs.push("falta nombre");
-
-      if(lineaErrs.length){
-        errs.push({fila:i+1, nombre:nombre||"(sin nombre)", problemas:lineaErrs});
-        continue;
-      }
+      const mapsUrl = CI.maps>=0 ? (row[CI.maps]||"").toString().trim() : "";
+      const {lat, lng} = extractCoords(mapsUrl);
 
       validas.push({
-        repartoId: repMap[repNumStr],
-        dia,
-        orden: CI.orden>=0 ? (parseInt(row[CI.orden])||null) : null,
         nombre,
-        calle,
-        nro:  CI.nro>=0    ? (row[CI.nro]||"").toString().trim()     : "",
-        barrio: CI.barrio>=0 ? (row[CI.barrio]||"").toString().trim() : "",
-        telefono: CI.telefono>=0 ? (row[CI.telefono]||"").toString().trim() : "",
-        sifon:   CI.sifon>=0   ? (parseInt(row[CI.sifon])||0)   : 0,
-        bidon10: CI.bidon10>=0 ? (parseInt(row[CI.bidon10])||0) : 0,
-        bidon20: CI.bidon20>=0 ? (parseInt(row[CI.bidon20])||0) : 0,
-        obs: CI.obs>=0 ? (row[CI.obs]||"").toString().trim() : "",
-        saldo: 0, id: null, _nuevo: true,
+        dia,
+        orden:    CI.orden>=0    ? (parseInt(row[CI.orden])||null)         : null,
+        barrio:   CI.barrio>=0   ? (row[CI.barrio]||"").toString().trim()  : "",
+        calle:    CI.calle>=0    ? (row[CI.calle]||"").toString().trim()   : "",
+        nro:      CI.nro>=0      ? (row[CI.nro]||"").toString().trim()     : "",
+        manzana:  CI.manzana>=0  ? (row[CI.manzana]||"").toString().trim() : "",
+        lote:     CI.lote>=0     ? (row[CI.lote]||"").toString().trim()    : "",
+        sector:   CI.sector>=0   ? (row[CI.sector]||"").toString().trim()  : "",
+        acl:      CI.acl>=0      ? (row[CI.acl]||"").toString().trim()     : "",
+        telefono: CI.telefono>=0 ? (row[CI.telefono]||"").toString().trim(): "",
+        maps:     mapsUrl,
+        lat, lng,
+        sifon:    CI.sifon>=0    ? (parseInt(row[CI.sifon])||0)            : 0,
+        bidon10:  CI.bidon10>=0  ? (parseInt(row[CI.bidon10])||0)          : 0,
+        bidon20:  CI.bidon20>=0  ? (parseInt(row[CI.bidon20])||0)          : 0,
+        dispenser:CI.dispenser>=0? (parseInt(row[CI.dispenser])||0)        : 0,
+        saldo:    CI.saldo>=0    ? (parseFloat((row[CI.saldo]||"0").toString().replace(",","."))||0) : 0,
+        obs:      CI.notas>=0    ? (row[CI.notas]||"").toString().trim()   : "",
+        _nuevo: true,
       });
     }
     setFilas(validas);
@@ -1222,9 +1225,8 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
     const ahora = Date.now();
     const nuevos = filas.map((f,i)=>({
       ...f,
-      id: ahora + i,
-      dispenser: 0,
-      envasesSifon: f.sifon,
+      id: ahora+i,
+      envasesSifon:   f.sifon,
       envasesBidon10: f.bidon10,
       envasesBidon20: f.bidon20,
     }));
@@ -1238,12 +1240,12 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button>
         <span style={s.headerTitle}>Importar clientes</span></div>
       <div style={{padding:"60px 20px",textAlign:"center"}}>
-        <div style={{fontSize:48,marginBottom:16}}>✅</div>
+        <div style={{fontSize:48,marginBottom:16}}>{"\u2705"}</div>
         <div style={{fontSize:18,fontWeight:700,color:"var(--color-text-primary)",marginBottom:8}}>
-          ¡{importados} clientes importados!
+          {"\u00a1"}{importados} clientes importados!
         </div>
         <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:24}}>
-          Ya están disponibles en cada reparto
+          Ya estan disponibles en cada reparto
         </div>
         <button style={{...s.btnPrimary,padding:"12px 28px"}} onClick={onVolver}>Ir al panel</button>
       </div>
@@ -1253,127 +1255,227 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
   if(fase==="preview") return (
     <div style={s.screen}>
       <div style={s.header}><button style={s.backBtn} onClick={()=>setFase("inicio")}>← Volver</button>
-        <span style={s.headerTitle}>Revisá los datos</span></div>
-
-      {/* Resumen */}
+        <span style={s.headerTitle}>Revisa los datos</span></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,padding:"10px 14px 8px"}}>
         <div style={{...s.card,margin:0,background:"#0a2e1f",border:"1px solid #4dd9a0",padding:"10px 12px",textAlign:"center"}}>
           <div style={{fontSize:22,fontWeight:800,color:"#4dd9a0"}}>{filas.length}</div>
-          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Clientes listos para importar</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Clientes listos</div>
         </div>
-        <div style={{...s.card,margin:0,background:errores.length?"#2e0a0a":"#1a2e1a",border:"1px solid "+(errores.length?"#f07070":"#4dd9a0"),padding:"10px 12px",textAlign:"center"}}>
+        <div style={{...s.card,margin:0,background:errores.length?"#2e0a0a":"#0a2e1f",border:"1px solid "+(errores.length?"#f07070":"#4dd9a0"),padding:"10px 12px",textAlign:"center"}}>
           <div style={{fontSize:22,fontWeight:800,color:errores.length?"#f07070":"#4dd9a0"}}>{errores.length}</div>
-          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Filas con error (se omiten)</div>
+          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Filas con error</div>
         </div>
       </div>
-
-      {/* Errores */}
       {errores.length>0&&(
         <div style={{padding:"0 14px 8px"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#f07070",marginBottom:6}}>⚠️ Filas con problemas (no se importarán):</div>
+          <div style={{fontSize:11,fontWeight:600,color:"#f07070",marginBottom:6}}>Filas con problemas (se omiten):</div>
           {errores.slice(0,5).map((e,i)=>(
-            <div key={i} style={{...s.card,margin:"0 0 4px",padding:"8px 10px",background:"rgba(220,50,50,0.1)",border:"0.5px solid rgba(220,50,50,0.3)"}}>
+            <div key={i} style={{...s.card,margin:"0 0 4px",padding:"8px 10px",background:"rgba(220,50,50,0.1)"}}>
               <div style={{fontSize:12,color:"var(--color-text-primary)"}}>Fila {e.fila}: <b>{e.nombre}</b></div>
               <div style={{fontSize:11,color:"#f07070"}}>{e.problemas.join(" · ")}</div>
             </div>
           ))}
-          {errores.length>5&&<div style={{fontSize:11,color:"var(--color-text-tertiary)",padding:"4px 0"}}>...y {errores.length-5} más</div>}
         </div>
       )}
-
-      {/* Preview primeros clientes */}
-      <div style={{padding:"0 14px 6px"}}>
-        <div style={{fontSize:11,fontWeight:600,color:"var(--color-text-secondary)",marginBottom:6}}>Vista previa (primeros {Math.min(5,filas.length)}):</div>
-        {filas.slice(0,5).map((f,i)=>(
-          <div key={i} style={{...s.card,margin:"0 0 5px",padding:"8px 12px"}}>
-            <div style={{fontSize:12,fontWeight:600,color:"var(--color-text-primary)"}}>{f.nombre}</div>
-            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>
-              Rep.{repartos.find(r=>r.id===f.repartoId)?.numero} · {f.dia}{f.calle?` · ${f.calle} ${f.nro}`:""}{f.barrio?` · ${f.barrio}`:""}
-            </div>
-            {(f.sifon||f.bidon10||f.bidon20)>0&&(
-              <div style={{fontSize:10,color:"var(--color-text-tertiary)",marginTop:2}}>
-                {f.sifon>0?`${f.sifon} sifones `:""}{f.bidon10>0?`${f.bidon10} bidón10L `:""}{f.bidon20>0?`${f.bidon20} bidón20L`:""}
-              </div>
-            )}
+      {filas.length>0&&(
+        <div style={{padding:"0 14px 8px"}}>
+          <div style={{fontSize:11,fontWeight:600,color:"var(--color-text-secondary)",marginBottom:6}}>
+            Vista previa (primeros 5):
           </div>
-        ))}
-      </div>
-
-      {filas.length>0?(
-        <div style={{padding:"0 14px 20px"}}>
-          <button style={{...s.btnPrimary,width:"100%",padding:"14px",fontSize:14}}
-            onClick={confirmarImport}>
-            ✅ Importar {filas.length} clientes
-          </button>
-        </div>
-      ):(
-        <div style={{textAlign:"center",padding:"20px",color:"var(--color-text-tertiary)"}}>
-          No se encontraron clientes válidos para importar
+          {filas.slice(0,5).map((f,i)=>(
+            <div key={i} style={{...s.card,margin:"0 0 4px",padding:"8px 10px"}}>
+              <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)"}}>{f.nombre}</div>
+              <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>
+                {f.dia} · {f.calle?f.calle+" "+f.nro:f.manzana?"Mz "+f.manzana+" L "+f.lote:f.barrio}
+                {f.lat?" · 📍 GPS ok":""}
+                {f.saldo<0?" · Debe "+fmt(Math.abs(f.saldo)):""}
+              </div>
+            </div>
+          ))}
+          {filas.length>5&&<div style={{fontSize:11,color:"var(--color-text-tertiary)",padding:"4px 0"}}>...y {filas.length-5} mas</div>}
         </div>
       )}
+      <div style={{padding:"8px 14px 20px",display:"flex",gap:8}}>
+        <button style={{...s.btn,flex:1}} onClick={()=>setFase("inicio")}>Cancelar</button>
+        <button style={{...s.btnPrimary,flex:2,padding:"12px"}} disabled={filas.length===0} onClick={confirmarImport}>
+          Importar {filas.length} clientes
+        </button>
+      </div>
     </div>
   );
 
-  // Fase: inicio
   return (
     <div style={s.screen}>
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button>
         <span style={s.headerTitle}>Importar clientes</span></div>
-
-      <div style={{padding:"16px 14px"}}>
-        {/* Instrucciones */}
-        <div style={{...s.card,marginBottom:16,background:"#1e2e4a",border:"0.5px solid #5daaff"}}>
-          <div style={{fontSize:13,fontWeight:700,color:"#5daaff",marginBottom:10}}>📥 ¿Cómo importar?</div>
-          {[
-            "1. Descargá la plantilla Excel desde el botón de abajo",
-            "2. Completá los datos de tus clientes (una fila por cliente)",
-            "3. Guardá el archivo en tu celular",
-            "4. Tocá el botón Seleccionar Excel y elegí el archivo",
-          ].map((t,i)=>(
-            <div key={i} style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:5,paddingLeft:8}}>
-              {t}
-            </div>
-          ))}
-        </div>
-
-        {/* Repartos disponibles */}
-        <div style={{...s.card,marginBottom:16}}>
-          <div style={{fontSize:12,fontWeight:600,color:"var(--color-text-primary)",marginBottom:8}}>
-            Repartos configurados (usá estos números en el Excel):
+      <div style={{padding:"24px 14px",display:"flex",flexDirection:"column",gap:16}}>
+        <div style={{...s.card,margin:0,background:"var(--color-background-info)",textAlign:"center",padding:"24px"}}>
+          <div style={{fontSize:36,marginBottom:8}}>{"\u{1F4CA}"}</div>
+          <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)",marginBottom:6}}>Importar desde Excel</div>
+          <div style={{fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.6}}>
+            Usa la planilla oficial <b>planilla_clientes_SR2026.xlsx</b>.<br/>
+            Completa los datos y selecciona el archivo.
           </div>
-          {repartos.length===0&&(
-            <div style={{fontSize:12,color:"#f07070"}}>⚠️ Primero creá los repartos en la pestaña "Repartos"</div>
-          )}
-          {repartos.sort((a,b)=>a.numero-b.numero).map(r=>(
-            <div key={r.id} style={{display:"flex",gap:10,alignItems:"center",padding:"6px 0",borderBottom:"0.5px solid var(--color-border-secondary)"}}>
-              <div style={{width:30,height:30,borderRadius:7,background:"#185FA5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:"#fff",flexShrink:0}}>{r.numero}</div>
-              <div style={{fontSize:12,color:"var(--color-text-primary)"}}>{r.repartidorNombre}</div>
+        </div>
+        <button style={{...s.btnPrimary,padding:"16px",fontSize:15}} onClick={()=>fileRef.current?.click()}>
+          {"\u{1F4CE}"} Seleccionar archivo Excel
+        </button>
+        <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:"none"}}
+          onChange={e=>{ const f=e.target.files?.[0]; if(f) procesarExcel(f); e.target.value=""; }} />
+        <div style={{...s.card,margin:0,padding:"12px 14px"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--color-text-secondary)",marginBottom:8}}>La planilla debe tener estas columnas:</div>
+          {[
+            "Nombre y Apellido *","Dia de Reparto *","N Orden *",
+            "Barrio · Calle · Numero · Manzana · Lote",
+            "Telefono · Link Google Maps",
+            "Sifones · Bidones 10L · Bidones 20L · Dispenser",
+            "Saldo Inicial · Notas"
+          ].map((c,i)=>(
+            <div key={i} style={{fontSize:11,color:i<3?"var(--color-text-primary)":"var(--color-text-secondary)",padding:"2px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+              {i<3?"* ":""}{c}
             </div>
           ))}
-        </div>
-
-        {/* Botón seleccionar archivo */}
-        <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{display:"none"}}
-          onChange={e=>{if(e.target.files[0]) procesarExcel(e.target.files[0]);}} />
-
-        <button style={{...s.btnPrimary,width:"100%",padding:"14px",fontSize:14,marginBottom:10}}
-          onClick={()=>fileRef.current.click()}>
-          📂 Seleccionar Excel
-        </button>
-
-        <div style={{textAlign:"center",fontSize:11,color:"var(--color-text-tertiary)"}}>
-          La importación no borra clientes existentes
         </div>
       </div>
     </div>
   );
 }
 
+// ── MapaClientes ─────────────────────────────────────────────────────────────
+function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, onVolver}) {
+  const mapRef = React.useRef(null);
+  const mapInstRef = React.useRef(null);
+  const markersRef = React.useRef([]);
+  const [leafletOk, setLeafletOk] = React.useState(!!window.L);
+  const [filtroDia, setFiltroDia] = React.useState(dia||"todos");
+
+  const ventasHoy = (ventas||[]).filter(v=>v.fechaKey===fecha);
+  const noVisHoy  = (noVisitas||[]).filter(v=>v.fecha===fecha);
+  const clientesFiltrados = clientes.filter(c=>{
+    if(filtroDia!=="todos"&&c.dia!==filtroDia) return false;
+    return c.lat&&c.lng;
+  });
+  const sinCoordenadas = clientes.filter(c=>(filtroDia==="todos"||c.dia===filtroDia)&&(!c.lat||!c.lng)).length;
+
+  // Cargar Leaflet dinámicamente si no está
+  React.useEffect(()=>{
+    if(window.L){ setLeafletOk(true); return; }
+    const link = document.createElement("link");
+    link.rel="stylesheet"; link.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = ()=>setLeafletOk(true);
+    document.head.appendChild(script);
+  },[]);
+
+  // Inicializar mapa cuando Leaflet está listo
+  React.useEffect(()=>{
+    if(!leafletOk||!mapRef.current) return;
+    if(mapInstRef.current){ mapInstRef.current.remove(); mapInstRef.current=null; }
+    const L = window.L;
+    const map = L.map(mapRef.current, {zoomControl:true, scrollWheelZoom:true});
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      attribution:"© OpenStreetMap",maxZoom:19
+    }).addTo(map);
+    mapInstRef.current = map;
+
+    // Agregar marcadores
+    markersRef.current = [];
+    const bounds = [];
+    clientesFiltrados.forEach(c=>{
+      const entregado = ventasHoy.some(v=>v.clienteId===c.id);
+      const noVisitado = noVisHoy.some(v=>v.clienteId===c.id);
+      const color = entregado?"#4dd9a0":noVisitado?"#f07070":"#5daaff";
+      const icon = L.divIcon({
+        className:"",
+        html:`<div style="width:28px;height:28px;border-radius:50%;background:${color};border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">${c.orden||"·"}</div>`,
+        iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-14]
+      });
+      const marker = L.marker([c.lat,c.lng],{icon}).addTo(map);
+      marker.bindPopup(`<div style="font-family:sans-serif;min-width:160px"><b style="font-size:13px">${c.nombre}</b><br/><span style="font-size:11px;color:#666">${c.dia} · orden ${c.orden||"-"}</span><br/>${c.calle?c.calle+" "+c.nro:c.manzana?"Mz "+c.manzana+" L "+c.lote:c.barrio||""}<br/>${entregado?"<span style='color:#059669;font-weight:600'>✓ Entregado</span>":noVisitado?"<span style='color:#dc2626'>✗ No visitado</span>":"<span style='color:#2563eb'>Pendiente</span>"}</div>`);
+      if(onSeleccionar) marker.on("popupopen",()=>marker.getPopup().getElement()?.addEventListener("click",()=>onSeleccionar(c)));
+      bounds.push([c.lat,c.lng]);
+      markersRef.current.push(marker);
+    });
+
+    if(bounds.length>0) map.fitBounds(bounds,{padding:[30,30]});
+    else map.setView([-26.82,-65.2],13);
+
+    return ()=>{ if(mapInstRef.current){ mapInstRef.current.remove(); mapInstRef.current=null; } };
+  },[leafletOk, filtroDia, clientesFiltrados.length]);
+
+  const entregadosCount = clientesFiltrados.filter(c=>ventasHoy.some(v=>v.clienteId===c.id)).length;
+  const pendientesCount = clientesFiltrados.filter(c=>!ventasHoy.some(v=>v.clienteId===c.id)&&!noVisHoy.some(v=>v.clienteId===c.id)).length;
+
+  return (
+    <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>Mapa de clientes</span>
+      </div>
+      {/* Filtro de dia */}
+      <div style={{padding:"8px 14px",display:"flex",gap:6,overflowX:"auto",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+        {["todos",...DIAS].map(d=>(
+          <button key={d} style={{...s.btn,padding:"5px 12px",fontSize:12,flexShrink:0,
+            background:filtroDia===d?"#185FA5":"var(--color-background-tertiary)",
+            color:filtroDia===d?"#e2eaf4":"var(--color-text-secondary)",
+            border:filtroDia===d?"none":"0.5px solid var(--color-border-secondary)"}}
+            onClick={()=>setFiltroDia(d)}>
+            {d==="todos"?"Todos":d}
+          </button>
+        ))}
+      </div>
+      {/* Stats */}
+      <div style={{display:"flex",gap:0,background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+        <div style={{flex:1,textAlign:"center",padding:"8px 4px",borderRight:"0.5px solid var(--color-border-tertiary)"}}>
+          <div style={{fontSize:16,fontWeight:600,color:"#5daaff"}}>{clientesFiltrados.length}</div>
+          <div style={{fontSize:9,color:"var(--color-text-secondary)"}}>Con GPS</div>
+        </div>
+        <div style={{flex:1,textAlign:"center",padding:"8px 4px",borderRight:"0.5px solid var(--color-border-tertiary)"}}>
+          <div style={{fontSize:16,fontWeight:600,color:"#4dd9a0"}}>{entregadosCount}</div>
+          <div style={{fontSize:9,color:"var(--color-text-secondary)"}}>Entregados</div>
+        </div>
+        <div style={{flex:1,textAlign:"center",padding:"8px 4px",borderRight:"0.5px solid var(--color-border-tertiary)"}}>
+          <div style={{fontSize:16,fontWeight:600,color:"#f5b942"}}>{pendientesCount}</div>
+          <div style={{fontSize:9,color:"var(--color-text-secondary)"}}>Pendientes</div>
+        </div>
+        <div style={{flex:1,textAlign:"center",padding:"8px 4px"}}>
+          <div style={{fontSize:16,fontWeight:600,color:"var(--color-text-tertiary)"}}>{sinCoordenadas}</div>
+          <div style={{fontSize:9,color:"var(--color-text-secondary)"}}>Sin GPS</div>
+        </div>
+      </div>
+      {/* Leyenda */}
+      <div style={{display:"flex",gap:12,padding:"6px 14px",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+        {[["#4dd9a0","Entregado"],["#5daaff","Pendiente"],["#f07070","No visitado"]].map(([c,l])=>(
+          <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:c}}/>
+            <span style={{fontSize:10,color:"var(--color-text-secondary)"}}>{l}</span>
+          </div>
+        ))}
+      </div>
+      {/* Mapa */}
+      {!leafletOk&&(
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8}}>
+          <div style={{fontSize:24}}>{"\u{1F5FA}"}</div>
+          <div style={{fontSize:13,color:"var(--color-text-secondary)"}}>Cargando mapa...</div>
+        </div>
+      )}
+      {leafletOk&&clientesFiltrados.length===0&&(
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8,padding:24}}>
+          <div style={{fontSize:36}}>{"\u{1F4CD}"}</div>
+          <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Sin clientes con GPS</div>
+          <div style={{fontSize:12,color:"var(--color-text-secondary)",textAlign:"center",lineHeight:1.5}}>
+            Para ver clientes en el mapa, importalos desde la planilla Excel con el campo "Link Google Maps" completado, o agrega las coordenadas manualmente en el perfil de cada cliente.
+          </div>
+        </div>
+      )}
+      <div ref={mapRef} style={{flex:1,minHeight:400,display:leafletOk&&clientesFiltrados.length>0?"block":"none"}}/>
+    </div>
+  );
+}
 
 
-// ════════════════════════════════════════════════════════════════════
-// ◆  usarInformes — Envío de resúmenes por email via Brevo
-// ════════════════════════════════════════════════════════════════════
 function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
 
   const getLic = () => { try{ return JSON.parse(localStorage.getItem("sr_licencia")||"{}"); }catch{ return {}; } };
