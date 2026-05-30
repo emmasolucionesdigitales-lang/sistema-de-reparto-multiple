@@ -264,7 +264,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       {pantalla==="clientes"&&(
         <ListaClientes
           clientes={clientes}
-          dia={""} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
+          dia={diaActual} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
           onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("clientes");irA("detalleCliente");}}
           onNuevoCliente={null} onVolver={()=>irA("inicio")}
           onReordenar={lista=>{
