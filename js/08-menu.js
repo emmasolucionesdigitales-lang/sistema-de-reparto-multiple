@@ -145,6 +145,22 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                       Código: {rep.codigo}
                     </div>
                   </div>
+                  {(()=>{
+                    const pendTrans = (ventas||[]).filter(v=>
+                      (v.pago==="transferencia"||v.pago==="mixto") &&
+                      !v.transConfirmada &&
+                      clientesPorReparto(rep.id).some(c=>c.id===v.clienteId)
+                    );
+                    if(!pendTrans.length) return null;
+                    return (
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flexShrink:0,marginRight:4}}>
+                        <div style={{background:"var(--color-background-warning)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:8,padding:"4px 8px",textAlign:"center"}}>
+                          <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-warning)"}}>{pendTrans.length}</div>
+                          <div style={{fontSize:9,color:"var(--color-text-warning)",lineHeight:1.2}}>transfer{pendTrans.length>1?"s":""} pend.</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <span style={{color:"var(--color-text-tertiary)",fontSize:20}}>→</span>
                 </button>
               )}

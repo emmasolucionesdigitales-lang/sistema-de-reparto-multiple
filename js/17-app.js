@@ -25,21 +25,7 @@ function App() {
   };
 
   if(fase === "activacion") return <PantallaActivacionRM onActivado={handleActivado} />;
-  if(fase === "pin") return <PantallaPin pin={_srLic?.pin} onOk={async ()=>{
-    // Si no tiene negocioId, buscarlo en Firebase antes de continuar
-    if(_srLic && !_srLic.negocioId && _srLic.codigo && window.db) {
-      try {
-        const snap = await window.db.collection("negocios")
-          .where("codigoActivacion","==",_srLic.codigo).limit(1).get();
-        if(!snap.empty) {
-          const negocioId = snap.docs[0].id;
-          const updated = {..._srLic, negocioId};
-          localStorage.setItem("sr_licencia", JSON.stringify(updated));
-        }
-      } catch(_) {}
-    }
-    setFase("app");
-  }} />;
+  if(fase === "pin")        return <PantallaPin pin={_srLic?.pin} onOk={()=>setFase("app")} />;
   if(!temaElegido)          return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("sr_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
   if(!_srLic)               return <PantallaActivacionRM onActivado={handleActivado} />;
   return <AppPrincipal uid={_srLic.deviceId||_srLic.negocioId} email={_srLic.email} perfil={_srLic} />;
@@ -633,7 +619,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onFiados={()=>irA("fiadosPendientes")} />}
       {pantalla==="confirmacionesDia" && <ConfirmacionesDia
           dia={diaActual}
-          ventas={ventas.filter(v=>v.dia===diaActual&&v.pago==="transferencia")}
+          ventas={ventas.filter(v=>(v.pago==="transferencia"||v.pago==="mixto")&&!v.transConfirmada)}
           clientes={clientes}
           onConfirmar={(ventaId)=>{const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);saveVentas(nv);}}
           onVolver={()=>irA("menu")} />}

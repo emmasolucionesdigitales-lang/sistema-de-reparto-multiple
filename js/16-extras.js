@@ -319,6 +319,29 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
           <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
         </button>
 
+        {/* Transferencias pendientes */}
+        {(()=>{
+          const pendTrans = ventasHoy.filter(v=>(v.pago==="transferencia"||v.pago==="mixto")&&!v.transConfirmada);
+          const pendTransAll = ventas.filter(v=>(v.pago==="transferencia"||v.pago==="mixto")&&!v.transConfirmada);
+          const total = pendTransAll.length;
+          if(total===0) return null;
+          return (
+            <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px",
+              background:"var(--color-background-warning)",border:"0.5px solid var(--color-border-warning)"}}
+              onClick={onIrTransfers}>
+              <span style={{fontSize:20}}>{"\u{1F4B8}"}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-warning)"}}>
+                  Transferencias pendientes
+                  <span style={{...s.badge("warning"),fontSize:10,marginLeft:6}}>{total}</span>
+                </div>
+                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Tocar para marcar como acreditadas</div>
+              </div>
+              <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
+            </button>
+          );
+        })()}
+
         {/* Agenda */}
         <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px",
           background:recActivos.length>0?"var(--color-background-info)":undefined,
@@ -411,7 +434,7 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
   const filtrados = clientes
     .filter(c=>(diaFiltro==="todos"||c.dia===diaFiltro)&&(c.nombre.toLowerCase().includes(busq.toLowerCase())||(c.barrio||"").toLowerCase().includes(busq.toLowerCase())))
     .sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
-  const prospectosFiltrados = diaFiltro==="todos" ? (prospectos||[]).filter(p=>p.estado==="activo"&&(busq===""||p.nombre.toLowerCase().includes(busq.toLowerCase()))) : [];
+  const prospectosFiltrados = diaFiltro==="todos" ? (prospectos||[]).filter(p=>(p.estado==="activo"||!p.estado)&&(busq===""||p.nombre.toLowerCase().includes(busq.toLowerCase()))) : [];
 
   return (
     <div style={s.screen}>

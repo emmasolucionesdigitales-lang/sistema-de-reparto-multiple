@@ -411,8 +411,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       {pantalla==="confirmTransferRep"&&(
         <ConfirmacionesDia
           dia={diaActual}
-          ventas={ventas.filter(v=>v.pago==="transferencia")}
-          clientes={clientes}
+          ventas={ventas.filter(v=>v.pago==="transferencia"||v.pago==="mixto")}
+          clientes={todosClientes}
           onConfirmar={(ventaId)=>{
             const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);
             sync({...datos,ventas:nv});
