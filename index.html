@@ -113,12 +113,14 @@ self.addEventListener('notificationclick',e=>{
     const BREVO_KEY_RM = "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";
     window.enviarEmailBrevoRM = async function({to, toName, subject, htmlContent}) {
       try {
-        await fetch("https://api.brevo.com/v3/smtp/email", {
+        const res = await fetch("https://api.brevo.com/v3/smtp/email", {
           method:"POST",
           headers:{"Content-Type":"application/json","api-key":BREVO_KEY_RM},
           body:JSON.stringify({sender:{name:"Sistema de Reparto · Emma Soluciones",email:"carabajalponce1980@gmail.com"},to:[{email:to,name:toName||to}],subject,htmlContent})
         });
-      } catch(e) {}
+        if(!res.ok) { const txt = await res.text(); console.error("Brevo error:", res.status, txt); return false; }
+        return true;
+      } catch(e) { console.error("enviarEmailBrevoRM error:", e); return false; }
     };
 
     function getUserProfile(uid) {
@@ -380,10 +382,9 @@ self.addEventListener('notificationclick',e=>{
 <script type="text/babel" src="js/10-ventas.js"></script>
 <script type="text/babel" src="js/11-promocion.js"></script>
 <script type="text/babel" src="js/12-gestion.js"></script>
-<script type="text/babel" src="js/13-resumen.js"></script>
-<script type="text/babel" src="js/14-roles.js"></script>
-<script type="text/babel" src="js/15-config.js"></script>
-<script type="text/babel" src="js/16-extras.js"></script>
-<script type="text/babel" src="js/17-app.js"></script>
+<script type="text/babel" src="js/13-roles.js"></script>
+<script type="text/babel" src="js/14-config.js"></script>
+<script type="text/babel" src="js/15-extras.js"></script>
+<script type="text/babel" src="js/16-app.js"></script>
 </body>
 </html>
