@@ -455,9 +455,12 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="planilla"&&(
         <PlanillaDelDia
-          dia={diaActual} fecha={fechaActual} ventas={ventasHoy}
+          dia={diaActual} fecha={fechaActual} ventas={ventas}
+          clientes={todosClientes}
           planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()}
-          productos={productos} stock={datos.stock||{}} setStock={()=>{}} syncData={()=>{}}
+          productos={productos} stock={datos.stock||{}}
+          setStock={(ns)=>sync({...datos,stock:ns})}
+          syncData={(overrides)=>sync({...datos,...overrides})}
           onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("inicio");}}
           onVolver={()=>irA("inicio")}
         />
