@@ -198,151 +198,220 @@ async function guardarLogoFirestore(codigo, logoB64) {
 
 
 // ── InicioRepartidor ─────────────────────────────────────────
-function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onSalir}) {
-  const transfersPend = ventas.filter(v=>v.pago==="transferencia"&&!v.transConfirmada);
-  const recActivos    = (recordatorios||[]).filter(r=>!r.confirmado);
-  const hoy           = new Date().toISOString().slice(0,10);
-  const recHoy        = recActivos.filter(r=>r.fecha===hoy);
-  const visitadosHoy  = new Set(ventas.filter(v=>v.fechaKey===fechaActual).map(v=>v.clienteId));
-  const noVisHoy      = new Set((noVisitas||[]).filter(v=>v.fecha===fechaActual).map(v=>v.clienteId));
-  const pendHoy       = clientes.filter(c=>!visitadosHoy.has(c.id)&&!noVisHoy.has(c.id)).length;
+function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,planillas,savePlanilla,productos,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onSalir,onEnviarInforme}) {
+  const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
+  const noVisHoy  = (noVisitas||[]).filter(v=>v.fecha===fechaActual);
+  const planKey   = `${diaActual}_${fechaActual}`;
+  const plan      = (planillas||{})[planKey] || planillaDiaVacia();
+  const totalEntregados = ventasHoy.length;
+  const totalPend = clientes.filter(c=>!ventasHoy.find(v=>v.clienteId===c.id)&&!noVisHoy.find(v=>v.clienteId===c.id)).length;
+  const recorrido = totalEntregados+noVisHoy.length >= clientes.length && clientes.length > 0;
+  const cargaHecha = !!(planillas||{})[planKey]?.productos;
+
+  // Paso actual del flujo
+  const paso = !cargaHecha ? "carga" : !recorrido ? "reparto" : "planilla";
+
+  const pasos = [
+    {id:"carga",    num:1, label:"Carga del día",    ok:cargaHecha},
+    {id:"reparto",  num:2, label:"Reparto del día",  ok:recorrido},
+    {id:"planilla", num:3, label:"Cierre y envío",   ok:false},
+  ];
+
+  const fmtP = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
+  const totalEfectivo = ventasHoy.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+  const totalTransfer = ventasHoy.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+  const totalFiado    = ventasHoy.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
+  const totalNeto     = totalEfectivo+totalTransfer+totalFiado;
 
   return (
-    <div style={{...s.screen,padding:"0 0 32px"}}>
+    <div style={{...s.screen,paddingBottom:40}}>
       {/* Header */}
       <div style={{...s.header,padding:"12px 14px"}}>
         <div style={{flex:1}}>
-          <div style={{fontSize:16,fontWeight:700,color:"var(--color-text-primary)"}}>🚐 {perfil.nombre}</div>
-          <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual} · {(perfil.sectores||[]).join(" · ")||"Reparto"}</div>
+          <div style={{fontSize:16,fontWeight:700,color:"var(--color-text-primary)"}}>{"\u{1F690} "+perfil.nombre}</div>
+          <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual} · {fechaActual}</div>
         </div>
         <button style={{...s.btn,fontSize:11,padding:"6px 10px"}} onClick={onSalir}>Salir</button>
       </div>
 
-      {/* Fecha */}
-      <div style={{padding:"10px 14px 0"}}>
-        <div style={{...s.card,margin:0,background:"var(--color-background-info)",padding:"10px 14px"}}>
-          <label style={{fontSize:11,color:"var(--color-text-info)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em",display:"block",marginBottom:4}}>📅 Fecha del reparto</label>
-          <input type="date" style={{...s.input,margin:0,background:"transparent",border:"none",color:"var(--color-text-primary)",fontSize:16,fontWeight:600,padding:"4px 0"}}
-            value={fechaActual} onChange={e=>setFechaActual(e.target.value)} />
-        </div>
+      {/* Barra de progreso de pasos */}
+      <div style={{display:"flex",padding:"12px 14px",gap:4}}>
+        {pasos.map((p,i)=>(
+          <div key={p.id} style={{flex:1,textAlign:"center"}}>
+            <div style={{
+              height:4,borderRadius:4,
+              background: p.ok?"#4dd9a0": paso===p.id?"#185FA5":"var(--color-border-tertiary)",
+              marginBottom:4
+            }}/>
+            <div style={{fontSize:9,color:p.ok?"#4dd9a0":paso===p.id?"#5daaff":"var(--color-text-tertiary)",fontWeight:p.ok||paso===p.id?600:400}}>
+              {p.ok?"✓ ":""}{p.label}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Alerta transferencias */}
-      {transfersPend.length>0&&(
-        <button style={{margin:"10px 14px 0",background:"#2e1f06",border:"1px solid #f5b942",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,width:"calc(100% - 28px)",cursor:"pointer",textAlign:"left"}}
-          onClick={onIrTransfers}>
-          <span style={{fontSize:20}}>🔴</span>
-          <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:600,color:"#f5b942"}}>{transfersPend.length} transferencia{transfersPend.length!==1?"s":""} sin confirmar</div>
-            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Total: {fmt(transfersPend.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0))} · Tocá para confirmar →</div>
+      {/* PASO 1: Carga del día */}
+      {!cargaHecha&&(
+        <div style={{padding:"0 14px"}}>
+          <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #5daaff"}}>
+            <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>{"\u{1F69A} Paso 1: Carga del día"}</div>
+            <div style={{fontSize:13,color:"var(--color-text-secondary)"}}>Registrá los envases que salís a repartir antes de empezar.</div>
           </div>
-        </button>
+          <button style={{...s.btnPrimary,padding:"16px",fontSize:15,display:"flex",alignItems:"center",gap:10,justifyContent:"center"}}
+            onClick={onIrCarga}>
+            {"\u{1F4CB} Registrar carga del día →"}
+          </button>
+        </div>
       )}
 
-      {/* Alerta recordatorios */}
-      {recHoy.length>0&&(
-        <div style={{margin:"8px 14px 0"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#5daaff",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.05em",cursor:"pointer"}}
-            onClick={onIrAgenda}>
-            🔔 Recordatorios de hoy — <span style={{textDecoration:"underline"}}>ver todos →</span>
-          </div>
-          {recHoy.slice(0,3).map(r=>(
-            <div key={r.id} style={{...s.card,margin:"0 0 6px",background:"#1e2e4a",border:"0.5px solid #5daaff",display:"flex",gap:8,alignItems:"center"}}>
-              <span style={{fontSize:16,cursor:"pointer"}} onClick={onIrAgenda}>{r.tipo==="cobro"?"💰":"🏠"}</span>
-              <div style={{flex:1,cursor:"pointer"}} onClick={onIrAgenda}>
-                <div style={{fontSize:12,fontWeight:500,color:"#5daaff"}}>{r.clienteNombre} <span style={{fontSize:10,opacity:0.7}}>· tocá para ver →</span></div>
-                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{r.motivo}{r.hora?` · ${r.hora}`:""}</div>
+      {/* PASO 2: Reparto */}
+      {cargaHecha&&!recorrido&&(
+        <div style={{padding:"0 14px"}}>
+          <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #185FA5"}}>
+            <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)",marginBottom:4}}>{"\u{1F4CB} Paso 2: Reparto del día"}</div>
+            <div style={{display:"flex",gap:12,marginTop:8}}>
+              <div style={{textAlign:"center",flex:1}}>
+                <div style={{fontSize:24,fontWeight:700,color:"#4dd9a0"}}>{totalEntregados}</div>
+                <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Entregados</div>
               </div>
-              <div style={{display:"flex",gap:4}}>
-                {r.clienteId&&<button style={{background:"#185FA5",color:"#fff",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,cursor:"pointer"}}
-                  onClick={()=>onIrCliente(r.clienteId)}>→</button>}
-                <button style={{background:"#0a2e1f",color:"#4dd9a0",border:"none",borderRadius:6,padding:"3px 8px",fontSize:10,cursor:"pointer"}}
-                  onClick={()=>onConfirmarRecordatorio(r.id)}>✓</button>
+              <div style={{textAlign:"center",flex:1}}>
+                <div style={{fontSize:24,fontWeight:700,color:"#f5b942"}}>{totalPend}</div>
+                <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Pendientes</div>
+              </div>
+              <div style={{textAlign:"center",flex:1}}>
+                <div style={{fontSize:24,fontWeight:700,color:"var(--color-text-primary)"}}>{fmtP(totalNeto)}</div>
+                <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Cobrado</div>
               </div>
             </div>
-          ))}
-          {recActivos.length>3&&(
-            <button style={{...s.btn,width:"100%",fontSize:11,padding:"5px"}} onClick={onIrAgenda}>
-              +{recActivos.length-3} más → Abrir agenda
+          </div>
+          <button style={{...s.btnPrimary,padding:"16px",fontSize:15,display:"flex",alignItems:"center",gap:10,justifyContent:"center"}}
+            onClick={onIrClientes}>
+            {"\u{1F4CB} Continuar reparto →"}
+          </button>
+          <div style={{marginTop:8}}>
+            <button style={{...s.card,margin:0,cursor:"pointer",width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"12px"}}
+              onClick={onIrTodosClientes}>
+              <span>{"\u{1F465}"}</span>
+              <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Ver todos los clientes</span>
+              <span style={{marginLeft:"auto"}}>→</span>
             </button>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Resumen del día */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,padding:"10px 14px 0"}}>
-        <div style={{...s.metricCard,textAlign:"center"}}>
-          <div style={{fontSize:22,fontWeight:700,color:"var(--color-text-primary)"}}>{pendHoy}</div>
-          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Pendientes</div>
-        </div>
-        <div style={{...s.metricCard,textAlign:"center"}}>
-          <div style={{fontSize:22,fontWeight:700,color:"#4dd9a0"}}>{visitadosHoy.size}</div>
-          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Entregados</div>
-        </div>
-        <div style={{...s.metricCard,textAlign:"center"}}>
-          <div style={{fontSize:22,fontWeight:700,color:"#f5b942"}}>{recActivos.length}</div>
-          <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Recordat.</div>
-        </div>
-      </div>
-
-      {/* Botones principales */}
-      <div style={{padding:"12px 14px 0",display:"flex",flexDirection:"column",gap:10}}>
-        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
-          onClick={onIrCarga}>
-          <span style={{fontSize:22}}>🚚</span>
-          <div>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Carga del día</div>
-            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Registrar envases que salís a repartir</div>
-          </div>
-          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
-        </button>
-
-        <button style={{...s.btnPrimary,padding:"16px",fontSize:16,borderRadius:12,display:"flex",alignItems:"center",gap:10}}
-          onClick={onIrClientes}>
-          <span style={{fontSize:22}}>📋</span>
-          <div style={{textAlign:"left"}}>
-            <div>Reparto del día</div>
-            <div style={{fontSize:11,opacity:0.8}}>{pendHoy} pendientes de entregar</div>
-          </div>
-        </button>
-
-        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
-          onClick={onIrPlanilla}>
-          <span style={{fontSize:22}}>📊</span>
-          <div>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Planilla del día</div>
-            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Totales y cierre del día</div>
-          </div>
-          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
-        </button>
-
-        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px"}}
-          onClick={onIrTodosClientes}>
-          <span style={{fontSize:22}}>👥</span>
-          <div>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Todos los clientes</div>
-            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Registrar ventas y cobros de cualquier día</div>
-          </div>
-          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
-        </button>
-
-        <button style={{...s.card,margin:0,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"14px",
-          background:recActivos.length>0?"#1e2e4a":undefined,
-          border:recActivos.length>0?"0.5px solid #5daaff":undefined}}
-          onClick={onIrAgenda}>
-          <span style={{fontSize:22}}>📅</span>
-          <div>
-            <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>
-              Agenda {recActivos.length>0&&<span style={{...s.badge("info"),fontSize:10,marginLeft:6}}>{recActivos.length}</span>}
+      {/* PASO 3: Planilla y cierre */}
+      {cargaHecha&&recorrido&&(
+        <div style={{padding:"0 14px"}}>
+          <div style={{...s.card,margin:"0 0 12px",borderLeft:"3px solid #4dd9a0"}}>
+            <div style={{fontSize:15,fontWeight:600,color:"#4dd9a0",marginBottom:8}}>{"\u2705 Recorrido completo"}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div style={s.metricCard}>
+                <div style={s.metricLabel}>Entregas</div>
+                <div style={{...s.metricVal,color:"#4dd9a0"}}>{totalEntregados}</div>
+              </div>
+              <div style={s.metricCard}>
+                <div style={s.metricLabel}>Total cobrado</div>
+                <div style={{...s.metricVal}}>{fmtP(totalNeto)}</div>
+              </div>
+              <div style={s.metricCard}>
+                <div style={s.metricLabel}>Efectivo</div>
+                <div style={{...s.metricVal,color:"#4dd9a0"}}>{fmtP(totalEfectivo)}</div>
+              </div>
+              <div style={s.metricCard}>
+                <div style={s.metricLabel}>Transferencias</div>
+                <div style={{...s.metricVal,color:"#5daaff"}}>{fmtP(totalTransfer)}</div>
+              </div>
             </div>
-            <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Recordatorios de visitas y cobros</div>
           </div>
-          <span style={{marginLeft:"auto",color:"var(--color-text-tertiary)"}}>→</span>
-        </button>
-      </div>
+
+          {/* Gastos extras */}
+          <GastosRepartidor
+            plan={plan}
+            onSave={(nuevosPlan)=>savePlanilla&&savePlanilla(planKey, nuevosPlan)}
+          />
+
+          <div style={{marginTop:12}}>
+            <button style={{...s.btnPrimary,background:"#1a5c2e",padding:"14px",fontSize:14,display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}
+              onClick={onEnviarInforme}>
+              {"\u{1F4E7} Finalizar y enviar informe al dueño"}
+            </button>
+          </div>
+          <div style={{marginTop:8}}>
+            <button style={{...s.card,margin:0,cursor:"pointer",width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:10,padding:"12px"}}
+              onClick={onIrClientes}>
+              <span>{"\u{1F4CB}"}</span>
+              <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Ver lista de clientes del día</span>
+              <span style={{marginLeft:"auto"}}>→</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// ── GastosRepartidor ─────────────────────────────────────────────────────────
+function GastosRepartidor({plan, onSave}) {
+  const [gastos, setGastos] = React.useState(plan.gastos||[]);
+  const [nuevo, setNuevo]   = React.useState({cat:"otro",desc:"",monto:""});
+  const [agregando, setAgregando] = React.useState(false);
+
+  const agregar = () => {
+    if(!nuevo.monto||isNaN(Number(nuevo.monto))) return;
+    const lista = [...gastos, {id:Date.now(),cat:nuevo.cat,desc:nuevo.desc,monto:Number(nuevo.monto),confirmado:true}];
+    setGastos(lista);
+    onSave&&onSave({...plan, gastos:lista});
+    setNuevo({cat:"otro",desc:"",monto:""});
+    setAgregando(false);
+  };
+
+  const eliminar = (id) => {
+    const lista = gastos.filter(g=>g.id!==id);
+    setGastos(lista);
+    onSave&&onSave({...plan, gastos:lista});
+  };
+
+  const total = gastos.reduce((a,g)=>a+(Number(g.monto)||0),0);
+  const fmtP = (n)=>"$"+Math.round(Number(n)||0).toLocaleString("es-AR");
+
+  return (
+    <div style={{...s.card,margin:"0 0 8px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)"}}>{"\u{1F4B8} Gastos extras"}</div>
+        {total>0&&<div style={{fontSize:12,color:"#f07070",fontWeight:600}}>−{fmtP(total)}</div>}
+      </div>
+      {gastos.map(g=>(
+        <div key={g.id} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+          <div style={{flex:1}}>
+            <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>{g.cat}</span>
+            {g.desc&&<span style={{fontSize:11,color:"var(--color-text-tertiary)"}}> · {g.desc}</span>}
+          </div>
+          <span style={{fontSize:13,fontWeight:500,color:"#f07070"}}>{fmtP(g.monto)}</span>
+          <button style={{...s.btn,padding:"2px 6px",fontSize:11,color:"var(--color-text-danger)"}} onClick={()=>eliminar(g.id)}>✕</button>
+        </div>
+      ))}
+      {!agregando&&(
+        <button style={{...s.btn,marginTop:8,width:"100%",fontSize:12}} onClick={()=>setAgregando(true)}>+ Agregar gasto</button>
+      )}
+      {agregando&&(
+        <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6}}>
+          <select style={s.select} value={nuevo.cat} onChange={e=>setNuevo(v=>({...v,cat:e.target.value}))}>
+            {["propina","mercado","gnc","gaseosa","uber","inflado","frutas","otro"].map(c=>(
+              <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>
+            ))}
+          </select>
+          <input style={s.input} placeholder="Descripción (opcional)" value={nuevo.desc} onChange={e=>setNuevo(v=>({...v,desc:e.target.value}))} />
+          <input style={{...s.input,textAlign:"right"}} type="number" placeholder="Monto $" value={nuevo.monto} onChange={e=>setNuevo(v=>({...v,monto:e.target.value}))} />
+          <div style={{display:"flex",gap:6}}>
+            <button style={{...s.btn,flex:1}} onClick={()=>setAgregando(false)}>Cancelar</button>
+            <button style={{...s.btnPrimary,flex:2,padding:"8px"}} onClick={agregar}>Guardar gasto</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 // ── TodosClientesRepartidor ──────────────────────────────────
 function TodosClientesRepartidor({clientes,ventas,onSeleccionar,onNuevoCliente,onVolver}) {

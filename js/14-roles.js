@@ -202,15 +202,17 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     if(sigCliente){
       setClienteId(sigCliente.id);
       setDiaClienteActual(sigCliente.dia||diaActual);
+      setOrigenDetalle("clientes");
       irA("venta");
       return;
     }
     // Si no hay más clientes, pasar a prospectos
     const visitadosProsp = new Set(ventasHoy.filter(v=>v._esProspecto).map(v=>v.clienteId));
-    const sigProspecto = prospectos.find(p=>!visitadosProsp.has(p.id));
+    const sigProspecto = prospectos.find(p=>p.dia===diaActual&&p.estado==="activo"&&!visitadosProsp.has(p.id));
     if(sigProspecto){
       setClienteId(sigProspecto.id);
-      irA("venta");
+      setOrigenDetalle("prospectos");
+      irA("clientes"); // volver a lista para que el usuario elija el prospecto
       return;
     }
     // Terminó todo
@@ -230,7 +232,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           setFechaActual={setFechaActual}
           clientes={clientes}
           ventas={ventas}
-          noVisitas={noVisHoy}
+          noVisitas={noVisitas}
+          planillas={planillas}
+          savePlanilla={(key,p)=>sync({...datos,planillas:{...planillas,[key]:p}})}
+          productos={productos}
           recordatorios={datos.recordatorios||[]}
           onSaveRecordatorio={(r)=>{
             const lista=[...(datos.recordatorios||[]),r];
@@ -248,6 +253,16 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           onIrAgenda={()=>irA("agendaRep")}
           onIrTransfers={()=>irA("confirmTransferRep")}
           onSalir={onSalirProp||(()=>window.auth.signOut())}
+          onEnviarInforme={async ()=>{
+            if(typeof usarInformes==="function"){
+              const inf = usarInformes({ventas,clientes,planillas,noVisitas,productos});
+              const ok = await inf.enviarDiario(fechaActual, diaActual);
+              if(ok) alert("\u2705 Informe enviado al dueño correctamente.");
+              else   alert("\u26A0\uFE0F Error al enviar. Verificá la conexión.");
+            } else {
+              alert("Función de informe no disponible.");
+            }
+          }}
         />
       )}
       {pantalla==="cargaDia"&&(
@@ -276,8 +291,30 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
             saveNoVisitas(nv);
           }}
           onQuitarNoVisita={(cId)=>saveNoVisitas(noVisitas.filter(v=>!(v.clienteId===cId&&v.fecha===fechaActual)))}
+          onVentaProspecto={(p)=>{
+            if(!todosClientes.find(c=>c.id===p.id)){
+              saveClientes([...todosClientes,{...p,saldo:0,_esProspecto:true}]);
+            }
+            setClienteId(p.id);
+            irA("venta");
+          }}
+          onNoEstaProspecto={(id)=>{
+            const nv=[...noVisitas.filter(v=>!(v.clienteId===id&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
+            saveNoVisitas(nv);
+          }}
+          onNoQuiereProspecto={(id)=>{
+            const nv=[...noVisitas.filter(v=>!(v.clienteId===id&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
+            saveNoVisitas(nv);
+          }}
           onConfirmarTransfer={null} prospectos={prospectos} recordatorios={[]}
         />
+      )}
+      {pantalla==="clientes"&&ventasHoy.length+noVisHoy.length>=clientes.length&&clientes.length>0&&(
+        <div style={{padding:"0 14px 16px"}}>
+          <button style={{...s.btnPrimary,background:"#1a8a4a"}} onClick={()=>irA("inicio")}>
+            {"\u2705 Recorrido terminado — Volver al inicio"}
+          </button>
+        </div>
       )}
       {pantalla==="nuevoCliente"&&false&&(
         <NuevoClienteForm
@@ -319,6 +356,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           }}
         />
       )}
+      {pantalla==="venta"&&!cliente&&(()=>{setTimeout(()=>irA("clientes"),0);return null;})()}
       {pantalla==="venta"&&cliente&&(
         <NuevaVenta
           key={clienteId}
