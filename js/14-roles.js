@@ -721,6 +721,7 @@ function RepartidoresPanel({negocioId, clientes}) {
     </div>
   );
 }
+}
 
 
 
