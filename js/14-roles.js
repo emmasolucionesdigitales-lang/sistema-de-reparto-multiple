@@ -422,9 +422,19 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="todosClientes"&&(
         <TodosClientesRepartidor
-          clientes={clientes}
+          clientes={todosClientes}
+          prospectos={prospectos}
           ventas={ventas}
-          onSeleccionar={(c)=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("todosClientes");irA("detalleCliente");}}
+          onSeleccionar={(c)=>{
+            setClienteId(c.id);
+            setDiaClienteActual(c.dia||diaActual);
+            setOrigenDetalle("todosClientes");
+            // Si es prospecto, agregarlo temporalmente a clientes
+            if(c._esProspecto && !todosClientes.find(x=>x.id===c.id)){
+              saveClientes([...todosClientes,{...c,saldo:0}]);
+            }
+            irA("detalleCliente");
+          }}
           onNuevoCliente={null}
           onVolver={()=>irA("inicio")}
         />
@@ -463,6 +473,99 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           syncData={(overrides)=>sync({...datos,...overrides})}
           onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("inicio");}}
           onVolver={()=>irA("inicio")}
+          onCerrarDia={async ()=>{
+            try {
+              // Buscar email del dueño
+              let emailDueno = "";
+              if(window.db && perfil.negocioId) {
+                const negSnap = await window.db.collection("negocios").doc(perfil.negocioId).get();
+                if(negSnap.exists) emailDueno = negSnap.data().ownerEmail||negSnap.data().email||"";
+                if(!emailDueno) {
+                  const licSnap = await window.dbLicencias.collection("licencias")
+                    .where("negocioId","==",perfil.negocioId).limit(1).get();
+                  if(!licSnap.empty) emailDueno = licSnap.docs[0].data().email||"";
+                }
+              }
+              if(!emailDueno) { alert("No se encontró el email del dueño."); return false; }
+              // Datos del informe
+              const planKey = `${diaActual}_${fechaActual}`;
+              const plan = planillas[planKey]||{};
+              const ventasDia = ventas.filter(v=>v.fechaKey===fechaActual&&!v._esCobro&&!v._esAjuste);
+              const totalEfectivo = ventasDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+              const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+              const totalFiado    = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
+              const totalNeto     = totalEfectivo+totalTransfer+totalFiado;
+              const retencion     = Math.round(totalTransfer*0.025);
+              const transferNeto  = totalTransfer-retencion;
+              const gastosExtras  = (plan.gastos||[]).filter(g=>g.monto);
+              const totalGastos   = gastosExtras.reduce((a,g)=>a+Math.round(Number(g.monto)||0),0);
+              const costSifon = productos.find(p=>p.nombre==="Sifón 1.5L")?.costo||133.33;
+              const costB10   = productos.find(p=>p.nombre==="Bidón 10L")?.costo||800;
+              const costB20   = productos.find(p=>p.nombre==="Bidón 20L")?.costo||1100;
+              const CAJON=6;
+              let vendSoda=0,vendB10=0,vendB20=0;
+              ventasDia.forEach(v=>(v.detalle||[]).forEach(d=>{
+                if(d.nombre==="Sifón 1.5L") vendSoda+=d.cantidad||0;
+                if(d.nombre==="Bidón 10L")  vendB10 +=d.cantidad||0;
+                if(d.nombre==="Bidón 20L")  vendB20 +=d.cantidad||0;
+              }));
+              const salSoda = Number(plan.productos?.soda?.llenos||0);
+              const salB10  = Number(plan.productos?.b10?.llenos||0);
+              const salB20  = Number(plan.productos?.b20?.llenos||0);
+              const volvSoda = salSoda - vendSoda;
+              const volvB10  = salB10  - vendB10;
+              const volvB20  = salB20  - vendB20;
+              const cajSoda  = Math.floor(vendSoda/CAJON);
+              const totalCosto = cajSoda*(costSifon*CAJON) + vendB10*costB10 + vendB20*costB20;
+              const plataEnMano = totalEfectivo - totalCosto - totalGastos;
+              const fmtP = (n)=>"$"+Math.round(Number(n)||0).toLocaleString("es-AR");
+              const fila = (l,v,color="")=>`<tr><td style="padding:7px 0;color:#555;border-bottom:1px solid #eee">${l}</td><td style="text-align:right;font-weight:600;border-bottom:1px solid #eee;color:${color||"#222"}">${v}</td></tr>`;
+              const sep  = (t)=>`<tr><td colspan="2" style="padding:10px 0 4px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">${t}</td></tr>`;
+              const noVisHoyCount = (datos.noVisitas||[]).filter(v=>v.fecha===fechaActual).length;
+              const htmlContent = `
+                <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#f9fafb">
+                  <div style="background:#185FA5;border-radius:12px 12px 0 0;padding:20px 24px">
+                    <h2 style="color:#fff;margin:0;font-size:18px">📋 Informe de reparto · ${diaActual} ${fechaActual}</h2>
+                    <p style="color:#c8dcf0;margin:4px 0 0;font-size:13px">Repartidor: <b>${perfil.nombre}</b></p>
+                  </div>
+                  <div style="background:#fff;border-radius:0 0 12px 12px;padding:20px 24px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+                    <div style="background:#f0f7ff;border-radius:10px;padding:16px;margin-bottom:20px;text-align:center">
+                      <div style="font-size:32px;font-weight:800;color:#185FA5">${fmtP(totalNeto)}</div>
+                      <div style="color:#666;font-size:13px">${ventasDia.length} entregas · ${noVisHoyCount} sin visita</div>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:14px">
+                      ${sep("📦 Envases")}
+                      <tr style="background:#f5f5f5"><td style="padding:5px;font-size:12px;color:#666">Producto</td><td style="padding:5px;text-align:center;font-size:12px;color:#666">Salida</td><td style="padding:5px;text-align:center;font-size:12px;color:#666">Vendidos</td><td style="padding:5px;text-align:center;font-size:12px;color:#666">Vuelve</td></tr>
+                      ${salSoda>0||vendSoda>0?`<tr><td style="padding:6px 5px;border-bottom:1px solid #eee">Soda (cajones)</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee">${Math.floor(salSoda/CAJON)}</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee;color:#185FA5;font-weight:600">${cajSoda}</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee">${Math.floor(volvSoda/CAJON)}</td></tr>`:""}
+                      ${salB10>0||vendB10>0?`<tr><td style="padding:6px 5px;border-bottom:1px solid #eee">Bidon 10L</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee">${salB10}</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee;color:#185FA5;font-weight:600">${vendB10}</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee">${volvB10}</td></tr>`:""}
+                      ${salB20>0||vendB20>0?`<tr><td style="padding:6px 5px;border-bottom:1px solid #eee">Bidon 20L</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee">${salB20}</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee;color:#185FA5;font-weight:600">${vendB20}</td><td style="text-align:center;padding:6px 5px;border-bottom:1px solid #eee">${volvB20}</td></tr>`:""}
+                      ${sep("💵 Cobranza")}
+                      ${fila("Efectivo",fmtP(totalEfectivo))}
+                      ${fila("Transferencias (bruto)",fmtP(totalTransfer))}
+                      ${retencion>0?fila("Retención 2.5%","−"+fmtP(retencion),"#e05c5c"):""}
+                      ${fila("Transferencias (neto)",fmtP(transferNeto),"#185FA5")}
+                      ${totalFiado>0?fila("Fiado",fmtP(totalFiado),"#f5a623"):""}
+                      ${sep("📦 Costo de llenado")}
+                      ${fila("Llenado de envases","−"+fmtP(totalCosto),"#e05c5c")}
+                      ${gastosExtras.length>0?sep("💸 Gastos extras"):""}
+                      ${gastosExtras.map(g=>fila((g.cat||"gasto")+( g.desc?` · ${g.desc}`:""),"−"+fmtP(g.monto),"#e05c5c")).join("")}
+                      ${gastosExtras.length>0?fila("<b>Total gastos</b>","−"+fmtP(totalGastos),"#e05c5c"):""}
+                      ${sep("💰 Resultado")}
+                      ${fila("<b>💵 Plata en mano</b>","<b>"+fmtP(plataEnMano)+"</b>",plataEnMano>=0?"#0a7c3e":"#e05c5c")}
+                      ${fila("<b>📊 Total cobrado</b>","<b>"+fmtP(totalEfectivo+transferNeto)+"</b>","#0a7c3e")}
+                    </table>
+                  </div>
+                  <p style="color:#aaa;font-size:11px;text-align:center;margin-top:16px">Sistema de Reparto · Emma Soluciones Digitales</p>
+                </div>`;
+              const ok = await window.enviarEmailBrevoRM({
+                to:emailDueno, toName:"Dueno",
+                subject:`📋 Reparto ${diaActual} ${fechaActual} · ${perfil.nombre} · ${fmtP(totalNeto)} · En mano ${fmtP(plataEnMano)}`,
+                htmlContent
+              });
+              if(ok) localStorage.setItem(`sr_informe_${fechaActual}_${diaActual}`,"1");
+              return ok;
+            } catch(e) { console.error(e); return false; }
+          }}
         />
       )}
     </div>
