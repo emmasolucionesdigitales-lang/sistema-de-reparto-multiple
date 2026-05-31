@@ -434,7 +434,7 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
   const filtrados = clientes
     .filter(c=>(diaFiltro==="todos"||c.dia===diaFiltro)&&(c.nombre.toLowerCase().includes(busq.toLowerCase())||(c.barrio||"").toLowerCase().includes(busq.toLowerCase())))
     .sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
-  const prospectosFiltrados = diaFiltro==="todos" ? (prospectos||[]).filter(p=>(p.estado==="activo"||!p.estado)&&(busq===""||p.nombre.toLowerCase().includes(busq.toLowerCase()))) : [];
+  const prospectosFiltrados = (prospectos||[]).filter(p=>(p.estado==="activo"||!p.estado)&&(diaFiltro==="todos"||p.dia===diaFiltro)&&(busq===""||p.nombre.toLowerCase().includes(busq.toLowerCase())||(p.barrio||"").toLowerCase().includes(busq.toLowerCase())));
 
   return (
     <div style={s.screen}>
