@@ -91,8 +91,8 @@ self.addEventListener('notificationclick',e=>{
         firebase.initializeApp(firebaseConfig);
       }
       window.db = firebase.firestore(); window.firebaseDB = window.db;
-      // Activar persistencia offline para que las ventas se guarden localmente sin internet
-      window.db.enableIndexedDbPersistence({synchronizeTabs:true}).catch(function(err){
+      // Activar persistencia offline (Firebase 10+)
+      window.db.enablePersistence({synchronizeTabs:true}).catch(function(err){
         if(err.code==="failed-precondition"){console.warn("Persistencia offline: múltiples pestañas abiertas");}
         else if(err.code==="unimplemented"){console.warn("Persistencia offline: navegador no compatible");}
       });
