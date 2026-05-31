@@ -3,15 +3,11 @@
 // ════════════════════════════════════════════════════════════════════
 
 function App() {
-  // ── PASO 1: Repartidor — lectura directa sin estados ──────────────
+  // ── Estado del rol (evaluado una sola vez) ────────────────────────
   const _rmLic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
-  if(_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
-    return <AppRepartidorWrapper uid={_rmLic.deviceId} perfil={_rmLic}
-      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
-  }
-
-  // ── PASO 2: Dueño — flujo normal ─────────────────────────────────
   const _srLic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+
+  // Todos los hooks siempre — sin return condicional antes de ellos
   const [fase, setFase] = React.useState(()=>(!_srLic||!_srLic.activado)?"activacion":"pin");
   const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("sr_tema"));
 
@@ -24,6 +20,13 @@ function App() {
     }
   };
 
+  // ── REPARTIDOR: renderizar componente completo (con sus propios hooks) ──
+  if(_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
+    return <AppRepartidorWrapper uid={_rmLic.deviceId} perfil={_rmLic}
+      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
+  }
+
+  // ── DUEÑO ─────────────────────────────────────────────────────────
   if(fase === "activacion") return <PantallaActivacionRM onActivado={handleActivado} />;
   if(fase === "pin")        return <PantallaPin pin={_srLic?.pin} onOk={()=>setFase("app")} />;
   if(!temaElegido)          return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("sr_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
