@@ -89,17 +89,13 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   // ── Calcular diaActual PRIMERO para poder usarlo en useState ────────
   // IMPORTANTE: debe ir antes de cualquier useState que lo use
   const _diasSemana = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  // Usar fecha local para evitar problemas de timezone (UTC vs Argentina)
-  const _fechaLocal = new Date();
-  const _offsetMin = _fechaLocal.getTimezoneOffset();
-  const _fechaLocalCorr = new Date(_fechaLocal.getTime() - _offsetMin * 60000);
-  const diaActual = _diasSemana[_fechaLocalCorr.getDay()];
+  const diaActual = _diasSemana[new Date().getDay()];
 
   // ── Estado del repartidor ───────────────────────────────────────────
   const [pantalla,   setPantalla]   = React.useState("inicio");
-  const [fechaActual,setFechaActual]= React.useState(()=>new Date().toLocaleDateString("en-CA"));
+  const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
   const [clienteId,  setClienteId]  = React.useState(null);
-  const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toLocaleDateString("en-CA"));
+  const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toISOString().slice(0,10));
   const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual); // ahora sí está definido
   const [origenDetalle, setOrigenDetalle] = React.useState("clientes");
   const [datos,      setDatos]      = React.useState(null);

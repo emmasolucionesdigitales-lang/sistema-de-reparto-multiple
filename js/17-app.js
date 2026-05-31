@@ -3,11 +3,15 @@
 // ════════════════════════════════════════════════════════════════════
 
 function App() {
-  // ── Estado del rol (evaluado una sola vez) ────────────────────────
+  // ── PASO 1: Repartidor — lectura directa sin estados ──────────────
   const _rmLic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
-  const _srLic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+  if(_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
+    return <AppRepartidorWrapper uid={_rmLic.deviceId} perfil={_rmLic}
+      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
+  }
 
-  // Todos los hooks siempre — sin return condicional antes de ellos
+  // ── PASO 2: Dueño — flujo normal ─────────────────────────────────
+  const _srLic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
   const [fase, setFase] = React.useState(()=>(!_srLic||!_srLic.activado)?"activacion":"pin");
   const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("sr_tema"));
 
@@ -20,13 +24,6 @@ function App() {
     }
   };
 
-  // ── REPARTIDOR: renderizar componente completo (con sus propios hooks) ──
-  if(_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
-    return <AppRepartidorWrapper uid={_rmLic.deviceId} perfil={_rmLic}
-      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
-  }
-
-  // ── DUEÑO ─────────────────────────────────────────────────────────
   if(fase === "activacion") return <PantallaActivacionRM onActivado={handleActivado} />;
   if(fase === "pin")        return <PantallaPin pin={_srLic?.pin} onOk={()=>setFase("app")} />;
   if(!temaElegido)          return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("sr_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
@@ -671,6 +668,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
           saveNoVisitas(nv);
         }}
+        onAbrirMapa={()=>irA("mapaClientes")}
         />}
       {pantalla==="detalleCliente" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual} fecha={fechaActual} productos={productos} onVenta={()=>irA("venta")} onVolver={()=>irA("clientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>eliminarCliente(cliente.id)}
           onNoEstaCliente={()=>{
@@ -845,6 +843,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         ventas={ventas}
         noVisitas={noVisitas}
         onSeleccionar={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}}
+        onActualizar={(nuevosClientes)=>saveClientes(nuevosClientes)}
         onVolver={()=>irA("menu")}
       />}
       {pantalla==="vistaClientesGeneral" && <VistaClientesGeneral

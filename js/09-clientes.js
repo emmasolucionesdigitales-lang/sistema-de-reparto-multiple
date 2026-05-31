@@ -2,7 +2,7 @@
 // ◆  09-clientes.js — ListaClientes · DetalleCliente · EditCliente · EditVenta · Modals
 // ════════════════════════════════════════════════════════════════════
 
-function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto}) {
+function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto,onAbrirMapa}) {
   const [busqueda,setBusqueda] = useState("");
   const [editandoOrden,setEditandoOrden] = useState(null);
   const [ordenTemp,setOrdenTemp] = useState("");
@@ -164,7 +164,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
           <span style={s.badge("success")}>{visitados.size}/{clientes.length} visitados</span>
           {volverAlFinal.length>0&&<span style={s.badge("warning")}>{volverAlFinal.length} volver al final</span>}
           {sinEntrega.length>0&&<span style={s.badge("danger")}>{sinEntrega.length} sin entrega</span>}
-          <button style={{...s.btn,fontSize:11,padding:"3px 10px",marginLeft:"auto"}} onClick={abrirRuta}>🗺 Ruta Maps</button>
+          <button style={{...s.btn,fontSize:11,padding:"3px 10px",marginLeft:"auto"}} onClick={onAbrirMapa||abrirRuta}>🗺 Mapa</button>
         </div>
         <p style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6}}>Tocá el # para editar el número de orden del cliente</p>
       </div>

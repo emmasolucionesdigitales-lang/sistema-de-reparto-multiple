@@ -865,3 +865,259 @@ function CalculadoraCostoReal({productos,ventas}) {
 
 
 // ── OnboardingRoles ──────────────────────────────────────────────
+
+// ════════════════════════════════════════════════════════════════════
+// ◆  GPS / Mapa de Clientes
+// ════════════════════════════════════════════════════════════════════
+
+function extraerCoordsDeURL(url) {
+  if(!url) return null;
+  let m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  m = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  m = url.match(/ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  m = url.match(/\/dir\/[^/]*\/(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  m = url.match(/\/(-2[0-9]\.\d{4,}),(-6[0-9]\.\d{4,})/);
+  if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
+  return null;
+}
+function esLinkCorto(url) {
+  return url && (url.includes("maps.app.goo.gl") || url.includes("goo.gl/maps"));
+}
+
+function CargaGPSMasiva({clientes, onActualizar, onVolver}) {
+  const sinGPS = React.useMemo(()=>(clientes||[]).filter(c=>!c.lat||!c.lng),[]);
+  const [idx, setIdx] = React.useState(0);
+  const [latVal, setLatVal] = React.useState("");
+  const [lngVal, setLngVal] = React.useState("");
+  const [guardados, setGuardados] = React.useState(0);
+  const [listo, setListo] = React.useState(false);
+  const actualizados = React.useRef([...clientes]);
+  const cliente = sinGPS[idx] || null;
+  const coordsDelLink = cliente?.maps ? extraerCoordsDeURL(cliente.maps) : null;
+  React.useEffect(()=>{
+    if(!cliente) return;
+    if(coordsDelLink){ setLatVal(String(coordsDelLink.lat)); setLngVal(String(coordsDelLink.lng)); }
+    else { setLatVal(""); setLngVal(""); }
+  },[idx]);
+  const guardarYSiguiente = (omitir=false) => {
+    if(!omitir && cliente) {
+      const lat=parseFloat(latVal), lng=parseFloat(lngVal);
+      if(!isNaN(lat)&&!isNaN(lng)) {
+        const i=actualizados.current.findIndex(c=>c.id===cliente.id);
+        if(i>=0) actualizados.current[i]={...actualizados.current[i],lat,lng};
+        const ng=guardados+1; setGuardados(ng);
+        if(ng%5===0||idx+1>=sinGPS.length) onActualizar([...actualizados.current]);
+      }
+    }
+    setLatVal(""); setLngVal("");
+    if(idx+1>=sinGPS.length) setListo(true);
+    else setIdx(i=>i+1);
+  };
+  if(sinGPS.length===0||listo||!cliente) return (
+    <div style={{...s.screen,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16,padding:32}}>
+      <div style={{fontSize:48}}>✅</div>
+      <div style={{fontSize:17,fontWeight:600,color:"var(--color-text-primary)",textAlign:"center"}}>¡GPS cargado!</div>
+      <div style={{fontSize:13,color:"var(--color-text-secondary)",textAlign:"center"}}>{guardados} cliente{guardados!==1?"s":""} con GPS guardado.</div>
+      <button style={s.btnPrimary} onClick={onVolver}>Ver mapa →</button>
+    </div>
+  );
+  const progreso=Math.round((idx/sinGPS.length)*100);
+  const dir=cliente.calle?`${cliente.calle} ${cliente.nro||""}`.trim():cliente.manzana?`Mz ${cliente.manzana} L ${cliente.lote||""} · ${cliente.barrio||""}`:cliente.barrio||"";
+  const latOk=latVal&&lngVal&&!isNaN(parseFloat(latVal))&&!isNaN(parseFloat(lngVal));
+  return (
+    <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>Cargar GPS · {idx+1}/{sinGPS.length}</span>
+      </div>
+      <div style={{height:4,background:"var(--color-background-tertiary)"}}>
+        <div style={{height:"100%",background:"#185FA5",width:`${progreso}%`,transition:"width 0.3s"}}/>
+      </div>
+      <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{...s.card,margin:0}}>
+          <div style={{fontSize:16,fontWeight:600,color:"var(--color-text-primary)",marginBottom:2}}>{cliente.nombre}</div>
+          <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{cliente.dia} · {dir}</div>
+          {cliente.maps&&<div style={{fontSize:10,color:"var(--color-text-tertiary)",marginTop:2,wordBreak:"break-all"}}>{cliente.maps}</div>}
+        </div>
+        {coordsDelLink&&<div style={{background:"var(--color-background-success)",borderRadius:10,padding:"10px 14px"}}>
+          <div style={{fontSize:13,color:"var(--color-text-success)",fontWeight:600}}>✓ Coordenadas extraídas del link</div>
+          <div style={{fontSize:12,color:"var(--color-text-success)"}}>{coordsDelLink.lat.toFixed(5)}, {coordsDelLink.lng.toFixed(5)}</div>
+        </div>}
+        <div style={{background:"var(--color-background-info)",borderRadius:10,padding:"10px 14px"}}>
+          <div style={{fontSize:12,color:"var(--color-text-info)",fontWeight:600,marginBottom:4}}>📋 Cómo obtener las coordenadas:</div>
+          <div style={{fontSize:11,color:"var(--color-text-secondary)",lineHeight:1.8}}>
+            1. Tocá <b>"Abrir en Maps"</b> abajo<br/>2. <b>Mantené presionado</b> el punto del cliente<br/>3. Aparecen los números: <b>-26.865, -65.217</b><br/>4. Tocá esos números → <b>Copiar</b><br/>5. Volvé acá y pegá abajo
+          </div>
+        </div>
+        {cliente.maps&&<button style={{...s.btnPrimary,background:"#1a7a3a",display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={()=>window.open(cliente.maps,"_blank")}>🗺 Abrir en Google Maps</button>}
+        <div style={{...s.card,margin:0}}>
+          <label style={{...s.label,fontSize:12,fontWeight:600}}>Pegá las coordenadas (ej: -26.86590, -65.21780)</label>
+          <input style={{...s.input,marginTop:4}} placeholder="-26.86590, -65.21780"
+            value={latVal&&lngVal?`${latVal}, ${lngVal}`:latVal}
+            onChange={e=>{const raw=e.target.value;const m=raw.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);if(m){setLatVal(m[1]);setLngVal(m[2]);}else setLatVal(raw);}}
+          />
+          {latOk?<div style={{fontSize:11,color:"#4dd9a0",marginTop:4}}>✓ {latVal}, {lngVal}</div>
+            :<div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:4}}>Pegá los dos números separados por coma</div>}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button style={{...s.btn,flex:1,padding:"12px",fontSize:13}} onClick={()=>guardarYSiguiente(true)}>Omitir →</button>
+          <button style={{...s.btnPrimary,flex:2,opacity:latOk||coordsDelLink?1:0.4}} disabled={!latOk&&!coordsDelLink} onClick={()=>guardarYSiguiente(false)}>Guardar y siguiente →</button>
+        </div>
+        <div style={{fontSize:11,color:"var(--color-text-tertiary)",textAlign:"center"}}>{guardados} guardados · {sinGPS.length-idx-1} restantes · Se sincroniza cada 5</div>
+      </div>
+    </div>
+  );
+}
+
+function calcularRutaOptima(clientes) {
+  if(clientes.length<=1) return clientes;
+  const dist=(a,b)=>Math.hypot(a.lat-b.lat,a.lng-b.lng);
+  const restantes=[...clientes];
+  const ruta=[restantes.shift()];
+  while(restantes.length>0){const ul=ruta[ruta.length-1];let md=Infinity,mi=0;restantes.forEach((c,i)=>{const d=dist(ul,c);if(d<md){md=d;mi=i;}});ruta.push(restantes.splice(mi,1)[0]);}
+  return ruta;
+}
+
+function PreviaRuta({rutaOptima, ventasHoy, noVisHoy, onAplicar, onVolver}) {
+  return (
+    <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>Ruta óptima sugerida</span>
+      </div>
+      <div style={{padding:"10px 14px",background:"var(--color-background-info)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+        <div style={{fontSize:13,color:"var(--color-text-info)",lineHeight:1.6}}>Orden que minimiza la distancia total. Podés aplicarlo o volver sin cambios.</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",paddingBottom:80}}>
+        {rutaOptima.map((c,i)=>{
+          const entregado=ventasHoy.some(v=>v.clienteId===c.id);
+          const noVis=noVisHoy.some(v=>v.clienteId===c.id);
+          const dir=c.calle?c.calle+" "+(c.nro||""):c.manzana?"Mz "+c.manzana+" L "+(c.lote||""):c.barrio||"";
+          return (
+            <div key={c.id} style={{...s.card,margin:"6px 14px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:"#185FA5",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.nombre}</div>
+                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{c.dia} · {dir}</div>
+              </div>
+              {entregado&&<span style={s.badge("success")}>✓</span>}
+              {noVis&&<span style={s.badge("danger")}>✗</span>}
+              {c.orden&&c.orden!==i+1&&<span style={{fontSize:10,color:"var(--color-text-tertiary)"}}>antes:{c.orden}</span>}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,padding:"12px 16px",background:"var(--color-background-secondary)",borderTop:"0.5px solid var(--color-border-tertiary)",display:"flex",gap:8,zIndex:20}}>
+        <button style={{...s.btn,flex:1,padding:"12px"}} onClick={onVolver}>Cancelar</button>
+        <button style={{...s.btnPrimary,flex:2}} onClick={onAplicar}>✓ Aplicar este orden</button>
+      </div>
+    </div>
+  );
+}
+
+function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, onVolver, onActualizar}) {
+  const mapRef=React.useRef(null);
+  const mapInstRef=React.useRef(null);
+  const [leafletOk,setLeafletOk]=React.useState(!!window.L);
+  const [filtroDia,setFiltroDia]=React.useState(dia||"todos");
+  const [modoCarga,setModoCarga]=React.useState(false);
+  const [modoRuta,setModoRuta]=React.useState(false);
+  const [mostrarRuta,setMostrarRuta]=React.useState(false);
+  const ventasHoy=(ventas||[]).filter(v=>v.fechaKey===fecha);
+  const noVisHoy=(noVisitas||[]).filter(v=>v.fecha===fecha);
+  const clientesFiltrados=(clientes||[]).filter(c=>{if(filtroDia!=="todos"&&c.dia!==filtroDia)return false;return c.lat&&c.lng;});
+  const sinCoordenadas=(clientes||[]).filter(c=>(filtroDia==="todos"||c.dia===filtroDia)&&(!c.lat||!c.lng)).length;
+  const entregadosCount=clientesFiltrados.filter(c=>ventasHoy.some(v=>v.clienteId===c.id)).length;
+  const pendientesCount=clientesFiltrados.filter(c=>!ventasHoy.some(v=>v.clienteId===c.id)&&!noVisHoy.some(v=>v.clienteId===c.id)).length;
+  const rutaOptima=React.useMemo(()=>calcularRutaOptima([...clientesFiltrados]),[clientesFiltrados.length,filtroDia]);
+
+  React.useEffect(()=>{
+    if(window.L){setLeafletOk(true);return;}
+    const link=document.createElement("link");link.rel="stylesheet";link.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";document.head.appendChild(link);
+    const script=document.createElement("script");script.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";script.onload=()=>setLeafletOk(true);document.head.appendChild(script);
+  },[]);
+
+  React.useEffect(()=>{
+    if(modoCarga||modoRuta)return;
+    if(!leafletOk||!mapRef.current)return;
+    if(mapInstRef.current){mapInstRef.current.remove();mapInstRef.current=null;}
+    const L=window.L;
+    const map=L.map(mapRef.current,{zoomControl:true,scrollWheelZoom:true});
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OpenStreetMap",maxZoom:19}).addTo(map);
+    mapInstRef.current=map;
+    const bounds=[];
+    const lista=mostrarRuta?rutaOptima:clientesFiltrados;
+    lista.forEach((c,ri)=>{
+      const entregado=ventasHoy.some(v=>v.clienteId===c.id);
+      const noVis=noVisHoy.some(v=>v.clienteId===c.id);
+      const color=entregado?"#4dd9a0":noVis?"#f07070":"#5daaff";
+      const num=mostrarRuta?ri+1:(c.orden||"·");
+      const icon=L.divIcon({className:"",html:`<div style="width:30px;height:30px;border-radius:50%;background:${color};border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">${num}</div>`,iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-16]});
+      const marker=L.marker([c.lat,c.lng],{icon}).addTo(map);
+      const dir=c.calle?c.calle+" "+(c.nro||""):c.manzana?"Mz "+c.manzana+" L "+(c.lote||""):c.barrio||"";
+      const estado=entregado?"<span style='color:#059669;font-weight:600'>✓ Entregado</span>":noVis?"<span style='color:#dc2626;font-weight:600'>✗ No visitado</span>":"<span style='color:#2563eb;font-weight:600'>⏳ Pendiente</span>";
+      const pid=`popup_btn_${c.id}`;
+      marker.bindPopup(`<div style="font-family:sans-serif;min-width:170px;padding:4px 0"><div style="font-size:14px;font-weight:700;margin-bottom:2px">${c.nombre}</div><div style="font-size:11px;color:#666;margin-bottom:4px">${c.dia} · ${dir}</div><div style="margin-bottom:8px">${estado}</div>${!entregado?`<button id="${pid}" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%">Entregar →</button>`:""}</div>`);
+      marker.on("popupopen",()=>{const btn=document.getElementById(pid);if(btn)btn.onclick=()=>{map.closePopup();onSeleccionar(c);};});
+      bounds.push([c.lat,c.lng]);
+    });
+    if(mostrarRuta&&rutaOptima.length>1)L.polyline(rutaOptima.map(c=>[c.lat,c.lng]),{color:"#185FA5",weight:3,opacity:0.7,dashArray:"8,6"}).addTo(map);
+    if(bounds.length>0)map.fitBounds(bounds,{padding:[30,30]});
+    else map.setView([-26.82,-65.2],13);
+    return()=>{if(mapInstRef.current){mapInstRef.current.remove();mapInstRef.current=null;}};
+  },[leafletOk,modoCarga,modoRuta,filtroDia,clientesFiltrados.length,mostrarRuta]);
+
+  if(modoCarga)return <CargaGPSMasiva clientes={clientes} onActualizar={onActualizar||((v)=>{})} onVolver={()=>setModoCarga(false)}/>;
+  if(modoRuta)return <PreviaRuta rutaOptima={rutaOptima} ventasHoy={ventasHoy} noVisHoy={noVisHoy}
+    onAplicar={()=>{const a=[...clientes];rutaOptima.forEach((c,i)=>{const idx=a.findIndex(x=>x.id===c.id);if(idx>=0)a[idx]={...a[idx],orden:i+1};});if(onActualizar)onActualizar(a);setModoRuta(false);setMostrarRuta(true);}}
+    onVolver={()=>setModoRuta(false)}/>;
+
+  return (
+    <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
+      <div style={s.header}>
+        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+        <span style={s.headerTitle}>Mapa de clientes</span>
+        {clientesFiltrados.length>1&&<button style={{...s.btn,fontSize:11,padding:"5px 10px",background:"var(--color-background-info)",color:"var(--color-text-info)",border:"none"}} onClick={()=>setModoRuta(true)}>🗺 Ruta óptima</button>}
+      </div>
+      <div style={{display:"flex",gap:6,padding:"8px 14px",overflowX:"auto",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+        {["todos",...DIAS].map(d=>(
+          <button key={d} style={{...s.btn,padding:"5px 12px",fontSize:12,flexShrink:0,background:filtroDia===d?"#185FA5":"var(--color-background-tertiary)",color:filtroDia===d?"#e2eaf4":"var(--color-text-secondary)",border:filtroDia===d?"none":"0.5px solid var(--color-border-secondary)"}} onClick={()=>setFiltroDia(d)}>
+            {d==="todos"?"Todos":d}
+          </button>
+        ))}
+      </div>
+      <div style={{display:"flex",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+        {[{val:clientesFiltrados.length,lbl:"Con GPS",color:"#5daaff"},{val:entregadosCount,lbl:"Entregados",color:"#4dd9a0"},{val:pendientesCount,lbl:"Pendientes",color:"#f5b942"},{val:sinCoordenadas,lbl:"Sin GPS",color:"var(--color-text-tertiary)"}].map((item,i)=>(
+          <div key={i} style={{flex:1,textAlign:"center",padding:"8px 4px",borderRight:i<3?"0.5px solid var(--color-border-tertiary)":"none"}}>
+            <div style={{fontSize:16,fontWeight:600,color:item.color}}>{item.val}</div>
+            <div style={{fontSize:9,color:"var(--color-text-secondary)"}}>{item.lbl}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:14,padding:"6px 14px",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+        {[["#4dd9a0","Entregado"],["#5daaff","Pendiente"],["#f07070","No visitado"]].map(([color,lbl])=>(
+          <div key={lbl} style={{display:"flex",alignItems:"center",gap:4}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:color}}/><span style={{fontSize:10,color:"var(--color-text-secondary)"}}>{lbl}</span>
+          </div>
+        ))}
+        {clientesFiltrados.length>1&&<button style={{...s.btn,fontSize:10,padding:"3px 8px",marginLeft:"auto",background:mostrarRuta?"#185FA5":"var(--color-background-tertiary)",color:mostrarRuta?"#e2eaf4":"var(--color-text-secondary)",border:"none"}} onClick={()=>setMostrarRuta(r=>!r)}>{mostrarRuta?"Ocultar ruta":"Ver ruta"}</button>}
+      </div>
+      {leafletOk&&clientesFiltrados.length===0&&(
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14,padding:32}}>
+          <div style={{fontSize:40}}>📍</div>
+          <div style={{fontSize:15,fontWeight:500,color:"var(--color-text-primary)",textAlign:"center"}}>Sin clientes con GPS</div>
+          <button style={{...s.btnPrimary,maxWidth:260}} onClick={()=>setModoCarga(true)}>📍 Iniciar carga de GPS ({sinCoordenadas} clientes)</button>
+        </div>
+      )}
+      {!leafletOk&&<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontSize:13,color:"var(--color-text-secondary)"}}>Cargando mapa...</div></div>}
+      <div style={{flex:1,position:"relative",display:leafletOk&&clientesFiltrados.length>0?"block":"none"}}>
+        <div ref={mapRef} style={{width:"100%",height:"100%",minHeight:400}}/>
+        {sinCoordenadas>0&&<button onClick={()=>setModoCarga(true)} style={{position:"absolute",bottom:16,right:16,zIndex:1000,background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:24,padding:"10px 16px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:"0 3px 12px rgba(0,0,0,0.4)"}}>📍 {sinCoordenadas} sin GPS</button>}
+      </div>
+    </div>
+  );
+}
