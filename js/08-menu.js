@@ -10,9 +10,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
 
   const genCodigo = () => {
-    // Genera código de 6 letras mayúsculas (sin O, 0, I, 1 para evitar confusión)
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    return Array.from({length:6}, ()=>chars[Math.floor(Math.random()*chars.length)]).join("");
+    return String(Math.floor(1000 + Math.random() * 9000));
   };
 
   const guardarReparto = () => {
@@ -91,7 +89,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
             </div>
           </div>
           <div style={{marginBottom:12}}>
-            <label style={s.label}>Código de acceso del repartidor (6 letras)</label>
+            <label style={s.label}>PIN de acceso del repartidor (4 números)</label>
             <div style={{display:"flex",gap:8}}>
               <input style={{...s.input,fontFamily:"monospace",fontSize:18,fontWeight:700,letterSpacing:"0.15em",flex:1,textTransform:"uppercase"}}
                 placeholder="XXXXXX" maxLength={6} value={form.codigo}
@@ -99,7 +97,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
               <button style={{...s.btn,padding:"8px 12px",fontSize:12,whiteSpace:"nowrap"}}
                 onClick={()=>setForm(f=>({...f,codigo:genCodigo()}))}>🎲 Generar</button>
             </div>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:3}}>El repartidor ingresa este código de 6 letras en la app para activarse</div>
+            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:3}}>El repartidor usa este código para entrar</div>
           </div>
           <div style={{display:"flex",gap:8}}>
             <button style={{...s.btn,flex:1}} onClick={()=>{setModoNuevo(false);setEditandoId(null);}}>Cancelar</button>
@@ -260,7 +258,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
 }
 
 
-function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona,onDiaHoy,onDiaResumen,noVisitas,onFiados}) {
+function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPromocion,onStock,onAgenda,onVolver,transferenciasPendientes,recordatoriosActivos,onConfirmarRecordatorio,onVerConfirmaciones,clientes,ventas,stock,zonasReparto,onSetZona,onDiaHoy,onDiaResumen,noVisitas,onFiados,prospectos}) {
   const [editandoZona, setEditandoZona] = React.useState(null);
   const hoyDiaNombre = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][new Date().getDay()];
   const hoyFechaKey = (()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
@@ -320,6 +318,7 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
           const deudas = (clientes||[]).filter(c=>c.dia===d&&c.saldo<0);
           const totalDeuda = deudas.reduce((a,c)=>a+Math.abs(c.saldo),0);
           const totalClientes = (clientes||[]).filter(c=>c.dia===d).length;
+          const totalProspectos = (prospectos||[]).filter(p=>p.dia===d&&(p.estado==="activo"||!p.estado)).length;
           const zona = (zonasReparto||{})[d] || "";
           return (<React.Fragment key={d}>
           <div style={{display:"flex",gap:6,alignItems:"stretch"}}>
@@ -340,7 +339,7 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
                   ?<span style={{fontSize:12,color:"var(--color-text-danger)"}}>⚠ {deudas.length} cliente{deudas.length>1?"s":""} {deudas.length>1?"deben":"debe"} {fmt(totalDeuda)}</span>
                   :<span style={{fontSize:12,color:"var(--color-text-success)"}}>✓ Sin deudas</span>
                 }
-                <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{totalClientes} cliente{totalClientes!==1?"s":""}</span>
+                <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{totalClientes} cliente{totalClientes!==1?"s":""}{totalProspectos>0?` + ${totalProspectos} prosp.`:""}</span>
               </div>
             </div>
             <span style={{color:"var(--color-text-tertiary)",fontSize:18,marginLeft:10}}>→</span>

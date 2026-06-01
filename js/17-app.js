@@ -665,6 +665,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onDiaHoy={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));irA("inicioReparto");}}
         onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setInitCierre(!planillas[`${dia}_${fechaKey}`]?._diaCerrado);irA("planilla");}}
         noVisitas={noVisitas||[]}
+        prospectos={prospectos||[]}
         onFiados={()=>irA("fiadosPendientes")} />}
       {pantalla==="confirmacionesDia" && <ConfirmacionesDia
           dia={diaActual}
@@ -693,7 +694,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             setStock(normStock(s));
             syncData({stock:normStock(s)});
           }
-          irA("planilla");
+          irA("clientes");
         }} onVolver={()=>irA("selectorFechaClientes")} />}
       {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id))} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
           const otros=clientes.filter(c=>c.dia!==diaActual);
