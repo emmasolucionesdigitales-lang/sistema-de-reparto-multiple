@@ -726,7 +726,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           setClienteId(p.id);
           irA("detalleCliente");
         }}
-        onIrPlanilla={()=>irA("selectorFechaPlanilla")}
+        onIrPlanilla={()=>{ setInitCierre(!planillas[`${diaActual}_${fechaActual}`]?._diaCerrado); irA("planilla"); }}
         onIrMenu={()=>irA("menu")}
         onAbrirMapa={()=>irA("mapaClientes")}
         />}
