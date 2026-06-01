@@ -3,10 +3,56 @@
 // ════════════════════════════════════════════════════════════════════
 
 function App() {
-  // ── PASO 1: Repartidor — lectura directa sin estados ──────────────
+  // ── PASO 1: Repartidor — primero localStorage, luego Firebase ─────
   const _rmLic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
   if(_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
     return <AppRepartidorWrapper uid={_rmLic.deviceId} perfil={_rmLic}
+      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
+  }
+
+  // ── PASO 1b: Repartidor — recuperar sesión desde Firebase si se borró el caché ──
+  const [perfilRecuperado, setPerfilRecuperado] = React.useState(null);
+  const [buscandoSesion, setBuscandoSesion] = React.useState(true);
+
+  React.useEffect(()=>{
+    // Solo buscar en Firebase si NO hay sesión local de ningún tipo
+    const hayLocalDueno  = !!localStorage.getItem("sr_licencia");
+    const hayLocalRep    = !!localStorage.getItem("rm_licencia");
+    if(hayLocalDueno || hayLocalRep){ setBuscandoSesion(false); return; }
+    // Buscar en Firebase por deviceId
+    const deviceId = localStorage.getItem("sr_device_id");
+    if(!deviceId || !window.db){ setBuscandoSesion(false); return; }
+    window.db.collection("repartidores")
+      .where("deviceId","==",deviceId)
+      .where("activado","==",true)
+      .limit(1)
+      .get()
+      .then(snap=>{
+        if(!snap.empty){
+          const d = snap.docs[0].data();
+          const perfil = {
+            rol:"repartidor", negocioId:d.negocioId,
+            nombre:d.nombre||"Repartidor", sectores:d.sectores||[],
+            deviceId, codigo:snap.docs[0].id, activado:true
+          };
+          // Restaurar localStorage para próximas cargas
+          localStorage.setItem("rm_licencia", JSON.stringify(perfil));
+          setPerfilRecuperado(perfil);
+        }
+        setBuscandoSesion(false);
+      })
+      .catch(()=>setBuscandoSesion(false));
+  },[]);
+
+  if(buscandoSesion) return (
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,background:"var(--color-background-primary)"}}>
+      <div style={{fontSize:36}}>💧</div>
+      <div style={{fontSize:14,color:"var(--color-text-secondary)"}}>Verificando sesión...</div>
+    </div>
+  );
+
+  if(perfilRecuperado && perfilRecuperado.rol==="repartidor") {
+    return <AppRepartidorWrapper uid={perfilRecuperado.deviceId} perfil={perfilRecuperado}
       onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
   }
 
