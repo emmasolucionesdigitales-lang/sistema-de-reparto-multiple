@@ -202,10 +202,11 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
         <button style={{...s.btnPrimary,marginBottom:10,opacity:detalle.length===0?0.45:1}} disabled={detalle.length===0} onClick={()=>{
           if(pago==="mixto"){
             const ef=Number(montoEfec||0), tr=Number(montoTrans||0);
+            if(ef===0&&tr===0){alert("Ingresá al menos un monto para el pago mixto");return;}
             const totalPagado=ef+tr;
             const saldoDelta=totalPagado-aPagar;
-            if(ef>0) onGuardar(detalle,"contado",String(ef),saldoApl,envPrest,envDev,obs,"mixto_ef",tr,saldoDelta);
-            else if(tr>0) onGuardar(detalle,"transferencia",String(tr),saldoApl,envPrest,envDev,obs,"mixto_tr",ef,saldoDelta);
+            // ▶ UNA sola llamada con ambos montos — ef va en montoPagado, tr en montoTrans2
+            onGuardar(detalle,"contado",String(ef),saldoApl,envPrest,envDev,obs,"mixto_ef",tr,saldoDelta);
           } else {
             const montoFinal = opcionSaldo==="todo"&&!monto
               ? String(Math.round(Math.abs(cliente.saldo)+aPagar))
@@ -353,4 +354,3 @@ function NuevoCliente({diaActual,repartoActual,onGuardar,onVolver}) {
 
 
 // ─── MÓDULO PROMOCIÓN ────────────────────────────────────────────────────────
-
