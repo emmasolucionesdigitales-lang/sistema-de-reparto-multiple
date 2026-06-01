@@ -10,9 +10,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
 
   const genCodigo = () => {
-    // Genera código de 6 letras mayúsculas (sin O, 0, I, 1 para evitar confusión)
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    return Array.from({length:6}, ()=>chars[Math.floor(Math.random()*chars.length)]).join("");
+    return String(Math.floor(1000 + Math.random() * 9000));
   };
 
   const guardarReparto = () => {
@@ -91,7 +89,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
             </div>
           </div>
           <div style={{marginBottom:12}}>
-            <label style={s.label}>Código de acceso del repartidor (6 letras)</label>
+            <label style={s.label}>PIN de acceso del repartidor (4 números)</label>
             <div style={{display:"flex",gap:8}}>
               <input style={{...s.input,fontFamily:"monospace",fontSize:18,fontWeight:700,letterSpacing:"0.15em",flex:1,textTransform:"uppercase"}}
                 placeholder="XXXXXX" maxLength={6} value={form.codigo}
@@ -99,7 +97,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
               <button style={{...s.btn,padding:"8px 12px",fontSize:12,whiteSpace:"nowrap"}}
                 onClick={()=>setForm(f=>({...f,codigo:genCodigo()}))}>🎲 Generar</button>
             </div>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:3}}>El repartidor ingresa este código de 6 letras en la app para activarse</div>
+            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:3}}>El repartidor usa este código para entrar</div>
           </div>
           <div style={{display:"flex",gap:8}}>
             <button style={{...s.btn,flex:1}} onClick={()=>{setModoNuevo(false);setEditandoId(null);}}>Cancelar</button>
@@ -1329,3 +1327,4 @@ function InicioReparto({dia,fecha,planilla,productos,cargasDia,stock,onGuardar,o
     </div>
   );
 }
+

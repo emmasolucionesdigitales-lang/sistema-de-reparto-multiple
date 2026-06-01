@@ -169,6 +169,19 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
         <p style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6}}>Tocá el # para editar el número de orden del cliente</p>
       </div>
       {filtrados.length===0&&<div style={{textAlign:"center",padding:"40px 20px",color:"var(--color-text-tertiary)",fontSize:14}}>No hay clientes para {dia}.</div>}
+
+      {/* ▶ Botón al menú cuando todos los clientes están visitados */}
+      {pendientes.length===0&&clientes.length>0&&(
+        <div style={{margin:"12px 14px",background:"#0a2e1f",border:"1.5px solid #4dd9a0",borderRadius:14,padding:"18px 20px",textAlign:"center"}}>
+          <div style={{fontSize:32,marginBottom:8}}>🎉</div>
+          <div style={{fontSize:16,fontWeight:600,color:"#4dd9a0",marginBottom:4}}>¡Todos visitados!</div>
+          <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:14}}>Completaste todos los clientes del día.</div>
+          <button style={{...s.btnPrimary,padding:"12px 28px",fontSize:15,background:"#1D9E75",border:"none"}} onClick={onVolver}>
+            → Ir al menú principal
+          </button>
+        </div>
+      )}
+
       {pendientesNormales.length>0&&<><span style={s.sectionTitle}>Pendientes ({pendientesNormales.length})</span>{pendientesNormales.map(c=><Card key={c.id} c={c}/>)}</>}
       {volverAlFinal.length>0&&<><span style={{...s.sectionTitle,color:"#f5b942"}}>🔄 Volver a visitar ({volverAlFinal.length})</span>{volverAlFinal.map(c=><Card key={c.id} c={c}/>)}</>}
       {listos.length>0&&<><span style={s.sectionTitle}>Entregado ({listos.length})</span>{listos.map(c=><Card key={c.id} c={c}/>)}</>}

@@ -222,8 +222,7 @@ function Promocion({prospectos,onSave,onConvertir,onVolver}) {
         }
         const wb = XLSX.read(e.target.result, {type:"array"});
         // Buscar hoja "Prospectos", luego segunda hoja, luego primera
-        // Buscar hoja por nombre (flexible) o usar la primera hoja disponible
-        let sheet = wb.Sheets["Prospectos"] || wb.Sheets["prospectos"] || wb.Sheets["Clientes"] || wb.Sheets["clientes"] || wb.Sheets[wb.SheetNames[0]];
+        let sheet = wb.Sheets["Prospectos"] || wb.Sheets[wb.SheetNames[1]] || wb.Sheets[wb.SheetNames[0]];
         if(!sheet){ setImportMsg({tipo:"error",txt:"No se encontró ninguna hoja válida en el archivo."}); return; }
 
         // Leer en modo raw (header:1) para encontrar la fila de encabezados
@@ -901,3 +900,5 @@ function TagsCliente({cliente,ventas,style}) {
     </div>
   );
 }
+
+

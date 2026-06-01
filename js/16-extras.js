@@ -1540,7 +1540,7 @@ function SinGpsItem({cliente, onGuardar}) {
 
 function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
 
-  const getLic = () => { try{ return JSON.parse(localStorage.getItem("sr_licencia")||"{}"); }catch{ return {}; } };
+  const getLic = () => { try{ return JSON.parse(localStorage.getItem("rm_licencia_dueno")||localStorage.getItem("sr_licencia")||"{}"); }catch{ return {}; } };
 
   const fmtPesos = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
 
