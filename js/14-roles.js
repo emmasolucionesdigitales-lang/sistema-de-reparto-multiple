@@ -609,7 +609,8 @@ function PantallaActivacionRM({onActivado}) {
     setCargando(true); setError("");
     try {
       // 6 letras = código de repartidor (invitación del dueño)
-      if(cod.length === 6 && !cod.includes("-")) {
+      // También si el usuario eligió rol repartidor explícitamente
+      if((cod.length === 6 && !cod.includes("-")) || tipo==="repartidor") {
         const res = await canjearInvitacion(getDeviceId(), "", cod);
         if(!res.ok){ setError(res.msg); setCargando(false); return; }
         const profile = {
@@ -662,8 +663,6 @@ function PantallaActivacionRM({onActivado}) {
         deviceId, codigo:cod, activado:true
       };
       localStorage.setItem("rm_licencia", JSON.stringify(profile));
-      // ▶ Fix F5: también guardar en sr_licencia para que App() lo encuentre al recargar
-      localStorage.setItem("sr_licencia", JSON.stringify(profile));
       if(window.enviarEmailBrevoRM) {
         await window.enviarEmailBrevoRM({
           to:email.trim(), toName:nombre.trim(),
@@ -685,22 +684,61 @@ function PantallaActivacionRM({onActivado}) {
       <h1 style={{fontSize:22,fontWeight:600,color:"var(--color-text-primary)",textAlign:"center",margin:0}}>Sistema de Reparto</h1>
 
       {paso===1&&<>
-        <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
-          Ingresá el código de activación que recibiste.<br/>
-          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: código de 6 letras</span>
-        </p>
-        <div style={{width:"100%",maxWidth:320}}>
-          <label style={s.label}>Código de activación</label>
-          <input style={{...stInp,textAlign:"center",fontSize:18,letterSpacing:3,textTransform:"uppercase"}}
-            placeholder="RM-XXXX o código de 6 letras"
-            value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
-            onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
-        </div>
-        {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
-        <button style={{...stBtn,width:200}} disabled={cargando} onClick={verificarCodigo}>
-          {cargando?"Verificando...":"Continuar →"}
-        </button>
-        {/* Soporte */}
+        {/* Selector de rol */}
+        {!tipo&&<>
+          <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+            ¿Cómo vas a usar la app?
+          </p>
+          <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:10}}>
+            <button style={{...stBtn,background:"#185FA5",padding:18,borderRadius:14,fontSize:15,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}
+              onClick={()=>setTipo("dueno")}>
+              <span style={{fontSize:24}}>👤</span>
+              <span style={{fontWeight:600}}>Soy dueño</span>
+              <span style={{fontSize:12,opacity:0.8,fontWeight:400}}>Ingresá tu código RM-XXXX</span>
+            </button>
+            <button style={{...stBtn,background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",border:"0.5px solid var(--color-border-secondary)",padding:18,borderRadius:14,fontSize:15,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}
+              onClick={()=>setTipo("repartidor")}>
+              <span style={{fontSize:24}}>🚐</span>
+              <span style={{fontWeight:600}}>Soy repartidor</span>
+              <span style={{fontSize:12,opacity:0.7,fontWeight:400}}>Ingresá el código de 6 letras que te dio el dueño</span>
+            </button>
+          </div>
+        </>}
+
+        {/* Campo de código según rol */}
+        {tipo&&<>
+          <button style={{...s.btn,alignSelf:"flex-start",fontSize:12}} onClick={()=>{setTipo(null);setCodigo("");setError("");}}>← Volver</button>
+          {tipo==="dueno"&&<>
+            <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+              Ingresá el código de activación que recibiste por email.
+            </p>
+            <div style={{width:"100%",maxWidth:320}}>
+              <label style={s.label}>Código de dueño (RM-XXXX)</label>
+              <input style={{...stInp,textAlign:"center",fontSize:20,letterSpacing:4,textTransform:"uppercase"}}
+                placeholder="RM-XXXX"
+                value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
+                onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
+            </div>
+          </>}
+          {tipo==="repartidor"&&<>
+            <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+              Ingresá el código de 6 letras que te compartió el dueño.
+            </p>
+            <div style={{width:"100%",maxWidth:320}}>
+              <label style={s.label}>Código de repartidor (6 letras)</label>
+              <input style={{...stInp,textAlign:"center",fontSize:22,letterSpacing:6,textTransform:"uppercase"}}
+                placeholder="XXXXXX"
+                maxLength={6}
+                value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
+                onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
+            </div>
+          </>}
+          {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
+          <button style={{...stBtn,width:200}} disabled={cargando} onClick={verificarCodigo}>
+            {cargando?"Verificando...":"Continuar →"}
+          </button>
+        </>}
+
         <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
           target="_blank" rel="noopener"
           style={{marginTop:8,fontSize:12,color:"var(--color-text-tertiary)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
@@ -719,8 +757,8 @@ function PantallaActivacionRM({onActivado}) {
             <input style={stInp} type="tel" placeholder="3816559001" value={celular} onChange={e=>setCelular(e.target.value)} /></div>
           <div><label style={s.label}>Email *</label>
             <input style={stInp} type="email" placeholder="tu@email.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
-          <div><label style={s.label}>PIN de activación * (número de 4 dígitos que te enviaron por email)</label>
-            <input style={{...stInp,textAlign:"center",letterSpacing:6,fontSize:18}} type="number" placeholder="0000" value={pinIngresado} onChange={e=>setPinIngresado(e.target.value)} /></div>
+          <div><label style={s.label}>PIN de activación *</label>
+            <input style={{...stInp,textAlign:"center",letterSpacing:6,fontSize:18}} type="number" placeholder="1234" value={pinIngresado} onChange={e=>setPinIngresado(e.target.value)} /></div>
         </div>
         <label style={{display:"flex",alignItems:"flex-start",gap:10,maxWidth:320,cursor:"pointer",marginTop:4}}>
           <input type="checkbox" checked={terminos} onChange={e=>setTerminos(e.target.checked)}
