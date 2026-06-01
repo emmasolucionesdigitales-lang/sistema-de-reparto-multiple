@@ -114,7 +114,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
             <span style={{fontSize:20,cursor:"pointer",lineHeight:1}} title="Foto domicilio" onClick={e=>{e.stopPropagation();setFotoOpen(true);}}>📷</span>
           </div>
         </div>
-        {(!visitados.has(c.id)||est==="noesta")&&!atendido&&(
+        {(!visitados.has(c.id)||est==="noesta")&&!atendido&&!esProspecto&&(
           <div style={{display:"flex",gap:8,marginTop:10}}>
             <button style={{background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"1px solid var(--color-border-warning)",borderRadius:10,padding:"10px 0",fontSize:13,cursor:"pointer",fontWeight:500,flex:1}}
               onClick={()=>marcarNoVisita(c.id,est==="noesta"?"noesta2":"noesta")}>
@@ -124,6 +124,16 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
               onClick={()=>marcarNoVisita(c.id,"noquiso")}>No quiere</button>
             <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:10,padding:"10px 0",fontSize:14,cursor:"pointer",fontWeight:600,flex:2}}
               onClick={()=>onSeleccionar(c)}>Entregar →</button>
+          </div>
+        )}
+        {(!visitadosProspectos.has(c.id))&&!atendido&&esProspecto&&(
+          <div style={{display:"flex",gap:8,marginTop:10}}>
+            <button style={{background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"1px solid var(--color-border-warning)",borderRadius:10,padding:"10px 0",fontSize:13,cursor:"pointer",fontWeight:500,flex:1}}
+              onClick={()=>onNoEstaProspecto&&onNoEstaProspecto(c.id)}>🔄 No está</button>
+            <button style={{background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"1px solid var(--color-border-danger)",borderRadius:10,padding:"10px 0",fontSize:13,cursor:"pointer",fontWeight:500,flex:1}}
+              onClick={()=>onNoQuiereProspecto&&onNoQuiereProspecto(c.id)}>No quiere</button>
+            <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:10,padding:"10px 0",fontSize:14,cursor:"pointer",fontWeight:600,flex:2}}
+              onClick={()=>onVentaProspecto&&onVentaProspecto(c)}>Entregar →</button>
           </div>
         )}
         {(est==="noesta2"||est==="noquiso")&&!atendido&&(
@@ -154,15 +164,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
           <span style={{color:"#aaa",fontSize:11,marginTop:14}}>Tocá fuera para cerrar</span>
         </div>
       )}
-      {/* Botones de acción para prospectos */}
-      {esProspecto&&!atendido&&(
-        <div style={{display:"flex",gap:6,marginTop:8,justifyContent:"flex-end"}}>
-          <button style={{background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"0.5px solid var(--color-border-warning)",borderRadius:8,padding:"5px 10px",fontSize:11,cursor:"pointer"}}
-            onClick={e=>{e.stopPropagation();onNoEstaProspecto&&onNoEstaProspecto(c.id);}}>No estaba</button>
-          <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"5px 12px",fontSize:12,cursor:"pointer",fontWeight:500}}
-            onClick={e=>{e.stopPropagation();onVentaProspecto&&onVentaProspecto(c);}}>Registrar entrega →</button>
-        </div>
-      )}
+
       </>
     );
   };

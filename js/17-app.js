@@ -533,7 +533,9 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     const tr = esMixto?(opcionSaldo==="mixto_ef"?Number(montoTrans2||0):Number(montoPagado)):0;
     const totalMixto = esMixto ? ef+tr : 0;
     const montoFinalCalc = esMixto ? String(totalMixto) : montoPagado;
-    const obsExtra = esMixto&&totalMixto>0?` [Mixto: ef $${ef} + tr $${tr}]`:"";
+    const deudaCobrada = opcionSaldo==="todo"&&c.saldo<0 ? Math.abs(c.saldo) : 0;
+    const obsDeuda = deudaCobrada>0 ? ` [Incluye deuda cobrada: $${deudaCobrada.toLocaleString("es-AR")}]` : "";
+    const obsExtra = (esMixto&&totalMixto>0?` [Mixto: ef $${ef} + tr $${tr}]`:"") + obsDeuda;
 
     const calc = calcVenta(detalle, pagoReal, montoFinalCalc, saldoAplicado, productos);
     const nuevaVenta = {
