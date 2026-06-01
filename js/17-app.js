@@ -881,6 +881,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       {pantalla==="importarClientes" && <ImportarClientesExcel
         repartos={repartos}
         clientes={clientes}
+        repartoPreseleccionado={repartoActual}
         onGuardar={(nuevos)=>{saveClientes([...clientes,...nuevos]);irA("menu");}}
         onVolver={()=>irA("menu")}
       />}
