@@ -662,6 +662,8 @@ function PantallaActivacionRM({onActivado}) {
         deviceId, codigo:cod, activado:true
       };
       localStorage.setItem("rm_licencia", JSON.stringify(profile));
+      // ▶ Fix F5: también guardar en sr_licencia para que App() lo encuentre al recargar
+      localStorage.setItem("sr_licencia", JSON.stringify(profile));
       if(window.enviarEmailBrevoRM) {
         await window.enviarEmailBrevoRM({
           to:email.trim(), toName:nombre.trim(),
@@ -717,8 +719,8 @@ function PantallaActivacionRM({onActivado}) {
             <input style={stInp} type="tel" placeholder="3816559001" value={celular} onChange={e=>setCelular(e.target.value)} /></div>
           <div><label style={s.label}>Email *</label>
             <input style={stInp} type="email" placeholder="tu@email.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
-          <div><label style={s.label}>PIN de activación *</label>
-            <input style={{...stInp,textAlign:"center",letterSpacing:6,fontSize:18}} type="number" placeholder="1234" value={pinIngresado} onChange={e=>setPinIngresado(e.target.value)} /></div>
+          <div><label style={s.label}>PIN de activación * (número de 4 dígitos que te enviaron por email)</label>
+            <input style={{...stInp,textAlign:"center",letterSpacing:6,fontSize:18}} type="number" placeholder="0000" value={pinIngresado} onChange={e=>setPinIngresado(e.target.value)} /></div>
         </div>
         <label style={{display:"flex",alignItems:"flex-start",gap:10,maxWidth:320,cursor:"pointer",marginTop:4}}>
           <input type="checkbox" checked={terminos} onChange={e=>setTerminos(e.target.checked)}
