@@ -659,10 +659,14 @@ function PantallaActivacionRM({onActivado}) {
       });
       const profile = {
         rol:"dueño", negocioId, pin:licData.pin,
-        nombre:nombre.trim(), email:email.trim(), celular:celular.trim(),
+        nombre:nombre.trim(), negocio:nombre.trim(), email:email.trim(), celular:celular.trim(),
         deviceId, codigo:cod, activado:true
       };
+      // ▶ Guardar en rm_licencia_dueno (clave propia del dueño multi)
+      localStorage.setItem("rm_licencia_dueno", JSON.stringify(profile));
       localStorage.setItem("rm_licencia", JSON.stringify(profile));
+      // ▶ Guardar email del dueño en Firebase para que los repartidores puedan encontrarlo
+      if(window.actualizarEmailNegocio) window.actualizarEmailNegocio(negocioId, email.trim());
       if(window.enviarEmailBrevoRM) {
         await window.enviarEmailBrevoRM({
           to:email.trim(), toName:nombre.trim(),
