@@ -6,6 +6,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
   const [tab,setTab]=useState(tabInicial||"stock");
   const [editandoId,setEditandoId]=useState(null);
   const [importando,setImportando]=useState(false);
+  // ▶ Fix: filtroReparto faltaba declarado — causaba crash al abrir Datos
+  const [filtroReparto,setFiltroReparto]=useState("todos");
   const [mantVeh,setMantVeh] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]");}catch{return [];}});
   const [mostrarNuevoMant,setMostrarNuevoMant] = React.useState(false);
   const saveMantVeh = (lista) => {setMantVeh(lista);localStorage.setItem("cat_mant_vehiculo_v1",JSON.stringify(lista));if(syncData)syncData({mantVeh:lista});};
@@ -416,4 +418,3 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
     </div>
   );
 }
-
