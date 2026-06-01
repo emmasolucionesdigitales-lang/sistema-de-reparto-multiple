@@ -3,23 +3,20 @@
 // ════════════════════════════════════════════════════════════════════
 
 function App() {
-  // ── PASO 1: Repartidor — primero localStorage, luego Firebase ─────
-  const _rmLic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
-  if(_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
-    return <AppRepartidorWrapper uid={_rmLic.deviceId} perfil={_rmLic}
-      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
-  }
-
-  // ── PASO 1b: Repartidor — recuperar sesión desde Firebase si se borró el caché ──
+  // ── Todos los hooks primero (regla de React: nunca hooks después de un return) ──
   const [perfilRecuperado, setPerfilRecuperado] = React.useState(null);
-  const [buscandoSesion, setBuscandoSesion] = React.useState(true);
+  const [buscandoSesion, setBuscandoSesion] = React.useState(()=>{
+    // Si ya hay sesión local de cualquier tipo, no necesitamos buscar en Firebase
+    const hayLocal = !!localStorage.getItem("rm_licencia") || !!localStorage.getItem("sr_licencia");
+    return !hayLocal; // true = hay que buscar, false = ya tenemos sesión
+  });
+  const _srLic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+  const [fase, setFase] = React.useState(()=>(!_srLic||!_srLic.activado)?"activacion":"pin");
+  const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("sr_tema"));
 
+  // ── Recuperar sesión de repartidor desde Firebase si se borró el caché ──
   React.useEffect(()=>{
-    // Solo buscar en Firebase si NO hay sesión local de ningún tipo
-    const hayLocalDueno  = !!localStorage.getItem("sr_licencia");
-    const hayLocalRep    = !!localStorage.getItem("rm_licencia");
-    if(hayLocalDueno || hayLocalRep){ setBuscandoSesion(false); return; }
-    // Buscar en Firebase por deviceId
+    if(!buscandoSesion) return; // ya tenía sesión local, no buscar
     const deviceId = localStorage.getItem("sr_device_id");
     if(!deviceId || !window.db){ setBuscandoSesion(false); return; }
     window.db.collection("repartidores")
@@ -35,7 +32,6 @@ function App() {
             nombre:d.nombre||"Repartidor", sectores:d.sectores||[],
             deviceId, codigo:snap.docs[0].id, activado:true
           };
-          // Restaurar localStorage para próximas cargas
           localStorage.setItem("rm_licencia", JSON.stringify(perfil));
           setPerfilRecuperado(perfil);
         }
@@ -43,23 +39,6 @@ function App() {
       })
       .catch(()=>setBuscandoSesion(false));
   },[]);
-
-  if(buscandoSesion) return (
-    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,background:"var(--color-background-primary)"}}>
-      <div style={{fontSize:36}}>💧</div>
-      <div style={{fontSize:14,color:"var(--color-text-secondary)"}}>Verificando sesión...</div>
-    </div>
-  );
-
-  if(perfilRecuperado && perfilRecuperado.rol==="repartidor") {
-    return <AppRepartidorWrapper uid={perfilRecuperado.deviceId} perfil={perfilRecuperado}
-      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
-  }
-
-  // ── PASO 2: Dueño — flujo normal ─────────────────────────────────
-  const _srLic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
-  const [fase, setFase] = React.useState(()=>(!_srLic||!_srLic.activado)?"activacion":"pin");
-  const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("sr_tema"));
 
   const handleActivado = (lic) => {
     if(lic.rol === "repartidor") {
@@ -70,6 +49,28 @@ function App() {
     }
   };
 
+  // ── PASO 1: Repartidor desde localStorage ─────────────────────────
+  const _rmLic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
+  if(_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
+    return <AppRepartidorWrapper uid={_rmLic.deviceId} perfil={_rmLic}
+      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
+  }
+
+  // ── PASO 1b: Buscando sesión en Firebase ──────────────────────────
+  if(buscandoSesion) return (
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,background:"var(--color-background-primary)"}}>
+      <div style={{fontSize:36}}>💧</div>
+      <div style={{fontSize:14,color:"var(--color-text-secondary)"}}>Verificando sesión...</div>
+    </div>
+  );
+
+  // ── PASO 1c: Sesión recuperada de Firebase ────────────────────────
+  if(perfilRecuperado && perfilRecuperado.rol==="repartidor") {
+    return <AppRepartidorWrapper uid={perfilRecuperado.deviceId} perfil={perfilRecuperado}
+      onSalir={()=>{ localStorage.removeItem("rm_licencia"); window.location.reload(); }} />;
+  }
+
+  // ── PASO 2: Dueño — flujo normal ─────────────────────────────────
   if(fase === "activacion") return <PantallaActivacionRM onActivado={handleActivado} />;
   if(fase === "pin")        return <PantallaPin pin={_srLic?.pin} onOk={()=>setFase("app")} />;
   if(!temaElegido)          return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("sr_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
