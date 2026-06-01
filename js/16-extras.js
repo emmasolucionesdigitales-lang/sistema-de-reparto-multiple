@@ -1342,7 +1342,7 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver}) {
 }
 
 // ── MapaClientes ─────────────────────────────────────────────────────────────
-function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, onActualizar, onVolver}) {
+function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, onVolver}) {
   const mapRef = React.useRef(null);
   const mapInstRef = React.useRef(null);
   const markersRef = React.useRef([]);
@@ -1462,70 +1462,15 @@ function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, o
         </div>
       )}
       {leafletOk&&clientesFiltrados.length===0&&(
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8,padding:"20px 24px 8px"}}>
-          <div style={{fontSize:32}}>{"\u{1F4CD}"}</div>
-          <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Ningún cliente tiene GPS aún</div>
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8,padding:24}}>
+          <div style={{fontSize:36}}>{"\u{1F4CD}"}</div>
+          <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Sin clientes con GPS</div>
           <div style={{fontSize:12,color:"var(--color-text-secondary)",textAlign:"center",lineHeight:1.5}}>
-            Pegá el link de Google Maps de cada cliente abajo para que aparezcan en el mapa.
+            Para ver clientes en el mapa, importalos desde la planilla Excel con el campo "Link Google Maps" completado, o agrega las coordenadas manualmente en el perfil de cada cliente.
           </div>
         </div>
       )}
-      <div ref={mapRef} style={{flex:1,minHeight:350,display:leafletOk&&clientesFiltrados.length>0?"block":"none"}}/>
-
-      {/* Lista de clientes SIN GPS para asignar coordenadas */}
-      {sinCoordenadas>0&&(
-        <div style={{borderTop:"0.5px solid var(--color-border-tertiary)",paddingBottom:40}}>
-          <div style={{padding:"10px 14px 4px",fontSize:11,fontWeight:600,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:"0.07em"}}>
-            {"\u{1F4CD}"} {sinCoordenadas} clientes sin GPS — pegá el link de Google Maps
-          </div>
-          {clientes
-            .filter(c=>(filtroDia==="todos"||c.dia===filtroDia)&&(!c.lat||!c.lng))
-            .sort((a,b)=>(a.dia||"").localeCompare(b.dia||"")||(a.orden||99)-(b.orden||99))
-            .map(c=>(
-              <SinGpsItem key={c.id} cliente={c} onGuardar={(mapsUrl)=>{
-                if(onActualizar){
-                  const {lat,lng}=extractCoords(mapsUrl);
-                  onActualizar(clientes.map(x=>x.id===c.id?{...x,maps:mapsUrl,lat,lng}:x));
-                }
-              }}/>
-            ))
-          }
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SinGpsItem({cliente, onGuardar}) {
-  const [link, setLink] = React.useState(cliente.maps||"");
-  const [guardado, setGuardado] = React.useState(false);
-  const guardar = () => {
-    if(!link.trim()){alert("Pegá un link de Google Maps"); return;}
-    onGuardar(link.trim());
-    setGuardado(true);
-    setTimeout(()=>setGuardado(false), 2000);
-  };
-  return (
-    <div style={{margin:"6px 14px",background:"var(--color-background-secondary)",borderRadius:10,padding:"10px 12px",border:"0.5px solid var(--color-border-tertiary)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-        <div>
-          <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{cliente.nombre}</div>
-          <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{cliente.dia} · Orden {cliente.orden||"-"} · {cliente.barrio||cliente.calle||""}</div>
-        </div>
-        {guardado&&<span style={{fontSize:11,color:"var(--color-text-success)",fontWeight:600}}>✓ Guardado</span>}
-      </div>
-      <div style={{display:"flex",gap:8}}>
-        <input
-          style={{...s.input,fontSize:12,flex:1}}
-          placeholder="https://maps.app.goo.gl/..."
-          value={link}
-          onChange={e=>setLink(e.target.value)}
-        />
-        <button style={{...s.btnPrimary,padding:"6px 14px",fontSize:12,width:"auto",whiteSpace:"nowrap"}}
-          onClick={guardar}>
-          📍 Guardar
-        </button>
-      </div>
+      <div ref={mapRef} style={{flex:1,minHeight:400,display:leafletOk&&clientesFiltrados.length>0?"block":"none"}}/>
     </div>
   );
 }

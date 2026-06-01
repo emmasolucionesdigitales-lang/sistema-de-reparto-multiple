@@ -149,40 +149,51 @@ self.addEventListener('notificationclick',e=>{
     }
     function crearInvitacion(negocioId, nombre, sectores, codigoParam) {
       if(!window.db) return Promise.resolve(null);
-      var pin = String(Math.floor(1000 + Math.random() * 9000));
-      var codigo = codigoParam || pin;
-      return window.db.collection("repartidores").doc(codigo).set({
-        negocioId: negocioId, nombre: nombre, sectores: sectores||[],
-        activo: true, activado: false, deviceId: "",
-        creadoEn: new Date().toISOString()
-      }).then(function(){ return {codigo: codigo, pin: pin}; });
+      var codigo = codigoParam || (function(){
+        var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        return Array.from({length:6}, function(){ return chars[Math.floor(Math.random()*chars.length)]; }).join("");
+      })();
+      // ▶ Guardar DENTRO del negocio: negocios/{negocioId}/repartidores/{codigo}
+      return window.db.collection("negocios").doc(negocioId)
+        .collection("repartidores").doc(codigo).set({
+          negocioId: negocioId, nombre: nombre, sectores: sectores||[],
+          activo: true, activado: false, deviceId: "",
+          creadoEn: new Date().toISOString()
+        }).then(function(){ return {codigo: codigo}; });
     }
     function listarInvitaciones(negocioId) {
       if(!window.db) return Promise.resolve([]);
-      return window.db.collection("repartidores")
-        .where("negocioId","==",negocioId).where("activo","==",true).get()
+      // ▶ Leer DENTRO del negocio: negocios/{negocioId}/repartidores/
+      return window.db.collection("negocios").doc(negocioId)
+        .collection("repartidores").where("activo","==",true).get()
         .then(function(snap){
           var r=[];
-          snap.forEach(function(d){ if(!d.data().activado) r.push({codigo:d.id,...d.data()}); });
+          snap.forEach(function(d){ r.push({codigo:d.id,...d.data()}); });
           return r;
         })
         .catch(function(){ return []; });
     }
     function canjearInvitacion(uid, email, codigo) {
       if(!window.db) return Promise.resolve({ok:false, msg:"Sin conexión"});
-      return window.db.collection("repartidores").doc(codigo).get().then(function(snap){
-        if(!snap.exists) return {ok:false, msg:"PIN inválido. Pedile al dueño que verifique tu PIN."};
-        var d = snap.data();
-        if(!d.activo) return {ok:false, msg:"Este acceso fue desactivado por el dueño."};
-        return snap.ref.update({deviceId: uid, activado: true, usadoEn: new Date().toISOString()})
-          .then(function(){
-            return {ok:true, negocioId: d.negocioId, nombre: d.nombre||"Repartidor", sectores: d.sectores||[]};
-          });
-      }).catch(function(e){ return {ok:false, msg:"Error: "+e.message}; });
+      // ▶ Buscar el código en TODOS los negocios (búsqueda por collectionGroup)
+      return window.db.collectionGroup("repartidores")
+        .where(firebase.firestore.FieldPath.documentId(),"==",codigo).get()
+        .then(function(snap){
+          if(snap.empty) return {ok:false, msg:"Código inválido. Pedile al dueño que verifique tu código de 6 letras."};
+          var doc = snap.docs[0];
+          var d = doc.data();
+          if(!d.activo) return {ok:false, msg:"Este acceso fue desactivado por el dueño."};
+          return doc.ref.update({deviceId: uid, activado: true, usadoEn: new Date().toISOString()})
+            .then(function(){
+              return {ok:true, negocioId: d.negocioId, nombre: d.nombre||"Repartidor", sectores: d.sectores||[]};
+            });
+        }).catch(function(e){ return {ok:false, msg:"Error al verificar el código. Intentá de nuevo."}; });
     }
     function listarRepartidores(negocioId) {
       if(!window.db) return Promise.resolve([]);
-      return window.db.collection("users").where("negocioId","==",negocioId).where("rol","==","repartidor").get()
+      // ▶ Leer DENTRO del negocio: negocios/{negocioId}/repartidores/
+      return window.db.collection("negocios").doc(negocioId)
+        .collection("repartidores").where("activo","==",true).get()
         .then(function(snap){ var r=[]; snap.forEach(function(d){ r.push({uid:d.id,...d.data()}); }); return r; })
         .catch(function(){ return []; });
     }

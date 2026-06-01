@@ -19,7 +19,8 @@ function App() {
     if(!buscandoSesion) return; // ya tenía sesión local, no buscar
     const deviceId = localStorage.getItem("sr_device_id");
     if(!deviceId || !window.db){ setBuscandoSesion(false); return; }
-    window.db.collection("repartidores")
+    // ▶ Buscar en subcolección: negocios/{negocioId}/repartidores/
+    window.db.collectionGroup("repartidores")
       .where("deviceId","==",deviceId)
       .where("activado","==",true)
       .limit(1)
