@@ -143,7 +143,12 @@ self.addEventListener('notificationclick',e=>{
     }
     function crearNegocio(uid, nombre, email) {
       if(!window.db) return Promise.resolve(null);
-      var ref = window.db.collection("negocios").doc();
+      // ▶ Usar nombre limpio como ID para que sea legible en Firebase
+      var idLimpio = nombre.toLowerCase()
+        .normalize("NFD").replace(/[̀-ͯ]/g,"")
+        .replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")
+        .slice(0,40) || ("negocio-"+Date.now());
+      var ref = window.db.collection("negocios").doc(idLimpio);
       return ref.set({ nombre:nombre, ownerId:uid, email:email||"", creadoEn:new Date().toISOString() })
         .then(function(){ return ref.id; });
     }
