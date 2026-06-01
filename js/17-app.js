@@ -716,6 +716,14 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
           saveNoVisitas(nv);
         }}
+        onVerProspecto={(p)=>{
+          // ▶ Agregar prospecto a clientes temporalmente para poder ver su perfil completo
+          if(!clientes.find(c=>c.id===p.id)){
+            saveClientes([...clientes,{...p,saldo:p.saldo||0,_esProspecto:true}]);
+          }
+          setClienteId(p.id);
+          irA("detalleCliente");
+        }}
         onAbrirMapa={()=>irA("mapaClientes")}
         />}
       {pantalla==="detalleCliente" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual} fecha={fechaActual} productos={productos} onVenta={()=>irA("venta")} onVolver={()=>irA("clientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>eliminarCliente(cliente.id)}
@@ -801,7 +809,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   visitadosIds.add(clienteId);
   const siguiente = clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
   if(siguiente){ setClienteId(siguiente.id); irA("venta"); }
-  else irA("clientes");
+  else irA("clientes"); // vuelve a la lista — los prospectos se ven ahí si quedan pendientes
 }}
         onSaltar={()=>{
           const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),
