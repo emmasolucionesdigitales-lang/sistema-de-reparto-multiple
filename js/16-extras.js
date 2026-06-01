@@ -1540,13 +1540,45 @@ function SinGpsItem({cliente, onGuardar}) {
 
 function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
 
-  const getLic = () => { try{ return JSON.parse(localStorage.getItem("rm_licencia_dueno")||localStorage.getItem("sr_licencia")||"{}"); }catch{ return {}; } };
+  const getLic = () => {
+    try{
+      // Dueño: rm_licencia_dueno
+      const dueno = JSON.parse(localStorage.getItem("rm_licencia_dueno")||"null");
+      if(dueno?.email) return dueno;
+      // Repartidor: buscar en rm_licencia el negocioId y luego en Firebase
+      const rep = JSON.parse(localStorage.getItem("rm_licencia")||"null");
+      if(rep?.email) return rep;
+      // Fallback legacy
+      return JSON.parse(localStorage.getItem("sr_licencia")||"{}");
+    }catch{ return {}; }
+  };
+
+  // Para repartidor: obtener email del dueño desde Firebase
+  const getEmailDueno = async () => {
+    const lic = getLic();
+    if(lic?.email) return lic.email;
+    // Buscar en Firebase el negocio del repartidor
+    try {
+      const rep = JSON.parse(localStorage.getItem("rm_licencia")||"null");
+      if(rep?.negocioId && window.db) {
+        const snap = await window.db.collection("negocios").doc(rep.negocioId).get();
+        if(snap.exists) return snap.data().email || snap.data().ownerEmail || null;
+      }
+    } catch(e) {}
+    return null;
+  };
 
   const fmtPesos = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
 
   const enviarDiario = async (fecha, dia) => {
     const lic = getLic();
-    if(!lic.email || !window.enviarEmailBrevoRM) return false;
+    // Para repartidor: buscar email del dueño en Firebase si no está local
+    const emailDestino = lic.email || await getEmailDueno();
+    if(!emailDestino || !window.enviarEmailBrevoRM) {
+      alert("No se encontró el email del dueño. Verificá la configuración.");
+      return false;
+    }
+    lic.email = emailDestino;
     try {
       const ventasDia = (ventas||[]).filter(v=>v.fechaKey===fecha&&v.dia===dia&&!v._esCobro&&!v._esAjuste);
       // Cobranza
