@@ -2,7 +2,7 @@
 // ◆  05-licencias.js — Brevo · PantallaActivacion · PantallaPin · getDeviceId · getLogo
 // ════════════════════════════════════════════════════════════════════
 
-const BREVO_API_KEY = "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";
+const BREVO_API_KEY = "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";
 const BREVO_FROM    = "carabajalponce1980@gmail.com";
 
 async function enviarEmailBrevo({to, toName, subject, htmlContent}) {
@@ -74,7 +74,7 @@ function PantallaActivacion({onActivado}) {
       }));
       // ── Email de activación ──
       try {
-        fetch("https://api.brevo.com/v3/smtp/email",{method:"POST",headers:{"Content-Type":"application/json","api-key":"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"},body:JSON.stringify({
+        fetch("https://api.brevo.com/v3/smtp/email",{method:"POST",headers:{"Content-Type":"application/json","api-key":"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"},body:JSON.stringify({
           sender:{name:"Emma Soluciones Digitales",email:"carabajalponce1980@gmail.com"},
           to:[{email:email.trim(),name:negocio.trim()}],
           subject:"✅ Sistema de Reparto activado correctamente",
