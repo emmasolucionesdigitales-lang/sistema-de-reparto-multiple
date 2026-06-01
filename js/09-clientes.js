@@ -2,7 +2,7 @@
 // ◆  09-clientes.js — ListaClientes · DetalleCliente · EditCliente · EditVenta · Modals
 // ════════════════════════════════════════════════════════════════════
 
-function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto,onAbrirMapa}) {
+function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto,onAbrirMapa,onIrPlanilla,onIrMenu}) {
   const [busqueda,setBusqueda] = useState("");
   const [editandoOrden,setEditandoOrden] = useState(null);
   const [ordenTemp,setOrdenTemp] = useState("");
@@ -200,6 +200,25 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
             <Card key={p.id} c={{...p, _esProspecto:true}} />
           ))}
         </>
+      )}
+
+      {/* Botón Reparto completo cuando todos los clientes están visitados */}
+      {pendientes.length===0&&clientes.length>0&&(
+        <div style={{margin:"12px 14px 24px",display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{background:"#0a2e1f",border:"1.5px solid #4dd9a0",borderRadius:14,padding:"16px 20px",textAlign:"center"}}>
+            <div style={{fontSize:28,marginBottom:6}}>🎉</div>
+            <div style={{fontSize:15,fontWeight:600,color:"#4dd9a0",marginBottom:4}}>¡Todos visitados!</div>
+            <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:14}}>Completaste todos los clientes del día.</div>
+            <div style={{display:"flex",gap:8}}>
+              {onIrPlanilla&&<button style={{...s.btnPrimary,flex:1,background:"#185FA5"}} onClick={onIrPlanilla}>
+                📋 Ver planilla del día
+              </button>}
+              {onIrMenu&&<button style={{...s.btnPrimary,flex:1,background:"#1a8a4a"}} onClick={onIrMenu}>
+                🏠 Menú principal
+              </button>}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

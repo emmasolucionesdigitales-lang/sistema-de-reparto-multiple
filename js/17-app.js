@@ -720,13 +720,14 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           saveNoVisitas(nv);
         }}
         onVerProspecto={(p)=>{
-          // ▶ Agregar prospecto a clientes temporalmente para poder ver su perfil completo
           if(!clientes.find(c=>c.id===p.id)){
             saveClientes([...clientes,{...p,saldo:p.saldo||0,_esProspecto:true}]);
           }
           setClienteId(p.id);
           irA("detalleCliente");
         }}
+        onIrPlanilla={()=>irA("selectorFechaPlanilla")}
+        onIrMenu={()=>irA("menu")}
         onAbrirMapa={()=>irA("mapaClientes")}
         />}
       {pantalla==="detalleCliente" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual} fecha={fechaActual} productos={productos} onVenta={()=>irA("venta")} onVolver={()=>irA("clientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>eliminarCliente(cliente.id)}
