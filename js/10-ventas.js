@@ -117,7 +117,9 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
                 <input style={s.input} type="number" placeholder="0" value={montoEfec} onChange={e=>{
                   const ef = e.target.value;
                   setMontoEfec(ef);
-                  const resto = aPagar - Number(ef||0);
+                  // Total real = compra + deuda si elige pagar todo
+                  const totalReal = opcionSaldo==="todo" ? Math.round(Math.abs(cliente.saldo||0)+aPagar) : aPagar;
+                  const resto = totalReal - Number(ef||0);
                   setMontoTrans(resto > 0 ? String(Math.round(resto)) : "0");
                 }} />
               </div>
@@ -128,9 +130,14 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
             </div>
             {Number(montoEfec||0)+Number(montoTrans||0)>0&&(
               <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>
-                Total pagado: {fmt(Number(montoEfec||0)+Number(montoTrans||0))} de {fmt(aPagar)}
-                {(Number(montoEfec||0)+Number(montoTrans||0))<aPagar&&
-                  <span style={{color:"var(--color-text-warning)"}}> · Queda {fmt(aPagar-Number(montoEfec||0)-Number(montoTrans||0))} de saldo</span>}
+                {(()=>{
+                  const totalReal = opcionSaldo==="todo" ? Math.round(Math.abs(cliente.saldo||0)+aPagar) : aPagar;
+                  const totalPag = Number(montoEfec||0)+Number(montoTrans||0);
+                  return <>
+                    Total pagado: {fmt(totalPag)} de {fmt(totalReal)}
+                    {totalPag<totalReal&&<span style={{color:"var(--color-text-warning)"}}> · Queda {fmt(totalReal-totalPag)}</span>}
+                  </>;
+                })()}
               </div>
             )}
             {Number(montoTrans||0)>0&&(
@@ -204,8 +211,9 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
             const ef=Number(montoEfec||0), tr=Number(montoTrans||0);
             if(ef===0&&tr===0){alert("Ingresá al menos un monto para el pago mixto");return;}
             const totalPagado=ef+tr;
-            const saldoDelta=totalPagado-aPagar;
-            // ▶ UNA sola llamada con ambos montos — ef va en montoPagado, tr en montoTrans2
+            // Si paga deuda + compra, el saldoDelta incluye la deuda cobrada
+            const totalReal = opcionSaldo==="todo" ? Math.round(Math.abs(cliente.saldo||0)+aPagar) : aPagar;
+            const saldoDelta = totalPagado - totalReal;
             onGuardar(detalle,"contado",String(ef),saldoApl,envPrest,envDev,obs,"mixto_ef",tr,saldoDelta);
           } else {
             const montoFinal = opcionSaldo==="todo"&&!monto
