@@ -141,11 +141,16 @@ self.addEventListener('notificationclick',e=>{
       if(!window.db) return Promise.resolve();
       return window.db.collection("users").doc(uid).set(data, {merge:true});
     }
-    function crearNegocio(uid, nombre) {
+    function crearNegocio(uid, nombre, email) {
       if(!window.db) return Promise.resolve(null);
       var ref = window.db.collection("negocios").doc();
-      return ref.set({ nombre:nombre, ownerId:uid, creadoEn:new Date().toISOString() })
+      return ref.set({ nombre:nombre, ownerId:uid, email:email||"", creadoEn:new Date().toISOString() })
         .then(function(){ return ref.id; });
+    }
+
+    function actualizarEmailNegocio(negocioId, email) {
+      if(!window.db || !negocioId || !email) return Promise.resolve();
+      return window.db.collection("negocios").doc(negocioId).update({email:email}).catch(function(){});
     }
     function crearInvitacion(negocioId, nombre, sectores, codigoParam) {
       if(!window.db) return Promise.resolve(null);
