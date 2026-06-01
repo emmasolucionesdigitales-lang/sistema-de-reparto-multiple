@@ -83,12 +83,15 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
               )}
               {(()=>{const vt=ventas.find(v=>v.clienteId===c.id&&v.fechaKey===fecha&&(v.pago==="transferencia"||v.pago==="mixto"));
                 if(!vt) return null;
+                // Para mixto mostrar solo la parte de transferencia, no el total
+                const montoTransfer = vt.pago==="mixto" ? (vt.montoTrans||0) : (vt.pagadoNum||vt.neto||0);
+                if(montoTransfer===0) return null;
                 return (
                   <button style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",lineHeight:1,flexShrink:0,display:"flex",alignItems:"center",gap:3,borderRadius:6,background:vt.transConfirmada?"transparent":"rgba(245,185,66,0.15)"}}
                     onClick={e=>{e.stopPropagation();onConfirmarTransfer&&onConfirmarTransfer(c.id,vt.id);}}
                     title={vt.transConfirmada?"Transfer. confirmada — tocá para desmarcar":"Tocá para confirmar transferencia"}>
                     <span style={{fontSize:15}}>{vt.transConfirmada?"🟢":"🔴"}</span>
-                    {!vt.transConfirmada&&<span style={{fontSize:11,fontWeight:500,color:"#f5b942"}}>{fmt(vt.pagadoNum||vt.neto||0)}</span>}
+                    {!vt.transConfirmada&&<span style={{fontSize:11,fontWeight:500,color:"#f5b942"}}>{fmt(montoTransfer)}</span>}
                   </button>
                 );
               })()}
