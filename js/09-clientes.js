@@ -50,8 +50,12 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
 
   const Card=({c})=>{
     const [fotoOpen,setFotoOpen] = React.useState(false);
-    const atendido=atendidos.has(c.id), est=noVMap[c.id];
-    const bc=atendido?"#1D9E75":est==="noesta"?"#EF9F27":(est==="noesta2"||est==="noquiso")?"#E24B4A":"var(--color-border-tertiary)";
+    const esProspecto = !!c._esProspecto;
+    const atendido=esProspecto?visitadosProspectos.has(c.id):atendidos.has(c.id);
+    const est=noVMap[c.id];
+    // Borde naranja para prospectos, verde/amarillo/rojo para clientes normales
+    const bc=esProspecto?"#f5b942":atendido?"#1D9E75":est==="noesta"?"#EF9F27":(est==="noesta2"||est==="noquiso")?"#E24B4A":"var(--color-border-tertiary)";
+    const handleClick = () => esProspecto ? (onVerProspecto&&onVerProspecto(c)) : onSeleccionar(c);
     return (
       <>
       <div style={{...s.card,borderLeft:`3px solid ${bc}`,opacity:(visitados.has(c.id))?0.65:est==="noesta"?0.85:1}}>
@@ -68,7 +72,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
                 </div>
             }
           </div>
-          <div style={{flex:1,cursor:"pointer",minWidth:0}} onClick={()=>onSeleccionar(c)}>
+          <div style={{flex:1,cursor:"pointer",minWidth:0}} onClick={handleClick}>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
               <div style={{fontWeight:500,fontSize:15,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:5}}>
                 {c.nombre}
@@ -77,7 +81,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
               {(recordatorios||[]).some(r=>r.clienteId===c.id&&!r.confirmado)&&(
                 <span style={{fontSize:13,flexShrink:0}} title="Recordatorio pendiente">🔔</span>
               )}
-              {(()=>{const vt=ventas.find(v=>v.clienteId===c.id&&v.fechaKey===fecha&&v.pago==="transferencia");
+              {(()=>{const vt=ventas.find(v=>v.clienteId===c.id&&v.fechaKey===fecha&&(v.pago==="transferencia"||v.pago==="mixto"));
                 if(!vt) return null;
                 return (
                   <button style={{background:"none",border:"none",cursor:"pointer",padding:"2px 4px",lineHeight:1,flexShrink:0,display:"flex",alignItems:"center",gap:3,borderRadius:6,background:vt.transConfirmada?"transparent":"rgba(245,185,66,0.15)"}}
@@ -147,6 +151,15 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
           <span style={{color:"#aaa",fontSize:11,marginTop:14}}>Tocá fuera para cerrar</span>
         </div>
       )}
+      {/* Botones de acción para prospectos */}
+      {esProspecto&&!atendido&&(
+        <div style={{display:"flex",gap:6,marginTop:8,justifyContent:"flex-end"}}>
+          <button style={{background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"0.5px solid var(--color-border-warning)",borderRadius:8,padding:"5px 10px",fontSize:11,cursor:"pointer"}}
+            onClick={e=>{e.stopPropagation();onNoEstaProspecto&&onNoEstaProspecto(c.id);}}>No estaba</button>
+          <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"5px 12px",fontSize:12,cursor:"pointer",fontWeight:500}}
+            onClick={e=>{e.stopPropagation();onVentaProspecto&&onVentaProspecto(c);}}>Registrar entrega →</button>
+        </div>
+      )}
       </>
     );
   };
@@ -169,59 +182,17 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
         <p style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6}}>Tocá el # para editar el número de orden del cliente</p>
       </div>
       {filtrados.length===0&&<div style={{textAlign:"center",padding:"40px 20px",color:"var(--color-text-tertiary)",fontSize:14}}>No hay clientes para {dia}.</div>}
-
-      {/* ▶ Botón al menú cuando todos los clientes están visitados */}
-      {pendientes.length===0&&clientes.length>0&&(
-        <div style={{margin:"12px 14px",background:"#0a2e1f",border:"1.5px solid #4dd9a0",borderRadius:14,padding:"18px 20px",textAlign:"center"}}>
-          <div style={{fontSize:32,marginBottom:8}}>🎉</div>
-          <div style={{fontSize:16,fontWeight:600,color:"#4dd9a0",marginBottom:4}}>¡Todos visitados!</div>
-          <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:14}}>Completaste todos los clientes del día.</div>
-          <button style={{...s.btnPrimary,padding:"12px 28px",fontSize:15,background:"#1D9E75",border:"none"}} onClick={onVolver}>
-            → Ir al menú principal
-          </button>
-        </div>
-      )}
-
       {pendientesNormales.length>0&&<><span style={s.sectionTitle}>Pendientes ({pendientesNormales.length})</span>{pendientesNormales.map(c=><Card key={c.id} c={c}/>)}</>}
       {volverAlFinal.length>0&&<><span style={{...s.sectionTitle,color:"#f5b942"}}>🔄 Volver a visitar ({volverAlFinal.length})</span>{volverAlFinal.map(c=><Card key={c.id} c={c}/>)}</>}
       {listos.length>0&&<><span style={s.sectionTitle}>Entregado ({listos.length})</span>{listos.map(c=><Card key={c.id} c={c}/>)}</>}
       {sinEntrega.length>0&&<><span style={s.sectionTitle}>Sin entrega ({sinEntrega.length})</span>{sinEntrega.map(c=><Card key={c.id} c={c}/>)}</>}
 
-      {/* Prospectos del día — al final de la lista */}
+      {/* Prospectos del día — usan el mismo Card con borde naranja */}
       {prospectosDelDia.length>0&&(
         <>
           <span style={{...s.sectionTitle,color:"#f5b942"}}>🚀 Prospectos en promoción ({prospectosDelDia.length})</span>
           {prospectosDelDia.map(p=>(
-            <div key={p.id} style={{...s.card,borderLeft:"3px solid #f5b942",opacity:visitadosProspectos.has(p.id)?0.7:1}}>
-              <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-                <div style={{width:34,height:34,borderRadius:8,background:"#2e1f06",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#f5b942",flexShrink:0}}>P</div>
-                <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>onVerProspecto&&onVerProspecto(p)}>
-                  <div style={{fontWeight:500,fontSize:14,color:"var(--color-text-primary)"}}>{p.nombre} <span style={{fontSize:10,color:"var(--color-text-tertiary)"}}>→ ver perfil</span></div>
-                  <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>
-                    {p.barrio}{p.calle?` · ${p.calle} ${p.nro||""}`:p.manzana?` · Mz ${p.manzana} L ${p.lote}`:""}
-                  </div>
-                  <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:4}}>
-                    {p.sifon>0&&<span style={s.tag}>Sifón×{p.sifon}</span>}
-                    {p.bidon10>0&&<span style={s.tag}>10L×{p.bidon10}</span>}
-                    {p.bidon20>0&&<span style={s.tag}>20L×{p.bidon20}</span>}
-                    {p.dispenser>0&&<span style={{...s.tag,color:"#5daaff"}}>Disp×{p.dispenser}</span>}
-                    {visitadosProspectos.has(p.id)&&<span style={s.badge("success")}>✓ Registrado</span>}
-                  </div>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:8,flexShrink:0}}>
-                  {p.maps&&<a href={p.maps} target="_blank" rel="noreferrer" style={{fontSize:18,textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
-                  {p.telefono&&<a href={`https://wa.me/54${p.telefono}`} target="_blank" rel="noreferrer" style={{fontSize:18,textDecoration:"none"}} onClick={e=>e.stopPropagation()}>💬</a>}
-                </div>
-              </div>
-              {!visitadosProspectos.has(p.id)&&(
-                <div style={{display:"flex",gap:6,marginTop:8,justifyContent:"flex-end"}}>
-                  <button style={{background:"var(--color-background-warning)",color:"var(--color-text-warning)",border:"0.5px solid var(--color-border-warning)",borderRadius:8,padding:"5px 10px",fontSize:11,cursor:"pointer"}}
-                    onClick={()=>onNoEstaProspecto&&onNoEstaProspecto(p.id)}>No estaba</button>
-                  <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"5px 12px",fontSize:12,cursor:"pointer",fontWeight:500}}
-                    onClick={()=>onVentaProspecto&&onVentaProspecto(p)}>Registrar entrega →</button>
-                </div>
-              )}
-            </div>
+            <Card key={p.id} c={{...p, _esProspecto:true}} />
           ))}
         </>
       )}
