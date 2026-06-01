@@ -271,13 +271,13 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               if(!emailDueno){ alert("No se encontró el email del dueño. Contactá al soporte."); return; }
               // Guardar email temporalmente en sr_licencia para que usarInformes lo encuentre
               const licTemp = {email:emailDueno, negocio:perfil.nombre||"Reparto"};
-              const prevLic = localStorage.getItem("sr_licencia");
-              localStorage.setItem("sr_licencia", JSON.stringify(licTemp));
+              const prevLic = localStorage.getItem("rm_licencia_dueno");
+              localStorage.setItem("rm_licencia_dueno", JSON.stringify(licTemp));
               const inf = usarInformes({ventas,clientes,planillas,noVisitas,productos});
               const ok = await inf.enviarDiario(fechaActual, diaActual);
               // Restaurar licencia original
-              if(prevLic) localStorage.setItem("sr_licencia", prevLic);
-              else localStorage.removeItem("sr_licencia");
+              if(prevLic) localStorage.setItem("rm_licencia_dueno", prevLic);
+              else localStorage.removeItem("rm_licencia_dueno");
               if(ok) alert("\u2705 Informe enviado al dueño (" + emailDueno + ") correctamente.");
               else   alert("\u26A0\uFE0F Error al enviar. Verificá la conexión.");
             } catch(e) {
@@ -609,7 +609,8 @@ function PantallaActivacionRM({onActivado}) {
     setCargando(true); setError("");
     try {
       // 6 letras = código de repartidor (invitación del dueño)
-      if(cod.length === 6 && !cod.includes("-")) {
+      // También si el usuario eligió rol repartidor explícitamente
+      if((cod.length === 6 && !cod.includes("-")) || tipo==="repartidor") {
         const res = await canjearInvitacion(getDeviceId(), "", cod);
         if(!res.ok){ setError(res.msg); setCargando(false); return; }
         const profile = {
@@ -683,22 +684,61 @@ function PantallaActivacionRM({onActivado}) {
       <h1 style={{fontSize:22,fontWeight:600,color:"var(--color-text-primary)",textAlign:"center",margin:0}}>Sistema de Reparto</h1>
 
       {paso===1&&<>
-        <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
-          Ingresá el código de activación que recibiste.<br/>
-          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: código de 6 letras</span>
-        </p>
-        <div style={{width:"100%",maxWidth:320}}>
-          <label style={s.label}>Código de activación</label>
-          <input style={{...stInp,textAlign:"center",fontSize:18,letterSpacing:3,textTransform:"uppercase"}}
-            placeholder="RM-XXXX o código de 6 letras"
-            value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
-            onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
-        </div>
-        {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
-        <button style={{...stBtn,width:200}} disabled={cargando} onClick={verificarCodigo}>
-          {cargando?"Verificando...":"Continuar →"}
-        </button>
-        {/* Soporte */}
+        {/* Selector de rol */}
+        {!tipo&&<>
+          <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+            ¿Cómo vas a usar la app?
+          </p>
+          <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:10}}>
+            <button style={{...stBtn,background:"#185FA5",padding:18,borderRadius:14,fontSize:15,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}
+              onClick={()=>setTipo("dueno")}>
+              <span style={{fontSize:24}}>👤</span>
+              <span style={{fontWeight:600}}>Soy dueño</span>
+              <span style={{fontSize:12,opacity:0.8,fontWeight:400}}>Ingresá tu código RM-XXXX</span>
+            </button>
+            <button style={{...stBtn,background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",border:"0.5px solid var(--color-border-secondary)",padding:18,borderRadius:14,fontSize:15,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}
+              onClick={()=>setTipo("repartidor")}>
+              <span style={{fontSize:24}}>🚐</span>
+              <span style={{fontWeight:600}}>Soy repartidor</span>
+              <span style={{fontSize:12,opacity:0.7,fontWeight:400}}>Ingresá el código de 6 letras que te dio el dueño</span>
+            </button>
+          </div>
+        </>}
+
+        {/* Campo de código según rol */}
+        {tipo&&<>
+          <button style={{...s.btn,alignSelf:"flex-start",fontSize:12}} onClick={()=>{setTipo(null);setCodigo("");setError("");}}>← Volver</button>
+          {tipo==="dueno"&&<>
+            <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+              Ingresá el código de activación que recibiste por email.
+            </p>
+            <div style={{width:"100%",maxWidth:320}}>
+              <label style={s.label}>Código de dueño (RM-XXXX)</label>
+              <input style={{...stInp,textAlign:"center",fontSize:20,letterSpacing:4,textTransform:"uppercase"}}
+                placeholder="RM-XXXX"
+                value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
+                onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
+            </div>
+          </>}
+          {tipo==="repartidor"&&<>
+            <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
+              Ingresá el código de 6 letras que te compartió el dueño.
+            </p>
+            <div style={{width:"100%",maxWidth:320}}>
+              <label style={s.label}>Código de repartidor (6 letras)</label>
+              <input style={{...stInp,textAlign:"center",fontSize:22,letterSpacing:6,textTransform:"uppercase"}}
+                placeholder="XXXXXX"
+                maxLength={6}
+                value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
+                onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
+            </div>
+          </>}
+          {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
+          <button style={{...stBtn,width:200}} disabled={cargando} onClick={verificarCodigo}>
+            {cargando?"Verificando...":"Continuar →"}
+          </button>
+        </>}
+
         <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
           target="_blank" rel="noopener"
           style={{marginTop:8,fontSize:12,color:"var(--color-text-tertiary)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>

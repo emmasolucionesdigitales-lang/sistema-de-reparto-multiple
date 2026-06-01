@@ -130,7 +130,7 @@ function aplicarTema(temaId) {
 }
 
 function getTemaActual() {
-  try { return JSON.parse(localStorage.getItem("sr_tema")||"null") || "oscuro-azul"; } catch { return "oscuro-azul"; }
+  try { return JSON.parse(localStorage.getItem("rm_tema")||"null") || "oscuro-azul"; } catch { return "oscuro-azul"; }
 }
 
 // Aplicar tema al cargar antes de React

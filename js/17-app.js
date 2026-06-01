@@ -7,12 +7,12 @@ function App() {
   const [perfilRecuperado, setPerfilRecuperado] = React.useState(null);
   const [buscandoSesion, setBuscandoSesion] = React.useState(()=>{
     // Si ya hay sesión local de cualquier tipo, no necesitamos buscar en Firebase
-    const hayLocal = !!localStorage.getItem("rm_licencia") || !!localStorage.getItem("sr_licencia");
+    const hayLocal = !!localStorage.getItem("rm_licencia") || !!localStorage.getItem("rm_licencia_dueno");
     return !hayLocal; // true = hay que buscar, false = ya tenemos sesión
   });
-  const _srLic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+  const _srLic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia_dueno")||"null"); } catch { return null; } })();
   const [fase, setFase] = React.useState(()=>(!_srLic||!_srLic.activado)?"activacion":"pin");
-  const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("sr_tema"));
+  const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("rm_tema"));
 
   // ── Recuperar sesión de repartidor desde Firebase si se borró el caché ──
   React.useEffect(()=>{
@@ -74,7 +74,7 @@ function App() {
   // ── PASO 2: Dueño — flujo normal ─────────────────────────────────
   if(fase === "activacion") return <PantallaActivacionRM onActivado={handleActivado} />;
   if(fase === "pin")        return <PantallaPin pin={_srLic?.pin} onOk={()=>setFase("app")} />;
-  if(!temaElegido)          return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("sr_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
+  if(!temaElegido)          return <PantallaElegirTema onElegido={(id)=>{ localStorage.setItem("rm_tema",JSON.stringify(id)); aplicarTema(id); setTemaElegido(true); }} />;
   if(!_srLic)               return <PantallaActivacionRM onActivado={handleActivado} />;
   return <AppPrincipal uid={_srLic.deviceId||_srLic.negocioId} email={_srLic.email} perfil={_srLic} />;
 }
@@ -223,14 +223,14 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       if (data.zonasReparto && Object.keys(data.zonasReparto).length) setZonasReparto(data.zonasReparto);
       if (data.repartos?.length) { setRepartos(data.repartos); try{localStorage.setItem("cat_repartos_v1",JSON.stringify(data.repartos));}catch{} }
       // Refrescar logo desde licencia
-      const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+      const lic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia_dueno")||"null"); } catch { return null; } })();
       if(lic?.codigo && window.dbLicencias) {
         window.dbLicencias.collection("licencias").doc(lic.codigo).get().then(doc=>{
           if(doc.exists) {
             const d = doc.data();
             if(d.logo !== undefined && d.logo !== lic.logo) {
               lic.logo = d.logo;
-              localStorage.setItem("sr_licencia", JSON.stringify(lic));
+              localStorage.setItem("rm_licencia_dueno", JSON.stringify(lic));
             }
           }
         }).catch(()=>{});
