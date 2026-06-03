@@ -10,7 +10,15 @@ function App() {
     const hayLocal = !!localStorage.getItem("rm_licencia") || !!localStorage.getItem("rm_licencia_dueno");
     return !hayLocal; // true = hay que buscar, false = ya tenemos sesión
   });
-  const _srLic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia_dueno")||"null"); } catch { return null; } })();
+  const _srLic = (() => {
+    try {
+      const d = JSON.parse(localStorage.getItem("rm_licencia_dueno")||"null");
+      if(d) return d;
+      const r = JSON.parse(localStorage.getItem("rm_licencia")||"null");
+      if(r && r.rol === "dueño") return r; // dueño guardado en rm_licencia (compatibilidad)
+      return null;
+    } catch { return null; }
+  })();
   const [fase, setFase] = React.useState(()=>(!_srLic||!_srLic.activado)?"activacion":"pin");
   const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("rm_tema"));
 

@@ -667,6 +667,7 @@ function PantallaActivacionRM({onActivado}) {
         deviceId, codigo:cod, activado:true
       };
       localStorage.setItem("rm_licencia", JSON.stringify(profile));
+      localStorage.setItem("rm_licencia_dueno", JSON.stringify(profile));
       if(window.enviarEmailBrevoRM) {
         await window.enviarEmailBrevoRM({
           to:email.trim(), toName:nombre.trim(),
