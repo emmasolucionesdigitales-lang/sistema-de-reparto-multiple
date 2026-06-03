@@ -581,8 +581,15 @@ function DetalleTransferencias({ventas, ventasPendTrans}) {
   );
 }
 
-function DetalleVentasDia({ventas}) {
+function DetalleVentasDia({ventas, clientes, prospectos, noVisitas, fecha}) {
   const [abierto, setAbierto] = React.useState(false);
+  const todosMap = React.useMemo(()=>{
+    const m={};
+    (prospectos||[]).forEach(p=>{ m[p.id]={...p,_esProspecto:true}; });
+    (clientes||[]).forEach(c=>{ m[c.id]=c; });
+    return m;
+  },[clientes,prospectos]);
+  const fmtEnv=(arr)=>(arr||[]).filter(e=>e.prod&&Number(e.cant)>0).map(e=>`${e.cant} ${e.prod}`).join(", ");
   return (
     <div style={{margin:"0 0 8px",borderRadius:12,overflow:"hidden",border:"1.5px solid #185FA5",background:"var(--color-background-info)"}}>
       <button
@@ -604,12 +611,19 @@ function DetalleVentasDia({ventas}) {
               fiado:{bg:"var(--color-background-warning)",color:"var(--color-text-warning)",txt:"Fiado"},
               mixto:{bg:"var(--color-background-info)",color:"var(--color-text-info)",txt:`Mixto 💵$${v.montoEfec||0} + 💳$${v.montoTrans||0}`},
             }[v.pago]||{bg:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",txt:v.pago};
+            const cli=todosMap[v.clienteId]||{};
+            const dir=(cli.calle?`${cli.calle} ${cli.nro||""}`:cli.manzana?`Mz ${cli.manzana} L ${cli.lote}`:"")+(cli.barrio?` · ${cli.barrio}`:"");
+            const deudaPagada=Math.max(0,(v.pagadoNum||0)-(v.neto||0));
+            const prestStr=fmtEnv(v.envPrest); const devStr=fmtEnv(v.envDev);
             return (
               <div key={v.id} style={{padding:"10px 16px",borderBottom:idx<ventas.length-1?"0.5px solid var(--color-border-tertiary)":"none"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}}>
-                  <div style={{flex:1}}>
+                  <div style={{flex:1,minWidth:0}}>
                     <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{v.cliente}</span>
+                    {cli._esProspecto&&<span style={{marginLeft:6,fontSize:10,padding:"1px 6px",borderRadius:4,background:"#2e1f06",color:"#f5b942",fontWeight:600}}>🚀 Prospecto</span>}
                     <span style={{marginLeft:6,fontSize:10,padding:"1px 6px",borderRadius:4,background:pagoBadge.bg,color:pagoBadge.color,fontWeight:600}}>{pagoBadge.txt}</span>
+                    {v.repartidor&&<span style={{marginLeft:6,fontSize:10,padding:"1px 6px",borderRadius:4,background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",fontWeight:500}}>🚐 {v.repartidor}</span>}
+                    {dir&&<div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:2}}>📍 {dir}</div>}
                   </div>
                   <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(v.neto||0)}</span>
                 </div>
@@ -619,22 +633,49 @@ function DetalleVentasDia({ventas}) {
                     <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{fmt(d.total)}</span>
                   </div>
                 ))}
-                {(v.saldoAplicado>0||((v.pagadoNum||0)-(v.neto||0))>0)&&(
-                  <div style={{display:"flex",gap:10,padding:"3px 0 0 8px",marginTop:2,borderTop:"0.5px solid var(--color-border-tertiary)"}}>
-                    {v.saldoAplicado>0&&<span style={{fontSize:11,color:"var(--color-text-success)"}}>Saldo aplicado: −{fmt(v.saldoAplicado)}</span>}
-                    {((v.pagadoNum||0)-(v.neto||0))>0&&<span style={{fontSize:11,color:"var(--color-text-success)"}}>Pagó de más: +{fmt((v.pagadoNum||0)-(v.neto||0))}</span>}
+                {(v.saldoAplicado>0||deudaPagada>0||prestStr||devStr)&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:2,padding:"3px 0 0 8px",marginTop:2,borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                    {v.saldoAplicado>0&&<span style={{fontSize:11,color:"var(--color-text-success)"}}>Saldo a favor aplicado: −{fmt(v.saldoAplicado)}</span>}
+                    {deudaPagada>0&&<span style={{fontSize:11,color:"var(--color-text-success)"}}>💵 Pagó deuda: +{fmt(deudaPagada)}</span>}
+                    {prestStr&&<span style={{fontSize:11,color:"#f5b942"}}>📦 Prestó: {prestStr}</span>}
+                    {devStr&&<span style={{fontSize:11,color:"var(--color-text-info)"}}>↩️ Devolvió: {devStr}</span>}
                   </div>
                 )}
               </div>
             );
           })}
+          {(()=>{
+            const ventaIds = new Set(ventas.map(v=>v.clienteId));
+            const noComp = (noVisitas||[]).filter(n=>n.fecha===fecha && !ventaIds.has(n.clienteId) && n.motivo!=="salteado");
+            if(noComp.length===0) return null;
+            const lbl = (m)=> m==="noquiso" ? {t:"No quiso",c:"var(--color-text-danger)",ic:"🚫"} : {t:"No estaba",c:"var(--color-text-warning)",ic:"🔄"};
+            return (
+              <div style={{borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                <div style={{padding:"8px 16px 4px",fontSize:11,fontWeight:600,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:"0.05em"}}>No compraron ({noComp.length})</div>
+                {noComp.map((n,i)=>{
+                  const p = todosMap[n.clienteId] || {};
+                  const info = lbl(n.motivo);
+                  const dir = (p.calle?`${p.calle} ${p.nro||""}`:p.manzana?`Mz ${p.manzana} L ${p.lote}`:"")+(p.barrio?` · ${p.barrio}`:"");
+                  return (
+                    <div key={"nv"+i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 16px",borderTop:i>0?"0.5px solid var(--color-border-tertiary)":"none"}}>
+                      <div style={{minWidth:0}}>
+                        <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{p.nombre||"Cliente"}</span>
+                        {dir&&<div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>📍 {dir}</div>}
+                      </div>
+                      <span style={{fontSize:11,fontWeight:600,color:info.c,flexShrink:0}}>{info.ic} {info.t}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
   );
 }
 
-function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre}) {
+function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre,prospectos,noVisitas}) {
   // Separar ventas del día propio vs ventas de clientes de otro día
   const clientesDia = new Set((clientes||[]).filter(c=>c.dia===dia).map(c=>c.id));
   const ventasPropias  = ventas.filter(v=>clientesDia.has(v.clienteId));
@@ -1063,7 +1104,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
 
         {/* Detalle de ventas — recuadrado azul, colapsable */}
         {ventasPropias.length>0
-          ? <DetalleVentasDia ventas={ventasPropias} />
+          ? <DetalleVentasDia ventas={ventasPropias} clientes={clientes} prospectos={prospectos} noVisitas={noVisitas} fecha={fecha} />
           : <div style={{...s.card,margin:"0 0 8px",padding:"12px 16px",background:"var(--color-background-tertiary)"}}>
               <span style={{fontSize:13,color:"var(--color-text-tertiary)"}}>📋 Sin ventas registradas para este día</span>
             </div>

@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 
 function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial,repartos}) {
-  const [tab,setTab]=useState(tabInicial||"stock");
+  const [tab,setTab]=useState(["datos","vehiculo","apariencia"].includes(tabInicial)?tabInicial:"datos");
   const [editandoId,setEditandoId]=useState(null);
   const [importando,setImportando]=useState(false);
   // ▶ Fix: filtroReparto faltaba declarado — causaba crash al abrir Datos
@@ -18,7 +18,7 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button><span style={s.headerTitle}>Configuración</span></div>
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
-          [["stock","📦","Stock"],["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
+          [["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
           [["x","",""],["x","",""],["x","",""],["x","",""]],
         ].map((fila,fi)=>(
           <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
@@ -257,6 +257,32 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
                 return `📥 Exportar datos · ${n} clientes${rep!=="todos"?` · ${rep}`:""}`;
               })()}
             </button>
+
+            {/* Respaldo completo descargable (.json) */}
+            <div style={{borderTop:"1px solid var(--color-border-secondary)",marginTop:12,paddingTop:12}}>
+              <div style={{fontSize:13,fontWeight:700,color:"var(--color-text-secondary)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>💾 Respaldo completo</div>
+              <p style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:10}}>
+                Guarda TODOS los datos en un archivo. Descargalo seguido y guardalo en otro lado (mail, Drive). Si se pierde el teléfono o se borra la app, lo restaurás y recuperás todo.
+              </p>
+              <button style={{...s.btnPrimary,marginBottom:8}} onClick={()=>{
+                if(typeof window._descargarRespaldo==="function") window._descargarRespaldo();
+                else alert("No se pudo generar el respaldo. Recargá la app e intentá de nuevo.");
+              }}>💾 Descargar respaldo completo (.json)</button>
+              <label style={{...s.btn,width:"100%",padding:"11px",display:"block",textAlign:"center",cursor:"pointer",boxSizing:"border-box"}}>
+                ♻️ Restaurar desde un respaldo
+                <input type="file" accept=".json,application/json" style={{display:"none"}} onChange={(e)=>{
+                  const file=e.target.files&&e.target.files[0]; if(!file) return;
+                  if(!window.confirm("⚠️ Restaurar va a REEMPLAZAR todos los datos actuales por los del archivo. ¿Seguro?")){ e.target.value=""; return; }
+                  const reader=new FileReader();
+                  reader.onload=(ev)=>{
+                    try{ const data=JSON.parse(ev.target.result); const ok=window._restaurarRespaldo&&window._restaurarRespaldo(data); if(ok) alert("✅ Respaldo restaurado. Revisá que esté todo en orden."); }
+                    catch(err){ alert("El archivo no es un respaldo válido (.json). "+err.message); }
+                    e.target.value="";
+                  };
+                  reader.readAsText(file);
+                }} />
+              </label>
+            </div>
 
             {/* Importar clientes */}
             {!importando

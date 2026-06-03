@@ -42,6 +42,14 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
   const saldoDisp=cliente.saldo>0?cliente.saldo:0;
   const saldoApl=(usarSaldo&&pago!=="fiado")?Math.min(saldoDisp,neto):0;
   const aPagar=neto-saldoApl;
+  const deudaPendiente = cliente.saldo<0 ? Math.abs(cliente.saldo) : 0;
+  const totalACobrar = opcionSaldo==="todo" ? Math.round(deudaPendiente+aPagar) : aPagar;
+  const pagaTodo = deudaPendiente>0 && pago!=="fiado" && opcionSaldo==="todo";
+  React.useEffect(()=>{
+    if(pago==="fiado") return;
+    if(opcionSaldo==="todo" && deudaPendiente>0){ setMonto(String(Math.round(deudaPendiente+aPagar))); }
+    else if(opcionSaldo==="compra"){ setMonto(""); }
+  },[opcionSaldo,aPagar,deudaPendiente,pago]);
   const ER=({list,setList,i})=>(
     <div style={{...s.row,marginBottom:6}}>
       <select style={{...s.select,flex:2}} value={list[i].prod} onChange={e=>{const n=[...list];n[i].prod=e.target.value;setList(n);}}>
@@ -186,10 +194,10 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
           </div>
         )}
 
-        {pago!=="fiado"&&(
+        {pago!=="fiado"&&pago!=="mixto"&&(
           <div style={{marginBottom:12}}>
             <label style={s.label}>
-              {opcionSaldo==="parcial"?"Monto que paga (parcial)":opcionSaldo==="todo"?`Total a cobrar (deuda + compra):`:"Monto cobrado (vacío = ${fmt(aPagar)} exacto)"}
+              {opcionSaldo==="parcial"?"Monto que paga (parcial)":opcionSaldo==="todo"?"Total a cobrar (deuda + compra):":`Monto cobrado (vacío = ${fmt(aPagar)} exacto)`}
             </label>
             <input style={s.input} type="number"
               placeholder={opcionSaldo==="todo"?String(Math.round(Math.abs(cliente.saldo)+aPagar)):String(Math.round(aPagar))}
@@ -201,24 +209,40 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
           {bruto>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Subtotal</span><span style={{fontSize:13,color:"var(--color-text-primary)"}}>{fmt(bruto)}</span></div>}
           {desc>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Descuento 2.5%</span><span style={{fontSize:13,color:"var(--color-text-danger)"}}>−{fmt(desc)}</span></div>}
           {saldoApl>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Saldo a favor</span><span style={{fontSize:13,color:"var(--color-text-success)"}}>−{fmt(saldoApl)}</span></div>}
+          {pagaTodo&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:13,color:"var(--color-text-danger)"}}>Deuda anterior</span><span style={{fontSize:13,color:"var(--color-text-danger)"}}>+{fmt(deudaPendiente)}</span></div>}
           <div style={{borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:10,marginTop:6,display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
             <span style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)"}}>A cobrar</span>
-            <span style={{fontSize:26,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(aPagar)}</span>
+            <span style={{fontSize:26,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(totalACobrar)}</span>
           </div>
         </div>
         <button style={{...s.btnPrimary,marginBottom:10,opacity:detalle.length===0?0.45:1}} disabled={detalle.length===0} onClick={()=>{
+          const envIncompleto = [...envPrest, ...envDev].some(e=>{
+            const tieneProd = !!e.prod;
+            const tieneCant = String(e.cant||"").trim()!=="" && Number(e.cant)>0;
+            return (tieneProd && !tieneCant) || (!tieneProd && tieneCant);
+          });
+          if(envIncompleto){
+            alert("⚠️ Hay un envase cargado a medias: falta elegir el producto o poner la cantidad. Completalo o borrá esa fila antes de registrar, así no se pierde la devolución o el préstamo.");
+            return;
+          }
           if(pago==="mixto"){
             const ef=Number(montoEfec||0), tr=Number(montoTrans||0);
             if(ef===0&&tr===0){alert("Ingresá al menos un monto para el pago mixto");return;}
             const totalPagado=ef+tr;
-            // Si paga deuda + compra, el saldoDelta incluye la deuda cobrada
-            const totalReal = opcionSaldo==="todo" ? Math.round(Math.abs(cliente.saldo||0)+aPagar) : aPagar;
-            const saldoDelta = totalPagado - totalReal;
-            onGuardar(detalle,"contado",String(ef),saldoApl,envPrest,envDev,obs,"mixto_ef",tr,saldoDelta);
+            if(totalACobrar>0 && totalPagado>totalACobrar*3 && totalPagado>totalACobrar+10000){
+              if(!window.confirm(`Estás cobrando ${fmt(totalPagado)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
+            }
+            const saldoDelta = totalPagado - totalACobrar;
+            if(ef>0) onGuardar(detalle,"contado",String(ef),saldoApl,envPrest,envDev,obs,"mixto_ef",tr,saldoDelta);
+            else onGuardar(detalle,"transferencia",String(tr),saldoApl,envPrest,envDev,obs,"mixto_tr",ef,saldoDelta);
           } else {
             const montoFinal = opcionSaldo==="todo"&&!monto
               ? String(Math.round(Math.abs(cliente.saldo)+aPagar))
               : monto;
+            const pagadoNum=Number(montoFinal)||0;
+            if(pago!=="fiado" && totalACobrar>0 && pagadoNum>totalACobrar*3 && pagadoNum>totalACobrar+10000){
+              if(!window.confirm(`Estás cobrando ${fmt(pagadoNum)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
+            }
             onGuardar(detalle,pago,montoFinal,saldoApl,envPrest,envDev,obs,opcionSaldo);
           }
         }}>

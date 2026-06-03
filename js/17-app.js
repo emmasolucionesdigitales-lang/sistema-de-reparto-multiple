@@ -244,6 +244,38 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const estadoRef = React.useRef({clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos});
   React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos}; });
 
+  // Respaldo COMPLETO descargable + restaurar (solo dueño)
+  React.useEffect(()=>{
+    window._descargarRespaldo = () => {
+      const mantVeh = (()=>{ try { return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
+      const data = { ...estadoRef.current, mantVeh, _respaldo:true, _app:"reparto-multi", _fecha:new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const fkk = new Date().toLocaleDateString("es-AR").replace(/\//g,"-");
+      a.href = url; a.download = `respaldo-completo_reparto_${fkk}.json`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    };
+    window._restaurarRespaldo = (data) => {
+      if(!data || typeof data!=="object"){ alert("El archivo no es un respaldo válido."); return false; }
+      try {
+        if(data.clientes!==undefined) setClientes(data.clientes||[]);
+        if(data.ventas!==undefined) setVentasRaw(data.ventas||[]);
+        if(data.planillas!==undefined) setPlanillas(data.planillas||{});
+        if(data.stock) setStock(normStock(data.stock));
+        if(data.productos!==undefined) setProductos(data.productos||[]);
+        if(data.noVisitas!==undefined) setNoVisitas(data.noVisitas||[]);
+        if(data.prospectos!==undefined) setProspectos(data.prospectos||[]);
+        if(data.recordatorios!==undefined) setRecordatorios(data.recordatorios||[]);
+        if(data.mantVeh!==undefined){ try{localStorage.setItem("cat_mant_vehiculo_v1",JSON.stringify(data.mantVeh||[]));}catch{} }
+        try { syncData({clientes:data.clientes,ventas:data.ventas,planillas:data.planillas,productos:data.productos,noVisitas:data.noVisitas,prospectos:data.prospectos,recordatorios:data.recordatorios}); } catch{}
+        return true;
+      } catch(e){ alert("Error al restaurar: "+e.message); return false; }
+    };
+    return ()=>{ delete window._descargarRespaldo; delete window._restaurarRespaldo; };
+  }, []);
+
   // Auto backup DIARIO a localStorage
   React.useEffect(()=>{
     const ultimoBackup = localStorage.getItem("lc_ultimo_backup");
@@ -677,7 +709,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           onVolver={()=>irA("menu")} />}
       {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&v.pago==="transferencia"&&!v.transConfirmada).length} />}
       {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
-      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("planilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={()=>cerrarDia(fechaActual,diaActual)} initCierre={initCierre} />}
+      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("planilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={()=>cerrarDia(fechaActual,diaActual)} initCierre={initCierre} prospectos={prospectos||[]} noVisitas={noVisitas||[]} />}
       {pantalla==="selectorFechaClientes" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("inicioReparto");}} onVolver={()=>irA("diaPrincipal")} />}
       {pantalla==="inicioReparto"  && <InicioReparto dia={diaActual} fecha={fechaActual} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} cargasDia={cargasDia} stock={stockNorm}
         onGuardar={(p,descontar)=>{
