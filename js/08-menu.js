@@ -10,7 +10,10 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
 
   const genCodigo = () => {
-    return String(Math.floor(1000 + Math.random() * 9000));
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // sin I ni O para no confundir con 1/0
+    let c = "";
+    for(let i=0;i<6;i++) c += chars[Math.floor(Math.random()*chars.length)];
+    return c;
   };
 
   const guardarReparto = () => {
@@ -89,11 +92,11 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
             </div>
           </div>
           <div style={{marginBottom:12}}>
-            <label style={s.label}>PIN de acceso del repartidor (4 números)</label>
+            <label style={s.label}>Código del repartidor (6 letras)</label>
             <div style={{display:"flex",gap:8}}>
               <input style={{...s.input,fontFamily:"monospace",fontSize:18,fontWeight:700,letterSpacing:"0.15em",flex:1,textTransform:"uppercase"}}
                 placeholder="XXXXXX" maxLength={6} value={form.codigo}
-                onChange={e=>setForm(f=>({...f,codigo:e.target.value.toUpperCase()}))}/>
+                onChange={e=>setForm(f=>({...f,codigo:e.target.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,6)}))}/>
               <button style={{...s.btn,padding:"8px 12px",fontSize:12,whiteSpace:"nowrap"}}
                 onClick={()=>setForm(f=>({...f,codigo:genCodigo()}))}>🎲 Generar</button>
             </div>
