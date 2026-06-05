@@ -145,21 +145,21 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const setVentas = (arg) => setVentasRaw(typeof arg==='function' ? prev=>arg(prev) : arg);
   const [productos, setProductos] = useLS("cat_productos_v3", PRODUCTOS_INICIALES);
   const normStock = (s) => {
-    const empty = {sifon:0,bidon10:0,bidon20:0};
-    const base = {soderia:{...empty},soderia_vacios:{...empty},casa:{...empty},camion:{...empty}};
+    const e = () => ({sifon:0,bidon10:0,bidon20:0,dispenser:0});
+    const pick = (o) => ({sifon:o?.sifon||0,bidon10:o?.bidon10||0,bidon20:o?.bidon20||0,dispenser:o?.dispenser||0});
+    const base = {soderia:e(),soderia_vacios:e(),casa:e(),camion:e()};
     if(!s||typeof s!=="object") return base;
     if(s.soderia&&typeof s.soderia==="object") {
       return {
-        soderia:        {sifon:s.soderia?.sifon||0,bidon10:s.soderia?.bidon10||0,bidon20:s.soderia?.bidon20||0},
-        soderia_vacios: {sifon:s.soderia_vacios?.sifon||0,bidon10:s.soderia_vacios?.bidon10||0,bidon20:s.soderia_vacios?.bidon20||0},
-        casa:           {sifon:s.casa?.sifon||0,bidon10:s.casa?.bidon10||0,bidon20:s.casa?.bidon20||0},
-        camion:         {sifon:s.camion?.sifon||0,bidon10:s.camion?.bidon10||0,bidon20:s.camion?.bidon20||0},
+        soderia:    pick(s.soderia),
+        soderia_vacios: pick(s.soderia_vacios),
+        casa:       pick(s.casa),
+        camion:     pick(s.camion),
       };
     }
-    // old format
-    return {soderia:{sifon:s.sifon||0,bidon10:s.bidon10||0,bidon20:s.bidon20||0},soderia_vacios:{...empty},casa:{...empty},camion:{...empty}};
+    return {soderia:pick(s), soderia_vacios:e(), casa:e(), camion:e()};
   };
-  const [stockRaw, setStockRaw] = useLS("cat_stock_v4", {soderia:{sifon:0,bidon10:0,bidon20:0},casa:{sifon:0,bidon10:0,bidon20:0},camion:{sifon:0,bidon10:0,bidon20:0}});
+  const [stockRaw, setStockRaw] = useLS("cat_stock_v4", {soderia:{sifon:0,bidon10:0,bidon20:0,dispenser:0},soderia_vacios:{sifon:0,bidon10:0,bidon20:0,dispenser:0},casa:{sifon:0,bidon10:0,bidon20:0,dispenser:0},camion:{sifon:0,bidon10:0,bidon20:0,dispenser:0}});
   const stockNorm = React.useMemo(()=>normStock(stockRaw), [JSON.stringify(stockRaw)]);
   const setStock = (sOrFn) => {
     if(typeof sOrFn === "function") {
@@ -178,9 +178,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const cerrarCamion = (sobrLlenos, vacios) => {
     setStock(prev=>{
       const s = JSON.parse(JSON.stringify(normStock(prev)));
-      ["sifon","bidon10","bidon20"].forEach(k=>{
-        s.soderia[k] = (s.soderia[k]||0) + (sobrLlenos[k]||0) + (vacios[k]||0);
-        s.camion[k]  = Math.max(0, (s.camion[k]||0) - (sobrLlenos[k]||0));
+      ["sifon","bidon10","bidon20","dispenser"].forEach(k=>{
+        s.soderia[k]    = (s.soderia[k]||0) + (sobrLlenos[k]||0);
+        s.soderia_vacios[k] = (s.soderia_vacios[k]||0) + (vacios[k]||0);
+        s.camion[k]  = Math.max(0, (s.camion[k]||0) - (sobrLlenos[k]||0) - (vacios[k]||0));
       });
       syncData({stock:s});
       return s;
@@ -966,7 +967,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         }}
         onVolver={()=>irA("menu")}
       />}
-      {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} ventas={ventas} productos={productos} planillas={planillas} onVolver={()=>irA("menu")} />}
+      {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDia} setCargasDia={saveCargasDia} planillas={planillas} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
       {pantalla==="fiadosPendientes" && <FiadosPendientes clientes={clientes} onCobrar={(cId,monto,pago)=>{
         const cl=clientes.find(c=>c.id===cId);if(!cl)return;
         const saldoAntes=cl.saldo||0;const saldoDespues=saldoAntes+monto;
