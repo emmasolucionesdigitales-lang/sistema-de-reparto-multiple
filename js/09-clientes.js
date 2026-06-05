@@ -109,7 +109,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
             </div>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:8,flexShrink:0,alignItems:"center"}}>
-            {c.maps     && <a href={c.maps} target="_blank" rel="noreferrer" style={{fontSize:20,textDecoration:"none"}}>📍</a>}
+            {(c.maps||(c.lat&&c.lng))     && <a href={c.maps||`https://www.google.com/maps?q=${c.lat},${c.lng}`} target="_blank" rel="noreferrer" style={{fontSize:20,textDecoration:"none"}}>📍</a>}
             {c.telefono && <a href={`https://wa.me/54${c.telefono}`} target="_blank" rel="noreferrer" style={{fontSize:20,textDecoration:"none"}}>💬</a>}
             <span style={{fontSize:20,cursor:"pointer",lineHeight:1}} title="Foto domicilio" onClick={e=>{e.stopPropagation();setFotoOpen(true);}}>📷</span>
           </div>
@@ -191,16 +191,6 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
       {volverAlFinal.length>0&&<><span style={{...s.sectionTitle,color:"#f5b942"}}>🔄 Volver a visitar ({volverAlFinal.length})</span>{volverAlFinal.map(c=><Card key={c.id} c={c}/>)}</>}
       {listos.length>0&&<><span style={s.sectionTitle}>Entregado ({listos.length})</span>{listos.map(c=><Card key={c.id} c={c}/>)}</>}
       {sinEntrega.length>0&&<><span style={s.sectionTitle}>Sin entrega ({sinEntrega.length})</span>{sinEntrega.map(c=><Card key={c.id} c={c}/>)}</>}
-
-      {/* Prospectos del día — usan el mismo Card con borde naranja */}
-      {prospectosDelDia.length>0&&(
-        <>
-          <span style={{...s.sectionTitle,color:"#f5b942"}}>🚀 Prospectos en promoción ({prospectosDelDia.length})</span>
-          {prospectosDelDia.map(p=>(
-            <Card key={p.id} c={{...p, _esProspecto:true}} />
-          ))}
-        </>
-      )}
 
       {/* Botón Reparto completo cuando todos los clientes están visitados */}
       {pendientes.length===0&&clientes.length>0&&(
@@ -340,7 +330,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
               {cliente.notas&&<div style={{fontSize:12,color:"var(--color-text-warning)",marginTop:3}}>📝 {cliente.notas}</div>}
             </div>
             <div style={{display:"flex",gap:10,alignItems:"center"}}>
-              {cliente.maps     && <a href={cliente.maps} target="_blank" rel="noreferrer" style={{fontSize:26,textDecoration:"none"}}>📍</a>}
+              {(cliente.maps||(cliente.lat&&cliente.lng))     && <a href={cliente.maps||`https://www.google.com/maps?q=${cliente.lat},${cliente.lng}`} target="_blank" rel="noreferrer" style={{fontSize:26,textDecoration:"none"}}>📍</a>}
               {cliente.telefono && <a href={`https://wa.me/54${cliente.telefono}`} target="_blank" rel="noreferrer" style={{fontSize:26,textDecoration:"none"}}>💬</a>}
 
             </div>

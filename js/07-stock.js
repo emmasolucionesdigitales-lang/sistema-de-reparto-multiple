@@ -6,7 +6,9 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
   const [clientesAbierto,setClientesAbierto]=React.useState(false);
   const hoyDia = DIAS[(new Date().getDay()+6)%7] || "Lunes";
   const [diaCarga,setDiaCarga]=React.useState(DIAS.includes(hoyDia)?hoyDia:"Lunes");
-  const PRODS=[["sifon","Sifón 1.5L"],["bidon10","Bidón 10L"],["bidon20","Bidón 20L"],["dispenser","Dispenser"]];
+  const STOCK_KEY={1:"sifon",2:"bidon10",3:"bidon20",4:"dispenser"};
+  const keyDe=(p)=> STOCK_KEY[p.id] || ("p"+p.id);
+  const PRODS=(productos||[]).length ? (productos||[]).map(p=>[keyDe(p), p.nombre]) : [["sifon","Sifón 1.5L"],["bidon10","Bidón 10L"],["bidon20","Bidón 20L"],["dispenser","Dispenser"]];
 
   const setLoc=(loc,key,val)=>{
     const ns=JSON.parse(JSON.stringify(stock));
@@ -19,6 +21,18 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
   };
   const setProdPrecio=(id,campo,val)=>{
     setProductos((productos||[]).map(p=>p.id===id?{...p,[campo]:Math.max(0,Number(val)||0)}:p));
+  };
+  const setProdNombre=(id,val)=>{
+    setProductos((productos||[]).map(p=>p.id===id?{...p,nombre:val}:p));
+  };
+  const agregarProducto=()=>{
+    const nombre=(window.prompt("Nombre del producto nuevo:")||"").trim();
+    if(!nombre) return;
+    setProductos([...(productos||[]),{id:Date.now(),nombre,costo:0,precio:0}]);
+  };
+  const eliminarProducto=(id)=>{
+    if(!window.confirm("¿Eliminar este producto de la lista? (No afecta ventas ya hechas)")) return;
+    setProductos((productos||[]).filter(p=>p.id!==id));
   };
   const setCarga=(dia,key,val)=>{
     const nc=JSON.parse(JSON.stringify(cargasDia||{}));
@@ -116,19 +130,21 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
         <div style={{...s.card,margin:"0 0 10px"}}>
           <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",marginBottom:3}}>🏷️ Productos y precios</div>
           <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:9}}>De acá salen los precios de la planilla y todas las ventas</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 74px 74px",gap:6,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
-            <span></span><span style={{textAlign:"center"}}>Llenado</span><span style={{textAlign:"center"}}>Venta</span>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 66px 66px 24px",gap:5,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
+            <span>Producto</span><span style={{textAlign:"center"}}>Llenado</span><span style={{textAlign:"center"}}>Venta</span><span></span>
           </div>
           {(productos||[]).map(p=>(
-            <div key={p.id} style={{display:"grid",gridTemplateColumns:"1fr 74px 74px",gap:6,alignItems:"center",marginBottom:5}}>
-              <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{p.nombre}</span>
+            <div key={p.id} style={{display:"grid",gridTemplateColumns:"1fr 66px 66px 24px",gap:5,alignItems:"center",marginBottom:5}}>
+              <input type="text" value={p.nombre||""} onChange={e=>setProdNombre(p.id,e.target.value)} style={{...inNum,textAlign:"left",fontSize:12}} />
               <input type="number" value={p.costo||0} onChange={e=>setProdPrecio(p.id,"costo",e.target.value)} style={{...inNum,fontSize:12}} />
               {p.esDispenser
-                ? <span style={{textAlign:"center",fontSize:11,color:"var(--color-text-warning)"}}>comodato</span>
+                ? <span style={{textAlign:"center",fontSize:10,color:"var(--color-text-warning)"}}>comod.</span>
                 : <input type="number" value={p.precio||0} onChange={e=>setProdPrecio(p.id,"precio",e.target.value)} style={{...inNum,fontSize:12}} />
               }
+              <button onClick={()=>eliminarProducto(p.id)} title="Eliminar" style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"var(--color-text-danger)",padding:0}}>🗑</button>
             </div>
           ))}
+          <button onClick={agregarProducto} style={{...s.btn,width:"100%",marginTop:6,fontSize:13}}>+ Agregar producto</button>
         </div>
 
         {/* CARGA DIARIA */}

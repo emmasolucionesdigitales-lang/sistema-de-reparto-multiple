@@ -179,7 +179,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                   </div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0,alignItems:"center"}}>
-                  {c.maps&&<a href={c.maps} target="_blank" rel="noreferrer" style={{fontSize:18,textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
+                  {(c.maps||(c.lat&&c.lng))&&<a href={c.maps||`https://www.google.com/maps?q=${c.lat},${c.lng}`} target="_blank" rel="noreferrer" style={{fontSize:18,textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
                   {c.telefono&&<a href={`https://wa.me/54${c.telefono}`} target="_blank" rel="noreferrer" style={{fontSize:18,textDecoration:"none"}} onClick={e=>e.stopPropagation()}>💬</a>}
                   <span style={{fontSize:18,cursor:"pointer",lineHeight:1}} onClick={e=>{e.stopPropagation();setFotoClienteId(fotoClienteId===c.id?null:c.id);}}>📷</span>
                 </div>
@@ -958,7 +958,7 @@ function CargaGPSMasiva({clientes, onActualizar, onVolver}) {
           <label style={{...s.label,fontSize:12,fontWeight:600}}>Pegá las coordenadas (ej: -26.86590, -65.21780)</label>
           <input style={{...s.input,marginTop:4}} placeholder="-26.86590, -65.21780"
             value={latVal&&lngVal?`${latVal}, ${lngVal}`:latVal}
-            onChange={e=>{const raw=e.target.value;const m=raw.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);if(m){setLatVal(m[1]);setLngVal(m[2]);}else setLatVal(raw);}}
+            onChange={e=>{const raw=e.target.value;const m=raw.match(/(-?\d+(?:\.\d+)?)[,;\s]+(-?\d+(?:\.\d+)?)/);if(m){setLatVal(m[1]);setLngVal(m[2]);}else setLatVal(raw);}}
           />
           {latOk?<div style={{fontSize:11,color:"#4dd9a0",marginTop:4}}>✓ {latVal}, {lngVal}</div>
             :<div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:4}}>Pegá los dos números separados por coma</div>}

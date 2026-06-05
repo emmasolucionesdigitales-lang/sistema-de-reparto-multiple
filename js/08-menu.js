@@ -342,7 +342,7 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
                   ?<span style={{fontSize:12,color:"var(--color-text-danger)"}}>⚠ {deudas.length} cliente{deudas.length>1?"s":""} {deudas.length>1?"deben":"debe"} {fmt(totalDeuda)}</span>
                   :<span style={{fontSize:12,color:"var(--color-text-success)"}}>✓ Sin deudas</span>
                 }
-                <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{totalClientes} cliente{totalClientes!==1?"s":""}{totalProspectos>0?` + ${totalProspectos} prosp.`:""}</span>
+                <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{totalClientes} cliente{totalClientes!==1?"s":""}</span>
               </div>
             </div>
             <span style={{color:"var(--color-text-tertiary)",fontSize:18,marginLeft:10}}>→</span>
@@ -444,8 +444,8 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
         {/* ── Botones del menú reorganizados ── */}
         <div style={{display:"flex",flexDirection:"column",gap:8,paddingBottom:8}}>
 
-          {/* Fila 1: Clientes (con Agenda y Fiados) + Promoción */}
-          <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8}}>
+          {/* Fila 1: Clientes (con Agenda y Fiados) */}
+          <div>
             {/* Clientes — grande con sub-botones */}
             <div style={{background:"var(--color-background-tertiary)",borderRadius:12,padding:"10px 10px 8px",
               boxShadow:"0 3px 6px rgba(0,0,0,0.3)"}}>
@@ -465,14 +465,6 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
                 ))}
               </div>
             </div>
-            {/* Promoción */}
-            <button onClick={onPromocion} style={{display:"flex",flexDirection:"column",alignItems:"center",
-              justifyContent:"center",gap:4,padding:"14px 6px",borderRadius:12,cursor:"pointer",
-              border:"2px solid transparent",background:"var(--color-background-tertiary)",
-              boxShadow:"0 3px 6px rgba(0,0,0,0.3)"}}>
-              <span style={{fontSize:22}}>🚀</span>
-              <span style={{fontSize:11,fontWeight:500,color:"var(--color-text-primary)",textAlign:"center"}}>Promoción</span>
-            </button>
           </div>
 
           {/* Fila 2: Stock (con Resumen) + Config */}

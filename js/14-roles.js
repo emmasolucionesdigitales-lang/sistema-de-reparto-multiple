@@ -332,11 +332,6 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="clientes"&&ventasHoy.length+noVisHoy.length>=clientes.length&&clientes.length>0&&(
         <div style={{padding:"0 14px 16px",display:"flex",flexDirection:"column",gap:8}}>
-          {prospectos.filter(p=>p.dia===diaActual&&(p.estado==="activo"||!p.estado)&&!ventasHoy.find(v=>v.clienteId===p.id)).length>0&&(
-            <div style={{background:"#2e1f06",border:"1px solid #f5b942",borderRadius:10,padding:"10px 14px",fontSize:13,color:"#f5b942",textAlign:"center"}}>
-              🚀 Tenés prospectos pendientes arriba en la lista
-            </div>
-          )}
           <button style={{...s.btnPrimary,background:"#1a8a4a"}} onClick={()=>irA("planilla")}>
             {"\u2705 Recorrido terminado \u2014 Ir a planilla del d\u00eda"}
           </button>

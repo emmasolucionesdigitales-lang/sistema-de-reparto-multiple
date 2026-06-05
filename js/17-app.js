@@ -146,7 +146,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [productos, setProductos] = useLS("cat_productos_v3", PRODUCTOS_INICIALES);
   const normStock = (s) => {
     const e = () => ({sifon:0,bidon10:0,bidon20:0,dispenser:0});
-    const pick = (o) => ({sifon:o?.sifon||0,bidon10:o?.bidon10||0,bidon20:o?.bidon20||0,dispenser:o?.dispenser||0});
+    const pick = (o) => { const r={sifon:0,bidon10:0,bidon20:0,dispenser:0}; if(o&&typeof o==="object"){ for(const k in o){ r[k]=Math.max(0,Math.round(Number(o[k])||0)); } } return r; };
     const base = {soderia:e(),soderia_vacios:e(),casa:e(),camion:e()};
     if(!s||typeof s!=="object") return base;
     if(s.soderia&&typeof s.soderia==="object") {
@@ -305,7 +305,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     setSyncStatus("saving");
     const mantVehActual = (() => { try { return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
     const histPreciosActual = (() => { try { return JSON.parse(localStorage.getItem("lc_hist_precios")||"[]"); } catch { return []; } })();
-    const data = { ...estadoRef.current, ...overrides, noVisitas: estadoRef.current.noVisitas||[], prospectos: overrides.prospectos!==undefined ? overrides.prospectos : (estadoRef.current.prospectos||[]), recordatorios: estadoRef.current.recordatorios||[], mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{}, repartos: overrides.repartos||estadoRef.current.repartos||[] };
+    const data = { ...estadoRef.current, ...overrides, noVisitas: overrides.noVisitas!==undefined ? overrides.noVisitas : (estadoRef.current.noVisitas||[]), prospectos: overrides.prospectos!==undefined ? overrides.prospectos : (estadoRef.current.prospectos||[]), recordatorios: overrides.recordatorios!==undefined ? overrides.recordatorios : (estadoRef.current.recordatorios||[]), mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{}, repartos: overrides.repartos||estadoRef.current.repartos||[] };
     estadoRef.current = data;
     debounceSave(() => {
       if(!navigator.onLine) {

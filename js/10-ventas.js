@@ -70,7 +70,7 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
           </div>
         </div>
         <div style={{display:"flex",gap:6,fontSize:17,flexShrink:0}}>
-          {cliente.maps&&<a href={cliente.maps} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
+          {(cliente.maps||(cliente.lat&&cliente.lng))&&<a href={cliente.maps||`https://www.google.com/maps?q=${cliente.lat},${cliente.lng}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
           {cliente.telefono&&<a href={`https://wa.me/54${cliente.telefono}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>💬</a>}
         </div>
       </div>
