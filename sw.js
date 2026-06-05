@@ -4,11 +4,12 @@ const ASSETS = [
   'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
   'https://unpkg.com/@babel/standalone/babel.min.js',
   'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{})).then(() => self.skipWaiting())
   );
 });
 
@@ -20,41 +21,37 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Librerías pesadas de CDN (versionadas, no cambian) → caché primero.
-// Todo lo demás (index.html y los .js de la app) → red primero, así
-// siempre ves la última versión; si no hay internet, usa la caché.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = e.request.url;
-  const esLibCDN = url.includes('unpkg.com') ||
-                   url.includes('jsdelivr.net') ||
-                   url.includes('cdnjs.cloudflare.com') ||
-                   url.includes('gstatic.com') ||
-                   url.includes('googleapis.com');
 
-  if (esLibCDN) {
-    // Caché primero (rápido y offline para las librerías)
+  // 1) NO interceptar Firebase/Google (rompe con "Failed to convert to Response")
+  if (
+    url.includes('googleapis.com') ||
+    url.includes('gstatic.com') ||
+    url.includes('firebaseio.com') ||
+    url.includes('firebase.com') ||
+    url.includes('firestore.googleapis') ||
+    url.includes('securetoken.googleapis')
+  ) return; // lo maneja el navegador directo
+
+  // 2) Librerías pesadas de CDN (versionadas) -> CACHÉ primero
+  if (url.includes('unpkg.com') || url.includes('jsdelivr.net') || url.includes('cdnjs.cloudflare.com')) {
     e.respondWith(
       caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
-        if (res && res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
+        if (res && res.ok) { const cl = res.clone(); caches.open(CACHE).then(c => c.put(e.request, cl)); }
         return res;
-      }))
+      }).catch(() => new Response('', { status: 503 })))
     );
     return;
   }
 
-  // Red primero para la app (siempre lo último), caché de respaldo offline
+  // 3) App (index.html y .js) -> RED primero (siempre lo último), caché de respaldo offline
   e.respondWith(
     fetch(e.request).then(res => {
-      if (res && res.ok) {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
+      if (res && res.ok) { const cl = res.clone(); caches.open(CACHE).then(c => c.put(e.request, cl)); }
       return res;
-    }).catch(() => caches.match(e.request))
+    }).catch(() => caches.match(e.request).then(c => c || new Response('', { status: 503 })))
   );
 });
 
