@@ -873,7 +873,7 @@ function ConfigApariencia() {
 }
 
 // ── VistaClientesGeneral (dueño ve TODOS los clientes agrupados) ──
-function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onVolver}) {
+function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onAgenda, onMapa, onVolver}) {
   const [busq, setBusq] = React.useState("");
   const [repFiltro, setRepFiltro] = React.useState("todos");
   const [diaFiltro, setDiaFiltro] = React.useState("todos");
@@ -934,7 +934,9 @@ function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onVolve
     <div style={s.screen}>
       <div style={s.header}>
         <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Todos los clientes</span>
+        <span style={{...s.headerTitle,flex:1}}>Todos los clientes</span>
+        {onAgenda&&<button title="Agenda" style={{...s.btn,padding:"6px 10px",fontSize:15}} onClick={onAgenda}>📅</button>}
+        {onMapa&&<button title="Mapa" style={{...s.btn,padding:"6px 10px",fontSize:15}} onClick={onMapa}>🗺</button>}
       </div>
 
       {/* Resumen general */}

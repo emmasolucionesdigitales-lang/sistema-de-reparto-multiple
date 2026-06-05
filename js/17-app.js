@@ -953,6 +953,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         repartos={repartos}
         ventas={ventas}
         onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}}
+        onAgenda={()=>irA("agenda")}
+        onMapa={()=>irA("mapaClientes")}
         onVolver={()=>irA("menu")}
       />}
       {pantalla==="agenda" && <AgendaScreen

@@ -219,11 +219,9 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
             {[
               {ico:"📊",lbl:"Resumen",sub:"Ventas del período",fn:onResumen,color:"#185FA5"},
-              {ico:"👥",lbl:"Todos los clientes",sub:"Ver y registrar por día",fn:onTodosClientes,color:"#0e7c6b"},
-              {ico:"🗺",lbl:"Mapa de clientes",sub:"Ver clientes en el mapa",fn:onMapaClientes,color:"#065f46"},
-              {ico:"📥",lbl:"Importar clientes",sub:"Cargar desde Excel",fn:onImportarClientes,color:"#7c3aed"},
-              {ico:"📅",lbl:"Agenda",sub:"Recordatorios",fn:onAgenda,color:"#c17a1a"},
-              {ico:"⚙️",lbl:"Configuración",sub:"Productos, stock, backup",fn:()=>onConfig&&onConfig("stock"),color:"#555"},
+              {ico:"👥",lbl:"Todos los clientes",sub:"Clientes, agenda y mapa",fn:onTodosClientes,color:"#0e7c6b"},
+              {ico:"📦",lbl:"Stock",sub:"Sodería, depósito, carga",fn:onStock,color:"#065f46"},
+              {ico:"⚙️",lbl:"Configuración",sub:"Productos, precios, datos",fn:()=>onConfig&&onConfig("datos"),color:"#555"},
             ].map(({ico,lbl,sub,fn,color})=>(
               <button key={lbl} onClick={fn}
                 style={{display:"flex",alignItems:"center",gap:10,padding:"14px 12px",
