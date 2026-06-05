@@ -1,148 +1,109 @@
-// ── App Reparto Multi · Enviador de notificaciones push ──────────────────
-// Corre desde GitHub Actions. Itera sobre todos los negocios registrados
-// y envía notificaciones push al dueño de cada uno.
+// enviar-notificaciones.js  —  Sistema de Reparto (MULTI)
+// Recorre los negocios, mira los recordatorios de cada uno y envía un push
+// al dueño cuando llega la hora. Se ejecuta solo desde GitHub Actions.
 
-const webpush = require('web-push');
 const admin   = require('firebase-admin');
+const webpush = require('web-push');
 
-// ── Inicializar Firebase Admin ────────────────────────────────────────────
-const sa = JSON.parse(Buffer.from(process.env.FIREBASE_SA, 'base64').toString('utf8'));
+// ── Claves VAPID de la MULTI (la pública coincide con la del index.html) ──
+const VAPID_PUBLIC  = 'BCddH8J9o3uc7RnLKD2PV9Ut4FfoQPBnlN0y1CbDGJptSqNYsPU5kiVCWDsXmuR4xv1yFUuKyJdwO2ar2B0lBFQ';
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE;            // secreto de GitHub
+
+const VENTANA_MIN = 20;  // tolerancia hacia atrás por demoras de GitHub Actions
+
+webpush.setVapidDetails('mailto:carabajalponce1980@gmail.com', VAPID_PUBLIC, VAPID_PRIVATE);
+
+const sa = JSON.parse(process.env.FIREBASE_SA);
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 
-// ── Configurar VAPID ─────────────────────────────────────────────────────
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL}`,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+function ahoraArg(){ return new Date(Date.now() - 3 * 60 * 60 * 1000); }   // UTC-3
+function fechaStr(d){ return d.toISOString().slice(0, 10); }
+function minutosDelDia(d){ return d.getUTCHours() * 60 + d.getUTCMinutes(); }
 
-// ── Hora Argentina (UTC-3) ────────────────────────────────────────────────
-function horaArg() {
-  return new Date(Date.now() - 3 * 60 * 60 * 1000).getUTCHours();
-}
-function fechaArgHoy() {
-  return new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
-
-// ── Enviar push ───────────────────────────────────────────────────────────
-async function enviar(sub, payload, negocioId) {
-  try {
-    await webpush.sendNotification(sub, JSON.stringify(payload));
-    console.log(`✅ [${negocioId}] Enviada:`, payload.title);
-  } catch (err) {
-    console.error(`❌ [${negocioId}] Error:`, err.statusCode, err.message);
-    if (err.statusCode === 410 || err.statusCode === 404) {
-      await db.collection('negocios').doc(negocioId).collection('datos').doc('push_sub').delete();
-      console.log(`⚠ [${negocioId}] Suscripción expirada, borrada.`);
-    }
+// Reconstruye la lista de clientes (están repartidos en cl_0, cl_1, ...)
+async function cargarClientes(col){
+  const meta = await col.doc('clientes_meta').get();
+  const nc = meta.exists ? (meta.data().n || 0) : 0;
+  let clientes = [];
+  for(let i=0;i<nc;i++){
+    const d = await col.doc('cl_' + i).get();
+    if(d.exists) clientes = clientes.concat(d.data().d || []);
   }
+  return clientes;
 }
 
-// ── Obtener todos los negocios con suscripción ────────────────────────────
-async function getNegociosConSub() {
-  const snap = await db.collection('negocios').get();
-  const result = [];
-  for (const negDoc of snap.docs) {
+async function main(){
+  const arg      = ahoraArg();
+  const hoy      = fechaStr(arg);
+  const ahoraMin = minutosDelDia(arg);
+  console.log('Hora Argentina:', hoy, String(Math.floor(ahoraMin/60)).padStart(2,'0') + ':' + String(ahoraMin%60).padStart(2,'0'));
+
+  const negocios = await db.collection('negocios').get();
+  let enviados = 0;
+
+  for (const negDoc of negocios.docs){
     const negocioId = negDoc.id;
-    const subDoc = await db.collection('negocios').doc(negocioId).collection('datos').doc('push_sub').get();
-    if (!subDoc.exists) continue;
-    try {
-      const sub = JSON.parse(subDoc.data().sub);
-      result.push({ negocioId, sub });
-    } catch { continue; }
-  }
-  return result;
-}
+    const col       = db.collection('negocios').doc(negocioId).collection('datos');
 
-// ── Transferencias pendientes para un negocio ─────────────────────────────
-async function checkTransferencias(negocioId, sub) {
-  const hoy = fechaArgHoy();
-  let pendientes = 0;
-  try {
-    const col = db.collection('negocios').doc(negocioId).collection('datos');
-    const meta = await col.doc('ventas_meta').get();
-    if (!meta.exists) return;
-    const n = meta.data().n || 0;
-    for (let i = 0; i < n; i++) {
-      const doc = await col.doc(`vt_${i}`).get();
-      if (!doc.exists) continue;
-      (doc.data().d || []).forEach(v => {
-        if (v.fechaKey === hoy && v.pago === 'transferencia' && !v.transConfirmada) pendientes++;
-      });
-    }
-  } catch (e) { console.error(`[${negocioId}] Error ventas:`, e.message); return; }
-  if (pendientes > 0) {
-    await enviar(sub, {
-      title: '💳 Transferencias sin confirmar',
-      body: `Tenés ${pendientes} transferencia${pendientes > 1 ? 's' : ''} pendiente${pendientes > 1 ? 's' : ''} de hoy.`,
-      tag: 'trans-pendientes',
-      requireInteraction: true,
-    }, negocioId);
-  } else {
-    console.log(`[${negocioId}] Sin transferencias pendientes.`);
-  }
-}
+    // 1) suscripción (del dueño)
+    const subSnap = await col.doc('push_sub').get();
+    if(!subSnap.exists) continue;
+    let sub;
+    try { sub = JSON.parse(subSnap.data().sub); } catch { continue; }
 
-// ── Mantenimiento de vehículo para un negocio ─────────────────────────────
-async function checkMantenimiento(negocioId, sub) {
-  try {
-    const col = db.collection('negocios').doc(negocioId).collection('datos');
-    const doc = await col.doc('config').get();
-    if (!doc.exists) return;
-    const mantVeh = doc.data().mantVeh || [];
-    const hoy = new Date(fechaArgHoy() + 'T12:00:00');
-    for (const m of mantVeh) {
-      if (!m.proximaFechaISO) continue;
-      const prox = new Date(m.proximaFechaISO + 'T12:00:00');
-      const dias = Math.round((prox - hoy) / (1000 * 60 * 60 * 24));
-      if ([0, 1, 2, 3].includes(dias)) {
-        const labels = { aceite:'Cambio de aceite', preventivo:'Mantenimiento preventivo', embrague:'Cambio de embrague', reparacion:'Reparación', otro:'Mantenimiento' };
-        const tipo = labels[m.tipo] || m.tipo || 'Mantenimiento';
-        const cuando = dias === 0 ? 'HOY' : `en ${dias} día${dias > 1 ? 's' : ''}`;
-        await enviar(sub, {
-          title: '🔧 Vencimiento de mantenimiento',
-          body: `${tipo} vence ${cuando}${m.descripcion ? ' — ' + m.descripcion : ''}.`,
-          tag: `mant-${m.proximaFechaISO}`,
-          requireInteraction: false,
-        }, negocioId);
+    // 2) recordatorios (están en 'config')
+    const cfgSnap = await col.doc('config').get();
+    if(!cfgSnap.exists) continue;
+    const recordatorios = cfgSnap.data().recordatorios || [];
+    if(!recordatorios.length) continue;
+
+    // 3) log de enviados
+    const logSnap = await col.doc('push_log').get();
+    const log     = logSnap.exists ? (logSnap.data().enviados || {}) : {};
+    let cambioLog = false;
+
+    // clientes (solo si hace falta un nombre)
+    let clientes = null;
+
+    for (const r of recordatorios){
+      if(r.confirmado) continue;
+      if(r.fecha !== hoy) continue;
+      if(!r.hora) continue;
+
+      const [h, m] = r.hora.split(':').map(Number);
+      const recMin = h * 60 + m;
+      if(recMin > ahoraMin) continue;
+      if(ahoraMin - recMin > VENTANA_MIN) continue;
+
+      const clave = r.id + '_' + r.fecha;
+      if(log[clave]) continue;
+
+      if(clientes === null) clientes = await cargarClientes(col);
+      const cli    = clientes.find(c => c.id === r.clienteId);
+      const nombre = (cli && cli.nombre) || r.clienteNombre || '';
+      const cuerpo = (nombre ? nombre + ' — ' : '') + (r.motivo || 'Tenés un recordatorio');
+
+      try {
+        await webpush.sendNotification(sub, JSON.stringify({
+          title: '🔔 Recordatorio', body: cuerpo, tag: clave, requireInteraction: true
+        }));
+        log[clave] = Date.now();
+        cambioLog  = true;
+        enviados++;
+        console.log('✓ Enviado a', negocioId, '-', cuerpo);
+      } catch(e){
+        console.log('✗ Error en', negocioId, ':', e.statusCode || e.message);
+        if(e.statusCode === 410 || e.statusCode === 404){
+          await col.doc('push_sub').delete().catch(()=>{});
+        }
       }
     }
-  } catch (e) { console.error(`[${negocioId}] Error mantenimiento:`, e.message); }
-}
 
-// ── Main ─────────────────────────────────────────────────────────────────
-async function main() {
-  const hora = horaArg();
-  console.log(`Hora Argentina: ${hora}:00`);
-
-  const negocios = await getNegociosConSub();
-  console.log(`Negocios con suscripción: ${negocios.length}`);
-  if (negocios.length === 0) { process.exit(0); return; }
-
-  for (const { negocioId, sub } of negocios) {
-    console.log(`\nProcesando negocio: ${negocioId}`);
-    if (hora === 7)  await checkMantenimiento(negocioId, sub);
-    if (hora === 13) await checkTransferencias(negocioId, sub);
-    if (hora === 18) {
-      await enviar(sub, {
-        title: '🚚 Reparto — 18:00 hs',
-        body: '¿Ya revisaste todas las entregas del día?',
-        tag: 'cierre-18',
-        requireInteraction: false,
-      }, negocioId);
-    }
-    if (hora === 19) await checkTransferencias(negocioId, sub);
-    if (hora === 20) {
-      await enviar(sub, {
-        title: '⏰ Son las 20:00 hs',
-        body: 'Hora de cerrar la planilla. Los pendientes quedarán como no visitados.',
-        tag: 'cierre-20',
-        requireInteraction: true,
-      }, negocioId);
-    }
+    if(cambioLog) await col.doc('push_log').set({ enviados: log }, { merge: true });
   }
-  process.exit(0);
+
+  console.log('Listo. Notificaciones enviadas:', enviados);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
