@@ -14,7 +14,7 @@ jobs:
         with:
           node-version: '20'
       - run: npm install firebase-admin web-push
-      - run: node enviar-notificaciones.js
+      - run: node enviar-scripts/enviar-notif.js
         env:
           FIREBASE_SA:   ${{ secrets.FIREBASE_SA }}
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE_KEY }}
