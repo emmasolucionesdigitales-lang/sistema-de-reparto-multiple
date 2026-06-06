@@ -672,7 +672,7 @@ function exportarExcel(clientes,ventas,productos,planillas){
   XLSX.writeFile(wb,`backup_reparto-app_${fecha}.xlsx`);
 }
 
-function importarClientesPlanilla(file, clientesActuales, onImportado) {
+function importarClientesPlanilla(file, clientesActuales, onImportado, repartoId) {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
@@ -765,6 +765,7 @@ function importarClientesPlanilla(file, clientesActuales, onImportado) {
           dispenser:  getN(C.dispenser),
           saldo:      getN(C.saldo),
           notas:      get(C.notas),
+          repartoId:  repartoId||null,
         });
       });
 

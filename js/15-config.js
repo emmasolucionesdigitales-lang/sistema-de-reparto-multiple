@@ -2,10 +2,11 @@
 // ◆  14-config.js — Config
 // ════════════════════════════════════════════════════════════════════
 
-function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial,repartos}) {
+function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial,repartos,repartoActual}) {
   const [tab,setTab]=useState(["datos","vehiculo","apariencia"].includes(tabInicial)?tabInicial:"datos");
   const [editandoId,setEditandoId]=useState(null);
   const [importando,setImportando]=useState(false);
+  const [importReparto,setImportReparto]=useState(repartoActual?.id??"");
   // ▶ Fix: filtroReparto faltaba declarado — causaba crash al abrir Datos
   const [filtroReparto,setFiltroReparto]=useState("todos");
   const [mantVeh,setMantVeh] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]");}catch{return [];}});
@@ -19,9 +20,8 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
         {[
           [["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
-          [["x","",""],["x","",""],["x","",""],["x","",""]],
         ].map((fila,fi)=>(
-          <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:8}}>
+          <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:8}}>
             {fila.map(([id,ico,lbl])=>(
               <button key={id} onClick={()=>setTab(id)} style={{
                 display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,
@@ -279,10 +279,25 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
                </button>
               :<div style={{...s.card,margin:0}}>
                  <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8}}>Seleccioná el archivo Excel con los clientes:</div>
+                 {(repartos&&repartos.length>0)&&(
+                   <div style={{marginBottom:10}}>
+                     <label style={{...s.label,fontWeight:500}}>Asignar los clientes a:</label>
+                     <select style={{...s.input}} value={importReparto}
+                       onChange={e=>setImportReparto(e.target.value?Number(e.target.value)||e.target.value:"")}>
+                       <option value="">— Sin asignar —</option>
+                       {repartos.map(r=>(
+                         <option key={r.id} value={r.id}>{r.numero}. {r.repartidorNombre}</option>
+                       ))}
+                     </select>
+                     <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:4}}>
+                       Los clientes importados quedarán asignados a ese reparto.
+                     </div>
+                   </div>
+                 )}
                  <input type="file" accept=".xlsx" style={{...s.input,marginBottom:8,padding:"6px"}}
                    onChange={e=>{
                      if(e.target.files[0]){
-                       importarClientesPlanilla(e.target.files[0], clientes, (nuevos)=>{setClientes(nuevos);syncData({clientes:nuevos,negocioId});});
+                       importarClientesPlanilla(e.target.files[0], clientes, (nuevos)=>{setClientes(nuevos);syncData({clientes:nuevos,negocioId});}, importReparto||null);
                      }
                      setImportando(false);
                    }}
