@@ -2,7 +2,7 @@
 // ◆  08-menu.js — MenuRepartos · MenuDias · DiaPrincipal · PlanillaDelDia · InicioReparto
 // ════════════════════════════════════════════════════════════════════
 
-function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,tabInicial,onTabChange}) {
+function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,tabInicial,onTabChange}) {
   const [tab, setTab] = React.useState(tabInicial||"repartos");
   const cambiarTab = (t) => { setTab(t); if(onTabChange) onTabChange(t); };
   const [modoNuevo, setModoNuevo] = React.useState(false);
@@ -38,6 +38,10 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
   const clientesPorReparto = (repId) => clientes.filter(c=>c.repartoId===repId);
   const deudaPorReparto = (repId) => clientes.filter(c=>c.repartoId===repId&&c.saldo<0).reduce((a,c)=>a+Math.abs(c.saldo),0);
   const deudoresCount = (repId) => clientes.filter(c=>c.repartoId===repId&&c.saldo<0).length;
+  const visitasPorReparto = (repId) => {
+    const ids = new Set(clientesPorReparto(repId).map(c=>c.id));
+    return (recordatorios||[]).filter(r=>!r.confirmado && ids.has(r.clienteId));
+  };
 
   return (
     <div style={s.screen}>
@@ -154,13 +158,20 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,onSeleccionar,onConfig
                       !v.transConfirmada &&
                       clientesPorReparto(rep.id).some(c=>c.id===v.clienteId)
                     );
-                    if(!pendTrans.length) return null;
+                    const pendVisitas = visitasPorReparto(rep.id);
+                    if(!pendTrans.length && !pendVisitas.length) return null;
                     return (
-                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flexShrink:0,marginRight:4}}>
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0,marginRight:4}}>
+                        {pendVisitas.length>0 &&
+                        <div style={{background:"var(--color-background-info)",border:"0.5px solid #5daaff",borderRadius:8,padding:"4px 8px",textAlign:"center"}}>
+                          <div style={{fontSize:14,fontWeight:500,color:"#5daaff"}}>🔔 {pendVisitas.length}</div>
+                          <div style={{fontSize:9,color:"#5daaff",lineHeight:1.2}}>visita{pendVisitas.length>1?"s":""} agend.</div>
+                        </div>}
+                        {pendTrans.length>0 &&
                         <div style={{background:"var(--color-background-warning)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:8,padding:"4px 8px",textAlign:"center"}}>
                           <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-warning)"}}>{pendTrans.length}</div>
                           <div style={{fontSize:9,color:"var(--color-text-warning)",lineHeight:1.2}}>transfer{pendTrans.length>1?"s":""} pend.</div>
-                        </div>
+                        </div>}
                       </div>
                     );
                   })()}

@@ -665,6 +665,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         repartos={repartos}
         clientes={clientes}
         ventas={ventas}
+        recordatorios={recordatorios}
         onSeleccionar={(rep)=>{setRepartoActual(rep);irA("diasReparto");}}
         onConfig={(tab)=>{setTabConfig(tab||"stock");irA("config");}}
         onResumen={()=>irA("resumen")}
