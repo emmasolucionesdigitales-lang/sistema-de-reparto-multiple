@@ -2,14 +2,13 @@
 // ◆  05-licencias.js — Brevo · PantallaActivacion · PantallaPin · getDeviceId · getLogo
 // ════════════════════════════════════════════════════════════════════
 
-const EMAIL_ENDPOINT = "https://script.google.com/macros/s/AKfycbzmNoGW8yrdtUTjGUhLym67rDfRc9-h4FtYqFWkOEojkIYnDGEy13gt1704S74YU9xj/exec";
-const EMAIL_TOKEN    = "Emma131017";
-
+// El endpoint y token del proxy de email se declaran una sola vez en index.html
+// (window.EMAIL_ENDPOINT / window.EMAIL_TOKEN). Acá se reutilizan.
 async function enviarEmailBrevo({to, toName, subject, htmlContent}) {
   try {
-    await fetch(EMAIL_ENDPOINT, {
+    await fetch(window.EMAIL_ENDPOINT, {
       method:"POST",
-      body: JSON.stringify({token:EMAIL_TOKEN, to, toName:toName||to, subject, htmlContent})
+      body: JSON.stringify({token:window.EMAIL_TOKEN, to, toName:toName||to, subject, htmlContent})
     });
     return true;
   } catch(e) { console.error("Email error",e); return false; }

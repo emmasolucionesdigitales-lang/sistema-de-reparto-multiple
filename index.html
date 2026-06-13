@@ -122,6 +122,8 @@ self.addEventListener('notificationclick',e=>{
 
     const EMAIL_ENDPOINT = "https://script.google.com/macros/s/AKfycbzmNoGW8yrdtUTjGUhLym67rDfRc9-h4FtYqFWkOEojkIYnDGEy13gt1704S74YU9xj/exec";
     const EMAIL_TOKEN = "Emma131017";
+    window.EMAIL_ENDPOINT = EMAIL_ENDPOINT;
+    window.EMAIL_TOKEN = EMAIL_TOKEN;
     window.enviarEmailBrevoRM = async function({to, toName, subject, htmlContent}) {
       try {
         await fetch(EMAIL_ENDPOINT, {
