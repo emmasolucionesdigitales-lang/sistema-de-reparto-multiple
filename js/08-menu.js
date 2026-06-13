@@ -681,6 +681,7 @@ function DetalleVentasDia({ventas, clientes, prospectos, noVisitas, fecha}) {
 
 function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre,prospectos,noVisitas}) {
   // Separar ventas del día propio vs ventas de clientes de otro día
+  const [enviosInforme,setEnviosInforme] = React.useState(()=>Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`)||0));
   const clientesDia = new Set((clientes||[]).filter(c=>c.dia===dia).map(c=>c.id));
   const ventasPropias  = ventas.filter(v=>clientesDia.has(v.clienteId));
   const ventasExtraDia = ventas.filter(v=>!clientesDia.has(v.clienteId)&&(!v.dia||v.dia===dia)&&v.fechaKey===fecha);
@@ -1242,16 +1243,27 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
         </div>
         <button style={s.btnPrimary} onClick={()=>onGuardar(datos)}>Guardar planilla</button>
         {onCerrarDia&&ventas.length>0&&(()=>{
-          const yaEnviado = !!localStorage.getItem(`sr_informe_${fecha}_${dia}`);
+          const MAX_ENVIOS = 3;
+          const envios = enviosInforme;
+          const quedan = MAX_ENVIOS - envios;
+          const agotado = quedan<=0;
           return (
-            <button style={{...s.btnPrimary,background:yaEnviado?"#0F6E56":"#8B2FC9",marginTop:8,width:"100%"}}
+            <button style={{...s.btnPrimary,background:agotado?"#555":envios>0?"#0F6E56":"#8B2FC9",marginTop:8,width:"100%",cursor:agotado?"default":"pointer",opacity:agotado?0.7:1}}
               onClick={async()=>{
-                if(yaEnviado){alert("El informe del día ya fue enviado a tu email.");return;}
+                if(agotado){alert(`Ya enviaste el informe del día ${MAX_ENVIOS} veces (el máximo). Revisá tu email, incluida la carpeta de spam.`);return;}
                 const ok = await onCerrarDia();
-                if(ok) alert("✅ Informe enviado a tu email correctamente.");
-                else alert("❌ No se pudo enviar el informe. Verificá tu conexión.");
+                if(ok){
+                  setEnviosInforme(Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`)||envios+1));
+                  alert(`✅ Informe enviado a tu email correctamente.${quedan-1>0?`\n\nSi no te llega, podés reenviarlo ${quedan-1} ${quedan-1===1?"vez":"veces"} más.`:""}`);
+                } else {
+                  alert("❌ No se pudo enviar el informe. Verificá tu conexión e intentá de nuevo.");
+                }
               }}>
-              {yaEnviado?"✓ Informe ya enviado":"📧 Cerrar día y enviar informe"}
+              {agotado
+                ? "✓ Informe enviado (máximo alcanzado)"
+                : envios>0
+                  ? `🔄 Reenviar informe (${quedan} ${quedan===1?"envío":"envíos"} restante${quedan===1?"":"s"})`
+                  : "📧 Cerrar día y enviar informe"}
             </button>
           );
         })()}

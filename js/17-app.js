@@ -442,21 +442,22 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
 
   const cerrarDia = async (fecha, dia) => {
     const key = `sr_informe_${fecha}_${dia}`;
-    if(localStorage.getItem(key)) return; // ya enviado
+    const envios = Number(localStorage.getItem(key)||0);
+    if(envios>=3) return false; // máximo 3 envíos por día
     setSyncStatus("saving");
     const ok = await enviarDiario(fecha, dia);
     if(ok) {
-      localStorage.setItem(key, "1");
-      // Sábado → también enviar semanal
+      localStorage.setItem(key, String(envios+1));
+      // Sábado → también enviar semanal (solo la primera vez)
       const d = new Date(fecha+"T12:00:00");
-      if(d.getDay()===6) {
+      if(d.getDay()===6 && !localStorage.getItem(`sr_informe_sem_${fecha}`)) {
         const okSem = await enviarSemanal(fecha);
         if(okSem) localStorage.setItem(`sr_informe_sem_${fecha}`,"1");
       }
-      // Último día hábil del mes → también mensual
+      // Último día hábil del mes → también mensual (solo la primera vez)
       const manana = new Date(d); manana.setDate(d.getDate()+1);
       const esUltimoDiaHabil = manana.getMonth()!==d.getMonth() || (manana.getDay()===6&&manana.getDate()>25);
-      if(esUltimoDiaHabil) {
+      if(esUltimoDiaHabil && !localStorage.getItem(`sr_informe_mes_${d.getFullYear()}_${d.getMonth()+1}`)) {
         const okMes = await enviarMensual(d.getMonth()+1, d.getFullYear());
         if(okMes) localStorage.setItem(`sr_informe_mes_${d.getFullYear()}_${d.getMonth()+1}`,"1");
       }
