@@ -325,16 +325,15 @@ function generarPDFMensual({ventas, clientes, planillas, noVisitas, productos, m
 
 async function enviarInformePorEmail({base64pdf, nombre, asunto, cuerpoHtml, emailDestino, nombreDestino}) {
   try {
-    const res = await fetch(window.EMAIL_ENDPOINT, {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method:"POST",
+      headers:{"Content-Type":"application/json","api-key":BREVO_API_KEY},
       body: JSON.stringify({
-        token: window.EMAIL_TOKEN,
-        to: emailDestino,
-        toName: nombreDestino || emailDestino,
+        sender:{name:"Sistema de Reparto 2026 · Multi", email:BREVO_FROM},
+        to:[{email:emailDestino, name:nombreDestino||emailDestino}],
         subject: asunto,
         htmlContent: cuerpoHtml,
-        attachmentBase64: base64pdf,
-        attachmentName: nombre
+        attachment:[{content:base64pdf, name:nombre}]
       })
     });
     return res.ok;
