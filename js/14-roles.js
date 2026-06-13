@@ -113,7 +113,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   // Leer repartos desde Firestore (datos descargados), con fallback a localStorage
   const todosRepartos = datos.repartos && datos.repartos.length > 0
     ? datos.repartos
-    : (() => { try{return JSON.parse(localStorage.getItem("cat_repartos_v1")||"[]");}catch{return [];} })();
+    : (() => { try{return JSON.parse(localStorage.getItem("rm_repartos_v1")||"[]");}catch{return [];} })();
   const miReparto = todosRepartos.find(r=>r.codigo===perfil?.codigo) || null;
 
   const todosClientes = datos.clientes || [];

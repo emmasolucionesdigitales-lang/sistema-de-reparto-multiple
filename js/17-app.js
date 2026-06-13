@@ -97,13 +97,13 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [pantalla, setPantalla]   = useState(()=>{
     const h = window.location.hash.slice(1)||"portada";
     const needsDia = ["diaPrincipal","selectorFechaClientes","selectorFechaPlanilla","inicioReparto","clientes","detalleCliente","venta","planilla"]; // historial does NOT need dia
-    const savedDia = (() => { try { return JSON.parse(localStorage.getItem("cat_dia_actual")||'""'); } catch{ return ""; } })();
+    const savedDia = (() => { try { return JSON.parse(localStorage.getItem("rm_dia_actual")||'""'); } catch{ return ""; } })();
     if(needsDia.includes(h) && !savedDia) return "portada";
     return h;
   });
-  const [diaActual, setDiaActual]   = useLS("cat_dia_actual", "");
-  const [repartos, setRepartos]     = useLS("cat_repartos_v1", []);
-  const [repartoActual, setRepartoActual] = useLS("cat_reparto_actual_v1", null);
+  const [diaActual, setDiaActual]   = useLS("rm_dia_actual", "");
+  const [repartos, setRepartos]     = useLS("rm_repartos_v1", []);
+  const [repartoActual, setRepartoActual] = useLS("rm_reparto_actual_v1", null);
   // repartos: [{id, numero, nombre, repartidorNombre, codigo}]
   const saveRepartos = (v) => {
     setRepartos(v);
@@ -117,18 +117,18 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   React.useEffect(()=>{
     if(diaActual && !DIAS.includes(diaActual)) setDiaActual("");
   },[]);
-  const [fechaActual, setFechaActual] = useLS("cat_fecha_actual", ""); // ISO date key YYYY-MM-DD
+  const [fechaActual, setFechaActual] = useLS("rm_fecha_actual", ""); // ISO date key YYYY-MM-DD
   const [fechaObj, setFechaObj]   = useState(null);
   const [clienteId, setClienteId] = useState(null);
   const [initCierre, setInitCierre] = useState(false);
-  const [noVisitas, setNoVisitas] = useLS("cat_novisitas_v1", []);
-  const [prospectos, setProspectos] = useLS("cat_prospectos_v1", []);
-  const [recordatorios, setRecordatorios] = useLS("cat_recordatorios_v1", []);
+  const [noVisitas, setNoVisitas] = useLS("rm_novisitas_v1", []);
+  const [prospectos, setProspectos] = useLS("rm_prospectos_v1", []);
+  const [recordatorios, setRecordatorios] = useLS("rm_recordatorios_v1", []);
   // recordatorio: {id, clienteId, clienteNombre, fecha, hora, motivo, dia, confirmado}
   const saveRecordatorios = (r) => { setRecordatorios(r); syncData({recordatorios:r}); };
   const recordatoriosActivos = (recordatorios||[]).filter(r=>!r.confirmado); // [{clienteId,dia,fecha,motivo}]
-  const [clientes, setClientes]   = useLS("cat_clientes_v3", CLIENTES_INICIALES);
-  const [ventasRaw, setVentasRaw] = useLS("cat_ventas_v3", []);
+  const [clientes, setClientes]   = useLS("rm_clientes_v3", CLIENTES_INICIALES);
+  const [ventasRaw, setVentasRaw] = useLS("rm_ventas_v3", []);
   const normalizarFechaKey = (v) => {
     if(v.fechaKey) return v;
     const fk = v.fecha ? (()=>{
@@ -143,7 +143,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   };
   const ventas = React.useMemo(()=>(ventasRaw||[]).map(normalizarFechaKey),[ventasRaw]);
   const setVentas = (arg) => setVentasRaw(typeof arg==='function' ? prev=>arg(prev) : arg);
-  const [productos, setProductos] = useLS("cat_productos_v3", PRODUCTOS_INICIALES);
+  const [productos, setProductos] = useLS("rm_productos_v3", PRODUCTOS_INICIALES);
   const normStock = (s) => {
     const e = () => ({sifon:0,bidon10:0,bidon20:0,dispenser:0});
     const pick = (o) => { const r={sifon:0,bidon10:0,bidon20:0,dispenser:0}; if(o&&typeof o==="object"){ for(const k in o){ r[k]=Math.max(0,Math.round(Number(o[k])||0)); } } return r; };
@@ -159,7 +159,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     }
     return {soderia:pick(s), soderia_vacios:e(), casa:e(), camion:e()};
   };
-  const [stockRaw, setStockRaw] = useLS("cat_stock_v4", {soderia:{sifon:0,bidon10:0,bidon20:0,dispenser:0},soderia_vacios:{sifon:0,bidon10:0,bidon20:0,dispenser:0},casa:{sifon:0,bidon10:0,bidon20:0,dispenser:0},camion:{sifon:0,bidon10:0,bidon20:0,dispenser:0}});
+  const [stockRaw, setStockRaw] = useLS("rm_stock_v4", {soderia:{sifon:0,bidon10:0,bidon20:0,dispenser:0},soderia_vacios:{sifon:0,bidon10:0,bidon20:0,dispenser:0},casa:{sifon:0,bidon10:0,bidon20:0,dispenser:0},camion:{sifon:0,bidon10:0,bidon20:0,dispenser:0}});
   const stockNorm = React.useMemo(()=>normStock(stockRaw), [JSON.stringify(stockRaw)]);
   const setStock = (sOrFn) => {
     if(typeof sOrFn === "function") {
@@ -187,7 +187,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       return s;
     });
   };
-  const [planillas, setPlanillas] = useLS("cat_planillas_v1", {});
+  const [planillas, setPlanillas] = useLS("rm_planillas_v1", {});
   // Firebase — credentials embedded in SDK config above
   const apiKey = "firebase";
   const binId  = "firebase";
@@ -197,8 +197,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     ()=>!!localStorage.getItem("sr_offline_pending")
   );
   const [cloudSetup, setCloudSetup] = useState(false);
-  const [zonasReparto, setZonasReparto] = useLS("cat_zonas_v1", {});
-  const [scaleIdx, setScaleIdx]   = useLS("cat_scale_v1", 1); // 0=S 1=M 2=L 3=XL
+  const [zonasReparto, setZonasReparto] = useLS("rm_zonas_v1", {});
+  const [scaleIdx, setScaleIdx]   = useLS("rm_scale_v1", 1); // 0=S 1=M 2=L 3=XL
   const SCALES = [0.82, 1.0, 1.18, 1.36];
   const SCALE_LABELS = ["S","M","L","XL"];
 
@@ -227,10 +227,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       if (data.noVisitas?.length)  setNoVisitas(data.noVisitas);
       if (data.prospectos?.length) setProspectos(data.prospectos);
       if (data.recordatorios?.length) setRecordatorios(data.recordatorios);
-      if (data.mantVeh?.length)    localStorage.setItem("cat_mant_vehiculo_v1", JSON.stringify(data.mantVeh));
-      if (data.histPrecios?.length) localStorage.setItem("lc_hist_precios", JSON.stringify(data.histPrecios));
+      if (data.mantVeh?.length)    localStorage.setItem("rm_mant_vehiculo_v1", JSON.stringify(data.mantVeh));
+      if (data.histPrecios?.length) localStorage.setItem("rm_lc_hist_precios", JSON.stringify(data.histPrecios));
       if (data.zonasReparto && Object.keys(data.zonasReparto).length) setZonasReparto(data.zonasReparto);
-      if (data.repartos?.length) { setRepartos(data.repartos); try{localStorage.setItem("cat_repartos_v1",JSON.stringify(data.repartos));}catch{} }
+      if (data.repartos?.length) { setRepartos(data.repartos); try{localStorage.setItem("rm_repartos_v1",JSON.stringify(data.repartos));}catch{} }
       // Refrescar logo desde licencia
       const lic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia_dueno")||"null"); } catch { return null; } })();
       if(lic?.codigo && window.dbLicencias) {
@@ -256,7 +256,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   // Respaldo COMPLETO descargable + restaurar (solo dueño)
   React.useEffect(()=>{
     window._descargarRespaldo = () => {
-      const mantVeh = (()=>{ try { return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
+      const mantVeh = (()=>{ try { return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
       const data = { ...estadoRef.current, mantVeh, _respaldo:true, _app:"reparto-multi", _fecha:new Date().toISOString() };
       const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
       const url = URL.createObjectURL(blob);
@@ -277,7 +277,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         if(data.noVisitas!==undefined) setNoVisitas(data.noVisitas||[]);
         if(data.prospectos!==undefined) setProspectos(data.prospectos||[]);
         if(data.recordatorios!==undefined) setRecordatorios(data.recordatorios||[]);
-        if(data.mantVeh!==undefined){ try{localStorage.setItem("cat_mant_vehiculo_v1",JSON.stringify(data.mantVeh||[]));}catch{} }
+        if(data.mantVeh!==undefined){ try{localStorage.setItem("rm_mant_vehiculo_v1",JSON.stringify(data.mantVeh||[]));}catch{} }
         try { syncData({clientes:data.clientes,ventas:data.ventas,planillas:data.planillas,productos:data.productos,noVisitas:data.noVisitas,prospectos:data.prospectos,recordatorios:data.recordatorios}); } catch{}
         return true;
       } catch(e){ alert("Error al restaurar: "+e.message); return false; }
@@ -287,14 +287,14 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
 
   // Auto backup DIARIO a localStorage
   React.useEffect(()=>{
-    const ultimoBackup = localStorage.getItem("lc_ultimo_backup");
+    const ultimoBackup = localStorage.getItem("rm_lc_ultimo_backup");
     const hoy = new Date().toISOString().slice(0,10);
     if(ultimoBackup===hoy) return; // ya se hizo hoy
     try {
-      localStorage.setItem("lc_backup_"+hoy, JSON.stringify({clientes,ventas,planillas}));
-      localStorage.setItem("lc_ultimo_backup", hoy);
+      localStorage.setItem("rm_lc_backup_"+hoy, JSON.stringify({clientes,ventas,planillas}));
+      localStorage.setItem("rm_lc_ultimo_backup", hoy);
       // Mantener solo los últimos 7 backups
-      const keys = Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).sort().reverse();
+      const keys = Object.keys(localStorage).filter(k=>k.startsWith("rm_lc_backup_")).sort().reverse();
       keys.slice(7).forEach(k=>localStorage.removeItem(k));
       console.log("Auto-backup diario guardado:", hoy);
     } catch(e){ console.warn("Auto-backup falló:", e); }
@@ -303,8 +303,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const syncData = (overrides={}) => {
     if(!window.db) return;
     setSyncStatus("saving");
-    const mantVehActual = (() => { try { return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
-    const histPreciosActual = (() => { try { return JSON.parse(localStorage.getItem("lc_hist_precios")||"[]"); } catch { return []; } })();
+    const mantVehActual = (() => { try { return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
+    const histPreciosActual = (() => { try { return JSON.parse(localStorage.getItem("rm_lc_hist_precios")||"[]"); } catch { return []; } })();
     const data = { ...estadoRef.current, ...overrides, noVisitas: overrides.noVisitas!==undefined ? overrides.noVisitas : (estadoRef.current.noVisitas||[]), prospectos: overrides.prospectos!==undefined ? overrides.prospectos : (estadoRef.current.prospectos||[]), recordatorios: overrides.recordatorios!==undefined ? overrides.recordatorios : (estadoRef.current.recordatorios||[]), mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{}, repartos: overrides.repartos||estadoRef.current.repartos||[] };
     estadoRef.current = data;
     debounceSave(() => {
@@ -337,6 +337,13 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const saveClientes = (v) => { setClientes(v); syncData({clientes:v}); };
   const saveVentas   = (v) => { setVentasRaw(v);   syncData({ventas:v}); };
   const savePlanillasCloud = (v) => { setPlanillas(v); syncData({planillas:v}); };
+
+  // Limpieza automática: partes-transferencia de pago mixto cuya venta principal ya no existe
+  React.useEffect(()=>{
+    const huerfanas = ventasRaw.filter(v=>v._esMixtoTrans && v._mixtoDe!==undefined && !ventasRaw.some(x=>x.id===v._mixtoDe));
+    if(huerfanas.length>0){ const ids=new Set(huerfanas.map(v=>v.id)); setVentasRaw(ventasRaw.filter(v=>!ids.has(v.id))); }
+  }, [ventasRaw]);
+
 
   // ── MODO OFFLINE ──────────────────────────────────────────────────
   React.useEffect(()=>{
@@ -409,7 +416,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     // —— Notificación 2: Mantenimiento vehicular 3 días antes ——
     const chequearMantenimiento = () => {
       if(Notification.permission !== "granted") return;
-      const mantList = (()=>{ try{ return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]"); }catch{ return []; } })();
+      const mantList = (()=>{ try{ return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1")||"[]"); }catch{ return []; } })();
       const hoy = new Date(); hoy.setHours(0,0,0,0);
       mantList.forEach(m=>{
         if(!m.proximaFechaISO) return;
@@ -470,15 +477,15 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const saveProductos= (v) => {
     // Registrar cambio de precio en historial
     const hoy = new Date().toISOString().slice(0,16);
-    const histPrecios = JSON.parse(localStorage.getItem("lc_hist_precios")||"[]");
+    const histPrecios = JSON.parse(localStorage.getItem("rm_lc_hist_precios")||"[]");
     histPrecios.push({fecha:hoy, productos:v.map(p=>({nombre:p.nombre,precio:p.precio,costo:p.costo}))});
-    localStorage.setItem("lc_hist_precios", JSON.stringify(histPrecios.slice(-50)));
+    localStorage.setItem("rm_lc_hist_precios", JSON.stringify(histPrecios.slice(-50)));
     setProductos(v); syncData({productos:v});
   };
-  const [cargasDia, setCargasDia] = useLS("cat_cargas_dia_v1", CARGA_DIA_DEFAULT);
-  const saveCargasDia = (v) => { setCargasDia(v); try{localStorage.setItem("cat_cargas_dia_v1",JSON.stringify(v));}catch{} };
-  const saveNoVisitas= (v) => { setNoVisitas(v); try{localStorage.setItem("cat_novisitas_v1",JSON.stringify(v));}catch{} };
-  const saveProspectos=(v)=>{ setProspectos(v); try{localStorage.setItem("cat_prospectos_v1",JSON.stringify(v));}catch{} syncData({prospectos:v}); };
+  const [cargasDia, setCargasDia] = useLS("rm_cargas_dia_v1", CARGA_DIA_DEFAULT);
+  const saveCargasDia = (v) => { setCargasDia(v); try{localStorage.setItem("rm_cargas_dia_v1",JSON.stringify(v));}catch{} };
+  const saveNoVisitas= (v) => { setNoVisitas(v); try{localStorage.setItem("rm_novisitas_v1",JSON.stringify(v));}catch{} };
+  const saveProspectos=(v)=>{ setProspectos(v); try{localStorage.setItem("rm_prospectos_v1",JSON.stringify(v));}catch{} syncData({prospectos:v}); };
 
   const cliente = clientes.find(c=>c.id===clienteId)||null;
   const irA = (p) => {
@@ -638,11 +645,6 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     if(c){ const nc=clientes.map(x=>x.id===c.id?{...x,saldo:c.saldo-v.saldoDelta-ajusteSaldoExtra}:x); saveClientes(nc); }
   };
 
-  React.useEffect(()=>{
-    const huerfanas = ventas.filter(v=>v._esMixtoTrans && v._mixtoDe!==undefined && !ventas.some(x=>x.id===v._mixtoDe));
-    if(huerfanas.length>0){ const ids=new Set(huerfanas.map(v=>v.id)); saveVentas(ventas.filter(v=>!ids.has(v.id))); }
-  }, [ventas]);
-
   const editarVenta = (ventaId, detalle, pago, montoPagado, saldoAplicado, obs, montoTrans2) => {
     const vV = ventas.find(v=>v.id===ventaId); if(!vV) return;
     const c  = clientes.find(x=>x.id===vV.clienteId);
@@ -688,6 +690,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         tabInicial={tabMenu}
         onTabChange={setTabMenu}
       />}
+      {pantalla==="diasReparto" && !repartoActual && (()=>{ setTimeout(()=>irA("menu"),0); return null; })()}
       {pantalla==="diasReparto" && repartoActual && <MenuDias
         dias={DIAS}
         reparto={repartoActual}

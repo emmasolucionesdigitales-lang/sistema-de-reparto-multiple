@@ -9,9 +9,9 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
   const [importReparto,setImportReparto]=useState(repartoActual?.id??"");
   // ▶ Fix: filtroReparto faltaba declarado — causaba crash al abrir Datos
   const [filtroReparto,setFiltroReparto]=useState("todos");
-  const [mantVeh,setMantVeh] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("cat_mant_vehiculo_v1")||"[]");}catch{return [];}});
+  const [mantVeh,setMantVeh] = React.useState(()=>{try{return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1")||"[]");}catch{return [];}});
   const [mostrarNuevoMant,setMostrarNuevoMant] = React.useState(false);
-  const saveMantVeh = (lista) => {setMantVeh(lista);localStorage.setItem("cat_mant_vehiculo_v1",JSON.stringify(lista));if(syncData)syncData({mantVeh:lista});};
+  const saveMantVeh = (lista) => {setMantVeh(lista);localStorage.setItem("rm_mant_vehiculo_v1",JSON.stringify(lista));if(syncData)syncData({mantVeh:lista});};
   const prestados={sifon:clientes.reduce((a,c)=>a+(c.sifon||0),0),bidon10:clientes.reduce((a,c)=>a+(c.bidon10||0),0),bidon20:clientes.reduce((a,c)=>a+(c.bidon20||0),0)};
   const stockKeys={"Sifón 1.5L":"sifon","Bidón 10L":"bidon10","Bidón 20L":"bidon20","Dispenser":"dispenser"};
   return (
@@ -397,10 +397,10 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
                 background:"rgba(220,38,38,0.1)",color:"var(--color-text-danger)",fontSize:13,fontWeight:600,cursor:"pointer"}}
                 onClick={async ()=>{
                   if(!window.confirm("⚠️ ¿Borrar TODOS los clientes, ventas y movimientos?\n\nLos productos, stock y repartos se conservan.")) return;
-                  ["cat_clientes_v3","cat_ventas_v3","cat_planillas_v1","cat_novisitas_v1",
-                   "cat_prospectos_v1","cat_recordatorios_v1","lc_hist_precios","lc_ultimo_backup"]
+                  ["rm_clientes_v3","rm_ventas_v3","rm_planillas_v1","rm_novisitas_v1",
+                   "rm_prospectos_v1","rm_recordatorios_v1","rm_lc_hist_precios","rm_lc_ultimo_backup"]
                     .forEach(k=>localStorage.removeItem(k));
-                  Object.keys(localStorage).filter(k=>k.startsWith("lc_backup_")).forEach(k=>localStorage.removeItem(k));
+                  Object.keys(localStorage).filter(k=>k.startsWith("rm_lc_backup_")).forEach(k=>localStorage.removeItem(k));
                   if(window.db && negocioId){
                     try{
                       const col=window.db.collection("negocios").doc(negocioId).collection("datos");
