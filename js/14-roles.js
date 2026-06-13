@@ -675,65 +675,83 @@ function PantallaActivacionRM({onActivado}) {
     setCargando(false);
   };
 
-  const stInp = {...s.input};
-  const stBtn = {...s.btnPrimary, opacity:cargando?0.6:1};
+  const inp = { width:"100%", padding:"12px 14px", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, fontSize:14, background:"rgba(255,255,255,0.05)", color:"var(--color-text-primary,#e2eaf4)", outline:"none", boxSizing:"border-box" };
+  const lbl = { fontSize:11, color:"var(--color-text-secondary,#7a9ab8)", display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.06em" };
 
   return (
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,minHeight:"100vh",gap:16,background:"var(--color-background-primary)"}}>
-      <div style={{width:70,height:70,borderRadius:"50%",background:"var(--color-background-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>💧</div>
-      <h1 style={{fontSize:22,fontWeight:600,color:"var(--color-text-primary)",textAlign:"center",margin:0}}>Sistema de Reparto</h1>
-
-      {paso===1&&<>
-        <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
-          Ingresá el código de activación que recibiste.<br/>
-          <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>Dueños: código RM-XXXX · Repartidores: código de 6 letras</span>
-        </p>
-        <div style={{width:"100%",maxWidth:320}}>
-          <label style={s.label}>Código de activación</label>
-          <input style={{...stInp,textAlign:"center",fontSize:18,letterSpacing:3,textTransform:"uppercase"}}
-            placeholder="RM-XXXX o código de 6 letras"
-            value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
-            onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"var(--color-background-primary,#0f1923)",padding:24,overflowY:"auto"}}>
+      <div style={{width:"100%",maxWidth:360}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <img src="icono-192.png" alt="" onError={e=>e.target.remove()} style={{width:64,height:64,borderRadius:16,marginBottom:12}} />
+          <h1 style={{fontSize:20,fontWeight:700,color:"var(--color-text-primary,#e2eaf4)",margin:0}}>Activación de cuenta</h1>
+          <p style={{fontSize:13,color:"var(--color-text-secondary,#7a9ab8)",marginTop:6,lineHeight:1.5}}>
+            {paso===1
+              ? <>Ingresá el código que recibiste.<br/><span style={{fontSize:12,color:"var(--color-text-tertiary,#4a6a85)"}}>Dueños: RM-XXXX · Repartidores: 6 letras</span></>
+              : <>Completá tus datos para activar el sistema.<br/><span style={{color:"#5daaff",fontWeight:500}}>Código: {codigo.trim().toUpperCase()}</span></>}
+          </p>
         </div>
-        {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
-        <button style={{...stBtn,width:200}} disabled={cargando} onClick={verificarCodigo}>
-          {cargando?"Verificando...":"Continuar →"}
-        </button>
-        {/* Soporte */}
-        <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto"
-          target="_blank" rel="noopener"
-          style={{marginTop:8,fontSize:12,color:"var(--color-text-tertiary)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
-          💬 ¿Necesitás ayuda? Escribinos por WhatsApp
-        </a>
-      </>}
 
-      {paso===2&&<>
-        <p style={{fontSize:14,color:"var(--color-text-success)",textAlign:"center",maxWidth:280,lineHeight:1.5,margin:0}}>
-          ✓ Código válido. Completá tus datos para activar.
-        </p>
-        <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:10}}>
-          <div><label style={s.label}>Nombre del negocio *</label>
-            <input style={stInp} placeholder="Ej: Distribuidora La Catalina" value={nombre} onChange={e=>setNombre(e.target.value)} /></div>
-          <div><label style={s.label}>Número de celular *</label>
-            <input style={stInp} type="tel" placeholder="3816559001" value={celular} onChange={e=>setCelular(e.target.value)} /></div>
-          <div><label style={s.label}>Email *</label>
-            <input style={stInp} type="email" placeholder="tu@email.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
-          <div><label style={s.label}>PIN de activación *</label>
-            <input style={{...stInp,textAlign:"center",letterSpacing:6,fontSize:18}} type="number" placeholder="1234" value={pinIngresado} onChange={e=>setPinIngresado(e.target.value)} /></div>
+        <div style={{background:"var(--color-background-secondary,#1a2b3c)",borderRadius:16,padding:24,border:"0.5px solid rgba(255,255,255,0.08)",display:"flex",flexDirection:"column",gap:16}}>
+
+          {paso===1&&<>
+            <div>
+              <label style={lbl}>Código de activación</label>
+              <input style={{...inp,textAlign:"center",fontSize:18,letterSpacing:"0.1em",textTransform:"uppercase"}}
+                placeholder="RM-XXXX o 6 letras"
+                value={codigo} onChange={e=>setCodigo(e.target.value.toUpperCase())}
+                onKeyDown={e=>e.key==="Enter"&&verificarCodigo()} />
+            </div>
+            {error&&<div style={{background:"rgba(240,112,112,0.1)",border:"0.5px solid #f07070",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#f07070"}}>⚠️ {error}</div>}
+            <button onClick={verificarCodigo} disabled={cargando}
+              style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"#185FA5",color:"#fff",fontSize:15,fontWeight:600,cursor:cargando?"wait":"pointer",opacity:cargando?0.7:1}}>
+              {cargando?"Verificando...":"Verificar código →"}
+            </button>
+            <a href="https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto" target="_blank" rel="noopener"
+              style={{fontSize:12,color:"var(--color-text-tertiary,#4a6a85)",textDecoration:"none",textAlign:"center"}}>
+              💬 ¿Necesitás ayuda? Escribinos por WhatsApp
+            </a>
+          </>}
+
+          {paso===2&&<>
+            <div>
+              <label style={lbl}>Nombre de tu negocio *</label>
+              <input style={inp} placeholder="Ej: Distribuidora La Catalina" value={nombre} onChange={e=>setNombre(e.target.value)} />
+            </div>
+            <div>
+              <label style={lbl}>Número de celular *</label>
+              <input style={inp} type="tel" placeholder="3816559001" value={celular} onChange={e=>setCelular(e.target.value)} />
+            </div>
+            <div>
+              <label style={lbl}>Email registrado *</label>
+              <input style={inp} type="email" placeholder="tumail@ejemplo.com" value={email} onChange={e=>setEmail(e.target.value)} />
+              <div style={{fontSize:11,color:"var(--color-text-tertiary,#4a6a85)",marginTop:4}}>Recibirás los informes en este email.</div>
+            </div>
+            <div>
+              <label style={lbl}>PIN de activación *</label>
+              <input style={{...inp,textAlign:"center",letterSpacing:"0.3em",fontSize:20,fontWeight:700,color:"#5daaff",background:"rgba(24,95,165,0.12)",borderColor:"#185FA5"}}
+                type="number" placeholder="••••" value={pinIngresado} onChange={e=>setPinIngresado(e.target.value)} />
+              <div style={{fontSize:11,color:"var(--color-text-tertiary,#4a6a85)",marginTop:4}}>Ingresá el PIN que te asignó el administrador. Lo vas a usar cada vez que abras la app.</div>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:12,border:"0.5px solid rgba(255,255,255,0.08)"}}>
+              <div style={{fontSize:11,color:"var(--color-text-secondary,#7a9ab8)",marginBottom:10,lineHeight:1.6,maxHeight:100,overflowY:"auto"}}>
+                <strong style={{color:"var(--color-text-primary,#e2eaf4)"}}>Términos y Condiciones de uso</strong><br/>
+                Al activar esta cuenta aceptás que: (1) El sistema es de uso exclusivo para gestión de reparto. (2) Los datos ingresados son responsabilidad del usuario. (3) La suscripción es mensual y se renueva automáticamente; el acceso se suspende si el pago no se realiza antes del día 11 de cada mes. (4) Emma Soluciones Digitales no se responsabiliza por pérdida de datos por falta de conectividad. (5) El PIN es personal e intransferible.
+              </div>
+              <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+                <input type="checkbox" checked={terminos} onChange={e=>setTerminos(e.target.checked)} style={{width:18,height:18,cursor:"pointer",accentColor:"#185FA5",flexShrink:0}} />
+                <span style={{fontSize:13,color:"var(--color-text-primary,#e2eaf4)"}}>Acepto los Términos y Condiciones</span>
+              </label>
+            </div>
+            {error&&<div style={{background:"rgba(240,112,112,0.1)",border:"0.5px solid #f07070",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#f07070"}}>⚠️ {error}</div>}
+            <button onClick={completarActivacion} disabled={cargando}
+              style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:"#185FA5",color:"#fff",fontSize:15,fontWeight:600,cursor:cargando?"wait":"pointer",opacity:cargando?0.7:1}}>
+              {cargando?"Activando...":"Activar cuenta →"}
+            </button>
+          </>}
         </div>
-        <label style={{display:"flex",alignItems:"flex-start",gap:10,maxWidth:320,cursor:"pointer",marginTop:4}}>
-          <input type="checkbox" checked={terminos} onChange={e=>setTerminos(e.target.checked)}
-            style={{marginTop:3,width:18,height:18,accentColor:"var(--color-accent)",flexShrink:0}} />
-          <span style={{fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.5}}>
-            Acepto los <span style={{color:"var(--color-text-info)",fontWeight:600}}>Términos y Condiciones</span> del servicio.
-            La aplicación se contrata mensualmente. El acceso se suspende si el pago no se realiza antes del día 11 de cada mes.
-          </span>
-        </label>
-        {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",margin:0}}>{error}</p>}
-        <button style={{...stBtn,width:200}} disabled={cargando} onClick={completarActivacion}>
-          {cargando?"Activando...":"Activar app →"}
-        </button>
-      </>}
+
+        <p style={{fontSize:11,color:"var(--color-text-tertiary,#4a6a85)",textAlign:"center",marginTop:16,lineHeight:1.6}}>Sistema de Reparto · Emma Soluciones Digitales</p>
+      </div>
     </div>
   );
 }
