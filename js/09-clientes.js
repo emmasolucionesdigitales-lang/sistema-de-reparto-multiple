@@ -2,7 +2,7 @@
 // ◆  09-clientes.js — ListaClientes · DetalleCliente · EditCliente · EditVenta · Modals
 // ════════════════════════════════════════════════════════════════════
 
-function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto,onAbrirMapa,onIrPlanilla,onIrMenu}) {
+function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onNuevoCliente,onVolver,onReordenar,onEditarCliente,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto,onAbrirMapa,onIrPlanilla,onIrMenu}) {
   const [busqueda,setBusqueda] = useState("");
   const [editandoOrden,setEditandoOrden] = useState(null);
   const [ordenTemp,setOrdenTemp] = useState("");
@@ -27,7 +27,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
   };
 
   const clientesOrdenados = [...clientes].sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-  const filtrados  = clientesOrdenados.filter(c=>c.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+  const filtrados  = clientesOrdenados.filter(c=>buscarCliente(c,busqueda)>0);
   const pendientesNormales = filtrados.filter(c=>!visitados.has(c.id)&&noVMap[c.id]!=="noesta");
   const volverAlFinal      = filtrados.filter(c=>noVMap[c.id]==="noesta"&&!atendidos.has(c.id));
   const pendientes         = [...pendientesNormales, ...volverAlFinal];
@@ -141,6 +141,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
             <button style={{...s.btn,fontSize:12,padding:"4px 10px"}} onClick={()=>onQuitarNoVisita(c.id)}>Desmarcar</button>
           </div>
         )}
+        {onEditarCliente&&<PieEnvases c={c} ventas={todasVentas||ventas} onEditar={onEditarCliente} />}
       </div>
       {fotoOpen&&(
         <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.92)",zIndex:2000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>{e.stopPropagation();setFotoOpen(false);}}>
@@ -177,7 +178,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
         <button style={{...s.btn,padding:"6px 12px",fontSize:13}} onClick={onNuevoCliente}>+ Nuevo</button>
       </div>
       <div style={{padding:"10px 16px 6px"}}>
-        <input style={s.input} placeholder="Buscar cliente..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} />
+        <input style={s.input} placeholder="Buscar por domicilio o nombre..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} />
         <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap",alignItems:"center"}}>
           <span style={s.badge("success")}>{visitados.size}/{clientes.length} visitados</span>
           {volverAlFinal.length>0&&<span style={s.badge("warning")}>{volverAlFinal.length} volver al final</span>}
@@ -481,6 +482,11 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
               <span style={{fontSize:11,color:"var(--color-text-tertiary)"}}>▾</span>
             </summary>
             <div style={{marginTop:4}}>
+              {/* Editor unificado: el mismo ♻️ Envases de todas las listas */}
+              <div style={{...s.card,margin:"0 0 10px",paddingTop:2}}>
+                <PieEnvases c={cliente} ventas={ventas} onEditar={(id,cambios)=>onEditar(cambios)}
+                  izquierda={<span style={{fontSize:12,color:"var(--color-text-secondary)"}}>Ajustar fijos y prestados</span>} />
+              </div>
               {(()=>{
                 const pkEnv={"Sifón 1.5L":"sifon","Bidón 10L":"bidon10","Bidón 20L":"bidon20"};
                 const extra={sifon:0,bidon10:0,bidon20:0};
@@ -607,11 +613,12 @@ function EditCliente({cliente,onGuardar,onEliminarCliente}) {
 
 function EditVenta({venta,productos,onGuardar,onCancelar}) { // onGuardar(detalle,pago,monto,saldoApl,obs,montoTrans2)
   const [cantidades,setCantidades]=useState(()=>{const m={};productos.forEach(p=>{m[p.nombre]=0;});venta.detalle.forEach(d=>{m[d.nombre]=d.cantidad;});return m;});
-  const [pago,setPago]=useState(venta.pago||"contado");
+  const esMixtaOrig = venta.pago==="mixto" || (Number(venta.montoTrans)||0)>0;
+  const [pago,setPago]=useState(esMixtaOrig?"mixto":(venta.pago||"contado"));
   const [monto,setMonto]=useState(()=>String(venta.pagadoNum||venta.neto||""));
-  const [montoEfec,setMontoEfec]=useState("");
-  const [montoTrans,setMontoTrans]=useState("");
-  const [obs,setObs]=useState(venta.obs||"");
+  const [montoEfec,setMontoEfec]=useState(esMixtaOrig?String(venta.montoEfec||""):"");
+  const [montoTrans,setMontoTrans]=useState(esMixtaOrig?String(venta.montoTrans||""):"");
+  const [obs,setObs]=useState((venta.obs||"").replace(/\s*\[Mixto:[^\]]*\]/g,""));
   const detalle=productos.map(p=>({nombre:p.nombre,cantidad:cantidades[p.nombre]||0,precio:p.precio,total:(cantidades[p.nombre]||0)*p.precio})).filter(d=>d.cantidad>0);
   const bruto=detalle.reduce((a,d)=>a+d.total,0);
   const neto=bruto;
@@ -671,8 +678,8 @@ function EditVenta({venta,productos,onGuardar,onCancelar}) { // onGuardar(detall
         <button style={{...s.btnPrimary,flex:2,padding:"10px"}} onClick={()=>{
           if(pago==="mixto"){
             const ef=Number(montoEfec||0), tr=Number(montoTrans||0);
-            onGuardar(detalle,"mixto",String(ef),venta.saldoAplicado||0,
-              `[Mixto: ef $${ef} + tr $${tr}]`,tr);
+            if(ef+tr===0){ alert("⚠️ Completá el desglose: cuánto en efectivo y cuánto por transferencia."); return; }
+            onGuardar(detalle,"mixto",String(ef),venta.saldoAplicado||0,obs,tr);
           } else {
             onGuardar(detalle,pago,pago==="fiado"?"":monto,venta.saldoAplicado||0,obs);
           }
@@ -878,7 +885,7 @@ function CobroDeudaPanel({saldo,onCobrar}) {
 }
 
 
-function FiadosPendientes({clientes,onCobrar,onVolver}) {
+function FiadosPendientes({clientes,ventas,onCobrar,onVolver,onEditarCliente}) {
   const [pagando,setPagando]=React.useState(null);
   const [monto,setMonto]=React.useState('');
   const [pago,setPago]=React.useState('contado');
@@ -927,6 +934,7 @@ function FiadosPendientes({clientes,onCobrar,onVolver}) {
               💰 Cobrar deuda
             </button>
           )}
+          {onEditarCliente&&<PieEnvases c={c} ventas={ventas} onEditar={onEditarCliente} />}
         </div>
       ))}
     </div>

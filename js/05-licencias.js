@@ -2,21 +2,16 @@
 // ◆  05-licencias.js — Brevo · PantallaActivacion · PantallaPin · getDeviceId · getLogo
 // ════════════════════════════════════════════════════════════════════
 
-const BREVO_API_KEY = "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";
-const BREVO_FROM    = "carabajalponce1980@gmail.com";
+const EMAIL_ENDPOINT = "https://script.google.com/macros/s/AKfycbzmNoGW8yrdtUTjGUhLym67rDfRc9-h4FtYqFWkOEojkIYnDGEy13gt1704S74YU9xj/exec";
+const EMAIL_TOKEN    = "Emma131017";
 
 async function enviarEmailBrevo({to, toName, subject, htmlContent}) {
   try {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    await fetch(EMAIL_ENDPOINT, {
       method:"POST",
-      headers:{"Content-Type":"application/json","api-key":BREVO_API_KEY},
-      body: JSON.stringify({
-        sender:{name:"Sistema de Reparto 2026 · Multi", email: BREVO_FROM||"noreply@sistemareparto.com"},
-        to:[{email:to, name:toName||to}],
-        subject, htmlContent
-      })
+      body: JSON.stringify({token:EMAIL_TOKEN, to, toName:toName||to, subject, htmlContent})
     });
-    return res.ok;
+    return true;
   } catch(e) { console.error("Email error",e); return false; }
 }
 
@@ -72,14 +67,13 @@ function PantallaActivacion({onActivado}) {
         celular:celular.trim(), negocio:negocio.trim(), deviceId,
         activado:true, logo: lic.logo||""
       }));
-      // ── Email de activación ──
+      // ── Email de activación (vía proxy Apps Script, sin clave expuesta) ──
       try {
-        fetch("https://api.brevo.com/v3/smtp/email",{method:"POST",headers:{"Content-Type":"application/json","api-key":"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"},body:JSON.stringify({
-          sender:{name:"Emma Soluciones Digitales",email:"carabajalponce1980@gmail.com"},
-          to:[{email:email.trim(),name:negocio.trim()}],
-          subject:"✅ Sistema de Reparto activado correctamente",
-          htmlContent:`<div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px"><div style="background:#185FA5;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px"><h2 style="color:#fff;margin:0">¡Bienvenido!</h2><p style="color:rgba(255,255,255,.8);margin:8px 0 0">${negocio.trim()}</p></div><p style="color:#333">Tu app <b>Sistema de Reparto</b> fue activada correctamente.</p><div style="background:#f0f7ff;border-radius:10px;padding:16px;text-align:center;margin:16px 0"><div style="font-size:13px;color:#666;margin-bottom:4px">Tu PIN de acceso</div><div style="font-size:32px;font-weight:800;color:#185FA5;letter-spacing:8px">${lic.pin}</div><div style="font-size:12px;color:#999;margin-top:4px">Guardalo en un lugar seguro</div></div><p style="color:#555;font-size:13px">📱 Código: <b>${codigoUp}</b></p><p style="color:#999;font-size:12px;margin-top:20px">¿Ayuda? WhatsApp: <b>+54 9 381 339-9962</b></p><p style="color:#bbb;font-size:11px">Emma Soluciones Digitales</p></div>`
-        })}).catch(()=>{});
+        enviarEmailBrevo({
+          to: email.trim(), toName: negocio.trim(),
+          subject: "✅ Sistema de Reparto activado correctamente",
+          htmlContent: `<div style="font-family:sans-serif;max-width:400px;margin:0 auto;padding:24px"><div style="background:#185FA5;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px"><h2 style="color:#fff;margin:0">¡Bienvenido!</h2><p style="color:rgba(255,255,255,.8);margin:8px 0 0">${negocio.trim()}</p></div><p style="color:#333">Tu app <b>Sistema de Reparto</b> fue activada correctamente.</p><div style="background:#f0f7ff;border-radius:10px;padding:16px;text-align:center;margin:16px 0"><div style="font-size:13px;color:#666;margin-bottom:4px">Tu PIN de acceso</div><div style="font-size:32px;font-weight:800;color:#185FA5;letter-spacing:8px">${lic.pin}</div><div style="font-size:12px;color:#999;margin-top:4px">Guardalo en un lugar seguro</div></div><p style="color:#555;font-size:13px">📱 Código: <b>${codigoUp}</b></p><p style="color:#999;font-size:12px;margin-top:20px">¿Ayuda? WhatsApp: <b>+54 9 381 339-9962</b></p><p style="color:#bbb;font-size:11px">Emma Soluciones Digitales</p></div>`
+        });
       } catch(e) {}
       onActivado(lic.pin);
     } catch(e) { setError("Error al activar. Intentá de nuevo."); }

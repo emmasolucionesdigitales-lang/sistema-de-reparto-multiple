@@ -92,3 +92,100 @@ function comprimirFoto(file, maxW=800, quality=0.75) {
 }
 
 // ── GENERADOR DE INFORMES PDF ────────────────────────────────────────────────
+
+
+// ════════════════════════════════════════════════════════════════════
+// ◆  buscarCliente — búsqueda UNIFICADA priorizando el DOMICILIO
+//    2 = coincide el domicilio · 1 = nombre/tel/notas · 0 = no
+// ════════════════════════════════════════════════════════════════════
+function buscarCliente(c, q) {
+  const t = (q||"").trim().toLowerCase();
+  if(!t) return 1;
+  const domicilio = [
+    c.calle, c.nro, (c.calle&&c.nro)?`${c.calle} ${c.nro}`:"",
+    c.barrio, c.sector, c.aclaracion, c.manzana, c.lote,
+    c.manzana?`mz ${c.manzana}`:"", c.lote?`l ${c.lote}`:"",
+    (c.manzana&&c.lote)?`mz ${c.manzana} l ${c.lote}`:"",
+    (c.manzana&&c.lote)?`manzana ${c.manzana} lote ${c.lote}`:"",
+  ].filter(Boolean).join(" · ").toLowerCase();
+  if(domicilio.includes(t)) return 2;
+  if((c.nombre||"").toLowerCase().includes(t)) return 1;
+  if(String(c.telefono||"").includes(t)) return 1;
+  if((c.notas||"").toLowerCase().includes(t)) return 1;
+  return 0;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ◆  PieEnvases — pie de tarjeta de cliente UNIFICADO (todas las listas)
+//    Botón ♻️ Envases + botones propios de cada pantalla + panel con Confirmar.
+//    Guarda SIEMPRE en c.envAjuste (mecanismo único).
+//    Uso: <PieEnvases c={c} ventas={ventas} onEditar={(id,cambios)=>...}
+//           izquierda={<botón opcional/>}> {botones derecha opcionales} </PieEnvases>
+// ════════════════════════════════════════════════════════════════════
+function PieEnvases({c, ventas, onEditar, izquierda, children}) {
+  const KEYS=["sifon","bidon10","bidon20","dispenser"];
+  const KP={"Sifón 1.5L":"sifon","Bidón 10L":"bidon10","Bidón 20L":"bidon20","Dispenser":"dispenser"};
+  const [draft,setDraft]=React.useState(null); // null = panel cerrado
+  const calcExtra=()=>{
+    const ex={sifon:0,bidon10:0,bidon20:0,dispenser:0};
+    (ventas||[]).filter(v=>v.clienteId===c.id).forEach(v=>{
+      (v.envPrest||[]).forEach(e=>{const k=KP[e.prod];if(k)ex[k]+=Number(e.cant)||0;});
+      (v.envDev||[]).forEach(e=>{const k=KP[e.prod];if(k)ex[k]-=Number(e.cant)||0;});
+    });
+    return ex;
+  };
+  const abrir=()=>{
+    const ex=calcExtra(), aj=c.envAjuste||{};
+    setDraft({
+      fijos:Object.fromEntries(KEYS.map(k=>[k,Number(c[k])||0])),
+      prest:Object.fromEntries(KEYS.map(k=>[k,(ex[k]||0)+(aj[k]||0)])),
+    });
+  };
+  const confirmar=()=>{
+    const ex=calcExtra();
+    onEditar(c.id,{
+      ...Object.fromEntries(KEYS.map(k=>[k,Math.max(0,draft.fijos[k])])),
+      envAjuste:Object.fromEntries(KEYS.map(k=>[k,draft.prest[k]-(ex[k]||0)])),
+    });
+    setDraft(null);
+  };
+  const abierto=!!draft;
+  return (
+    <>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
+        <div>{izquierda||null}</div>
+        <div style={{display:"flex",gap:6}}>
+          <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:abierto?"#2e1f06":"var(--color-background-tertiary)",color:abierto?"#f5b942":"var(--color-text-secondary)",border:abierto?"1px solid #f5b942":"0.5px solid var(--color-border-secondary)"}}
+            onClick={e=>{e.stopPropagation();abierto?setDraft(null):abrir();}}>♻️ Envases</button>
+          {children}
+        </div>
+      </div>
+      {abierto&&(
+        <div style={{marginTop:8,background:"var(--color-background-tertiary)",borderRadius:8,padding:"8px 10px"}} onClick={e=>e.stopPropagation()}>
+          <div style={{display:"grid",gridTemplateColumns:"82px 1fr 1fr 1fr 1fr",gap:4,fontSize:10,color:"var(--color-text-tertiary)",marginBottom:4}}>
+            <span></span><span style={{textAlign:"center"}}>Sifón</span><span style={{textAlign:"center"}}>10L</span><span style={{textAlign:"center"}}>20L</span><span style={{textAlign:"center"}}>Disp</span>
+          </div>
+          {[["fijos","🏠 Fijos"],["prest","📦 Prestados"]].map(([t,l])=>(
+            <div key={t} style={{display:"grid",gridTemplateColumns:"82px 1fr 1fr 1fr 1fr",gap:4,alignItems:"center",marginBottom:4}}>
+              <span style={{fontSize:11,color:t==="prest"?"var(--color-text-warning)":"var(--color-text-secondary)"}}>{l}</span>
+              {KEYS.map(k=>(
+                <input key={k} type="number" value={draft[t][k]}
+                  onChange={e=>{const n=Math.round(Number(e.target.value)||0);setDraft(d=>({...d,[t]:{...d[t],[k]:n}}));}}
+                  style={{...s.inputNum,padding:"6px 2px",fontSize:14,textAlign:"center",
+                    fontWeight:t==="prest"&&draft[t][k]!==0?600:400,
+                    color:t==="prest"?(draft[t][k]>0?"var(--color-text-warning)":draft[t][k]<0?"var(--color-text-success)":"var(--color-text-primary)"):"var(--color-text-primary)"}} />
+              ))}
+            </div>
+          ))}
+          <div style={{fontSize:10,color:"var(--color-text-tertiary)",margin:"2px 0 6px"}}>Prestados = total extra que tiene hoy · 0 = devolvió todo</div>
+          <div style={{display:"flex",gap:6}}>
+            <button style={{...s.btn,flex:1,fontSize:12}} onClick={e=>{e.stopPropagation();setDraft(null);}}>Cancelar</button>
+            <button style={{flex:2,background:"#1d9e75",color:"#fff",border:"none",borderRadius:8,padding:"9px",fontSize:13,fontWeight:600,cursor:"pointer"}}
+              onClick={e=>{e.stopPropagation();confirmar();}}>✓ Confirmar</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+

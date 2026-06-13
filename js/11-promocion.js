@@ -887,6 +887,8 @@ function TagsCliente({cliente,ventas,style}) {
     (v.envPrest||[]).forEach(e=>{if(e.prod==="Sifón 1.5L")ex.sifon+=Number(e.cant)||0;if(e.prod==="Bidón 10L")ex.b10+=Number(e.cant)||0;if(e.prod==="Bidón 20L")ex.b20+=Number(e.cant)||0;});
     (v.envDev||[]).forEach(e=>{if(e.prod==="Sifón 1.5L")ex.sifon-=Number(e.cant)||0;if(e.prod==="Bidón 10L")ex.b10-=Number(e.cant)||0;if(e.prod==="Bidón 20L")ex.b20-=Number(e.cant)||0;});
   });
+  // Ajuste manual de envases prestados (envAjuste, del botón ♻️ Envases)
+  const _aj=cl.envAjuste||{}; ex.sifon+=Number(_aj.sifon)||0; ex.b10+=Number(_aj.bidon10)||0; ex.b20+=Number(_aj.bidon20)||0;
   return(
     <div style={{display:"flex",flexWrap:"wrap",gap:5,...(style||{})}}>
       {cl.sifon>0&&<span style={TH}>Sif ×{cl.sifon}</span>}

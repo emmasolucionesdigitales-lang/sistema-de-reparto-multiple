@@ -620,36 +620,43 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
 
   const eliminarVenta = (ventaId) => {
     const v = ventas.find(x=>x.id===ventaId); if(!v) return;
-    const nv = ventas.filter(x=>x.id!==ventaId);
+    const eraMixta = (Number(v.montoTrans)||0)>0;
+    let ajusteSaldoExtra = 0;
+    let nv = ventas.filter(x=>{
+      if(x.id===ventaId) return false;
+      const ligada = x._esMixtoTrans && (
+        x._mixtoDe===ventaId ||
+        (x._mixtoDe===undefined && eraMixta && x.clienteId===v.clienteId && x.fechaKey===v.fechaKey)
+      );
+      if(ligada && (Number(x.saldoDelta)||0)!==0) ajusteSaldoExtra += Number(x.saldoDelta);
+      return !ligada;
+    });
+    nv = nv.filter(x=>!(x._esMixtoTrans && x._mixtoDe!==undefined && !nv.some(y=>y.id===x._mixtoDe)));
     saveVentas(nv);
     const c = clientes.find(x=>x.id===v.clienteId);
-    if(c){ const nc=clientes.map(x=>x.id===c.id?{...x,saldo:c.saldo-v.saldoDelta}:x); saveClientes(nc); }
+    if(c){ const nc=clientes.map(x=>x.id===c.id?{...x,saldo:c.saldo-v.saldoDelta-ajusteSaldoExtra}:x); saveClientes(nc); }
   };
+
+  React.useEffect(()=>{
+    const huerfanas = ventas.filter(v=>v._esMixtoTrans && v._mixtoDe!==undefined && !ventas.some(x=>x.id===v._mixtoDe));
+    if(huerfanas.length>0){ const ids=new Set(huerfanas.map(v=>v.id)); saveVentas(ventas.filter(v=>!ids.has(v.id))); }
+  }, [ventas]);
 
   const editarVenta = (ventaId, detalle, pago, montoPagado, saldoAplicado, obs, montoTrans2) => {
     const vV = ventas.find(v=>v.id===ventaId); if(!vV) return;
     const c  = clientes.find(x=>x.id===vV.clienteId);
-    const pagoReal = pago==="mixto"?"contado":pago;
-    const calc = calcVenta(detalle, pagoReal, montoPagado, saldoAplicado, productos);
-    // Remove old transfer venta if existed (from previous mixto edit)
-    let nev = ventas.filter(v=>!(v.obs==="[Parte transfer. de pago mixto]"&&v.clienteId===vV.clienteId&&v.fechaKey===vV.fechaKey));
-    nev = nev.map(v=>v.id===ventaId?{...vV,detalle,pago:pagoReal,obs,saldoAplicado:saldoAplicado||0,...calc}:v);
-    let saldoExtra = c ? (c.saldo - vV.saldoDelta + calc.saldoDelta) : 0;
-    // If mixto, add transfer venta
-    if(pago==="mixto"&&montoTrans2>0){
-      const ventaTr = {
-        id:Date.now()+2, clienteId:vV.clienteId, cliente:vV.cliente,
-        dia:vV.dia, fechaKey:vV.fechaKey, fecha:vV.fecha,
-        detalle:[{nombre:"Pago mixto · transferencia",cantidad:1,precio:montoTrans2,total:montoTrans2}],
-        pago:"transferencia", obs:"[Parte transfer. de pago mixto]", saldoAplicado:0,
-        neto:montoTrans2, bruto:montoTrans2, desc:0, costo:0, ganancia:montoTrans2,
-        pagadoNum:montoTrans2, saldoDelta:montoTrans2, envPrest:[], envDev:[],
-      };
-      nev = [...nev, ventaTr];
-      saldoExtra += montoTrans2;
-    }
+    const esMixto = pago==="mixto";
+    const ef = esMixto?(Number(montoPagado)||0):0;
+    const tr = esMixto?(Number(montoTrans2)||0):0;
+    // MIXTO (diseño Multi): UNA venta con pago "mixto" + montoEfec/montoTrans; cálculo con el total
+    const calc = calcVenta(detalle, esMixto?"contado":pago, esMixto?String(ef+tr):montoPagado, saldoAplicado, productos);
+    const obsLimpia = (obs||"").replace(/\s*\[Mixto:[^\]]*\]/g,"");
+    const obsFinal  = esMixto ? obsLimpia+` [Mixto: ef $${ef} + tr $${tr}]` : obsLimpia;
+    let nev = ventas.filter(v=>!(v._esMixtoTrans && v._mixtoDe===ventaId)); // limpiar restos de versiones viejas
+    nev = nev.map(v=>v.id===ventaId?{...vV,detalle,pago:esMixto?"mixto":pago,obs:obsFinal,saldoAplicado:saldoAplicado||0,...calc,montoEfec:esMixto?ef:0,montoTrans:esMixto?tr:0,transConfirmada:esMixto?(vV.transConfirmada||false):vV.transConfirmada}:v);
+    const saldoNuevo = c ? (c.saldo - vV.saldoDelta + calc.saldoDelta) : 0;
     saveVentas(nev);
-    if(c){ const nc=clientes.map(x=>x.id===c.id?{...x,saldo:saldoExtra}:x); saveClientes(nc); }
+    if(c) saveClientes(clientes.map(x=>x.id===c.id?{...x,saldo:saldoNuevo}:x));
   };
 
   return (
@@ -740,7 +747,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           }
           irA("clientes");
         }} onVolver={()=>irA("selectorFechaClientes")} />}
-      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id))} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
+      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id))} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
           const otros=clientes.filter(c=>c.dia!==diaActual);
           saveClientes([...otros,...lista]);
         }} onRegistrarNoVisita={(clienteId,motivo)=>{const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo}];saveNoVisitas(nv);}} onQuitarNoVisita={(clienteId)=>{const nv=(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual));saveNoVisitas(nv);}}
@@ -971,7 +978,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onVolver={()=>irA("menu")}
       />}
       {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDia} setCargasDia={saveCargasDia} planillas={planillas} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
-      {pantalla==="fiadosPendientes" && <FiadosPendientes clientes={clientes} onCobrar={(cId,monto,pago)=>{
+      {pantalla==="fiadosPendientes" && <FiadosPendientes clientes={clientes} ventas={ventas} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onCobrar={(cId,monto,pago)=>{
         const cl=clientes.find(c=>c.id===cId);if(!cl)return;
         const saldoAntes=cl.saldo||0;const saldoDespues=saldoAntes+monto;
         const vt={id:Date.now(),clienteId:cl.id,cliente:cl.nombre,dia:cl.dia,fechaKey:new Date().toISOString().slice(0,10),fecha:new Date().toLocaleString("es-AR"),

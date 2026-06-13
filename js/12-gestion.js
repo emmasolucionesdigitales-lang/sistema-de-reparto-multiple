@@ -24,10 +24,9 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
 
   const filtrados = clientes
     .filter(c=>filtroDia==="todos"||c.dia===filtroDia)
-    .filter(c=>c.nombre.toLowerCase().includes(busqueda.toLowerCase())||
-               (c.barrio||"").toLowerCase().includes(busqueda.toLowerCase())||
-               (c.telefono||"").includes(busqueda))
+    .filter(c=>buscarCliente(c,busqueda)>0)
     .sort((a,b)=>{
+      if(busqueda.trim()){ const dif=buscarCliente(b,busqueda)-buscarCliente(a,busqueda); if(dif!==0) return dif; }
     if(a.dia!==b.dia) return DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia);
     return (a.orden||9999)-(b.orden||9999);
   });
@@ -46,7 +45,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
 
       {/* Filtros */}
       <div style={{padding:"10px 14px 6px"}}>
-        <input style={s.input} placeholder="Buscar por nombre, barrio o teléfono..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} />
+        <input style={s.input} placeholder="Buscar por domicilio, nombre o teléfono..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} />
         <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap",alignItems:"center"}}>
           {["todos",...DIAS].map(d=>(
             <button key={d} style={{...s.btn,fontSize:11,padding:"3px 10px",
@@ -184,14 +183,12 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                   <span style={{fontSize:18,cursor:"pointer",lineHeight:1}} onClick={e=>{e.stopPropagation();setFotoClienteId(fotoClienteId===c.id?null:c.id);}}>📷</span>
                 </div>
               </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
-                <button style={{...s.btnDanger,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();onEliminar(c.id);}}>Eliminar</button>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {onRegistrarVenta&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={e=>{e.stopPropagation();onRegistrarVenta(c);}}>📦 Venta</button>}
-                  {repartos&&repartos.length>0&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"rgba(93,170,255,0.15)",color:"var(--color-text-info)",border:"1px solid rgba(93,170,255,0.4)",fontWeight:500}} onClick={e=>{e.stopPropagation();setReasignandoId(c.id);}}>↔ Reasignar</button>}
-                  <button style={{...s.btn,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();setEditandoId(c.id);}}>Editar</button>
-                </div>
-              </div>
+              <PieEnvases c={c} ventas={ventas} onEditar={onEditar}
+                izquierda={<button style={{...s.btnDanger,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();onEliminar(c.id);}}>Eliminar</button>}>
+                {onRegistrarVenta&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={e=>{e.stopPropagation();onRegistrarVenta(c);}}>📦 Venta</button>}
+                {repartos&&repartos.length>0&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"rgba(93,170,255,0.15)",color:"var(--color-text-info)",border:"1px solid rgba(93,170,255,0.4)",fontWeight:500}} onClick={e=>{e.stopPropagation();setReasignandoId(c.id);}}>↔ Reasignar</button>}
+                <button style={{...s.btn,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();setEditandoId(c.id);}}>Editar</button>
+              </PieEnvases>
             </>
           )}
         </div>

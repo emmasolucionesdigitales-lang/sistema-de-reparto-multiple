@@ -22,8 +22,8 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
   const totalNeto    = filtradas.reduce((a,v)=>a+(v.neto||0),0);
   const totalGan     = filtradas.reduce((a,v)=>a+(v.ganancia||0),0);
   const totalCosto   = filtradas.reduce((a,v)=>a+(v.costo||0),0);
-  const cobEfectivo  = filtradas.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.neto||0),0);
-  const cobTrans     = filtradas.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.neto||0),0);
+  const cobEfectivo  = filtradas.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.neto||0)),0);
+  const cobTrans     = filtradas.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.neto||0)),0);
   const cobFiado     = filtradas.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
   const cobSaldos    = filtradas.reduce((a,v)=>{const e=(v.pagadoNum||0)-(v.neto||0);return a+(e>0?e:0);},0);
   const porPago      = {contado:cobEfectivo, transferencia:cobTrans, fiado:cobFiado};

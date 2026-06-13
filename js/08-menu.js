@@ -575,7 +575,7 @@ function DetalleTransferencias({ventas, ventasPendTrans}) {
                     {confirmada?"✅ Confirmada":"🔴 Pendiente"}
                   </span>
                 </div>
-                <span style={{fontSize:13,fontWeight:500,color:confirmada?"var(--color-text-success)":"#f5b942"}}>{fmt(v.pagadoNum||v.neto||0)}</span>
+                <span style={{fontSize:13,fontWeight:500,color:confirmada?"var(--color-text-success)":"#f5b942"}}>{fmt(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0))}</span>
               </div>
             );
           })}
@@ -709,11 +709,11 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
   const extraFiado    = ventasExtraDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
   const extraTotal    = extraEfectivo + extraTrans + extraFiado;
   // Cobranza — solo ventas propias del día
-  const cobEfectivo   = ventasPropias.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-  const cobTransBruto = ventasPropias.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+  const cobEfectivo   = ventasPropias.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.pagadoNum||v.neto||0)),0);
+  const cobTransBruto = ventasPropias.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0)),0);
   const cobTransDesc  = Math.round(cobTransBruto*0.025);
   const cobTransNeto  = cobTransBruto - cobTransDesc;
-  const ventasPendTrans = ventas.filter(v=>v.pago==="transferencia"&&!v.transConfirmada);
+  const ventasPendTrans = ventas.filter(v=>(v.pago==="transferencia"||(v.pago==="mixto"&&(Number(v.montoTrans)||0)>0))&&!v.transConfirmada);
   const cobFiado      = ventasPropias.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
   const cobSaldosEfec  = ventasPropias.filter(v=>v.pago==="contado").reduce((a,v)=>{ const extra=(v.pagadoNum||0)-(v.neto||0); return a+(extra>0?extra:0); },0);
   const cobSaldosTrans = ventasPropias.filter(v=>v.pago==="transferencia").reduce((a,v)=>{ const extra=(v.pagadoNum||0)-(v.neto||0); return a+(extra>0?extra:0); },0);
@@ -1142,7 +1142,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
           )}
           <div style={{display:"flex",justifyContent:"space-between",padding:"8px 0 2px"}}>
             <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Total cobrado</span>
-            <span style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(cobEfectivo+cobTransBruto+cobSaldos)}</span>
+            <span style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)"}}>{fmt(cobEfectivo+cobTransBruto)}</span>
           </div>
         </div>
 
@@ -1205,7 +1205,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
               <span style={{fontSize:16,fontWeight:500,color:"var(--color-text-info)"}}>{fmt(cobTransNeto)}</span>
             </div>
             <DetalleTransferencias
-              ventas={ventasPropias.filter(v=>v.pago==="transferencia")}
+              ventas={ventasPropias.filter(v=>v.pago==="transferencia"||(v.pago==="mixto"&&(Number(v.montoTrans)||0)>0))}
               ventasPendTrans={ventasPendTrans}
             />
           </div>
