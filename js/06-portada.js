@@ -3,7 +3,7 @@
 // ════════════════════════════════════════════════════════════════════
 
 function Portada({onIngresar}) {
-  const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+  const lic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
   const logo = lic?.logo || null;
   const negocio = lic?.negocio || "Sistema de Reparto 2026 · Multi";
 

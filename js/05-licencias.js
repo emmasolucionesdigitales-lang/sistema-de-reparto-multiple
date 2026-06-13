@@ -61,7 +61,7 @@ function PantallaActivacion({onActivado}) {
         activadoEn: new Date().toISOString()
       });
       // Guardar en localStorage
-      localStorage.setItem("sr_licencia", JSON.stringify({
+      localStorage.setItem("rm_licencia", JSON.stringify({
         codigo:codigoUp, pin:lic.pin, email:email.trim(),
         celular:celular.trim(), negocio:negocio.trim(), deviceId,
         activado:true, logo: lic.logo||""
@@ -209,7 +209,7 @@ function getDeviceId() {
 
 function getLogo() {
   try {
-    const lic = JSON.parse(localStorage.getItem("sr_licencia")||"null");
+    const lic = JSON.parse(localStorage.getItem("rm_licencia")||"null");
     return lic?.logo || null;
   } catch { return null; }
 }

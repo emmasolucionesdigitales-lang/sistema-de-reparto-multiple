@@ -190,8 +190,8 @@ async function guardarLogoFirestore(codigo, logoB64) {
   try {
     await window.dbLicencias.collection("licencias").doc(codigo).update({ logo: logoB64 });
     // Actualizar localStorage también
-    const lic = JSON.parse(localStorage.getItem("sr_licencia")||"null");
-    if(lic) { lic.logo = logoB64; localStorage.setItem("sr_licencia", JSON.stringify(lic)); }
+    const lic = JSON.parse(localStorage.getItem("rm_licencia")||"null");
+    if(lic) { lic.logo = logoB64; localStorage.setItem("rm_licencia", JSON.stringify(lic)); }
     return true;
   } catch(e) { console.error("Error guardando logo:", e); return false; }
 }
@@ -788,7 +788,7 @@ function ConfigApariencia() {
   const [guardado, setGuardado] = React.useState(false);
   const [logo, setLogo] = React.useState(()=>getLogo());
   const [subiendoLogo, setSubiendoLogo] = React.useState(false);
-  const licData = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+  const licData = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
 
   const aplicar = (id) => {
     setTemaActual(id);
@@ -1551,7 +1551,7 @@ function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
       const rep = JSON.parse(localStorage.getItem("rm_licencia")||"null");
       if(rep?.email) return rep;
       // Fallback legacy
-      return JSON.parse(localStorage.getItem("sr_licencia")||"{}");
+      return JSON.parse(localStorage.getItem("rm_licencia")||"{}");
     }catch{ return {}; }
   };
 

@@ -269,15 +269,15 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
                 }
               }
               if(!emailDueno){ alert("No se encontró el email del dueño. Contactá al soporte."); return; }
-              // Guardar email temporalmente en sr_licencia para que usarInformes lo encuentre
+              // Guardar email temporalmente en rm_licencia para que usarInformes lo encuentre
               const licTemp = {email:emailDueno, negocio:perfil.nombre||"Reparto"};
-              const prevLic = localStorage.getItem("sr_licencia");
-              localStorage.setItem("sr_licencia", JSON.stringify(licTemp));
+              const prevLic = localStorage.getItem("rm_licencia");
+              localStorage.setItem("rm_licencia", JSON.stringify(licTemp));
               const inf = usarInformes({ventas,clientes,planillas,noVisitas,productos});
               const ok = await inf.enviarDiario(fechaActual, diaActual);
               // Restaurar licencia original
-              if(prevLic) localStorage.setItem("sr_licencia", prevLic);
-              else localStorage.removeItem("sr_licencia");
+              if(prevLic) localStorage.setItem("rm_licencia", prevLic);
+              else localStorage.removeItem("rm_licencia");
               if(ok) alert("\u2705 Informe enviado al dueño (" + emailDueno + ") correctamente.");
               else   alert("\u26A0\uFE0F Error al enviar. Verificá la conexión.");
             } catch(e) {
