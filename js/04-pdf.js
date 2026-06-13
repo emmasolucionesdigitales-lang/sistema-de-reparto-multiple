@@ -325,15 +325,16 @@ function generarPDFMensual({ventas, clientes, planillas, noVisitas, productos, m
 
 async function enviarInformePorEmail({base64pdf, nombre, asunto, cuerpoHtml, emailDestino, nombreDestino}) {
   try {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    const res = await fetch(window.EMAIL_ENDPOINT, {
       method:"POST",
-      headers:{"Content-Type":"application/json","api-key":BREVO_API_KEY},
       body: JSON.stringify({
-        sender:{name:"Sistema de Reparto 2026 · Multi", email:BREVO_FROM},
-        to:[{email:emailDestino, name:nombreDestino||emailDestino}],
+        token: window.EMAIL_TOKEN,
+        to: emailDestino,
+        toName: nombreDestino || emailDestino,
         subject: asunto,
         htmlContent: cuerpoHtml,
-        attachment:[{content:base64pdf, name:nombre}]
+        attachmentBase64: base64pdf,
+        attachmentName: nombre
       })
     });
     return res.ok;
@@ -341,7 +342,7 @@ async function enviarInformePorEmail({base64pdf, nombre, asunto, cuerpoHtml, ema
 }
 
 function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
-  const lic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
+  const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
   const negocio = lic?.negocio || "Sistema de Reparto 2026 · Multi";
   const emailDest = lic?.email || "";
 
@@ -399,7 +400,7 @@ function PantallaElegirTema({onElegido}) {
   React.useEffect(()=>{ aplicarTema(seleccion); },[seleccion]);
 
   const temasFiltrados = Object.entries(TEMAS).filter(([,t])=>t.modo===modoVista);
-  const lic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
+  const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
   const logo = lic?.logo || null;
 
   return (
