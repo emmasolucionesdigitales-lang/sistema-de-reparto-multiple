@@ -1,4 +1,4 @@
-const BREVO_API_KEY = "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";
+const BREVO_API_KEY = "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";
 const BREVO_FROM = "carabajalponce1980@gmail.com";
 
 // ════════════════════════════════════════════════════════════════════
