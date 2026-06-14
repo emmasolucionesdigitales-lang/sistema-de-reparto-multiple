@@ -1,6 +1,3 @@
-const BREVO_API_KEY = "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";
-const BREVO_FROM = "carabajalponce1980@gmail.com";
-
 // ════════════════════════════════════════════════════════════════════
 // ◆  05-licencias.js — Brevo · PantallaActivacion · PantallaPin · getDeviceId · getLogo
 // ════════════════════════════════════════════════════════════════════
@@ -9,14 +6,9 @@ const BREVO_FROM = "carabajalponce1980@gmail.com";
 // (window.EMAIL_ENDPOINT / window.EMAIL_TOKEN). Acá se reutilizan.
 async function enviarEmailBrevo({to, toName, subject, htmlContent}) {
   try {
-    await fetch("https://api.brevo.com/v3/smtp/email", {
+    await fetch(window.EMAIL_ENDPOINT, {
       method:"POST",
-      headers:{"Content-Type":"application/json","api-key":BREVO_API_KEY},
-      body: JSON.stringify({
-        sender:{name:"Sistema de Reparto 2026 · Multi", email:BREVO_FROM},
-        to:[{email:to, name:toName||to}],
-        subject, htmlContent
-      })
+      body: JSON.stringify({token:window.EMAIL_TOKEN, to, toName:toName||to, subject, htmlContent})
     });
     return true;
   } catch(e) { console.error("Email error",e); return false; }

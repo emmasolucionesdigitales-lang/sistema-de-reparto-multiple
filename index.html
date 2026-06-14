@@ -120,13 +120,15 @@ self.addEventListener('notificationclick',e=>{
     }
     window.getLicenciaRM = getLicenciaRM;
 
-    const BREVO_KEY_RM = "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";
+    const EMAIL_ENDPOINT = "https://script.google.com/macros/s/AKfycbzmNoGW8yrdtUTjGUhLym67rDfRc9-h4FtYqFWkOEojkIYnDGEy13gt1704S74YU9xj/exec";
+    const EMAIL_TOKEN = "Emma131017";
+    window.EMAIL_ENDPOINT = EMAIL_ENDPOINT;
+    window.EMAIL_TOKEN = EMAIL_TOKEN;
     window.enviarEmailBrevoRM = async function({to, toName, subject, htmlContent}) {
       try {
-        await fetch("https://api.brevo.com/v3/smtp/email", {
+        await fetch(EMAIL_ENDPOINT, {
           method:"POST",
-          headers:{"Content-Type":"application/json","api-key":BREVO_KEY_RM},
-          body:JSON.stringify({sender:{name:"Sistema de Reparto · Emma Soluciones",email:"carabajalponce1980@gmail.com"},to:[{email:to,name:toName||to}],subject,htmlContent})
+          body:JSON.stringify({token:EMAIL_TOKEN, to, toName:toName||to, subject, htmlContent})
         });
       } catch(e) {}
     };
