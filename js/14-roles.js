@@ -682,7 +682,7 @@ function PantallaActivacionRM({onActivado}) {
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"var(--color-background-primary,#0f1923)",padding:24,overflowY:"auto"}}>
       <div style={{width:"100%",maxWidth:360}}>
         <div style={{textAlign:"center",marginBottom:28}}>
-          <img src="icono-192.png" alt="" onError={e=>e.target.remove()} style={{width:64,height:64,borderRadius:16,marginBottom:12}} />
+          <img src="icon-192.png" alt="" onError={e=>e.target.remove()} style={{width:64,height:64,borderRadius:16,marginBottom:12}} />
           <h1 style={{fontSize:20,fontWeight:700,color:"var(--color-text-primary,#e2eaf4)",margin:0}}>Activación de cuenta</h1>
           <p style={{fontSize:13,color:"var(--color-text-secondary,#7a9ab8)",marginTop:6,lineHeight:1.5}}>
             {paso===1
