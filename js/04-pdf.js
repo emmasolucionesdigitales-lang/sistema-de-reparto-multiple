@@ -342,7 +342,7 @@ async function enviarInformePorEmail({base64pdf, nombre, asunto, cuerpoHtml, ema
 }
 
 function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
-  const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+  const lic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
   const negocio = lic?.negocio || "Sistema de Reparto 2026 · Multi";
   const emailDest = lic?.email || "";
 
@@ -400,7 +400,7 @@ function PantallaElegirTema({onElegido}) {
   React.useEffect(()=>{ aplicarTema(seleccion); },[seleccion]);
 
   const temasFiltrados = Object.entries(TEMAS).filter(([,t])=>t.modo===modoVista);
-  const lic = (() => { try { return JSON.parse(localStorage.getItem("sr_licencia")||"null"); } catch { return null; } })();
+  const lic = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
   const logo = lic?.logo || null;
 
   return (
