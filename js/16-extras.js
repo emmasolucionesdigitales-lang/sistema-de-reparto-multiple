@@ -574,7 +574,7 @@ function AgendaRepartidor({recordatorios,clientes,onConfirmar,onEliminar,onNuevo
 }
 
 
-function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onVolver}) {
+function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onIrCliente,onVolver}) {
   const [mostrarNuevo,setMostrarNuevo] = React.useState(false);
   const [clienteBusq,setClienteBusq]  = React.useState("");
   const [clienteSel,setClienteSel]    = React.useState(null);
@@ -683,8 +683,12 @@ function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onV
             {!r.confirmado&&(
               <div style={{display:"flex",gap:6,marginTop:10,paddingTop:8,borderTop:"0.5px solid var(--color-border-tertiary)"}}>
                 <button style={{...s.btn,flex:1,fontSize:12}} onClick={()=>{if(window.confirm("¿Eliminar este recordatorio?"))onEliminar(r.id);}}>🗑 Eliminar</button>
-                <button style={{flex:2,padding:"7px",borderRadius:8,border:"none",background:"#0a2e1f",color:"#4dd9a0",fontSize:12,fontWeight:500,cursor:"pointer"}}
+                <button style={{flex:1,padding:"7px",borderRadius:8,border:"none",background:"#0a2e1f",color:"#4dd9a0",fontSize:12,fontWeight:500,cursor:"pointer"}}
                   onClick={()=>onConfirmar(r.id)}>✓ Marcar como hecho</button>
+                {onIrCliente&&r.clienteId&&<button style={{flex:2,padding:"7px",borderRadius:8,border:"none",background:"#185FA5",color:"#e2eaf4",fontSize:12,fontWeight:600,cursor:"pointer"}}
+                  onClick={()=>onIrCliente(r.clienteId)}>
+                  {r.tipo==="cobro"?"💰 Ir a cobrar":"🏠 Ver cliente →"}
+                </button>}
               </div>
             )}
           </div>

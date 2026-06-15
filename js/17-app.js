@@ -979,6 +979,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           if(!c){alert("Seleccioná un cliente");return;}
           saveRecordatorios([...(recordatorios||[]),{...datos,id:Date.now(),clienteId:c.id,clienteNombre:c.nombre,dia:c.dia,confirmado:false}]);
         }}
+        onIrCliente={(cId)=>{
+          const c=clientes.find(x=>x.id===cId);
+          if(c){setClienteId(cId);setDiaActual(c.dia);irA("detalleCliente");}
+        }}
         onVolver={()=>irA("menu")}
       />}
       {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDia} setCargasDia={saveCargasDia} planillas={planillas} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
