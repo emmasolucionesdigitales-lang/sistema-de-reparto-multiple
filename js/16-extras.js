@@ -207,7 +207,7 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
   const totalPend = clientes.filter(c=>!ventasHoy.find(v=>v.clienteId===c.id)&&!noVisHoy.find(v=>v.clienteId===c.id)).length;
   const recorrido = totalEntregados+noVisHoy.length >= clientes.length && clientes.length > 0;
   const recActivos = (recordatorios||[]).filter(r=>!r.confirmado);
-  const hoy = new Date().toISOString().slice(0,10);
+  const hoy = (()=>{const d=new Date(Date.now()-3*60*60*1000);return d.toISOString().slice(0,10);})();
   const recHoy = recActivos.filter(r=>r.fecha===hoy||r.fecha===fechaActual);
   const fmtP = (n)=>"$"+Math.round(Number(n)||0).toLocaleString("es-AR");
   const totalEfectivo = ventasHoy.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
@@ -505,7 +505,7 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
 // ── AgendaRepartidor ─────────────────────────────────────────
 function AgendaRepartidor({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onIrCliente,onVolver,negocioId,repartidorNombre}) {
   const [mostrarNuevo,setMostrarNuevo] = React.useState(false);
-  const hoy = new Date().toISOString().slice(0,10);
+  const hoy = (()=>{const d=new Date(Date.now()-3*60*60*1000);return d.toISOString().slice(0,10);})();
   const pendientes = [...(recordatorios||[])].filter(r=>!r.confirmado).sort((a,b)=>a.fecha.localeCompare(b.fecha));
   const confirmados = [...(recordatorios||[])].filter(r=>r.confirmado).slice(0,5);
   const tipoIco = {visita:"🏠",cobro:"💰"};
@@ -579,7 +579,7 @@ function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onV
   const [clienteBusq,setClienteBusq]  = React.useState("");
   const [clienteSel,setClienteSel]    = React.useState(null);
   const [filtro,setFiltro]            = React.useState("pendiente"); // pendiente | todos
-  const hoy = new Date().toISOString().slice(0,10);
+  const hoy = (()=>{const d=new Date(Date.now()-3*60*60*1000);return d.toISOString().slice(0,10);})();
 
   const tipoIco  = {visita:"🏠",cobro:"💰"};
   const tipoCl   = {visita:"var(--color-text-info)",cobro:"var(--color-text-warning)"};
@@ -709,7 +709,7 @@ function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onV
 }
 
 function NuevoRecordatorioForm({clientes,onGuardar,onCerrar}) {
-  const hoy = new Date().toISOString().slice(0,10);
+  const hoy = (()=>{const d=new Date(Date.now()-3*60*60*1000);return d.toISOString().slice(0,10);})();
   const [tipo,setTipo]     = React.useState("visita");
   const [fecha,setFecha]   = React.useState(hoy);
   const [hora,setHora]     = React.useState("10:00");
@@ -772,7 +772,7 @@ function NuevoRecordatorioForm({clientes,onGuardar,onCerrar}) {
         <button style={{...s.btn,flex:1}} onClick={onCerrar}>Cancelar</button>
         <button style={{...s.btnPrimary,flex:2,opacity:(!clienteId||!motivo.trim())?0.5:1}}
           disabled={!clienteId||!motivo.trim()}
-          onClick={()=>onGuardar({tipo,fecha,hora,motivo:motivo.trim(),clienteId})}>
+          onClick={()=>onGuardar({id:Date.now(),tipo,fecha,hora,motivo:motivo.trim(),clienteId,clienteNombre:(clientes.find(c=>c.id===clienteId)||{}).nombre||"",confirmado:false})}>
           Guardar recordatorio
         </button>
       </div>
