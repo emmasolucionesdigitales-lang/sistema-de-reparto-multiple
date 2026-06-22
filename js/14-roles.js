@@ -511,8 +511,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               const plan = planillas[planKey]||{};
               const misClientesIds = new Set(clientes.map(c=>c.id));
               const ventasDia = ventas.filter(v=>v.fechaKey===fechaActual&&!v._esCobro&&!v._esAjuste&&misClientesIds.has(v.clienteId));
-              const totalEfectivo = ventasDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-              const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+              // Efectivo: contado + parte efectivo de mixto (igual que planilla)
+              const totalEfectivo = ventasDia.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.pagadoNum||v.neto||0)),0);
+              // Transferencias: transfer + parte transfer de mixto (igual que planilla)
+              const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0)),0);
               const totalFiado    = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
               const totalNeto     = totalEfectivo+totalTransfer+totalFiado;
               const retencion     = Math.round(totalTransfer*0.025);
