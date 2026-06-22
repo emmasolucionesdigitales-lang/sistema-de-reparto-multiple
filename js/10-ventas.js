@@ -2,7 +2,7 @@
 // ◆  10-ventas.js — NuevaVenta · NuevoCliente
 // ════════════════════════════════════════════════════════════════════
 
-function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVolver,onSaltar,progressData}) {
+function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVolver,onSaltar,ventasCliente,progressData}) {
   const [transConfirmada,setTransConfirmada] = React.useState(false);
 
   const sonarTransferencia = () => {
@@ -17,7 +17,18 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
       });
     } catch(e){}
   };
-  const [cantidades,setCantidades]=useState(()=>{const m={};productos.forEach(p=>{m[p.nombre]=0;});return m;});
+  // 🔁 Buscar la última venta con productos para repetirla automáticamente
+  const nombresEntrega = productos.filter(p=>!p.esDispenser).map(p=>p.nombre);
+  const ultimaConProd = (()=>{
+    const conProd=(ventasCliente||[]).filter(v=>Array.isArray(v.detalle)&&v.detalle.some(d=>(d.cantidad||0)>0&&!d._esDispRoto&&nombresEntrega.includes(d.nombre)));
+    return conProd.length?[...conProd].sort((a,b)=>(b.id||0)-(a.id||0))[0]:null;
+  })();
+  const [cantidades,setCantidades]=useState(()=>{
+    const m={};productos.forEach(p=>{m[p.nombre]=0;});
+    if(ultimaConProd)ultimaConProd.detalle.forEach(d=>{if(!d._esDispRoto&&(d.nombre in m)&&nombresEntrega.includes(d.nombre))m[d.nombre]=d.cantidad;});
+    return m;
+  });
+  const [repetido,setRepetido]=useState(!!ultimaConProd);
   const [pago,setPago]=useState("contado");
   const [monto,setMonto]=useState("");
   const [montoEfec,setMontoEfec]=useState(""); // pago mixto: parte efectivo
@@ -98,6 +109,12 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
       )}
       <div style={{padding:16}}>
         <span style={{...s.sectionTitle,padding:"0 0 10px"}}>Cantidades entregadas</span>
+        {repetido&&(
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,background:"var(--color-background-info)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:8,padding:"8px 12px",marginBottom:10}}>
+            <span style={{fontSize:12,color:"var(--color-text-info)",fontWeight:500}}>🔁 Repetido de la última venta</span>
+            <button style={{...s.btn,padding:"4px 12px",fontSize:12}} onClick={()=>{setCantidades(q=>{const m={};Object.keys(q).forEach(k=>m[k]=0);return m;});setRepetido(false);}}>Vaciar</button>
+          </div>
+        )}
         {prodEntrega.map(p=>(
           <div key={p.id} style={{...s.card,margin:"0 0 8px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div><div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{p.nombre}</div><div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{fmt(p.precio)} c/u</div></div>
