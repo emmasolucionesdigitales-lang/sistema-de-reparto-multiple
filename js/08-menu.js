@@ -719,8 +719,11 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
     const _cajInit = Math.floor(_sLlenos/(CAJON_SODA||6));
     const _pesoInit  = _cajInit * 13 + _b10Init * 10 + _b20Init * 20;
     const _bultosInit = _cajInit + _b10Init + _b20Init;
+    // Auto-completar fecha con la fecha del reparto en formato dd/mm/aaaa
+    const _fechaAuto = (()=>{ if(!fecha) return ""; const [y,m,d]=(fecha+"").split("-"); return d&&m&&y?`${d}/${m}/${y}`:""; })();
     return {
       ...planilla,
+      fecha:       planilla.fecha       || _fechaAuto,
       peso:        planilla.peso        || (_pesoInit>0   ? String(_pesoInit)                 : ""),
       bultos:      planilla.bultos      || (_bultosInit>0 ? String(_bultosInit)               : ""),
       efectivo:    planilla.efectivo    || (cobEfectivo>0   ? String(Math.round(cobEfectivo))   : ""),

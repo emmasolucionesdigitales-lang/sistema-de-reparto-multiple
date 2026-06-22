@@ -81,7 +81,8 @@ function OnboardingRoles({uid, email, onListo}) {
 
 // ── AppRepartidor ──────────────────────────────────────────────
 function AppRepartidorWrapper({uid, perfil, onSalir}) {
-  // Sin Cargando — renderizar AppRepartidor directamente
+  // Aplicar tema guardado (igual que el dueño)
+  React.useEffect(()=>{ try { aplicarTema(getTemaActual()); } catch{} },[]);
   return <AppRepartidor uid={uid} perfil={perfil} onSalir={onSalir} />;
 }
 
@@ -93,9 +94,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   // ── Estado del repartidor ───────────────────────────────────────────
   const [pantalla,   setPantalla]   = React.useState("inicio");
-  const [fechaActual,setFechaActual]= React.useState(()=>new Date().toISOString().slice(0,10));
+  const [fechaActual,setFechaActual]= React.useState(()=>new Date().toLocaleDateString("en-CA"));
   const [clienteId,  setClienteId]  = React.useState(null);
-  const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toISOString().slice(0,10));
+  const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toLocaleDateString("en-CA"));
   const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual); // ahora sí está definido
   const [origenDetalle, setOrigenDetalle] = React.useState("clientes");
   const [datos,      setDatos]      = React.useState(null);
@@ -142,11 +143,31 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   const cliente = todosClientes.find(c=>c.id===clienteId)||null;
 
-  const sync = (nd) => { setDatos(nd); cloudSave(nd, uid, perfil.negocioId); };
-  const saveVentas   = (nv) => sync({...datos, ventas:nv});
-  const saveClientes = (nc) => sync({...datos, clientes:nc});
-  const saveNoVisitas= (nv) => sync({...datos, noVisitas:nv});
-  const savePlanilla = (key,val) => sync({...datos, planillas:{...planillas,[key]:val}});
+  const sync = async (overrides={}) => {
+    // Traer datos frescos de Firebase para no sobreescribir cambios del dueño
+    let base = overrides;
+    try {
+      const fresh = await cloudLoad(uid, perfil.negocioId);
+      if(fresh) {
+        // Mergear ventas: las locales tienen prioridad (actualización de transConfirmada, etc.)
+        const freshVentas = fresh.ventas || [];
+        const localVentas = overrides.ventas !== undefined ? overrides.ventas : (datos.ventas || []);
+        const merged = [...freshVentas];
+        localVentas.forEach(lv => {
+          const idx = merged.findIndex(fv => fv.id === lv.id);
+          if(idx === -1) merged.push(lv); // nueva venta del repartidor
+          else merged[idx] = lv;          // actualización (ej: transConfirmada)
+        });
+        base = { ...fresh, ...datos, ...overrides, ventas: merged };
+      }
+    } catch(e) { base = { ...datos, ...overrides }; }
+    setDatos(base);
+    cloudSave(base, uid, perfil.negocioId);
+  };
+  const saveVentas   = (nv) => sync({ventas:nv});
+  const saveClientes = (nc) => sync({clientes:nc});
+  const saveNoVisitas= (nv) => sync({noVisitas:nv});
+  const savePlanilla = (key,val) => sync({planillas:{...(datos.planillas||{}),[key]:val}});
 
   const irA = (p) => { setPantalla(p); window.scrollTo(0,0); };
 
@@ -382,6 +403,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         <NuevaVenta
           key={clienteId}
           cliente={cliente} productos={productos} fecha={fechaActual}
+          ventasCliente={ventas.filter(v=>v.clienteId===cliente?.id)}
           onNoEsta={()=>{
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noesta"}]);
             irAlSiguiente();
@@ -414,8 +436,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           ventas={ventas.filter(v=>v.pago==="transferencia"||v.pago==="mixto")}
           clientes={todosClientes}
           onConfirmar={(ventaId)=>{
-            const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);
-            sync({...datos,ventas:nv});
+            const nv=(datos.ventas||[]).map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);
+            sync({ventas:nv});
           }}
           onVolver={()=>irA("inicio")}
         />

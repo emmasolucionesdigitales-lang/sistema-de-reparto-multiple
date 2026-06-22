@@ -247,6 +247,23 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       setSyncStatus("saved");
       setTimeout(()=>setSyncStatus("idle"), 2000);
     });
+
+    // Refrescar ventas del repartidor cada 60 segundos automáticamente
+    const _refreshInterval = setInterval(()=>{
+      cloudLoad(uid, negocioId).then(function(data){
+        if(!data) return;
+        if(data.ventas?.length) setVentasRaw(v => {
+          // Merge: agregar ventas nuevas del repartidor sin perder las del dueño
+          const ids = new Set(v.map(x=>x.id));
+          const nuevas = data.ventas.filter(x=>!ids.has(x.id));
+          if(!nuevas.length) return v;
+          return [...v, ...nuevas];
+        });
+        if(data.clientes?.length) setClientes(data.clientes);
+        if(data.planillas) setPlanillas(p=>({...data.planillas,...p}));
+      }).catch(()=>{});
+    }, 60000);
+    return ()=>clearInterval(_refreshInterval);
   }, []);
 
   // Ref siempre actualizado — evita datos viejos en el debounce
