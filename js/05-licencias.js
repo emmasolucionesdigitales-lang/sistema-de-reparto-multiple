@@ -6,12 +6,14 @@
 // (window.EMAIL_ENDPOINT / window.EMAIL_TOKEN). Acá se reutilizan.
 async function enviarEmailBrevo({to, toName, subject, htmlContent}) {
   try {
-    await fetch(window.EMAIL_ENDPOINT, {
+    const resp = await fetch(window.EMAIL_ENDPOINT, {
       method:"POST",
       body: JSON.stringify({token:window.EMAIL_TOKEN, to, toName:toName||to, subject, htmlContent})
     });
+    const data = await resp.json().catch(()=>({ok:false,error:"respuesta inválida del servicio"}));
+    if(!data.ok) { console.error("Email error:", data.error); return false; }
     return true;
-  } catch(e) { console.error("Email error",e); return false; }
+  } catch(e) { console.error("Email error:", e); return false; }
 }
 
 // ── PANTALLAS DE SEGURIDAD ───────────────────────────────────────────────────

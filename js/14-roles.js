@@ -143,26 +143,23 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   const cliente = todosClientes.find(c=>c.id===clienteId)||null;
 
-  const sync = async (overrides={}) => {
-    // Traer datos frescos de Firebase para no sobreescribir cambios del dueño
-    let base = overrides;
-    try {
-      const fresh = await cloudLoad(uid, perfil.negocioId);
-      if(fresh) {
-        // Mergear ventas: las locales tienen prioridad (actualización de transConfirmada, etc.)
-        const freshVentas = fresh.ventas || [];
-        const localVentas = overrides.ventas !== undefined ? overrides.ventas : (datos.ventas || []);
-        const merged = [...freshVentas];
-        localVentas.forEach(lv => {
-          const idx = merged.findIndex(fv => fv.id === lv.id);
-          if(idx === -1) merged.push(lv); // nueva venta del repartidor
-          else merged[idx] = lv;          // actualización (ej: transConfirmada)
-        });
-        base = { ...fresh, ...datos, ...overrides, ventas: merged };
-      }
-    } catch(e) { base = { ...datos, ...overrides }; }
-    setDatos(base);
-    cloudSave(base, uid, perfil.negocioId);
+  const sync = (overrides={}) => {
+    // 1. Actualizar UI inmediatamente (feedback instantáneo para el usuario)
+    const localBase = { ...datos, ...overrides };
+    setDatos(localBase);
+    // 2. En el fondo: mergear con Firebase y guardar (no bloquea la UI)
+    cloudLoad(uid, perfil.negocioId).then(function(fresh){
+      if(!fresh){ cloudSave(localBase, uid, perfil.negocioId); return; }
+      const freshVentas = fresh.ventas || [];
+      const localVentas = overrides.ventas !== undefined ? overrides.ventas : (datos.ventas || []);
+      const merged = [...freshVentas];
+      localVentas.forEach(function(lv){
+        const idx = merged.findIndex(function(fv){ return fv.id === lv.id; });
+        if(idx === -1) merged.push(lv);
+        else merged[idx] = lv;
+      });
+      cloudSave({...fresh,...datos,...overrides,ventas:merged}, uid, perfil.negocioId);
+    }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId); });
   };
   const saveVentas   = (nv) => sync({ventas:nv});
   const saveClientes = (nc) => sync({clientes:nc});
