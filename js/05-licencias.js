@@ -130,14 +130,63 @@ function PantallaActivacion({onActivado}) {
   );
 }
 
+// ── Acceso biométrico (huella / Face ID) con WebAuthn — Multi ──────────────
+const SR_BIO_KEY = "sr_bio_cred";
+function bioSoportado(){ return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create); }
+function bioEnrolado(){ try { return !!localStorage.getItem(SR_BIO_KEY); } catch { return false; } }
+function bioRechazado(){ try { return localStorage.getItem("sr_bio_no")==="1"; } catch { return false; } }
+function _srB64ToBuf(b64){ const x=atob(b64); const u=new Uint8Array(x.length); for(let i=0;i<x.length;i++)u[i]=x.charCodeAt(i); return u.buffer; }
+function _srBufToB64(buf){ const u=new Uint8Array(buf); let x=""; for(let i=0;i<u.length;i++)x+=String.fromCharCode(u[i]); return btoa(x); }
+async function srBioRegistrar(){
+  const cred = await navigator.credentials.create({ publicKey:{
+    challenge: crypto.getRandomValues(new Uint8Array(32)),
+    rp:{ name:"Sistema de Reparto Multi" },
+    user:{ id: crypto.getRandomValues(new Uint8Array(16)), name:"usuario", displayName:"Usuario" },
+    pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+    authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required" },
+    timeout:60000, attestation:"none",
+  }});
+  if(!cred) throw new Error("cancelado");
+  localStorage.setItem(SR_BIO_KEY, _srBufToB64(cred.rawId));
+  localStorage.removeItem("sr_bio_no");
+  return true;
+}
+async function srBioVerificar(){
+  const r = await navigator.credentials.get({ publicKey:{
+    challenge: crypto.getRandomValues(new Uint8Array(32)),
+    allowCredentials:[{ type:"public-key", id:_srB64ToBuf(localStorage.getItem(SR_BIO_KEY)) }],
+    userVerification:"required", timeout:60000,
+  }});
+  return !!r;
+}
+
 function PantallaPin({pin, onOk}) {
   const [intento, setIntento] = React.useState("");
   const [error, setError] = React.useState("");
   const [intentos, setIntentos] = React.useState(0);
   const [bloqueado, setBloqueado] = React.useState(false);
+  const [faseEnrolar, setFaseEnrolar] = React.useState(false);
+  const [bioMsg, setBioMsg] = React.useState("");
+  const [mostrarPin, setMostrarPin] = React.useState(true);
+  const [fallosBio, setFallosBio] = React.useState(0);
+  const puedeBio = bioSoportado();
+  const bioOn = bioEnrolado();
+
+  // Intento automático de huella al montar
+  React.useEffect(()=>{
+    if(puedeBio && bioOn){
+      setMostrarPin(false);
+      srBioVerificar().then(ok=>{ if(ok) onOk(); }).catch(()=>{ setFallosBio(1); setMostrarPin(true); setBioMsg("Usá tu PIN para entrar."); });
+    }
+  },[]);
+
+  const finalizar = () => {
+    if(puedeBio && !bioEnrolado() && !bioRechazado()) setFaseEnrolar(true);
+    else onOk();
+  };
 
   const verificar = () => {
-    if(intento === String(pin)) { setError(""); onOk(); }
+    if(intento === String(pin)) { setError(""); finalizar(); }
     else {
       const nv = intentos+1;
       setIntentos(nv);
@@ -147,56 +196,67 @@ function PantallaPin({pin, onOk}) {
     }
   };
 
+  const intentarHuellaDeNuevo = async () => {
+    setBioMsg(""); setError("");
+    try { if(await srBioVerificar()) onOk(); }
+    catch(e){ const nf=fallosBio+1; setFallosBio(nf); if(nf>=3){ setBioMsg("Demasiados intentos. Usá tu PIN."); setMostrarPin(true); } else setBioMsg(`No se reconoció. Intentos restantes: ${3-nf}`); }
+  };
+  const activarHuella = async () => { try { await srBioRegistrar(); onOk(); } catch(e){ onOk(); } };
+  const saltarHuella = () => { try{localStorage.setItem("sr_bio_no","1");}catch(e){} onOk(); };
+
   const teclas = [1,2,3,4,5,6,7,8,9,"","0","⌫"];
 
   return (
     <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,minHeight:"100vh",gap:20}}>
       <div style={{width:70,height:70,borderRadius:"50%",background:"var(--color-background-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>💧</div>
       <h1 style={{fontSize:20,fontWeight:600,color:"var(--color-text-primary)"}}>Sistema de Reparto 2026 · Multi</h1>
-      <p style={{fontSize:14,color:"var(--color-text-secondary)"}}>Ingresá tu PIN de acceso</p>
 
-      {/* Indicadores de dígitos */}
-      <div style={{display:"flex",gap:16,marginBottom:8}}>
-        {[0,1,2,3].map(i=>(
-          <div key={i} style={{width:18,height:18,borderRadius:"50%",
-            background:intento.length>i?"#185FA5":"transparent",
-            border:"2px solid var(--color-border-secondary)"}} />
-        ))}
-      </div>
-
-      {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center"}}>{error}</p>}
-
-      {/* Teclado numérico */}
-      {!bloqueado&&<div style={{display:"grid",gridTemplateColumns:"repeat(3,72px)",gap:10}}>
-        {teclas.map((t,i)=>(
-          <button key={i} style={{
-            height:60,fontSize:t==="⌫"?20:22,fontWeight:500,borderRadius:12,
-            background:t===""?"transparent":"var(--color-background-secondary)",
-            border:t===""?"none":"0.5px solid var(--color-border-secondary)",
-            color:"var(--color-text-primary)",cursor:t===""?"default":"pointer",
-            opacity:t===""?0:1
-          }} onClick={()=>{
-            if(t==="") return;
-            if(t==="⌫") setIntento(v=>v.slice(0,-1));
-            else if(intento.length<4) {
-              const nv = intento+t;
-              setIntento(nv);
-              if(nv.length===4) setTimeout(()=>{
-                if(nv===String(pin)){setError("");onOk();}
-                else{
-                  setIntento("");
-                  setIntentos(prev=>{
-                    const n2=prev+1;
-                    if(n2>=5){setBloqueado(true);setError("Demasiados intentos. Contactá al soporte.");}
-                    else{setError(`PIN incorrecto (${5-n2} intento${5-n2!==1?"s":""} restante${5-n2!==1?"s":""})`);}
-                    return n2;
-                  });
+      {faseEnrolar ? (
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,maxWidth:280}}>
+          <div style={{fontSize:46}}>👆</div>
+          <p style={{fontSize:16,color:"var(--color-text-primary)",textAlign:"center",margin:0,fontWeight:600}}>¿Entrar con tu huella la próxima vez?</p>
+          <p style={{fontSize:12,color:"var(--color-text-secondary)",textAlign:"center",margin:0,lineHeight:1.5}}>Tu PIN sigue funcionando por si lo necesitás.</p>
+          <button style={{background:"#185FA5",color:"#fff",border:"none",borderRadius:10,padding:"12px 20px",fontSize:15,fontWeight:600,cursor:"pointer",width:210}} onClick={activarHuella}>Activar huella</button>
+          <button style={{background:"none",border:"none",color:"var(--color-text-secondary)",fontSize:13,cursor:"pointer"}} onClick={saltarHuella}>Ahora no</button>
+        </div>
+      ) : !mostrarPin && bioOn ? (
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
+          <div style={{fontSize:56}}>👆</div>
+          <p style={{fontSize:15,color:"var(--color-text-secondary)",textAlign:"center"}}>Verificando huella...</p>
+          {bioMsg && <p style={{color:"#f5b942",fontSize:13,textAlign:"center"}}>{bioMsg}</p>}
+          {fallosBio>0 && fallosBio<3 && <button style={{background:"#185FA5",color:"#fff",border:"none",borderRadius:10,padding:"10px 20px",fontSize:14,cursor:"pointer"}} onClick={intentarHuellaDeNuevo}>Reintentar huella</button>}
+          <button style={{background:"none",border:"none",color:"var(--color-text-tertiary)",fontSize:13,cursor:"pointer",marginTop:8}} onClick={()=>setMostrarPin(true)}>Usar PIN</button>
+        </div>
+      ) : (
+        <>
+          <p style={{fontSize:14,color:"var(--color-text-secondary)"}}>Ingresá tu PIN de acceso</p>
+          <div style={{display:"flex",gap:16,marginBottom:8}}>
+            {[0,1,2,3].map(i=>(<div key={i} style={{width:18,height:18,borderRadius:"50%",background:intento.length>i?"#185FA5":"transparent",border:"2px solid var(--color-border-secondary)"}} />))}
+          </div>
+          {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center"}}>{error}</p>}
+          {bioMsg&&<p style={{fontSize:13,color:"#f5b942",textAlign:"center"}}>{bioMsg}</p>}
+          {!bloqueado&&<div style={{display:"grid",gridTemplateColumns:"repeat(3,72px)",gap:10}}>
+            {teclas.map((t,i)=>(
+              <button key={i} style={{
+                height:60,fontSize:t==="⌫"?20:22,fontWeight:500,borderRadius:12,
+                background:t===""?"transparent":"var(--color-background-secondary)",
+                border:t===""?"none":"0.5px solid var(--color-border-secondary)",
+                color:"var(--color-text-primary)",cursor:t===""?"default":"pointer",opacity:t===""?0:1
+              }} onClick={()=>{
+                if(t==="") return;
+                if(t==="⌫") setIntento(v=>v.slice(0,-1));
+                else if(intento.length<4){
+                  const nv=intento+t; setIntento(nv);
+                  if(nv.length===4) setTimeout(()=>{
+                    if(nv===String(pin)){setError("");finalizar();}
+                    else{ setIntento(""); setIntentos(prev=>{ const n2=prev+1; if(n2>=5){setBloqueado(true);setError("Demasiados intentos. Contactá al soporte.");}else{setError(`PIN incorrecto (${5-n2} intento${5-n2!==1?"s":""} restante${5-n2!==1?"s":""})`);}return n2;}); }
+                  },200);
                 }
-              },200);
-            }
-          }}>{t}</button>
-        ))}
-      </div>}
+              }}>{t}</button>
+            ))}
+          </div>}
+        </>
+      )}
     </div>
   );
 }

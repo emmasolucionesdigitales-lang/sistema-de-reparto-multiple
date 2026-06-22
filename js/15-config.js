@@ -18,28 +18,24 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
     <div style={s.screen}>
       <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button><span style={s.headerTitle}>Configuración</span></div>
       <div style={{padding:"14px 14px 6px",background:"var(--color-background-secondary)"}}>
-        {[
-          [["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]],
-        ].map((fila,fi)=>(
-          <div key={fi} style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:8}}>
-            {fila.map(([id,ico,lbl])=>(
-              <button key={id} onClick={()=>setTab(id)} style={{
-                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,
-                padding:"12px 6px",borderRadius:12,cursor:"pointer",
-                border:`2px solid ${tab===id?"var(--color-accent)":"transparent"}`,
-                background:tab===id?"var(--color-background-secondary)":"var(--color-background-tertiary)",
-                boxShadow:tab===id
-                  ?"0 0 0 1px var(--color-accent), 0 4px 12px rgba(24,95,165,0.3)"
-                  :"0 3px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.06) inset",
-                color:tab===id?"var(--color-accent)":"var(--color-text-secondary)",
-                transition:"all 0.15s",
-              }}>
-                <span style={{fontSize:20}}>{ico}</span>
-                <span style={{fontSize:10,fontWeight:tab===id?600:400,letterSpacing:"0.02em"}}>{lbl}</span>
-              </button>
-            ))}
-          </div>
-        ))}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:8}}>
+          {[["datos","📋","Datos"],["vehiculo","🚐","Vehículo"],["apariencia","🎨","Estilo"]].map(([id,ico,lbl])=>(
+            <button key={id} onClick={()=>setTab(id)} style={{
+              display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,
+              padding:"14px 8px",borderRadius:14,cursor:"pointer",
+              border:`2px solid ${tab===id?"var(--color-accent)":"var(--color-border-tertiary)"}`,
+              background:tab===id?"var(--color-background-info)":"var(--color-background-tertiary)",
+              boxShadow:tab===id
+                ?"0 0 0 1px var(--color-accent), 0 4px 16px rgba(24,95,165,0.25)"
+                :"0 2px 6px rgba(0,0,0,0.25)",
+              color:tab===id?"var(--color-text-info)":"var(--color-text-secondary)",
+              transition:"all 0.18s",
+            }}>
+              <span style={{fontSize:26,lineHeight:1}}>{ico}</span>
+              <span style={{fontSize:11,fontWeight:tab===id?600:400,letterSpacing:"0.03em"}}>{lbl}</span>
+            </button>
+          ))}
+        </div>
       </div>
       {tab==="stock"&&(<>
         <div style={{padding:16}}>
