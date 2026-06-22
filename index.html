@@ -130,7 +130,8 @@ self.addEventListener('notificationclick',e=>{
           method:"POST",
           body:JSON.stringify({token:EMAIL_TOKEN, to, toName:toName||to, subject, htmlContent})
         });
-      } catch(e) {}
+        return true;
+      } catch(e) { console.error("Email error:", e); return false; }
     };
 
     function getUserProfile(uid) {

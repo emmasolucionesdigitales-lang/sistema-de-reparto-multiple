@@ -509,7 +509,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               // Datos del informe
               const planKey = `${diaActual}_${fechaActual}`;
               const plan = planillas[planKey]||{};
-              const ventasDia = ventas.filter(v=>v.fechaKey===fechaActual&&!v._esCobro&&!v._esAjuste);
+              const misClientesIds = new Set(clientes.map(c=>c.id));
+              const ventasDia = ventas.filter(v=>v.fechaKey===fechaActual&&!v._esCobro&&!v._esAjuste&&misClientesIds.has(v.clienteId));
               const totalEfectivo = ventasDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
               const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
               const totalFiado    = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
