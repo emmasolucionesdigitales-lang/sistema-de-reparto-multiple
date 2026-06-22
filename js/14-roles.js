@@ -492,7 +492,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           syncData={(overrides)=>sync({...datos,...overrides})}
           onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("inicio");}}
           onVolver={()=>irA("inicio")}
-          onCerrarDia={async ()=>{
+          onCerrarDia={async (imgData)=>{
             try {
               // Buscar email del dueño
               let emailDueno = "";
@@ -512,9 +512,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               const misClientesIds = new Set(clientes.map(c=>c.id));
               const ventasDia = ventas.filter(v=>v.fechaKey===fechaActual&&!v._esCobro&&!v._esAjuste&&misClientesIds.has(v.clienteId));
               // Efectivo: contado + parte efectivo de mixto (igual que planilla)
-              const totalEfectivo = ventasDia.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.pagadoNum||v.neto||0)),0);
+              const totalEfectivo = vals?.cobEfectivo ?? ventasDia.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.pagadoNum||v.neto||0)),0);
               // Transferencias: transfer + parte transfer de mixto (igual que planilla)
-              const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0)),0);
+              const totalTransfer = vals?.cobTransBruto ?? ventasDia.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0)),0);
               const totalFiado    = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
               const totalNeto     = totalEfectivo+totalTransfer+totalFiado;
               const retencion     = Math.round(totalTransfer*0.025);
@@ -544,7 +544,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               const fila = (l,v,color="")=>`<tr><td style="padding:7px 0;color:#555;border-bottom:1px solid #eee">${l}</td><td style="text-align:right;font-weight:600;border-bottom:1px solid #eee;color:${color||"#222"}">${v}</td></tr>`;
               const sep  = (t)=>`<tr><td colspan="2" style="padding:10px 0 4px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">${t}</td></tr>`;
               const noVisHoyCount = (datos.noVisitas||[]).filter(v=>v.fecha===fechaActual).length;
-              const htmlContent = `
+              const htmlContent = imgData
+                ? `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:16px;background:#f9fafb"><div style="background:#185FA5;border-radius:12px 12px 0 0;padding:16px 20px"><h2 style="color:#fff;margin:0;font-size:17px">📋 Reparto · ${diaActual} ${fechaActual}</h2><p style="color:#c8dcf0;margin:4px 0 0;font-size:12px">Repartidor: <b>${perfil.nombre}</b></p></div><div style="background:#fff;border-radius:0 0 12px 12px;padding:12px"><img src="${imgData}" style="width:100%;border-radius:8px;display:block;" alt="Planilla del día"/></div><p style="color:#aaa;font-size:11px;text-align:center;margin-top:12px">Sistema de Reparto · Emma Soluciones Digitales</p></div>`
+                : `
                 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#f9fafb">
                   <div style="background:#185FA5;border-radius:12px 12px 0 0;padding:20px 24px">
                     <h2 style="color:#fff;margin:0;font-size:18px">📋 Informe de reparto · ${diaActual} ${fechaActual}</h2>

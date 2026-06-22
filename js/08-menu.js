@@ -719,11 +719,8 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
     const _cajInit = Math.floor(_sLlenos/(CAJON_SODA||6));
     const _pesoInit  = _cajInit * 13 + _b10Init * 10 + _b20Init * 20;
     const _bultosInit = _cajInit + _b10Init + _b20Init;
-    // Auto-completar fecha con la fecha del reparto en formato dd/mm/aaaa
-    const _fechaAuto = (()=>{ if(!fecha) return ""; const [y,m,d]=(fecha+"").split("-"); return d&&m&&y?`${d}/${m}/${y}`:""; })();
     return {
       ...planilla,
-      fecha:       planilla.fecha       || _fechaAuto,
       peso:        planilla.peso        || (_pesoInit>0   ? String(_pesoInit)                 : ""),
       bultos:      planilla.bultos      || (_bultosInit>0 ? String(_bultosInit)               : ""),
       efectivo:    planilla.efectivo    || (cobEfectivo>0   ? String(Math.round(cobEfectivo))   : ""),
@@ -1099,6 +1096,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
 
         {/* Resumen */}
         <div style={s.divider} />
+        <div id="planilla-capture">
         <span style={{...s.sectionTitle,padding:"0 0 10px"}}>Resumen del día</span>
 
         {/* Detalle de ventas — recuadrado azul, colapsable */}
@@ -1235,6 +1233,7 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
             <span style={{fontSize:22,fontWeight:500,color:ganancia>=0?"var(--color-text-success)":"var(--color-text-danger)"}}>{fmt(ganancia)}</span>
           </div>
         </div>
+        </div>{/* fin planilla-capture */}
         <button style={s.btnPrimary} onClick={()=>onGuardar(datos)}>Guardar planilla</button>
         {onCerrarDia&&ventas.length>0&&(()=>{
           const MAX_ENVIOS = 3;
@@ -1245,7 +1244,20 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
             <button style={{...s.btnPrimary,background:agotado?"#555":envios>0?"#0F6E56":"#8B2FC9",marginTop:8,width:"100%",cursor:agotado?"default":"pointer",opacity:agotado?0.7:1}}
               onClick={async()=>{
                 if(agotado){alert(`Ya enviaste el informe del día ${MAX_ENVIOS} veces (el máximo). Revisá tu email, incluida la carpeta de spam.`);return;}
-                const ok = await onCerrarDia();
+                let imgData = null;
+                try {
+                  const el = document.getElementById("planilla-capture");
+                  if(el && window.html2canvas) {
+                    const canvas = await window.html2canvas(el, {
+                      scale:1.5, useCORS:true, allowTaint:true,
+                      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--color-background-primary").trim()||"#0f1923",
+                      scrollY:0, scrollX:0, width:el.offsetWidth,
+                      height:el.scrollHeight, windowWidth:el.offsetWidth, windowHeight:el.scrollHeight
+                    });
+                    imgData = canvas.toDataURL("image/jpeg", 0.78);
+                  }
+                } catch(e) { console.warn("Captura falló:", e); }
+                const ok = await onCerrarDia(imgData);
                 if(ok){
                   setEnviosInforme(Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`)||envios+1));
                   alert(`✅ Informe enviado a tu email correctamente.${quedan-1>0?`\n\nSi no te llega, podés reenviarlo ${quedan-1} ${quedan-1===1?"vez":"veces"} más.`:""}`);
