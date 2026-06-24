@@ -18,17 +18,39 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
     } catch(e){}
   };
   // 🔁 Buscar la última venta con productos para repetirla automáticamente
-  const nombresEntrega = productos.filter(p=>!p.esDispenser).map(p=>p.nombre);
+  const nombresEntrega = (productos||[]).filter(p=>!p.esDispenser).map(p=>p.nombre);
   const ultimaConProd = (()=>{
-    const conProd=(ventasCliente||[]).filter(v=>Array.isArray(v.detalle)&&v.detalle.some(d=>(d.cantidad||0)>0&&!d._esDispRoto&&nombresEntrega.includes(d.nombre)));
+    const conProd=(ventasCliente||[]).filter(v=>{
+      const det=Array.isArray(v.detalle)?v.detalle:Object.values(v.detalle||{});
+      return det.some(d=>(d.cantidad||0)>0&&!d._esDispRoto&&nombresEntrega.includes(d.nombre));
+    });
     return conProd.length?[...conProd].sort((a,b)=>(b.id||0)-(a.id||0))[0]:null;
   })();
   const [cantidades,setCantidades]=useState(()=>{
-    const m={};productos.forEach(p=>{m[p.nombre]=0;});
-    if(ultimaConProd)ultimaConProd.detalle.forEach(d=>{if(!d._esDispRoto&&(d.nombre in m)&&nombresEntrega.includes(d.nombre))m[d.nombre]=d.cantidad;});
+    const m={};(productos||[]).forEach(p=>{m[p.nombre]=0;});
+    if(ultimaConProd){
+      const det=Array.isArray(ultimaConProd.detalle)?ultimaConProd.detalle:Object.values(ultimaConProd.detalle||{});
+      det.forEach(d=>{if(!d._esDispRoto&&(d.nombre in m)&&nombresEntrega.includes(d.nombre))m[d.nombre]=d.cantidad;});
+    }
     return m;
   });
   const [repetido,setRepetido]=useState(!!ultimaConProd);
+  const ventasClienteRef=React.useRef(ventasCliente);
+  React.useEffect(()=>{
+    if(ventasClienteRef.current===ventasCliente||repetido) return;
+    ventasClienteRef.current=ventasCliente;
+    const nombres=(productos||[]).filter(p=>!p.esDispenser).map(p=>p.nombre);
+    const conProd=(ventasCliente||[]).filter(v=>{
+      const det=Array.isArray(v.detalle)?v.detalle:Object.values(v.detalle||{});
+      return det.some(d=>(d.cantidad||0)>0&&!d._esDispRoto&&nombres.includes(d.nombre));
+    });
+    if(!conProd.length) return;
+    const ultima=[...conProd].sort((a,b)=>(b.id||0)-(a.id||0))[0];
+    const m={};(productos||[]).forEach(p=>{m[p.nombre]=0;});
+    const det=Array.isArray(ultima.detalle)?ultima.detalle:Object.values(ultima.detalle||{});
+    det.forEach(d=>{if(!d._esDispRoto&&nombres.includes(d.nombre))m[d.nombre]=d.cantidad||0;});
+    setCantidades(m); setRepetido(true);
+  },[ventasCliente]);
   const [pago,setPago]=useState("contado");
   const [monto,setMonto]=useState("");
   const [montoEfec,setMontoEfec]=useState(""); // pago mixto: parte efectivo
@@ -38,6 +60,10 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
   const [opcionSaldo,setOpcionSaldo]=useState("compra"); // compra | todo | parcial
   const [envPrest,setEnvPrest]=useState([{prod:"",cant:""}]);
   const [envDev,setEnvDev]=useState([{prod:"",cant:""}]);
+  const [envOpen,setEnvOpen]=useState(false);
+  const addEnv=(setList,prod)=>setList(prev=>{const idx=prev.findIndex(e=>e.prod===prod);if(idx>=0){const n=[...prev];n[idx]={...n[idx],cant:String((Number(n[idx].cant)||0)+1)};return n;}return [...prev.filter(e=>e.prod!==""),{prod,cant:"1"}];});
+  const subEnv=(setList,prod)=>setList(prev=>{const idx=prev.findIndex(e=>e.prod===prod);if(idx<0)return prev;const n=[...prev];const nc=Math.max(0,(Number(n[idx].cant)||0)-1);if(nc===0)return n.filter((_,i)=>i!==idx);n[idx]={...n[idx],cant:String(nc)};return n;});
+  const getEnvCnt=(list,prod)=>list.filter(e=>e.prod===prod).reduce((a,e)=>a+(Number(e.cant)||0),0);
   const [obs,setObs]=useState("");
   const [dispRotoPrecio, setDispRotoPrecio] = React.useState("");
   const dispenser = productos.find(p=>p.esDispenser);
@@ -287,62 +313,40 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
         )}
         <div style={s.divider} />
         {/* ── Dispenser ─────────────────────────────────── */}
-        {dispenser&&(()=>{
-          const cantActual = cliente.dispenser||0;
-          const prestados = envPrest.filter(e=>e.prod==="Dispenser").reduce((a,e)=>a+(Number(e.cant)||0),0);
-          const devueltos = envDev.filter(e=>e.prod==="Dispenser").reduce((a,e)=>a+(Number(e.cant)||0),0);
-          const enCliente = cantActual + prestados - devueltos;
-          return (
-            <div style={{...s.card,margin:"0 0 10px",padding:"12px 14px"}}>
+        {dispenser&&(cliente.dispenser||0)>0&&(
+          <div style={{...s.card,margin:"0 0 10px",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>🧊 Dispenser</span>
+            <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>En el cliente: <b style={{color:"var(--color-text-primary)"}}>{cliente.dispenser}</b></span>
+          </div>
+        )}
+        {/* ── Envases ─────────────────────────────────── */}
+        <div style={{...s.card,margin:"0 0 10px",padding:0,overflow:"hidden"}}>
+          <button style={{width:"100%",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",background:"none",border:"none",cursor:"pointer"}}
+            onClick={()=>setEnvOpen(o=>!o)}>
+            <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>📦 Envases{(getEnvCnt(envPrest,"Sifón 1.5L")+getEnvCnt(envPrest,"Bidón 10L")+getEnvCnt(envPrest,"Bidón 20L")+getEnvCnt(envDev,"Sifón 1.5L")+getEnvCnt(envDev,"Bidón 10L")+getEnvCnt(envDev,"Bidón 20L"))>0?" · hay movimientos":""}</span>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:16,transform:envOpen?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.2s"}}>⌃</span>
+          </button>
+          {envOpen&&prodEntrega.map((p)=>(
+            <div key={p.nombre} style={{padding:"10px 14px",borderTop:"0.5px solid var(--color-border-tertiary)"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>🧊 Dispenser</span>
-                <span style={{fontSize:12,color:"var(--color-text-secondary)"}}>
-                  En el cliente: <b style={{color:"var(--color-text-primary)"}}>{enCliente}</b>
+                <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{p.nombre}</span>
+                <span style={{fontSize:11,color:"var(--color-text-tertiary)"}}>
+                  {getEnvCnt(envPrest,p.nombre)>0&&`Presté ${getEnvCnt(envPrest,p.nombre)}`}
+                  {getEnvCnt(envPrest,p.nombre)>0&&getEnvCnt(envDev,p.nombre)>0&&" · "}
+                  {getEnvCnt(envDev,p.nombre)>0&&`Devolvió ${getEnvCnt(envDev,p.nombre)}`}
                 </span>
               </div>
-              {/* Prestar / Devolver rápido */}
-              <div style={{display:"flex",gap:6,marginBottom:10}}>
+              <div style={{display:"flex",gap:8}}>
                 <button style={{flex:1,background:"var(--color-background-info)",color:"var(--color-text-info)",border:"0.5px solid var(--color-border-secondary)",borderRadius:8,padding:"8px",fontSize:12,fontWeight:500,cursor:"pointer"}}
-                  onClick={()=>setEnvPrest(prev=>{const n=[...prev];const idx=n.findIndex(e=>e.prod==="Dispenser");if(idx>=0){const c=[...n];c[idx]={...c[idx],cant:String((Number(c[idx].cant)||0)+1)};return c;}return [...n.filter(e=>e.prod!==""),{prod:"Dispenser",cant:"1"}];})}>
-                  + Prestar uno
-                </button>
-                <button style={{flex:1,background:"var(--color-background-success)",color:"var(--color-text-success)",border:"0.5px solid var(--color-border-secondary)",borderRadius:8,padding:"8px",fontSize:12,fontWeight:500,cursor:"pointer",opacity:enCliente<=0?0.4:1}}
-                  disabled={enCliente<=0}
-                  onClick={()=>setEnvDev(prev=>{const n=[...prev];const idx=n.findIndex(e=>e.prod==="Dispenser");if(idx>=0){const c=[...n];c[idx]={...c[idx],cant:String((Number(c[idx].cant)||0)+1)};return c;}return [...n.filter(e=>e.prod!==""),{prod:"Dispenser",cant:"1"}];})}>
-                  − Devolver uno
-                </button>
+                  onClick={()=>addEnv(setEnvPrest,p.nombre)}>+ Presté uno</button>
+                <button style={{flex:1,background:"var(--color-background-success)",color:"var(--color-text-success)",border:"0.5px solid var(--color-border-secondary)",borderRadius:8,padding:"8px",fontSize:12,fontWeight:500,cursor:"pointer"}}
+                  onClick={()=>addEnv(setEnvDev,p.nombre)}>− Devolvió uno</button>
               </div>
-              {/* Cobrar rotura */}
-              <div>
-                <label style={{...s.label,marginBottom:4}}>💔 Cobrar rotura (precio a acordar)</label>
-                <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  <input
-                    style={{...s.input,flex:1}}
-                    type="number"
-                    placeholder={`Costo referencia: ${fmt(dispenser.costo)}`}
-                    value={dispRotoPrecio}
-                    onChange={e=>setDispRotoPrecio(e.target.value)}
-                  />
-                  {rotoPrecioNum>0&&(
-                    <button style={{...s.btnDanger,padding:"8px 10px",fontSize:12,whiteSpace:"nowrap"}}
-                      onClick={()=>setDispRotoPrecio("")}>✕ Quitar</button>
-                  )}
-                </div>
-                {rotoPrecioNum>0&&(
-                  <div style={{marginTop:6,fontSize:12,color:"var(--color-text-danger)",fontWeight:500}}>
-                    Se cobrará {fmt(rotoPrecioNum)} por rotura de dispenser
-                  </div>
-                )}
-              </div>
+              {getEnvCnt(envPrest,p.nombre)>0&&<button style={{marginTop:6,background:"none",border:"none",fontSize:11,color:"var(--color-text-tertiary)",cursor:"pointer",padding:0}} onClick={()=>subEnv(setEnvPrest,p.nombre)}>↩ deshacer último prestado</button>}
+              {getEnvCnt(envDev,p.nombre)>0&&<button style={{marginTop:getEnvCnt(envPrest,p.nombre)>0?2:6,background:"none",border:"none",fontSize:11,color:"var(--color-text-tertiary)",cursor:"pointer",padding:0,display:"block"}} onClick={()=>subEnv(setEnvDev,p.nombre)}>↩ deshacer última devolución</button>}
             </div>
-          );
-        })()}
-        <label style={{...s.label,fontSize:13,marginBottom:6}}>Envases prestados al cliente</label>
-        {envPrest.map((_,i)=><ER key={i} list={envPrest} setList={setEnvPrest} i={i} />)}
-        <button style={{...s.btn,fontSize:12,padding:"4px 12px",marginBottom:12}} onClick={()=>setEnvPrest([...envPrest,{prod:"",cant:""}])}>+ Fila</button>
-        <label style={{...s.label,fontSize:13,marginBottom:6}}>Envases devueltos por el cliente</label>
-        {envDev.map((_,i)=><ER key={i} list={envDev} setList={setEnvDev} i={i} />)}
-        <button style={{...s.btn,fontSize:12,padding:"4px 12px",marginBottom:12}} onClick={()=>setEnvDev([...envDev,{prod:"",cant:""}])}>+ Fila</button>
+          ))}
+        </div>
         <div style={s.divider} />
         <label style={s.label}>Observaciones</label>
         <textarea style={{...s.input,minHeight:60,resize:"vertical",marginBottom:14}} value={obs} onChange={e=>setObs(e.target.value)} placeholder="Notas opcionales..." />
