@@ -462,7 +462,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                     </div>
                     <div style={{fontSize:13,color:"var(--color-text-primary)",marginBottom:3}}>{v.detalle.map(d=>`${d.nombre} ×${d.cantidad}`).join(" · ")}</div>
                     <div style={{fontSize:11,color:"var(--color-text-secondary)",marginBottom:6}}>
-                      {v.pago}{v.desc>0?` · desc. ${fmt(v.desc)}`:""}{v.saldoAplicado>0?` · saldo ${fmt(v.saldoAplicado)}`:""}{v.obs?` · ${v.obs}`:""}
+                      {(()=>{const esMixto=(Number(v.montoTrans)||0)>0&&(Number(v.montoEfec)||0)>0;return esMixto?`Mixto · ef ${fmt(v.montoEfec)} + tr ${fmt(v.montoTrans)}`:v.pago;})()}{v.desc>0?` · desc. ${fmt(v.desc)}`:""}{v.saldoAplicado>0?` · saldo ${fmt(v.saldoAplicado)}`:""}{v.obs?` · ${v.obs.replace(/\s*\[Mixto:[^\]]*\]/g,"")}`:""} 
                     </div>
                     {!soloLectura&&<div style={{display:"flex",justifyContent:"flex-end",gap:6}}>
                       <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>setEditandoVentaId(v.id)}>Editar</button>
