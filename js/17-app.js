@@ -747,10 +747,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onVerConfirmaciones={(dia)=>{setDiaActual(dia);irA("confirmacionesDia");}}
         transferenciasPendientes={DIAS.map(dia=>{
           const clientesRep=clientes.filter(c=>c.repartoId===repartoActual.id);
-          const vts=ventas.filter(v=>v.dia===dia&&v.pago==="transferencia"&&!v.transConfirmada&&clientesRep.some(c=>c.id===v.clienteId));
+          const vts=ventas.filter(v=>v.dia===dia&&(v.pago==="transferencia"||(v.pago==="mixto"&&(Number(v.montoTrans)||0)>0))&&!v.transConfirmada&&clientesRep.some(c=>c.id===v.clienteId));
           if(!vts.length) return null;
           const fechas=[...new Set(vts.map(v=>v.fechaKey))].sort().reverse();
-          return {dia,fecha:fechas[0]||"",count:vts.length,monto:vts.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0),ventas:vts};
+          return {dia,fecha:fechas[0]||"",count:vts.length,monto:vts.reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0)),0),ventas:vts};
         }).filter(Boolean)}
         zonasReparto={zonasReparto}
         onSetZona={(dia,zona)=>{const nz={...zonasReparto,[dia]:zona};setZonasReparto(nz);syncData({zonasReparto:nz});}}
@@ -765,7 +765,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           clientes={clientes}
           onConfirmar={(ventaId)=>{const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);saveVentas(nv);}}
           onVolver={()=>irA("menu")} />}
-      {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&v.pago==="transferencia"&&!v.transConfirmada).length} />}
+      {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&(v.pago==="transferencia"||(v.pago==="mixto"&&(Number(v.montoTrans)||0)>0))&&!v.transConfirmada).length} />}
       {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
       {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("planilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={(img)=>cerrarDia(fechaActual,diaActual,img)} initCierre={initCierre} prospectos={prospectos||[]} noVisitas={noVisitas||[]} />}
       {pantalla==="selectorFechaClientes" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("inicioReparto");}} onVolver={()=>irA("diaPrincipal")} />}
