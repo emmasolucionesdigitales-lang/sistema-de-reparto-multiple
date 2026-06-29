@@ -173,6 +173,9 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
 function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
   const [abiertos, setAbiertos] = React.useState({});
   const toggleFecha = (fk) => setAbiertos(o=>({...o,[fk]:!o[fk]}));
+  // Cuánto entró REALMENTE por transferencia en esta venta:
+  // si fue pago mixto, solo la parte transferida; si fue transferencia pura, el total.
+  const montoT = (v) => v.pago === "mixto" ? (Number(v.montoTrans) || 0) : (v.pagadoNum || v.neto || 0);
   const pendientes = ventas.filter(v=>!v.transConfirmada);
   const confirmadas = ventas.filter(v=>v.transConfirmada);
   const porCliente = {};
@@ -181,8 +184,8 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
     porCliente[v.clienteId].ventas.push(v);
   });
   const grupos = Object.values(porCliente);
-  const totalPendiente = pendientes.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-  const totalConfirmado = confirmadas.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+  const totalPendiente = pendientes.reduce((a,v)=>a+(montoT(v)),0);
+  const totalConfirmado = confirmadas.reduce((a,v)=>a+(montoT(v)),0);
   const confirmadasPorFecha = {};
   confirmadas.forEach(v=>{ const fk=v.fechaKey||"sin fecha"; if(!confirmadasPorFecha[fk])confirmadasPorFecha[fk]=[]; confirmadasPorFecha[fk].push(v); });
   const fechasConf = Object.keys(confirmadasPorFecha).sort().reverse();
@@ -222,7 +225,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
                     <div style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{v.fechaKey} · {v.fecha?.slice(-8)||""}</div>
                     <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{(v.detalle||[]).map(d=>`${d.nombre}×${d.cantidad}`).join(" · ")}</div>
                   </div>
-                  <span style={{fontSize:16,fontWeight:500,color:"#f5b942"}}>{fmt(v.pagadoNum||v.neto||0)}</span>
+                  <span style={{fontSize:16,fontWeight:500,color:"#f5b942"}}>{fmt(montoT(v))}</span>
                 </div>
                 <button style={{width:"100%",padding:"9px",borderRadius:8,border:"none",background:"#185FA5",color:"#e2eaf4",fontSize:13,fontWeight:500,cursor:"pointer"}}
                   onClick={()=>onConfirmar(v.id)}>✓ Confirmar transferencia</button>
@@ -235,7 +238,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
             <div style={{fontSize:10,color:"var(--color-text-tertiary)",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.05em",margin:"8px 0 6px"}}>✓ Ya confirmadas</div>
             {fechasConf.map(fk=>{
               const vtsFecha=confirmadasPorFecha[fk];
-              const totalFecha=vtsFecha.reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+              const totalFecha=vtsFecha.reduce((a,v)=>a+(montoT(v)),0);
               const open=!!abiertos[fk];
               return (
                 <div key={fk} style={{...s.card,margin:"0 0 6px",background:"#0a2e1f",border:"0.5px solid #4dd9a0"}}>
@@ -259,7 +262,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
                             <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:1}}>{(v.detalle||[]).map(d=>`${d.nombre}×${d.cantidad}`).join(" · ")}</div>
                           </div>
                           <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
-                            <div style={{fontSize:13,fontWeight:500,color:"#4dd9a0"}}>{fmt(v.pagadoNum||v.neto||0)}</div>
+                            <div style={{fontSize:13,fontWeight:500,color:"#4dd9a0"}}>{fmt(montoT(v))}</div>
                             <button style={{fontSize:10,color:"var(--color-text-tertiary)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",textDecoration:"underline"}} onClick={()=>onConfirmar(v.id)}>desmarcar</button>
                           </div>
                         </div>

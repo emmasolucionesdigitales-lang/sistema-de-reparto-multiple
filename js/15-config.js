@@ -2,6 +2,65 @@
 // ◆  14-config.js — Config
 // ════════════════════════════════════════════════════════════════════
 
+// ── Tarjeta de seguridad: activar/desactivar acceso con huella (dueño) ──
+// Usa las funciones que ya viven en 05-licencias.js (bioSoportado, srBioRegistrar, etc.)
+function SeguridadHuella() {
+  const soportado = (typeof bioSoportado === "function") ? bioSoportado() : false;
+  const [enrolado, setEnrolado] = React.useState((typeof bioEnrolado === "function") ? bioEnrolado() : false);
+  const [trabajando, setTrabajando] = React.useState(false);
+  const [msg, setMsg] = React.useState("");
+
+  const activar = async () => {
+    setMsg(""); setTrabajando(true);
+    try {
+      await srBioRegistrar();
+      setEnrolado(true);
+      setMsg("✓ Listo. La próxima vez que abras la app vas a poder entrar con tu huella.");
+    } catch(e) {
+      setMsg("No se pudo activar. Probá de nuevo, o usá un dispositivo con lector de huella / Face ID (suele andar en el celular).");
+    }
+    setTrabajando(false);
+  };
+
+  const desactivar = () => {
+    // "sr_bio_cred" es la misma clave que usa 05-licencias.js (SR_BIO_KEY)
+    try { localStorage.removeItem("sr_bio_cred"); localStorage.removeItem("sr_bio_no"); } catch(e){}
+    setEnrolado(false);
+    setMsg("Huella desactivada. Vas a entrar con tu PIN.");
+  };
+
+  return (
+    <div style={{...s.card,margin:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+        <span style={{fontSize:18}}>🔒</span>
+        <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>Acceso con huella</span>
+      </div>
+      {!soportado ? (
+        <p style={{fontSize:12,color:"var(--color-text-tertiary)",margin:"4px 0 0",lineHeight:1.5}}>
+          Este dispositivo no tiene lector de huella / Face ID disponible. Suele funcionar desde el celular; probá abriendo la app ahí.
+        </p>
+      ) : (<>
+        <p style={{fontSize:12,color:"var(--color-text-tertiary)",margin:"0 0 12px",lineHeight:1.5}}>
+          Entrá a la app con tu huella en lugar de escribir el PIN. El PIN sigue funcionando por si lo necesitás.
+        </p>
+        {enrolado ? (
+          <>
+            <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-success)",display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+              <span>✓</span><span>Huella activada</span>
+            </div>
+            <button style={{...s.btn,width:"100%",padding:"11px",fontSize:13,background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"0.5px solid var(--color-border-danger)",borderRadius:10,fontWeight:600,cursor:"pointer"}}
+              onClick={desactivar}>Desactivar huella</button>
+          </>
+        ) : (
+          <button style={{...s.btnPrimary,width:"100%",opacity:trabajando?0.6:1}} disabled={trabajando}
+            onClick={activar}>{trabajando?"Verificando..." : "👆 Activar huella"}</button>
+        )}
+        {msg && <p style={{fontSize:12,color:"var(--color-text-secondary)",margin:"8px 0 0",lineHeight:1.5}}>{msg}</p>}
+      </>)}
+    </div>
+  );
+}
+
 function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial,repartos,repartoActual}) {
   const [tab,setTab]=useState(["datos","vehiculo","apariencia"].includes(tabInicial)?tabInicial:"datos");
   const [editandoId,setEditandoId]=useState(null);
@@ -194,6 +253,9 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
 
         {tab==="datos"&&(
           <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+
+            {/* SEGURIDAD — acceso con huella (dueño) */}
+            <SeguridadHuella />
 
             {/* RESPALDO */}
             <div style={{...s.card,margin:0}}>

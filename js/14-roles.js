@@ -80,9 +80,160 @@ function OnboardingRoles({uid, email, onListo}) {
 
 
 // ── AppRepartidor ──────────────────────────────────────────────
+
+// ── PIN local del repartidor (lo crea él mismo la 1ª vez) ──────────
+function _repPinLeer(){ try { return JSON.parse(localStorage.getItem("rm_rep_pin")||"null"); } catch { return null; } }
+function _repPinGuardar(pin, codigo){ try { localStorage.setItem("rm_rep_pin", JSON.stringify({pin:String(pin), codigo:codigo||""})); } catch(e){} }
+function _repPinBorrar(){ try { localStorage.removeItem("rm_rep_pin"); } catch(e){} }
+
+// ── Candado del repartidor: PIN propio + huella (reusa 05-licencias.js) ──
+//    Salida de emergencia: "¿Olvidaste tu PIN?" → poné tu código de repartidor
+//    para crear uno nuevo. Así nadie queda trabado afuera.
+function GateRepartidor({perfil, onOk, onSalir}) {
+  const codActual = (perfil && perfil.codigo) ? String(perfil.codigo) : "";
+  const guardado  = _repPinLeer();
+  const tienePin  = !!(guardado && guardado.pin && (!guardado.codigo || !codActual || guardado.codigo===codActual));
+  const puedeBio  = (typeof bioSoportado==="function") ? bioSoportado() : false;
+  const bioOn     = (typeof bioEnrolado==="function") ? bioEnrolado() : false;
+  const pinReal   = guardado ? guardado.pin : null;
+
+  const [fase, setFase]       = React.useState(tienePin ? (puedeBio && bioOn ? "bio" : "pin") : "crear");
+  const [valor, setValor]     = React.useState("");   // tecleo actual
+  const [pinTmp, setPinTmp]   = React.useState("");   // pin nuevo entre crear→confirmar
+  const [error, setError]     = React.useState("");
+  const [msg, setMsg]         = React.useState("");
+  const [intentos, setIntentos] = React.useState(0);
+  const [olvido, setOlvido]   = React.useState(false);
+  const [codReset, setCodReset] = React.useState("");
+
+  // Intento automático de huella al abrir
+  React.useEffect(()=>{
+    if(fase==="bio"){
+      srBioVerificar().then(ok=>{ if(ok) onOk(); else setFase("pin"); })
+        .catch(()=>{ setMsg("Usá tu PIN para entrar."); setFase("pin"); });
+    }
+  },[]);
+
+  const completar = (v) => {
+    if(fase==="crear"){ setPinTmp(v); setValor(""); setError(""); setFase("confirmar"); return; }
+    if(fase==="confirmar"){
+      if(v===pinTmp){
+        _repPinGuardar(pinTmp, codActual);
+        setValor("");
+        if(puedeBio && !bioOn && !(typeof bioRechazado==="function" && bioRechazado())) setFase("ofrecerBio");
+        else onOk();
+      } else { setError("Los PIN no coinciden. Empezá de nuevo."); setPinTmp(""); setValor(""); setFase("crear"); }
+      return;
+    }
+    if(fase==="pin"){
+      if(v===String(pinReal)){ onOk(); }
+      else { const n=intentos+1; setIntentos(n); setValor("");
+        setError("PIN incorrecto" + (n>=3 ? " — si no te acordás, tocá \"¿Olvidaste tu PIN?\"" : "")); }
+      return;
+    }
+  };
+
+  const tecla = (t) => {
+    setError("");
+    if(t==="") return;
+    if(t==="⌫"){ setValor(v=>v.slice(0,-1)); return; }
+    const nv = (valor + String(t)).slice(0,4);
+    setValor(nv);
+    if(nv.length===4) setTimeout(()=>completar(nv), 110);
+  };
+
+  const resetConCodigo = () => {
+    const c = codReset.trim().toUpperCase();
+    if(codActual && c===codActual.toUpperCase()){
+      _repPinBorrar(); setOlvido(false); setCodReset(""); setError(""); setMsg("");
+      setValor(""); setPinTmp(""); setIntentos(0); setFase("crear");
+    } else { setError("Ese código no coincide. Pedíselo al dueño."); }
+  };
+
+  const Teclado = (
+    <>
+      <div style={{display:"flex",gap:16,marginBottom:6}}>
+        {[0,1,2,3].map(i=>(<div key={i} style={{width:18,height:18,borderRadius:"50%",background:valor.length>i?"#185FA5":"transparent",border:"2px solid var(--color-border-secondary)"}} />))}
+      </div>
+      {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center",maxWidth:270,lineHeight:1.4}}>{error}</p>}
+      {msg&&<p style={{fontSize:13,color:"#f5b942",textAlign:"center"}}>{msg}</p>}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,72px)",gap:10}}>
+        {[1,2,3,4,5,6,7,8,9,"","0","⌫"].map((t,i)=>(
+          t===""? <div key={i}/> :
+          <button key={i} onClick={()=>tecla(t)} style={{height:60,borderRadius:14,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",fontSize:22,fontWeight:500,cursor:"pointer"}}>{t}</button>
+        ))}
+      </div>
+    </>
+  );
+
+  const shell = (contenido) => (
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32,minHeight:"100vh",gap:18}}>
+      <div style={{width:64,height:64,borderRadius:"50%",background:"var(--color-background-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>💧</div>
+      <h1 style={{fontSize:18,fontWeight:600,color:"var(--color-text-primary)",textAlign:"center"}}>Reparto{perfil&&perfil.nombre?` · ${perfil.nombre}`:""}</h1>
+      {contenido}
+    </div>
+  );
+
+  if(fase==="bio") return shell(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+      <div style={{fontSize:52}}>👆</div>
+      <p style={{fontSize:15,color:"var(--color-text-secondary)",textAlign:"center"}}>Verificando huella...</p>
+      <button style={{background:"none",border:"none",color:"var(--color-text-tertiary)",fontSize:13,cursor:"pointer"}} onClick={()=>setFase("pin")}>Usar PIN</button>
+    </div>
+  );
+
+  if(fase==="ofrecerBio") return shell(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,maxWidth:280}}>
+      <div style={{fontSize:46}}>👆</div>
+      <p style={{fontSize:16,color:"var(--color-text-primary)",textAlign:"center",margin:0,fontWeight:600}}>¿Entrar con tu huella la próxima vez?</p>
+      <p style={{fontSize:12,color:"var(--color-text-secondary)",textAlign:"center",margin:0,lineHeight:1.5}}>Tu PIN sigue funcionando por si lo necesitás.</p>
+      <button style={{background:"#185FA5",color:"#fff",border:"none",borderRadius:10,padding:"12px 20px",fontSize:15,fontWeight:600,cursor:"pointer",width:210}}
+        onClick={async ()=>{ try { await srBioRegistrar(); } catch(e){} onOk(); }}>Activar huella</button>
+      <button style={{background:"none",border:"none",color:"var(--color-text-secondary)",fontSize:13,cursor:"pointer"}}
+        onClick={()=>{ try{localStorage.setItem("sr_bio_no","1");}catch(e){} onOk(); }}>Ahora no</button>
+    </div>
+  );
+
+  if(fase==="crear" || fase==="confirmar") return shell(
+    <>
+      <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",maxWidth:280,lineHeight:1.5}}>
+        {fase==="crear" ? "Creá un PIN de 4 números para proteger la app. Lo vas a usar para entrar." : "Repetí el PIN para confirmar."}
+      </p>
+      {Teclado}
+    </>
+  );
+
+  // fase === "pin"
+  return shell(
+    olvido ? (
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,maxWidth:300,width:"100%"}}>
+        <p style={{fontSize:14,color:"var(--color-text-secondary)",textAlign:"center",lineHeight:1.5}}>
+          Ingresá tu <b>código de repartidor</b> (el de 6 letras que te dio el dueño) para crear un PIN nuevo.
+        </p>
+        <input value={codReset} onChange={e=>{setCodReset(e.target.value);setError("");}} placeholder="Código (6 letras)" maxLength={6}
+          style={{...s.input,textAlign:"center",textTransform:"uppercase",letterSpacing:"0.15em",fontSize:18}} />
+        {error&&<p style={{fontSize:13,color:"var(--color-text-danger)",textAlign:"center"}}>{error}</p>}
+        <button style={{...s.btnPrimary,width:"100%"}} onClick={resetConCodigo}>Crear PIN nuevo</button>
+        <button style={{background:"none",border:"none",color:"var(--color-text-tertiary)",fontSize:13,cursor:"pointer"}} onClick={()=>{setOlvido(false);setError("");setCodReset("");}}>Volver al PIN</button>
+        <button style={{background:"none",border:"none",color:"var(--color-text-danger)",fontSize:12,cursor:"pointer",marginTop:4}}
+          onClick={()=>{ if(window.confirm("¿Cerrar sesión? Vas a tener que ingresar de nuevo con tu código.")) onSalir(); }}>Cerrar sesión y volver a ingresar</button>
+      </div>
+    ) : (
+      <>
+        <p style={{fontSize:14,color:"var(--color-text-secondary)"}}>Ingresá tu PIN</p>
+        {Teclado}
+        {puedeBio && bioOn && <button style={{background:"none",border:"none",color:"var(--color-text-tertiary)",fontSize:13,cursor:"pointer",marginTop:6}} onClick={()=>setFase("bio")}>👆 Usar huella</button>}
+        <button style={{background:"none",border:"none",color:"var(--color-text-info)",fontSize:13,cursor:"pointer",marginTop:2}} onClick={()=>{setOlvido(true);setError("");}}>¿Olvidaste tu PIN?</button>
+      </>
+    )
+  );
+}
+
 function AppRepartidorWrapper({uid, perfil, onSalir}) {
   // Aplicar tema guardado (igual que el dueño)
   React.useEffect(()=>{ try { aplicarTema(getTemaActual()); } catch{} },[]);
+  const [desbloqueado, setDesbloqueado] = React.useState(false);
+  if(!desbloqueado) return <GateRepartidor perfil={perfil} onSalir={onSalir} onOk={()=>setDesbloqueado(true)} />;
   return <AppRepartidor uid={uid} perfil={perfil} onSalir={onSalir} />;
 }
 

@@ -52,8 +52,8 @@ function generarPDFDiario({ventas, clientes, planillas, noVisitas, productos, fe
   const totalGastos = gastos.reduce((a,g)=>a+(Number(g.monto)||0),0);
 
   // Totales
-  const cobEf  = ventasDia.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-  const cobTr  = ventasDia.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+  const cobEf  = ventasDia.reduce((a,v)=>a+(v.pago==="contado"?(v.pagadoNum||v.neto||0):v.pago==="mixto"?(Number(v.montoEfec)||0):0),0);
+  const cobTr  = ventasDia.reduce((a,v)=>a+(v.pago==="transferencia"?(v.pagadoNum||v.neto||0):v.pago==="mixto"?(Number(v.montoTrans)||0):0),0);
   const cobFi  = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
   const totalBruto = cobEf+cobTr+cobFi;
   const totalGan = ventasDia.reduce((a,v)=>a+(v.ganancia||0),0);
@@ -88,7 +88,7 @@ function generarPDFDiario({ventas, clientes, planillas, noVisitas, productos, fe
     y = pdfSeccion(doc, y, `DETALLE POR CLIENTE (${ventasDia.length} entregas)`);
     const filas = ventasDia.map(v=>{
       const prod = v.detalle.map(d=>`${d.nombre} ×${d.cantidad}`).join(", ");
-      return [v.cliente||"", prod, fmt2(v.neto), v.pago==="contado"?"Efectivo":v.pago==="transferencia"?"Transfer.":"Fiado", fmt2(v.pagadoNum||0)];
+      return [v.cliente||"", prod, fmt2(v.neto), v.pago==="contado"?"Efectivo":v.pago==="transferencia"?"Transfer.":v.pago==="mixto"?"Mixto":"Fiado", fmt2(v.pagadoNum||0)];
     });
     doc.autoTable({
       startY:y,
@@ -176,8 +176,8 @@ function generarPDFSemanal({ventas, clientes, planillas, noVisitas, productos, f
   for(let d=new Date(ini); d<=fin; d.setDate(d.getDate()+1)) fechasRango.push(d.toISOString().slice(0,10));
 
   const ventasSem = ventas.filter(v=>fechasRango.includes(v.fechaKey));
-  const cobEf  = ventasSem.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-  const cobTr  = ventasSem.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+  const cobEf  = ventasSem.reduce((a,v)=>a+(v.pago==="contado"?(v.pagadoNum||v.neto||0):v.pago==="mixto"?(Number(v.montoEfec)||0):0),0);
+  const cobTr  = ventasSem.reduce((a,v)=>a+(v.pago==="transferencia"?(v.pagadoNum||v.neto||0):v.pago==="mixto"?(Number(v.montoTrans)||0):0),0);
   const cobFi  = ventasSem.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
   const totalGan = ventasSem.reduce((a,v)=>a+(v.ganancia||0),0);
   const totalGastos = fechasRango.reduce((a,f)=>{
@@ -263,8 +263,8 @@ function generarPDFMensual({ventas, clientes, planillas, noVisitas, productos, m
   const ventasMes = ventas.filter(v=>{
     const fk=v.fechaKey||""; return fk.startsWith(`${anio}-${String(mes).padStart(2,"0")}`);
   });
-  const cobEf  = ventasMes.filter(v=>v.pago==="contado").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
-  const cobTr  = ventasMes.filter(v=>v.pago==="transferencia").reduce((a,v)=>a+(v.pagadoNum||v.neto||0),0);
+  const cobEf  = ventasMes.reduce((a,v)=>a+(v.pago==="contado"?(v.pagadoNum||v.neto||0):v.pago==="mixto"?(Number(v.montoEfec)||0):0),0);
+  const cobTr  = ventasMes.reduce((a,v)=>a+(v.pago==="transferencia"?(v.pagadoNum||v.neto||0):v.pago==="mixto"?(Number(v.montoTrans)||0):0),0);
   const cobFi  = ventasMes.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
   const totalGan = ventasMes.reduce((a,v)=>a+(v.ganancia||0),0);
   const mesNombre = new Date(anio,mes-1,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"});
