@@ -280,6 +280,14 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
   const noVisitasHoyIds = new Set((noVisitas||[]).filter(v=>v.fecha===hoyFechaKey).map(v=>v.clienteId));
   const visitadosHoy = clientesHoy.filter(c=>ventasHoyIds.has(c.id)||noVisitasHoyIds.has(c.id));
   const diaCompleto = clientesHoy.length>0 && visitadosHoy.length>=clientesHoy.length;
+  // Estado del recuadro de HOY según la hora del reloj (si quedó sin terminar):
+  //   antes de las 12 → normal (azul) · 12 a 17 hs → naranja · 17 hs en adelante → rojo/pendiente
+  const horaActual = new Date().getHours();
+  const hayPendHoy = clientesHoy.length>0 && !diaCompleto;
+  const estadoHoy = diaCompleto ? "listo"
+    : (hayPendHoy && horaActual>=17) ? "rojo"
+    : (hayPendHoy && horaActual>=12) ? "naranja"
+    : "normal";
   return (
     <div style={s.screen}>
       <div style={s.header}>
@@ -356,20 +364,30 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
             </div>
             <span style={{color:"var(--color-text-tertiary)",fontSize:18,marginLeft:10}}>→</span>
           </button>
-          {d===hoyDiaNombre&&onDiaHoy&&(
+          {d===hoyDiaNombre&&onDiaHoy&&(()=>{
+            const cfg = ({
+              listo:   {bg:"#0a5c3a", border:"1.5px solid #4dd9a0", icon:"✅", txt:"Listo",     txtCol:"#4dd9a0", subCol:"#9FE1CB"},
+              rojo:    {bg:"#b91c1c", border:"1.5px solid #fca5a5", icon:"🔴", txt:"Pendiente", txtCol:"#ffe4e4", subCol:"#ffc9c9"},
+              naranja: {bg:"#b45309", border:"1.5px solid #fcd34d", icon:"⏰", txt:"Hoy",       txtCol:"#fff4e0", subCol:"#ffe0b5"},
+              normal:  {bg:"#185FA5", border:"none",                icon:"📅", txt:"Hoy",       txtCol:"#e2eaf4", subCol:"#b5d4f4"},
+            })[estadoHoy];
+            const sub = (diaCompleto || estadoHoy!=="normal") ? `${visitadosHoy.length}/${clientesHoy.length}` : hoyLabel;
+            return (
             <button
-              style={{background:diaCompleto?"#0a5c3a":"#185FA5",borderRadius:12,padding:"8px 10px",
+              style={{background:cfg.bg,borderRadius:12,padding:"8px 10px",
                 display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-                gap:2,minWidth:56,border:diaCompleto?"1.5px solid #4dd9a0":"none",cursor:"pointer",flexShrink:0}}
+                gap:2,minWidth:56,border:cfg.border,cursor:"pointer",flexShrink:0}}
               onClick={()=>diaCompleto?(onDiaResumen&&onDiaResumen(d,hoyFechaKey)):onDiaHoy(d,hoyFechaKey)}>
-              <span style={{fontSize:16}}>{diaCompleto?"✅":"📅"}</span>
-              <span style={{fontSize:9,color:diaCompleto?"#4dd9a0":"#e2eaf4",fontWeight:500,textAlign:"center",lineHeight:1.3}}>
-                {diaCompleto?"Listo":"Hoy"}
+              <span style={{fontSize:16}}>{cfg.icon}</span>
+              <span style={{fontSize:9,color:cfg.txtCol,fontWeight:500,textAlign:"center",lineHeight:1.3}}>
+                {cfg.txt}
               </span>
-              <span style={{fontSize:9,color:diaCompleto?"#9FE1CB":"#b5d4f4",lineHeight:1}}>
-                {diaCompleto?`${visitadosHoy.length}/${clientesHoy.length}`:hoyLabel}
+              <span style={{fontSize:9,color:cfg.subCol,lineHeight:1}}>
+                {sub}
               </span>
             </button>
+            );
+          })()}
           )}
           </div>
           {/* Modal inline editar zona */}
