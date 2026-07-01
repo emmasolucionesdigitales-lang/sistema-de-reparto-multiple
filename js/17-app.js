@@ -214,12 +214,21 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       if (data.clientes?.length)   setClientes(data.clientes);
       if (data.ventas?.length)     {
         // Merge: no pisar ventas locales más nuevas que Firebase
+        // ── MERGE INTELIGENTE: por cada venta, quedarse con la versión MÁS NUEVA ──
+        // Compara el sello _upd. En empate (o datos viejos sin sello) prioriza la transferencia confirmada.
         const ventasLocales=(()=>{try{return JSON.parse(localStorage.getItem("rm_ventas_v3")||"[]");}catch{return[];}})();
-        const idsFirebase=new Set((data.ventas||[]).map(v=>v.id));
-        const soloEnLocal=ventasLocales.filter(v=>!idsFirebase.has(v.id));
-        const merged=soloEnLocal.length>0?[...data.ventas,...soloEnLocal]:data.ventas;
+        const porId={}; (data.ventas||[]).forEach(v=>{porId[v.id]=v;});
+        let cambiosLocales=0;
+        ventasLocales.forEach(v=>{
+          const enNube=porId[v.id];
+          if(!enNube){porId[v.id]=v;cambiosLocales++;return;}
+          const uL=Number(v._upd)||0, uN=Number(enNube._upd)||0;
+          const ganaLocal=(uL!==uN)?uL>uN:(!!v.transConfirmada&&!enNube.transConfirmada);
+          if(ganaLocal){porId[v.id]=v;cambiosLocales++;}
+        });
+        const merged=Object.values(porId);
         setVentasRaw(merged);
-        if(soloEnLocal.length>0){console.log("Merge: "+soloEnLocal.length+" ventas locales sincronizadas con Firebase");setTimeout(()=>syncData({ventas:merged}),2000);}
+        if(cambiosLocales>0){console.log("Merge: "+cambiosLocales+" ventas locales más nuevas, sincronizando");setTimeout(()=>syncData({ventas:merged}),2000);}
       }
       if (data.planillas)          setPlanillas(data.planillas);
       if (data.stock) {
@@ -763,7 +772,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           dia={diaActual}
           ventas={ventas.filter(v=>(v.pago==="transferencia"||v.pago==="mixto")&&!v.transConfirmada)}
           clientes={clientes}
-          onConfirmar={(ventaId)=>{const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);saveVentas(nv);}}
+          onConfirmar={(ventaId)=>{const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada,_upd:Date.now()}:v);saveVentas(nv);}}
           onVolver={()=>irA("menu")} />}
       {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&(v.pago==="transferencia"||(v.pago==="mixto"&&(Number(v.montoTrans)||0)>0))&&!v.transConfirmada).length} />}
       {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
@@ -793,7 +802,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           saveClientes([...otros,...lista]);
         }} onRegistrarNoVisita={(clienteId,motivo)=>{const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo}];saveNoVisitas(nv);}} onQuitarNoVisita={(clienteId)=>{const nv=(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual));saveNoVisitas(nv);}}
         onConfirmarTransfer={(clienteId,ventaId)=>{
-          const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada}:v);
+          const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada,_upd:Date.now()}:v);
           saveVentas(nv);
         }}
         prospectos={(prospectos||[]).filter(p=>p.dia===diaActual&&p.estado==="activo")}
