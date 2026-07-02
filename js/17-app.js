@@ -641,6 +641,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       envDev:(envDev||[]).filter(e=>e.prod&&e.cant), ...calc,
       montoTrans:esMixto?tr:(montoTrans2||0),
       montoEfec:esMixto?ef:0,
+      _upd:Date.now(),
     };
 
     // UNA sola venta — sin duplicar
@@ -702,7 +703,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     const obsLimpia = (obs||"").replace(/\s*\[Mixto:[^\]]*\]/g,"");
     const obsFinal  = esMixto ? obsLimpia+` [Mixto: ef $${ef} + tr $${tr}]` : obsLimpia;
     let nev = ventas.filter(v=>!(v._esMixtoTrans && v._mixtoDe===ventaId)); // limpiar restos de versiones viejas
-    nev = nev.map(v=>v.id===ventaId?{...vV,detalle,pago:esMixto?"mixto":pago,obs:obsFinal,saldoAplicado:saldoAplicado||0,...calc,montoEfec:esMixto?ef:0,montoTrans:esMixto?tr:0,transConfirmada:esMixto?(vV.transConfirmada||false):vV.transConfirmada}:v);
+    nev = nev.map(v=>v.id===ventaId?{...vV,detalle,pago:esMixto?"mixto":pago,obs:obsFinal,saldoAplicado:saldoAplicado||0,...calc,montoEfec:esMixto?ef:0,montoTrans:esMixto?tr:0,transConfirmada:esMixto?(vV.transConfirmada||false):vV.transConfirmada,_upd:Date.now()}:v);
     const saldoNuevo = c ? (c.saldo - vV.saldoDelta + calc.saldoDelta) : 0;
     saveVentas(nev);
     if(c) saveClientes(clientes.map(x=>x.id===c.id?{...x,saldo:saldoNuevo}:x));
@@ -863,7 +864,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             const calc=calcVenta(det,pago,String(monto),0,productos);
             const vt={id:Date.now(),clienteId:c.id,cliente:c.nombre,dia:diaActual,fechaKey:fechaActual,fecha:new Date().toLocaleString("es-AR"),
               detalle:det,pago,obs:`Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,saldoAplicado:0,
-              neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],_esCobro:true};
+              neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],_esCobro:true,_upd:Date.now()};
             const nv=[...ventas,vt];
             saveVentas(nv);
             const nc=clientes.map(x=>x.id===c.id?{...x,saldo:(c.saldo||0)+monto}:x);
@@ -984,7 +985,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
                 dia:diaActual||cliente.dia,fechaKey:fk,fecha:new Date().toLocaleString("es-AR"),
                 detalle:det,pago,obs:`Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,saldoAplicado:0,
                 neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],
-                saldoAntes,saldoDespues,_esCobro:true};
+                saldoAntes,saldoDespues,_esCobro:true,_upd:Date.now()};
               saveVentas([...ventas,vt]);
               saveClientes(clientes.map(x=>x.id===cliente.id?{...x,saldo:saldoDespues}:x));
             }
@@ -1037,7 +1038,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         const saldoAntes=cl.saldo||0;const saldoDespues=saldoAntes+monto;
         const vt={id:Date.now(),clienteId:cl.id,cliente:cl.nombre,dia:cl.dia,fechaKey:new Date().toLocaleDateString("en-CA"),fecha:new Date().toLocaleString("es-AR"),
           detalle:[{nombre:"Cobro de deuda",cantidad:1,precio:0,total:0}],pago,obs:`Cobro de deuda ${fmt(monto)} (${pago})`,
-          neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],saldoAntes,saldoDespues,_esCobro:true};
+          neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],saldoAntes,saldoDespues,_esCobro:true,_upd:Date.now()};
         saveVentas([...ventas,vt]);saveClientes(clientes.map(c=>c.id===cId?{...c,saldo:saldoDespues}:c));
       }} onVolver={()=>irA("menu")} />}
       {pantalla==="resumen"        && <Resumen ventas={ventas} clientes={clientes} productos={productos} planillas={planillas} noVisitas={noVisitas||[]} onVolver={()=>irA("menu")} />}
