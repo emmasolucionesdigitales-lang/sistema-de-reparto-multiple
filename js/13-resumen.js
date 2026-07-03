@@ -34,7 +34,7 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
   const conFavor     = clientes.filter(c=>c.saldo>0);
   const rankingClientes = React.useMemo(()=>{
     const mapa = {};
-    filtradas.filter(v=>!v._esCobro&&!v._esAjuste).forEach(v=>{
+    filtradas.filter(v=>!v._esCobro&&!v._esAjuste&&!v._esCambio).forEach(v=>{
       if(!mapa[v.clienteId]) mapa[v.clienteId]={id:v.clienteId,nombre:v.cliente,total:0,compras:0};
       mapa[v.clienteId].total += v.neto||0;
       mapa[v.clienteId].compras += 1;

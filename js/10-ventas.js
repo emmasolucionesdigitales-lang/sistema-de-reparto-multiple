@@ -4,6 +4,10 @@
 
 function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVolver,onSaltar,ventasCliente,progressData}) {
   const [transConfirmada,setTransConfirmada] = React.useState(false);
+  const [mostrarCambio,setMostrarCambio] = React.useState(false);
+  const [productoViejoCambio,setProductoViejoCambio] = React.useState("Bidón 20L");
+  const [productoNuevoCambio,setProductoNuevoCambio] = React.useState("Bidón 20L");
+  const [motivoCambio,setMotivoCambio] = React.useState("Agua en mal estado");
 
   const sonarTransferencia = () => {
     try {
@@ -311,6 +315,41 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
             onGuardar([{nombre:"Cobro de deuda",cantidad:1,precio:0,total:0}],pCobro,String(mCobro),0,[],[],`Cobro de deuda $${mCobro.toLocaleString("es-AR")} (${pCobro})`,"cobro_deuda");
           }} />
         )}
+        {/* Cambio de envase (ej: problema con el agua) — no cobra, solo registra */}
+        {!mostrarCambio
+          ? <button style={{...s.btn,width:"100%",marginBottom:10,fontSize:12,padding:"8px"}} onClick={()=>setMostrarCambio(true)}>🔄 Cambio de envase (sin cobrar)</button>
+          : (
+            <div style={{...s.card,margin:"0 0 10px",border:"1px solid #818cf8"}}>
+              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8,fontWeight:500}}>🔄 Cambio de envase (no se cobra)</div>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <div style={{flex:1}}>
+                  <label style={{...s.label,marginBottom:4}}>Se retira</label>
+                  <select style={s.select} value={productoViejoCambio} onChange={e=>setProductoViejoCambio(e.target.value)}>
+                    {(productos||[]).map(p=><option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <label style={{...s.label,marginBottom:4}}>Se entrega</label>
+                  <select style={s.select} value={productoNuevoCambio} onChange={e=>setProductoNuevoCambio(e.target.value)}>
+                    {(productos||[]).map(p=><option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{marginBottom:8}}>
+                <label style={{...s.label,marginBottom:4}}>Motivo</label>
+                <input style={s.input} placeholder="Ej: Agua en mal estado" value={motivoCambio} onChange={e=>setMotivoCambio(e.target.value)}/>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button style={{...s.btn,flex:1,fontSize:12}} onClick={()=>setMostrarCambio(false)}>Cancelar</button>
+                <button style={{...s.btnPrimary,flex:2,fontSize:12,padding:"8px"}} onClick={()=>{
+                  const obsTxt=`Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim()?` · ${motivoCambio.trim()}`:""}`;
+                  onGuardar([{nombre:"Cambio de envase",cantidad:1,precio:0,total:0}],"cambio","0",0,
+                    [{prod:productoNuevoCambio,cant:1}],[{prod:productoViejoCambio,cant:1}],obsTxt,"cambio_envase");
+                  setMostrarCambio(false);setMotivoCambio("Agua en mal estado");
+                }}>✓ Registrar cambio</button>
+              </div>
+            </div>
+          )}
         <div style={s.divider} />
         {/* ── Dispenser ─────────────────────────────────── */}
         {dispenser&&(cliente.dispenser||0)>0&&(

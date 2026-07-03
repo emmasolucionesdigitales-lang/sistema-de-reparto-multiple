@@ -215,7 +215,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
   );
 }
 
-function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onEditar,onEliminarVenta,onEditarVenta,onEliminarCliente,onNoEstaCliente,onNoQuiereCliente,recordatorios,onGuardarRecordatorio,onConfirmarRecordatorio,onCobrarSaldo,soloLectura=false}) {
+function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onEditar,onEliminarVenta,onEditarVenta,onEliminarCliente,onNoEstaCliente,onNoQuiereCliente,recordatorios,onGuardarRecordatorio,onConfirmarRecordatorio,onCobrarSaldo,soloLectura=false,onGuardarCambio}) {
   const [editandoCliente,setEditandoCliente] = useState(false);
   const [editandoVentaId,setEditandoVentaId] = useState(null);
   const [editandoSaldo,setEditandoSaldo] = useState(false);
@@ -224,9 +224,13 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
   const [mostrarRecordatorio,setMostrarRecordatorio] = useState(false);
   const [mostrarPagoSaldo,setMostrarPagoSaldo] = useState(false);
   const [mostrarFotoGrande,setMostrarFotoGrande] = useState(false);
+  const [mostrarCambio,setMostrarCambio] = useState(false);
+  const [productoViejoCambio,setProductoViejoCambio] = useState("Bidón 20L");
+  const [productoNuevoCambio,setProductoNuevoCambio] = useState("Bidón 20L");
+  const [motivoCambio,setMotivoCambio] = useState("Agua en mal estado");
   const recActivos = (recordatorios||[]).filter(r=>r.clienteId===cliente.id&&!r.confirmado);
   const historial = [...ventas].sort((a,b)=>(b.fechaKey||"").localeCompare(a.fechaKey||"")||(b.id||0)-(a.id||0));
-  const ventaHoy  = fecha ? ventas.find(v=>v.fechaKey===fecha&&!v._esCobro&&!v._esAjuste) : null;
+  const ventaHoy  = fecha ? ventas.find(v=>v.fechaKey===fecha&&!v._esCobro&&!v._esAjuste&&!v._esCambio) : null;
   const initials  = cliente.nombre.split(" ").slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
   const totalComprado = ventas.reduce((a,v)=>a+(v.neto||0),0);
   const promedioVenta = ventas.length>0 ? Math.round(totalComprado/ventas.length) : 0;
@@ -377,6 +381,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
                     </button>
                   )}
                   {!soloLectura&&<button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>setEditandoSaldo(true)}>Ajustar</button>}
+                  {!soloLectura&&<button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>setMostrarCambio(true)}>🔄 Cambio</button>}
                 </div>
               </div>
             ):(
@@ -408,6 +413,45 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
               </div>
             )}
           </div>
+
+          {/* Cambio de envase (ej: problema con el agua) — no cobra, solo registra */}
+          {mostrarCambio&&(
+            <div style={{...s.card,margin:"0 0 10px",border:"1px solid #818cf8"}}>
+              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:8,fontWeight:500}}>🔄 Cambio de envase (no se cobra)</div>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <div style={{flex:1}}>
+                  <label style={{...s.label,marginBottom:4}}>Se retira</label>
+                  <select style={s.select} value={productoViejoCambio} onChange={e=>setProductoViejoCambio(e.target.value)}>
+                    {(productos||[]).map(p=><option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <label style={{...s.label,marginBottom:4}}>Se entrega</label>
+                  <select style={s.select} value={productoNuevoCambio} onChange={e=>setProductoNuevoCambio(e.target.value)}>
+                    {(productos||[]).map(p=><option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{marginBottom:8}}>
+                <label style={{...s.label,marginBottom:4}}>Motivo</label>
+                <input style={s.input} placeholder="Ej: Agua en mal estado" value={motivoCambio} onChange={e=>setMotivoCambio(e.target.value)}/>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button style={{...s.btn,flex:1,fontSize:12}} onClick={()=>setMostrarCambio(false)}>Cancelar</button>
+                <button style={{...s.btnPrimary,flex:2,fontSize:12,padding:"8px"}} onClick={()=>{
+                  const vt={id:Date.now(),clienteId:cliente.id,cliente:cliente.nombre,
+                    dia:dia,fechaKey:fecha,fecha:new Date().toLocaleString("es-AR"),
+                    detalle:[{nombre:"Cambio de envase",cantidad:1,precio:0,total:0}],
+                    pago:"cambio",obs:`Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim()?` · ${motivoCambio.trim()}`:""}`,
+                    neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:0,saldoDelta:0,
+                    envDev:[{prod:productoViejoCambio,cant:1}],envPrest:[{prod:productoNuevoCambio,cant:1}],
+                    _esCambio:true,_upd:Date.now()};
+                  onGuardarCambio&&onGuardarCambio(vt);
+                  setMostrarCambio(false);setMotivoCambio("Agua en mal estado");
+                }}>✓ Registrar cambio</button>
+              </div>
+            </div>
+          )}
 
           {/* Registrar venta — solo una por día */}
           {ventaHoy

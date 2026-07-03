@@ -611,7 +611,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     const c = cliente;
     // Auto-detectar envases prestados (solo si no es cobro de deuda)
     const envAutoDetect = [];
-    if(opcionSaldo!=="cobro_deuda") {
+    if(opcionSaldo!=="cobro_deuda" && opcionSaldo!=="cambio_envase") {
       const mapa = {sifon:"Sifón 1.5L", bidon10:"Bidón 10L", bidon20:"Bidón 20L"};
       detalle.forEach(d=>{
         const asignado = d.nombre==="Sifón 1.5L"?(c.sifon||0):d.nombre==="Bidón 10L"?(c.bidon10||0):d.nombre==="Bidón 20L"?(c.bidon20||0):0;
@@ -642,6 +642,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       montoTrans:esMixto?tr:(montoTrans2||0),
       montoEfec:esMixto?ef:0,
       _upd:Date.now(),
+      ...(opcionSaldo==="cambio_envase"?{_esCambio:true,neto:0,bruto:0,costo:0,ganancia:0}:{}),
     };
 
     // UNA sola venta — sin duplicar
@@ -869,7 +870,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             saveVentas(nv);
             const nc=clientes.map(x=>x.id===c.id?{...x,saldo:(c.saldo||0)+monto}:x);
             saveClientes(nc);
-          }} />}
+          }}
+          onGuardarCambio={(vt)=>{saveVentas([...ventas,vt]);}} />}
       {pantalla==="venta"          && cliente && <NuevaVenta key={clienteId} cliente={cliente} productos={productos} fecha={fechaActual} ventasCliente={ventas.filter(v=>v.clienteId===cliente.id)}
         progressData={(()=>{
           const clientesDia=clientes.filter(c=>c.dia===diaActual);
@@ -971,7 +973,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           // Si no hay diaActual, usar el día del cliente como fallback
           if(!diaActual) setDiaActual(c.dia);
           irA("venta");
-        }} onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}} ventas={ventas} />}
+        }} onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}} ventas={ventas} productos={productos} onGuardarCambio={(vt)=>{saveVentas([...ventas,vt]);}} />}
       {pantalla==="detalleDesdeGestion" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual||cliente.dia} fecha={fechaActual} productos={productos} onVenta={()=>{setDiaActual(cliente.dia);const hoy=new Date().toLocaleDateString("en-CA");if(!fechaActual)setFechaActual(hoy);irA("venta");}} onVolver={()=>irA("gestionClientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>{eliminarCliente(cliente.id);irA("gestionClientes");}}
           onNoEstaCliente={()=>{}} onNoQuiereCliente={()=>{}}
           recordatorios={recordatorios} onGuardarRecordatorio={(r)=>saveRecordatorios([...(recordatorios||[]),r])} onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
@@ -989,7 +991,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
               saveVentas([...ventas,vt]);
               saveClientes(clientes.map(x=>x.id===cliente.id?{...x,saldo:saldoDespues}:x));
             }
-          }} />}
+          }}
+          onGuardarCambio={(vt)=>{saveVentas([...ventas,vt]);}} />}
       {pantalla==="importarClientes" && <ImportarClientesExcel
         repartos={repartos}
         clientes={clientes}
