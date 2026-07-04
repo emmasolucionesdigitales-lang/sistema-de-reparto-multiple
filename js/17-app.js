@@ -479,7 +479,33 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     chequearMantenimiento(); // al abrir la app
     const tMant = setInterval(chequearMantenimiento, 60*60*1000); // cada hora
 
-    return ()=>{ clearTimeout(t18); clearInterval(tMant); };
+    // Recordatorios de agenda con hora exacta (ventana de 15 min, no exacta)
+    const chequearAgenda = () => {
+      if(Notification.permission!=="granted") return;
+      const ahora = new Date();
+      const hoyKey = ahora.toLocaleDateString("en-CA");
+      const recs = estadoRef.current.recordatorios || [];
+      recs.forEach(r=>{
+        if(r.confirmado || !r.fecha || !r.hora || r.fecha!==hoyKey) return;
+        const [rh,rm] = r.hora.slice(0,5).split(":").map(Number);
+        const progHoy = new Date(ahora.getFullYear(),ahora.getMonth(),ahora.getDate(),rh,rm,0);
+        const diffMin = (ahora-progHoy)/60000;
+        if(diffMin>=0 && diffMin<=15){
+          const nk = `notif_agenda_${r.id||(r.fecha+r.hora)}`;
+          if(!localStorage.getItem(nk)){
+            const c=(estadoRef.current.clientes||[]).find(x=>x.id===r.clienteId);
+            new Notification(`📅 Recordatorio${c?" · "+c.nombre:""}`,{body:r.motivo||"Recordatorio de agenda",icon:"/icon-192.png",tag:nk});
+            localStorage.setItem(nk,"1");
+          }
+        }
+      });
+    };
+    chequearAgenda();
+    const tAgenda = setInterval(chequearAgenda, 60000);
+    const onVisibleAgenda = () => { if(document.visibilityState==="visible") chequearAgenda(); };
+    document.addEventListener("visibilitychange", onVisibleAgenda);
+
+    return ()=>{ clearTimeout(t18); clearInterval(tMant); clearInterval(tAgenda); document.removeEventListener("visibilitychange", onVisibleAgenda); };
   },[]);
 
   // ── INFORMES PDF ─────────────────────────────────────────────────
@@ -750,6 +776,9 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onStock={()=>irA("stock")}
         onAgenda={()=>irA("agenda")}
         onVolver={()=>irA("menu")}
+        scaleIdx={scaleIdx}
+        onToggleScale={()=>setScaleIdx(i=>(i+1)%4)}
+        scaleLabel={SCALE_LABELS[scaleIdx]}
         clientes={clientes.filter(c=>c.repartoId===repartoActual.id)}
         ventas={ventas.filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return cl?.repartoId===repartoActual.id;})}
         stock={stockNorm}
@@ -1047,22 +1076,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       {pantalla==="resumen"        && <Resumen ventas={ventas} clientes={clientes} productos={productos} planillas={planillas} noVisitas={noVisitas||[]} onVolver={()=>irA("menu")} />}
       {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDia} setCargasDia={saveCargasDia} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} tabInicial={tabConfig} repartos={repartos} repartoActual={repartoActual} />}
     </div>
-    {/* Botón flotante de escala — fuera del zoom para que no se afecte */}
-    <button
-      onClick={()=>setScaleIdx(i=>(i+1)%4)}
-      title={`Tamaño: ${SCALE_LABELS[scaleIdx]} — tocá para cambiar`}
-      style={{
-        position:"fixed", bottom:18, right:18, zIndex:9999,
-        width:38, height:38, borderRadius:"50%",
-        background:"#185FA5", color:"#e2eaf4",
-        border:"none", cursor:"pointer",
-        fontSize:12, fontWeight:700,
-        boxShadow:"0 2px 10px rgba(0,0,0,0.4)",
-        display:"flex", alignItems:"center", justifyContent:"center",
-        letterSpacing:"0.02em",
-      }}>
-      {SCALE_LABELS[scaleIdx]}
-    </button>
+    {/* fin del zoom */}
     </>)}{modalResumenDia&&(()=>{
         const {dia,fechaKey}=modalResumenDia;
         const vDia=ventas.filter(v=>v.fechaKey===fechaKey&&v.dia===dia&&!v._esCobro&&!v._esAjuste);
