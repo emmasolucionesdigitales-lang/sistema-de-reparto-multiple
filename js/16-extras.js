@@ -308,6 +308,19 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
           <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
         </button>
 
+        {/* Enviar informe al dueño */}
+        {onEnviarInforme&&(
+          <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px"}}
+            onClick={onEnviarInforme}>
+            <span style={{fontSize:20}}>{"\u{1F4E4}"}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>Enviar informe al dueño</div>
+              <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>Manda el resumen del día por email</div>
+            </div>
+            <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
+          </button>
+        )}
+
         {/* Todos los clientes */}
         <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px"}}
           onClick={onIrTodosClientes}>
