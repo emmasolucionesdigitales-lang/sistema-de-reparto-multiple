@@ -625,7 +625,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           }}
           onNuevo={async (datos2)=>{
             const c=todosClientes.find(x=>x.id===datos2.clienteId);
-            const nuevo={...datos2,id:Date.now(),clienteId:c?.id||null,clienteNombre:c?.nombre||datos2.clienteNombre||"Sin cliente",dia:c?.dia||"",confirmado:false,creadoPor:perfil.nombre,creadoEn:new Date().toISOString()};
+            const nuevo={...datos2,id:Date.now(),clienteId:c?.id||null,clienteNombre:c?.nombre||datos2.clienteNombre||"Sin cliente",dia:c?.dia||"",confirmado:false,creadoPor:perfil.nombre,creadoEn:new Date().toISOString(),paraRepartidor:perfil.nombre};
             const l=[...(datos.recordatorios||[]),nuevo];
             sync({...datos,recordatorios:l});
           }}

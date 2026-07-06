@@ -596,7 +596,7 @@ function AgendaRepartidor({recordatorios,clientes,onConfirmar,onEliminar,onNuevo
 }
 
 
-function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onIrCliente,onVolver}) {
+function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onIrCliente,onVolver,repartidores}) {
   const [mostrarNuevo,setMostrarNuevo] = React.useState(false);
   const [clienteBusq,setClienteBusq]  = React.useState("");
   const [clienteSel,setClienteSel]    = React.useState(null);
@@ -724,6 +724,7 @@ function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onI
             <div style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)",marginBottom:12}}>🔔 Nuevo recordatorio</div>
             <NuevoRecordatorioForm
               clientes={clientes}
+              repartidores={repartidores}
               onGuardar={(datos)=>{onNuevo(datos);setMostrarNuevo(false);}}
               onCerrar={()=>setMostrarNuevo(false)}
             />
@@ -734,7 +735,7 @@ function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onI
   );
 }
 
-function NuevoRecordatorioForm({clientes,onGuardar,onCerrar}) {
+function NuevoRecordatorioForm({clientes,onGuardar,onCerrar,repartidores}) {
   const hoy = (()=>{const d=new Date(Date.now()-3*60*60*1000);return d.toISOString().slice(0,10);})();
   const [tipo,setTipo]     = React.useState("visita");
   const [fecha,setFecha]   = React.useState(hoy);
@@ -742,6 +743,7 @@ function NuevoRecordatorioForm({clientes,onGuardar,onCerrar}) {
   const [busq,setBusq]     = React.useState("");
   const [clienteId,setClienteId] = React.useState(null);
   const [motivo,setMotivo] = React.useState("");
+  const [paraRepartidor,setParaRepartidor] = React.useState(""); // "" = yo mismo (dueño)
   const tipoConfig = {visita:{ico:"🏠",label:"Visita",color:"#5daaff",bg:"#1e3a5f"},cobro:{ico:"💰",label:"Cobro",color:"#f5b942",bg:"#2e1f06"}};
   const clientesFilt = busq.length>1 ? clientes.filter(c=>c.nombre.toLowerCase().includes(busq.toLowerCase())).slice(0,6) : [];
   const clienteSel = clientes.find(c=>c.id===clienteId);
@@ -787,6 +789,16 @@ function NuevoRecordatorioForm({clientes,onGuardar,onCerrar}) {
           </div>
         )}
       </div>
+      {/* Para quién (si hay repartidores cargados) */}
+      {repartidores&&repartidores.length>0&&(
+        <div style={{marginBottom:10}}>
+          <label style={s.label}>¿Para quién?</label>
+          <select style={s.select} value={paraRepartidor} onChange={e=>setParaRepartidor(e.target.value)}>
+            <option value="">Yo mismo</option>
+            {repartidores.map(r=>(<option key={r.nombre} value={r.nombre}>{r.nombre}</option>))}
+          </select>
+        </div>
+      )}
       {/* Detalle */}
       <div style={{marginBottom:14}}>
         <label style={s.label}>Detalle</label>
@@ -798,7 +810,7 @@ function NuevoRecordatorioForm({clientes,onGuardar,onCerrar}) {
         <button style={{...s.btn,flex:1}} onClick={onCerrar}>Cancelar</button>
         <button style={{...s.btnPrimary,flex:2,opacity:(!clienteId||!motivo.trim())?0.5:1}}
           disabled={!clienteId||!motivo.trim()}
-          onClick={()=>onGuardar({id:Date.now(),tipo,fecha,hora,motivo:motivo.trim(),clienteId,clienteNombre:(clientes.find(c=>c.id===clienteId)||{}).nombre||"",confirmado:false})}>
+          onClick={()=>onGuardar({id:Date.now(),tipo,fecha,hora,motivo:motivo.trim(),clienteId,clienteNombre:(clientes.find(c=>c.id===clienteId)||{}).nombre||"",confirmado:false,paraRepartidor:paraRepartidor||null})}>
           Guardar recordatorio
         </button>
       </div>

@@ -351,7 +351,7 @@ self.addEventListener('notificationclick',e=>{
   </script>
 
 <script>
-  // ── Push Notifications (solo dueño) ──────────────────────────────────
+  // ── Push Notifications (dueño y repartidor) ──────────────────────────
   const VAPID_PUB_KEY = 'BCddH8J9o3uc7RnLKD2PV9Ut4FfoQPBnlN0y1CbDGJptSqNYsPU5kiVCWDsXmuR4xv1yFUuKyJdwO2ar2B0lBFQ';
   function urlB64ToUint8(b){
     const p='='.repeat((4-b.length%4)%4);
@@ -360,8 +360,8 @@ self.addEventListener('notificationclick',e=>{
     for(let i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o;
   }
   function getLic(){ try{return JSON.parse(localStorage.getItem('rm_licencia')||'{}');}catch{return {};} }
-  // ID propio de ESTE navegador/dispositivo — para que el celu y la PC del
-  // dueño no se pisen la suscripción entre sí.
+  // ID propio de ESTE navegador/dispositivo — para que el celu y la PC de la
+  // misma persona no se pisen la suscripción entre sí.
   function getDeviceId(){
     let id = localStorage.getItem('rm_device_id');
     if(!id){ id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10); localStorage.setItem('rm_device_id', id); }
@@ -370,9 +370,11 @@ self.addEventListener('notificationclick',e=>{
   async function guardarSub(sub){
     if(!window.db) return;
     const lic=getLic();
-    if(!lic.negocioId||lic.rol!=='dueño') return;
+    if(!lic.negocioId) return;
     const deviceId = getDeviceId();
-    const payload = {}; payload[deviceId] = { sub: JSON.stringify(sub), ts: Date.now() };
+    // Se etiqueta con rol y nombre — así el servidor sabe si mandarle avisos
+    // de dueño (cierre, transferencias, mantenimiento) o de repartidor (agenda).
+    const payload = {}; payload[deviceId] = { sub: JSON.stringify(sub), ts: Date.now(), rol: lic.rol||'dueño', nombre: lic.nombre||'' };
     await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_subs').set(payload, {merge:true});
   }
   async function activarNotif(){
@@ -407,7 +409,7 @@ self.addEventListener('notificationclick',e=>{
   window.addEventListener('load', async ()=>{
     if(!('PushManager' in window)) return;
     const lic=getLic();
-    if(lic.rol!=='dueño') return; // solo para dueños
+    if(!lic.rol) return; // sin sesión todavía
     const btn=document.createElement('button');
     btn.id='btn-push-notif';
     btn.style.cssText='position:fixed;top:8px;right:56px;z-index:9999;width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.5);background:#1a2b3c;color:#fff;';

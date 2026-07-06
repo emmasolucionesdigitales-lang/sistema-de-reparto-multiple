@@ -105,6 +105,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [repartos, setRepartos]     = useLS("rm_repartos_v1", []);
   const [repartoActual, setRepartoActual] = useLS("rm_reparto_actual_v1", null);
   // repartos: [{id, numero, nombre, repartidorNombre, codigo}]
+  const repartidoresUnicos = React.useMemo(() =>
+    [...new Set((repartos||[]).map(r=>r.repartidorNombre).filter(Boolean))].map(nombre=>({nombre})),
+    [repartos]
+  );
   const saveRepartos = (v) => {
     setRepartos(v);
     syncData({repartos:v});
@@ -965,12 +969,13 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       {pantalla==="agenda" && <AgendaScreen
         recordatorios={recordatorios||[]}
         clientes={clientes}
+        repartidores={repartidoresUnicos}
         onConfirmar={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
         onEliminar={(id)=>saveRecordatorios((recordatorios||[]).filter(r=>r.id!==id))}
         onNuevo={(datos)=>{
           const c=clientes.find(x=>x.id===datos.clienteId);
           if(!c){alert("Seleccioná un cliente");return;}
-          saveRecordatorios([...(recordatorios||[]),{...datos,id:Date.now(),clienteId:c.id,clienteNombre:c.nombre,dia:c.dia,confirmado:false}]);
+          saveRecordatorios([...(recordatorios||[]),{...datos,id:Date.now(),clienteId:c.id,clienteNombre:c.nombre,dia:c.dia,confirmado:false,paraRepartidor:datos.paraRepartidor||null}]);
         }}
         onIrCliente={(cId)=>{
           const c=clientes.find(x=>x.id===cId);
