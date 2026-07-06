@@ -143,7 +143,7 @@ async function main(){
       const clave = 'trans_' + hoy + '_' + hora;
       if(!log[clave]){
         if(ventas === null) ventas = await cargarVentas(col);
-        const pend = ventas.filter(v => v.fechaKey === hoy && (v.pago === 'transferencia' || v._esMixtoTrans) && !v.transConfirmada).length;
+        const pend = ventas.filter(v => v.fechaKey === hoy && (v.pago === 'transferencia' || (v.pago === 'mixto' && Number(v.montoTrans) > 0)) && !v.transConfirmada).length;
         if(pend > 0){
           const ok = await enviarATodos(subsMap, col, {
             title: '💳 Transferencias sin confirmar',
