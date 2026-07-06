@@ -546,7 +546,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     }
   }, [ventas, noVisitas, clientes, diaActual, fechaActual]);
 
-  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto) => {
+  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto, transConfirmadaInicial) => {
     const c = cliente;
     // Auto-detectar envases prestados (solo si no es cobro de deuda)
     const envAutoDetect = [];
@@ -580,6 +580,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       envDev:(envDev||[]).filter(e=>e.prod&&e.cant), ...calc,
       montoTrans:esMixto?tr:(montoTrans2||0),
       montoEfec:esMixto?ef:0,
+      transConfirmada: !!transConfirmadaInicial,
       _upd:Date.now(),
       ...(opcionSaldo==="cambio_envase"?{_esCambio:true,neto:0,bruto:0,costo:0,ganancia:0}:{}),
     };

@@ -162,6 +162,18 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
             <button key={v} style={{...s.btn,flex:1,background:pago===v?"#185FA5":undefined,color:pago===v?"#fff":undefined,border:pago===v?"none":undefined,padding:"9px 4px",fontSize:13}} onClick={()=>setPago(v)}>{l}</button>
           ))}
         </div>
+        {/* Pago por transferencia (puro): confirmar si ya se hizo */}
+        {pago==="transferencia"&&(
+          <div style={{...s.card,margin:"0 0 10px",background:transConfirmada?"#0a2e1f":"#1e3a5f",border:transConfirmada?"0.5px solid #4dd9a0":"0.5px solid #5daaff"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:12,color:transConfirmada?"#4dd9a0":"#5daaff"}}>{transConfirmada?"✓ Transfer. confirmada":"⏳ Confirmar transferencia"}</span>
+              <button style={{background:transConfirmada?"#4dd9a0":"#185FA5",color:transConfirmada?"#0a2e1f":"#fff",border:"none",borderRadius:6,padding:"5px 10px",fontSize:11,cursor:"pointer"}}
+                onClick={()=>{setTransConfirmada(!transConfirmada);if(!transConfirmada)sonarTransferencia();}}>
+                {transConfirmada?"✓ OK":"Confirmar"}
+              </button>
+            </div>
+          </div>
+        )}
         {/* Pago mixto: efectivo + transferencia */}
         {pago==="mixto"&&(
           <div style={{...s.card,margin:"0 0 10px",background:"var(--color-background-tertiary)"}}>
@@ -280,8 +292,8 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
               if(!window.confirm(`Estás cobrando ${fmt(totalPagado)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
             }
             const saldoDelta = totalPagado - totalACobrar;
-            if(ef>0) onGuardar(detalle,"contado",String(ef),saldoApl,envPrest,envDev,obs,"mixto_ef",tr,saldoDelta);
-            else onGuardar(detalle,"transferencia",String(tr),saldoApl,envPrest,envDev,obs,"mixto_tr",ef,saldoDelta);
+            if(ef>0) onGuardar(detalle,"contado",String(ef),saldoApl,envPrest,envDev,obs,"mixto_ef",tr,saldoDelta,transConfMixto);
+            else onGuardar(detalle,"transferencia",String(tr),saldoApl,envPrest,envDev,obs,"mixto_tr",ef,saldoDelta,transConfMixto);
           } else {
             const montoFinal = opcionSaldo==="todo"&&!monto
               ? String(Math.round(Math.abs(cliente.saldo)+aPagar))
@@ -290,7 +302,7 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
             if(pago!=="fiado" && totalACobrar>0 && pagadoNum>totalACobrar*3 && pagadoNum>totalACobrar+10000){
               if(!window.confirm(`Estás cobrando ${fmt(pagadoNum)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
             }
-            onGuardar(detalle,pago,montoFinal,saldoApl,envPrest,envDev,obs,opcionSaldo);
+            onGuardar(detalle,pago,montoFinal,saldoApl,envPrest,envDev,obs,opcionSaldo,undefined,undefined,pago==="transferencia"?transConfirmada:false);
           }
         }}>
           ✓ Registrar entrega
