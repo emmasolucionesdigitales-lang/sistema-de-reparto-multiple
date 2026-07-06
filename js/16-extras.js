@@ -207,6 +207,41 @@ async function guardarNombreFirestore(codigo, nombre) {
 
 
 // ── InicioRepartidor ─────────────────────────────────────────
+// ── Notificaciones (repartidor) — versión compacta, sin pantalla de Config ──
+function NotifConfigRepartidor() {
+  const [permiso,setPermiso] = React.useState('Notification' in window ? Notification.permission : 'no-soportado');
+  const [probando,setProbando] = React.useState(false);
+  const [resultado,setResultado] = React.useState(null);
+  const pedirYActivar = async () => {
+    if(!('Notification' in window)) return;
+    setProbando(true); setResultado(null);
+    const r = await Notification.requestPermission();
+    setPermiso(r);
+    if(r==='granted' && typeof window.activarNotif==='function'){
+      const ok = await window.activarNotif();
+      setResultado(ok?{ok:true,msg:'Notificaciones activadas.'}:{ok:false,msg:'No se pudo completar la suscripción.'});
+    }
+    setProbando(false);
+  };
+  if(permiso==='granted') return (
+    <div style={{margin:"10px 14px 0",fontSize:12,color:"var(--color-text-success)",display:"flex",alignItems:"center",gap:6}}>
+      <span>✅</span><span>Notificaciones activadas</span>
+    </div>
+  );
+  if(permiso==='no-soportado') return null;
+  return (
+    <button style={{margin:"10px 14px 0",width:"calc(100% - 28px)",background:"var(--color-background-tertiary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left"}}
+      onClick={pedirYActivar} disabled={probando}>
+      <span style={{fontSize:18}}>🔔</span>
+      <div style={{flex:1}}>
+        <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>{probando?"Activando...":"Activar notificaciones"}</div>
+        {permiso==='denied' && <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>Bloqueadas — activalas desde el navegador</div>}
+        {resultado && <div style={{fontSize:11,color:resultado.ok?"var(--color-text-success)":"var(--color-text-danger)"}}>{resultado.msg}</div>}
+      </div>
+    </button>
+  );
+}
+
 function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,planillas,savePlanilla,productos,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onSalir,onEnviarInforme,scaleIdx,onToggleScale,scaleLabel}) {
   const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
   const noVisHoy  = (noVisitas||[]).filter(v=>v.fecha===fechaActual);
@@ -247,6 +282,8 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
           <span style={{color:"var(--color-text-tertiary)"}}>{"\u2192"}</span>
         </button>
       )}
+
+      <NotifConfigRepartidor />
 
       <div style={{padding:"12px 14px 0",display:"flex",flexDirection:"column",gap:8}}>
 

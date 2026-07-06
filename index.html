@@ -406,18 +406,11 @@ self.addEventListener('notificationclick',e=>{
     const sub=await reg.pushManager.getSubscription();
     return !!sub;
   }
-  window.addEventListener('load', async ()=>{
-    if(!('PushManager' in window)) return;
-    const lic=getLic();
-    if(!lic.rol) return; // sin sesión todavía
-    const btn=document.createElement('button');
-    btn.id='btn-push-notif';
-    btn.style.cssText='position:fixed;top:8px;right:56px;z-index:9999;width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.5);background:#1a2b3c;color:#fff;';
-    const upd=async()=>{const a=await estadoNotif();btn.textContent=a?'🔔':'🔕';btn.title=a?'Desactivar notificaciones':'Activar notificaciones';btn.style.opacity=a?'1':'0.5';};
-    btn.onclick=async()=>{const a=await estadoNotif();if(a){await desactivarNotif();}else{await activarNotif();}await upd();};
-    document.body.appendChild(btn);
-    await upd();
-  });
+  // El activar/desactivar/estado ahora se maneja desde Configuración
+  // (NotifConfig en 15-config.js), no con un botón flotante acá.
+  window.activarNotif = activarNotif;
+  window.desactivarNotif = desactivarNotif;
+  window.estadoNotif = estadoNotif;
   </script>
 <div id="root"></div>
 

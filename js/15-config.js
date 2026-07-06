@@ -61,6 +61,63 @@ function SeguridadHuella() {
   );
 }
 
+// ── Tarjeta de notificaciones (dueño) ──────────────────────────────────────
+function NotifConfig() {
+  const pedirPermiso = async () => {
+    if(!('Notification' in window)) return;
+    const r = await Notification.requestPermission();
+    setPermiso(r);
+  };
+  const [permiso,setPermiso] = React.useState('Notification' in window ? Notification.permission : 'no-soportado');
+  const [probando,setProbando] = React.useState(false);
+  const [resultado,setResultado] = React.useState(null);
+  const probar = async () => {
+    setProbando(true); setResultado(null);
+    try {
+      if(typeof window.activarNotif!=='function'){ setResultado({ok:false,msg:'La función todavía no cargó, esperá unos segundos y probá de nuevo.'}); }
+      else {
+        const ok = await window.activarNotif();
+        setResultado(ok?{ok:true,msg:'Suscripción guardada. Esto confirma que el navegador quedó registrado — no confirma que un aviso vaya a llegar (eso depende del servidor).'}:{ok:false,msg:'No se pudo activar. Revisá los permisos del navegador.'});
+      }
+    } catch(e){ setResultado({ok:false,msg:e.message||'Error inesperado'}); }
+    setProbando(false);
+  };
+  const estadoColor = permiso === 'granted' ? '#4dd9a0' : permiso === 'denied' ? '#f07070' : '#f5b942';
+  const estadoTexto = permiso === 'granted' ? '✅ Activadas' : permiso === 'denied' ? '🚫 Bloqueadas por el sistema' : permiso === 'no-soportado' ? '⚠ No soportado' : '⏳ Sin activar';
+  return (
+    <div style={{...s.card,margin:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+        <span style={{fontSize:18}}>🔔</span>
+        <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)"}}>Notificaciones</span>
+      </div>
+      <p style={{fontSize:12,color:"var(--color-text-tertiary)",margin:"0 0 10px",lineHeight:1.5}}>
+        Avisos de cierre, transferencias, mantenimiento y agenda — funcionan con la app cerrada.
+      </p>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <span style={{fontSize:13,fontWeight:600,color:estadoColor}}>{estadoTexto}</span>
+        {permiso !== 'granted' && permiso !== 'denied' && (
+          <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:500,cursor:"pointer"}}
+            onClick={pedirPermiso}>Activar</button>
+        )}
+        {permiso === 'denied' && (
+          <span style={{fontSize:11,color:"var(--color-text-tertiary)"}}>Activalas desde el navegador</span>
+        )}
+      </div>
+      {permiso === 'granted' && (<>
+        <button style={{width:"100%",background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:8,padding:"9px",fontSize:13,fontWeight:500,cursor:"pointer",marginBottom:6}}
+          disabled={probando} onClick={probar}>
+          {probando?"Probando...":"🔄 Probar / renovar suscripción de avisos"}
+        </button>
+        {resultado&&(
+          <div style={{fontSize:12,color:resultado.ok?"var(--color-text-success)":"var(--color-text-danger)",lineHeight:1.4}}>
+            {resultado.ok?"✓ ":"✗ "}{resultado.msg}
+          </div>
+        )}
+      </>)}
+    </div>
+  );
+}
+
 function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,planillas,setPlanillas,stock,setStock,cargasDia,setCargasDia,syncData,onVolver,negocioId,tabInicial,repartos,repartoActual}) {
   const [tab,setTab]=useState(["datos","vehiculo","apariencia"].includes(tabInicial)?tabInicial:"datos");
   const [editandoId,setEditandoId]=useState(null);
@@ -253,6 +310,9 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
 
         {tab==="datos"&&(
           <div style={{padding:16,display:"flex",flexDirection:"column",gap:12}}>
+
+            {/* NOTIFICACIONES */}
+            <NotifConfig />
 
             {/* SEGURIDAD — acceso con huella (dueño) */}
             <SeguridadHuella />
