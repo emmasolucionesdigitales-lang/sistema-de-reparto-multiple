@@ -74,6 +74,23 @@ async function enviarATodos(subsMap, col, payload){
   }
   return algunoOk;
 }
+// Filtra el mapa de suscripciones solo al dueño (entradas viejas sin "rol"
+// se tratan como dueño, por compatibilidad con suscripciones ya guardadas).
+function soloDueno(subsMap){
+  const out = {};
+  for(const [id, info] of Object.entries(subsMap||{})){
+    if(!info.rol || info.rol === 'dueño') out[id] = info;
+  }
+  return out;
+}
+// Filtra el mapa de suscripciones a UN repartidor puntual, por nombre.
+function soloRepartidor(subsMap, nombre){
+  const out = {};
+  for(const [id, info] of Object.entries(subsMap||{})){
+    if(info.rol === 'repartidor' && info.nombre === nombre) out[id] = info;
+  }
+  return out;
+}
 
 async function main(){
   const arg      = ahoraArg();
@@ -131,7 +148,10 @@ async function main(){
       const nombre = (cli && cli.nombre) || r.clienteNombre || '';
       const cuerpo = (nombre ? nombre + ' — ' : '') + (r.motivo || 'Tenés un recordatorio');
 
-      const ok = await enviarATodos(subsMap, col, {
+      // Si el recordatorio es "para" un repartidor puntual, avisarle SOLO a él.
+      // Si no tiene asignación (tarea propia del dueño o legado), avisarle al dueño.
+      const destinatarios = r.paraRepartidor ? soloRepartidor(subsMap, r.paraRepartidor) : soloDueno(subsMap);
+      const ok = await enviarATodos(destinatarios, col, {
         title: r.tipo === 'cobro' ? '💰 Recordatorio de cobro' : '🏠 Recordatorio de visita',
         body: cuerpo, tag: clave, requireInteraction: true,
       });
@@ -145,7 +165,7 @@ async function main(){
         if(ventas === null) ventas = await cargarVentas(col);
         const pend = ventas.filter(v => v.fechaKey === hoy && (v.pago === 'transferencia' || (v.pago === 'mixto' && Number(v.montoTrans) > 0)) && !v.transConfirmada).length;
         if(pend > 0){
-          const ok = await enviarATodos(subsMap, col, {
+          const ok = await enviarATodos(soloDueno(subsMap), col, {
             title: '💳 Transferencias sin confirmar',
             body: `Tenés ${pend} transferencia${pend>1?'s':''} pendiente${pend>1?'s':''} de hoy.`,
             tag: clave, requireInteraction: true,
@@ -167,7 +187,7 @@ async function main(){
         if(log[clave]) continue;
         const tipoLabel = {aceite:'Cambio de aceite',preventivo:'Mantenimiento preventivo',embrague:'Cambio de embrague',reparacion:'Reparación',otro:'Mantenimiento'}[mv.tipo] || mv.tipo || 'Mantenimiento';
         const cuando = dias === 0 ? 'HOY' : `en ${dias} día${dias>1?'s':''}`;
-        const ok = await enviarATodos(subsMap, col, {
+        const ok = await enviarATodos(soloDueno(subsMap), col, {
           title: '🔧 Vencimiento de mantenimiento',
           body: `${tipoLabel} vence ${cuando}${mv.descripcion?' — '+mv.descripcion:''}.`,
           tag: clave, requireInteraction: false,
@@ -188,14 +208,14 @@ async function main(){
         if(hora === 18){
           const clave = 'cierre18_' + hoy;
           if(!log[clave]){
-            const ok = await enviarATodos(subsMap, col, { title:'🚚 Sistema de Reparto — 18:00 hs', body:`¿Ya cerraste la planilla de ${diaHoy}?`, tag:'cierre-18', requireInteraction:false });
+            const ok = await enviarATodos(soloDueno(subsMap), col, { title:'🚚 Sistema de Reparto — 18:00 hs', body:`¿Ya cerraste la planilla de ${diaHoy}?`, tag:'cierre-18', requireInteraction:false });
             if(ok){ log[clave] = Date.now(); cambioLog = true; enviados++; }
           }
         }
         if(hora === 20){
           const clave = 'cierre20_' + hoy;
           if(!log[clave]){
-            const ok = await enviarATodos(subsMap, col, { title:'⏰ Son las 20:00 hs', body:'Hora de cerrar la planilla. Los pendientes quedarán como no visitados.', tag:'cierre-20', requireInteraction:true });
+            const ok = await enviarATodos(soloDueno(subsMap), col, { title:'⏰ Son las 20:00 hs', body:'Hora de cerrar la planilla. Los pendientes quedarán como no visitados.', tag:'cierre-20', requireInteraction:true });
             if(ok){ log[clave] = Date.now(); cambioLog = true; enviados++; }
           }
         }
