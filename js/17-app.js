@@ -413,99 +413,12 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   },[]);
 
   // ── NOTIFICACIONES ─────────────────────────────────────────────────
+  // Los avisos (cierre, mantenimiento, transferencias, agenda) los manda el
+  // servidor (GitHub Actions) por push real — funciona con la app cerrada.
+  // Acá solo pedimos permiso; la suscripción vive en index.html.
   React.useEffect(()=>{
     if(!("Notification" in window)) return;
-
-    const pedirPermiso = async () => {
-      if(Notification.permission === "default") {
-        await Notification.requestPermission();
-      }
-    };
-    pedirPermiso();
-
-    // —— Notificación 1: Recordatorio cierre del día a las 18:00 ——
-    const programar18hs = () => {
-      const ahora = new Date();
-      const hoy18 = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 18, 0, 0);
-      let msHasta18 = hoy18 - ahora;
-      if(msHasta18 < 0) msHasta18 += 24*60*60*1000; // ya pasó → mañana
-      return setTimeout(()=>{
-        if(Notification.permission === "granted"){
-          const hoyKey = new Date().toLocaleDateString("en-CA");
-          const diaHoy = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][new Date().getDay()];
-          const est = estadoRef.current || {};
-          const plan = (est.planillas||{})[`${diaHoy}_${hoyKey}`];
-          const huboReparto = (plan && plan.iniciado) || (est.ventas||[]).some(v=>v.fechaKey===hoyKey && v.dia===diaHoy);
-          const sinCerrar = !plan || (plan.efectivo==="" && plan.fiado==="");
-          if(DIAS.includes(diaHoy) && huboReparto && sinCerrar && !localStorage.getItem(`notif_cierre_${hoyKey}`)){
-            new Notification("🚚 Sistema de Reparto", {
-              body: `Son las 18:00 — ¿Ya cerraste la planilla de ${diaHoy}?`,
-              icon: "/icon-192.png",
-              tag: "cierre-dia"
-            });
-            localStorage.setItem(`notif_cierre_${hoyKey}`,"1");
-          }
-        }
-        programar18hs(); // reprogramar para mañana
-      }, msHasta18);
-    };
-    const t18 = programar18hs();
-
-    // —— Notificación 2: Mantenimiento vehicular 3 días antes ——
-    const chequearMantenimiento = () => {
-      if(Notification.permission !== "granted") return;
-      const mantList = (()=>{ try{ return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1")||"[]"); }catch{ return []; } })();
-      const hoy = new Date(); hoy.setHours(0,0,0,0);
-      mantList.forEach(m=>{
-        if(!m.proximaFechaISO) return;
-        const proxFecha = new Date(m.proximaFechaISO+"T12:00:00"); proxFecha.setHours(0,0,0,0);
-        const diffDias = Math.round((proxFecha - hoy)/(1000*60*60*24));
-        if(diffDias === 3 || diffDias === 2 || diffDias === 1){
-          const notifKey = `notif_mant_${m.proximaFechaISO}_${m.tipo}`;
-          const hoyKey = new Date().toLocaleDateString("en-CA");
-          const yaEnviado = localStorage.getItem(`${notifKey}_${hoyKey}`);
-          if(!yaEnviado){
-            const tipoLabel = {aceite:"Cambio de aceite",preventivo:"Mantenimiento preventivo",embrague:"Cambio de embrague",reparacion:"Reparación",otro:"Mantenimiento"}[m.tipo]||m.tipo;
-            new Notification("🔧 Vencimiento de mantenimiento", {
-              body: `${tipoLabel} vence en ${diffDias} día${diffDias>1?"s":""}${m.descripcion?" — "+m.descripcion:""}`,
-              icon: "/icon-192.png",
-              tag: notifKey
-            });
-            localStorage.setItem(`${notifKey}_${hoyKey}`,"1");
-          }
-        }
-      });
-    };
-    chequearMantenimiento(); // al abrir la app
-    const tMant = setInterval(chequearMantenimiento, 60*60*1000); // cada hora
-
-    // Recordatorios de agenda con hora exacta (ventana de 15 min, no exacta)
-    const chequearAgenda = () => {
-      if(Notification.permission!=="granted") return;
-      const ahora = new Date();
-      const hoyKey = ahora.toLocaleDateString("en-CA");
-      const recs = estadoRef.current.recordatorios || [];
-      recs.forEach(r=>{
-        if(r.confirmado || !r.fecha || !r.hora || r.fecha!==hoyKey) return;
-        const [rh,rm] = r.hora.slice(0,5).split(":").map(Number);
-        const progHoy = new Date(ahora.getFullYear(),ahora.getMonth(),ahora.getDate(),rh,rm,0);
-        const diffMin = (ahora-progHoy)/60000;
-        if(diffMin>=0 && diffMin<=15){
-          const nk = `notif_agenda_${r.id||(r.fecha+r.hora)}`;
-          if(!localStorage.getItem(nk)){
-            const c=(estadoRef.current.clientes||[]).find(x=>x.id===r.clienteId);
-            new Notification(`📅 Recordatorio${c?" · "+c.nombre:""}`,{body:r.motivo||"Recordatorio de agenda",icon:"/icon-192.png",tag:nk});
-            localStorage.setItem(nk,"1");
-          }
-        }
-      });
-    };
-    chequearAgenda();
-    const tAgenda = setInterval(chequearAgenda, 60000);
-    const onVisibleAgenda = () => { if(document.visibilityState==="visible") chequearAgenda(); };
-    document.addEventListener("visibilitychange", onVisibleAgenda);
-
-    return ()=>{ clearTimeout(t18); clearInterval(tMant); clearInterval(tAgenda); document.removeEventListener("visibilitychange", onVisibleAgenda); };
+    if(Notification.permission === "default") Notification.requestPermission();
   },[]);
 
   // ── INFORMES PDF ─────────────────────────────────────────────────

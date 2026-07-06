@@ -195,6 +195,15 @@ async function guardarLogoFirestore(codigo, logoB64) {
     return true;
   } catch(e) { console.error("Error guardando logo:", e); return false; }
 }
+async function guardarNombreFirestore(codigo, nombre) {
+  if(!window.db || !codigo) return false;
+  try {
+    await window.dbLicencias.collection("licencias").doc(codigo).update({ negocio: nombre });
+    const lic = JSON.parse(localStorage.getItem("rm_licencia")||"null");
+    if(lic) { lic.negocio = nombre; localStorage.setItem("rm_licencia", JSON.stringify(lic)); }
+    return true;
+  } catch(e) { console.error("Error guardando nombre:", e); return false; }
+}
 
 
 // ── InicioRepartidor ─────────────────────────────────────────
@@ -806,6 +815,9 @@ function ConfigApariencia() {
   const [logo, setLogo] = React.useState(()=>getLogo());
   const [subiendoLogo, setSubiendoLogo] = React.useState(false);
   const licData = (() => { try { return JSON.parse(localStorage.getItem("rm_licencia")||"null"); } catch { return null; } })();
+  const [nombreNegocio, setNombreNegocio] = React.useState(()=>licData?.negocio||"");
+  const [guardandoNombre, setGuardandoNombre] = React.useState(false);
+  const [nombreGuardado, setNombreGuardado] = React.useState(false);
 
   const aplicar = (id) => {
     setTemaActual(id);
@@ -849,6 +861,24 @@ function ConfigApariencia() {
           ))}
         </div>
         {guardado&&<div style={{fontSize:12,color:"var(--color-text-success)",textAlign:"center",marginTop:8}}>✓ Estilo aplicado</div>}
+      </div>
+
+      {/* Nombre del negocio */}
+      <div style={{...s.card,marginBottom:12}}>
+        <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",marginBottom:10}}>🏪 Nombre del negocio</div>
+        <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:8,lineHeight:1.5}}>
+          Aparece arriba de todo, en el menú principal.
+        </div>
+        <input style={{...s.input,marginBottom:8}} placeholder="Ej: Distribuidora Pérez" value={nombreNegocio} onChange={e=>setNombreNegocio(e.target.value)} />
+        <button style={{...s.btnPrimary,width:"100%",fontSize:13}} disabled={guardandoNombre}
+          onClick={async()=>{
+            setGuardandoNombre(true);
+            const ok = await guardarNombreFirestore(licData?.codigo, nombreNegocio.trim());
+            setGuardandoNombre(false);
+            if(ok){ setNombreGuardado(true); setTimeout(()=>setNombreGuardado(false),2000); }
+            else alert("❌ No se pudo guardar. Verificá la conexión.");
+          }}>{guardandoNombre?"Guardando...":"Guardar nombre"}</button>
+        {nombreGuardado&&<div style={{fontSize:12,color:"var(--color-text-success)",textAlign:"center",marginTop:6}}>✓ Guardado</div>}
       </div>
 
       {/* Logo del negocio */}

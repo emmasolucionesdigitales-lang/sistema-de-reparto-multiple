@@ -360,17 +360,28 @@ self.addEventListener('notificationclick',e=>{
     for(let i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o;
   }
   function getLic(){ try{return JSON.parse(localStorage.getItem('rm_licencia')||'{}');}catch{return {};} }
+  // ID propio de ESTE navegador/dispositivo — para que el celu y la PC del
+  // dueño no se pisen la suscripción entre sí.
+  function getDeviceId(){
+    let id = localStorage.getItem('rm_device_id');
+    if(!id){ id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10); localStorage.setItem('rm_device_id', id); }
+    return id;
+  }
   async function guardarSub(sub){
     if(!window.db) return;
     const lic=getLic();
     if(!lic.negocioId||lic.rol!=='dueño') return;
-    await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_sub').set({sub:JSON.stringify(sub),negocioId:lic.negocioId});
+    const deviceId = getDeviceId();
+    const payload = {}; payload[deviceId] = { sub: JSON.stringify(sub), ts: Date.now() };
+    await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_subs').set(payload, {merge:true});
   }
   async function activarNotif(){
     if(!('serviceWorker' in navigator)||!('PushManager' in window)){alert('Tu navegador no soporta notificaciones.');return false;}
     const p=await Notification.requestPermission();
     if(p!=='granted') return false;
     const reg=await navigator.serviceWorker.ready;
+    const subVieja = await reg.pushManager.getSubscription();
+    if(subVieja){ try{ await subVieja.unsubscribe(); }catch(e){} } // siempre limpio
     const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_PUB_KEY)});
     await guardarSub(sub); return true;
   }
@@ -380,7 +391,11 @@ self.addEventListener('notificationclick',e=>{
     if(sub) await sub.unsubscribe();
     if(window.db){
       const lic=getLic();
-      if(lic.negocioId) await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_sub').delete();
+      if(lic.negocioId){
+        const deviceId = getDeviceId();
+        const upd = {}; upd[deviceId] = firebase.firestore.FieldValue.delete();
+        await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_subs').update(upd).catch(()=>{});
+      }
     }
   }
   async function estadoNotif(){

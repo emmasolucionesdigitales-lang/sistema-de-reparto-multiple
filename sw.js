@@ -1,4 +1,5 @@
-const CACHE = 'reparto-multi-v3';
+// v4 — push handler blindado (todo dentro de waitUntil, con fallback)
+const CACHE = 'reparto-multi-v4';
 const ASSETS = [
   'https://unpkg.com/react@18/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
@@ -57,15 +58,25 @@ self.addEventListener('fetch', e => {
 
 // ── PUSH (notificaciones con la app cerrada) ──
 self.addEventListener('push', e => {
-  const d = e.data ? e.data.json() : {};
-  e.waitUntil(
-    self.registration.showNotification(d.title || 'Notificación', {
+  e.waitUntil((async () => {
+    let d = {};
+    try {
+      d = e.data ? e.data.json() : {};
+    } catch (err) {
+      try { d = { body: e.data ? e.data.text() : '' }; } catch (_) {}
+    }
+    const opts = {
       body: d.body || '',
       tag: d.tag || 'default',
       requireInteraction: !!d.requireInteraction,
       icon: 'icon-192.png',
-    })
-  );
+    };
+    try {
+      await self.registration.showNotification(d.title || 'Notificación', opts);
+    } catch (err) {
+      try { await self.registration.showNotification('Sistema de Reparto', { body: 'Tenés un aviso nuevo.' }); } catch (_) {}
+    }
+  })());
 });
 
 self.addEventListener('notificationclick', e => {

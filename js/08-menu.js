@@ -292,7 +292,7 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
     <div style={s.screen}>
       <div style={s.header}>
         <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Sistema de Reparto 2026 · Multi</span>
+        <span style={s.headerTitle}>{(()=>{try{return JSON.parse(localStorage.getItem("rm_licencia")||"null")?.negocio;}catch{return null;}})()||"Sistema de Reparto 2026 · Multi"}</span>
         {onToggleScale&&<button style={{...s.btn,padding:"5px 10px",fontSize:12,fontWeight:700,lineHeight:1,minWidth:28}} onClick={onToggleScale} title="Tamaño de texto">{scaleLabel}</button>}
       </div>
       
