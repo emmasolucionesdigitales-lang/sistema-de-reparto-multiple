@@ -681,6 +681,9 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onMapaClientes={()=>irA("mapaClientes")}
         tabInicial={tabMenu}
         onTabChange={setTabMenu}
+        scaleIdx={scaleIdx}
+        onToggleScale={()=>setScaleIdx(i=>(i+1)%4)}
+        scaleLabel={SCALE_LABELS[scaleIdx]}
       />}
       {pantalla==="diasReparto" && !repartoActual && (()=>{ setTimeout(()=>irA("menu"),0); return null; })()}
       {pantalla==="diasReparto" && repartoActual && <MenuDias

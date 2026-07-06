@@ -2,7 +2,7 @@
 // ◆  08-menu.js — MenuRepartos · MenuDias · DiaPrincipal · PlanillaDelDia · InicioReparto
 // ════════════════════════════════════════════════════════════════════
 
-function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,tabInicial,onTabChange}) {
+function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,tabInicial,onTabChange,scaleIdx,onToggleScale,scaleLabel}) {
   const [tab, setTab] = React.useState(tabInicial||"repartos");
   const cambiarTab = (t) => { setTab(t); if(onTabChange) onTabChange(t); };
   const [modoNuevo, setModoNuevo] = React.useState(false);
@@ -48,6 +48,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
       <div style={s.header}>
         <button style={s.backBtn} onClick={onVolver}>← Volver</button>
         <span style={s.headerTitle}>Panel del dueño</span>
+        {onToggleScale&&<button style={{...s.btn,padding:"5px 10px",fontSize:12,fontWeight:700,lineHeight:1,minWidth:28}} onClick={onToggleScale} title="Tamaño de texto">{scaleLabel}</button>}
       </div>
 
       {/* ── PESTAÑAS ── */}
@@ -416,7 +417,6 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
               <span style={{fontSize:9,color:"#ffe4e4",fontWeight:500,textAlign:"center",lineHeight:1.3}}>No cargado</span>
               <span style={{fontSize:9,color:"#ffc9c9",lineHeight:1}}>{fechaNoCargadoLabel}</span>
             </button>
-          )}
           )}
           </div>
           {/* Modal inline editar zona */}

@@ -251,6 +251,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual); // ahora sí está definido
   const [origenDetalle, setOrigenDetalle] = React.useState("clientes");
   const [datos,      setDatos]      = React.useState(null);
+  const [scaleIdx, setScaleIdx] = useLS("rm_scale_v1", 1); // 0=S 1=M 2=L 3=XL
+  const SCALES = [0.82, 1.0, 1.18, 1.36];
+  const SCALE_LABELS = ["S","M","L","XL"];
 
   const diaHoy = () => diaActual; // mantener compatibilidad
 
@@ -392,7 +395,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const noVisHoy  = noVisitas.filter(v=>v.fecha===fechaActual);
 
   return (
-    <div style={s.app}>
+    <div style={{...s.app, zoom: SCALES[scaleIdx]}}>
       {pantalla==="inicio"&&(
         <InicioRepartidor
           perfil={perfil}
@@ -406,6 +409,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           savePlanilla={(key,p)=>sync({...datos,planillas:{...planillas,[key]:p}})}
           productos={productos}
           recordatorios={datos.recordatorios||[]}
+          scaleIdx={scaleIdx}
+          onToggleScale={()=>setScaleIdx(i=>(i+1)%4)}
+          scaleLabel={SCALE_LABELS[scaleIdx]}
           onSaveRecordatorio={(r)=>{
             const lista=[...(datos.recordatorios||[]),r];
             sync({...datos,recordatorios:lista});
@@ -663,9 +669,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               const misClientesIds = new Set(clientes.map(c=>c.id));
               const ventasDia = ventas.filter(v=>v.fechaKey===fechaActual&&!v._esCobro&&!v._esAjuste&&misClientesIds.has(v.clienteId));
               // Efectivo: contado + parte efectivo de mixto (igual que planilla)
-              const totalEfectivo = vals?.cobEfectivo ?? ventasDia.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.pagadoNum||v.neto||0)),0);
+              const totalEfectivo = ventasDia.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.pagadoNum||v.neto||0)),0);
               // Transferencias: transfer + parte transfer de mixto (igual que planilla)
-              const totalTransfer = vals?.cobTransBruto ?? ventasDia.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0)),0);
+              const totalTransfer = ventasDia.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.pagadoNum||v.neto||0)),0);
               const totalFiado    = ventasDia.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
               const totalNeto     = totalEfectivo+totalTransfer+totalFiado;
               const retencion     = Math.round(totalTransfer*0.025);

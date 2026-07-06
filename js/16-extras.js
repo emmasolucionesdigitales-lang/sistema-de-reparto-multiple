@@ -207,7 +207,7 @@ async function guardarNombreFirestore(codigo, nombre) {
 
 
 // ── InicioRepartidor ─────────────────────────────────────────
-function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,planillas,savePlanilla,productos,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onSalir,onEnviarInforme}) {
+function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,planillas,savePlanilla,productos,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onSalir,onEnviarInforme,scaleIdx,onToggleScale,scaleLabel}) {
   const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
   const noVisHoy  = (noVisitas||[]).filter(v=>v.fecha===fechaActual);
   const planKey   = `${diaActual}_${fechaActual}`;
@@ -233,6 +233,7 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
           <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual+" · "+fechaActual}</div>
         </div>
         <button style={{...s.btn,fontSize:11,padding:"6px 10px"}} onClick={onSalir}>Salir</button>
+        {onToggleScale&&<button style={{...s.btn,padding:"5px 10px",fontSize:12,fontWeight:700,lineHeight:1,minWidth:28,marginLeft:6}} onClick={onToggleScale} title="Tamaño de texto">{scaleLabel}</button>}
       </div>
 
       {recHoy.length>0&&(
@@ -365,9 +366,7 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
         })()}
 
         {/* Agenda */}
-        <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px",
-          background:recActivos.length>0?"var(--color-background-info)":undefined,
-          border:recActivos.length>0?"0.5px solid var(--color-border-info)":undefined}}
+        <button style={{...s.card,margin:0,cursor:"pointer",display:"flex",alignItems:"center",gap:10,padding:"13px 14px"}}
           onClick={onIrAgenda}>
           <span style={{fontSize:20}}>{"\u{1F4C5}"}</span>
           <div style={{flex:1}}>
