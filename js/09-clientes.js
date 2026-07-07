@@ -239,10 +239,10 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>{cliente.nombre}</span>
-        <div style={{display:"flex",gap:4}}>
+      <HeaderApp titulo={`Clientes · ${cliente.dia||""}`} onVolver={onVolver}/>
+      <div style={{background:"var(--color-background-secondary)",borderRadius:10,margin:"8px 14px 0",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
+        <span style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)"}}>{cliente.nombre}</span>
+        <div style={{display:"flex",gap:6,flexShrink:0}}>
           <button style={{...s.btn,padding:"4px 8px",fontSize:18,lineHeight:1,position:"relative"}}
             onClick={()=>setMostrarRecordatorio(true)}>
             🔔
@@ -251,7 +251,6 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
           {!soloLectura&&<button style={{...s.btn,fontSize:12,padding:"5px 10px"}} onClick={()=>{setEditandoCliente(!editandoCliente);setEditandoVentaId(null);}}>
             {editandoCliente?"Cancelar":"Editar"}
           </button>}
-          <HeaderBotones/>
         </div>
       </div>
       {mostrarPagoSaldo&&(

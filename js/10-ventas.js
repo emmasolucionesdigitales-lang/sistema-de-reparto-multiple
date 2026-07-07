@@ -102,22 +102,22 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
   );
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <div style={{flex:1,paddingLeft:4}}>
-          <div style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{cliente.nombre}</div>
-          <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:1}}>
-            {cliente.calle?`${cliente.calle} ${cliente.nro||""}`:cliente.manzana?`Mz ${cliente.manzana} L ${cliente.lote}`:""}{cliente.barrio?` · ${cliente.barrio}`:""}{cliente.orden?` · #${cliente.orden}`:""}
+      <HeaderApp titulo={`Clientes · ${cliente.dia||""}`} onVolver={onVolver}/>
+      {/* Tarjeta de datos del cliente */}
+      <div style={{background:"var(--color-background-secondary)",borderRadius:10,margin:"8px 14px 0",padding:"10px 14px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)"}}>{cliente.nombre}</div>
+            <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:1}}>
+              {cliente.calle?`${cliente.calle} ${cliente.nro||""}`:cliente.manzana?`Mz ${cliente.manzana} L ${cliente.lote}`:""}{cliente.barrio?` · ${cliente.barrio}`:""}{cliente.orden?` · #${cliente.orden}`:""}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10,fontSize:17,flexShrink:0}}>
+            {(cliente.maps||(cliente.lat&&cliente.lng))&&<a href={cliente.maps||`https://www.google.com/maps?q=${cliente.lat},${cliente.lng}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
+            {cliente.telefono&&<a href={`https://wa.me/54${cliente.telefono}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>💬</a>}
           </div>
         </div>
-        <div style={{display:"flex",gap:6,fontSize:17,flexShrink:0,alignItems:"center"}}>
-          {(cliente.maps||(cliente.lat&&cliente.lng))&&<a href={cliente.maps||`https://www.google.com/maps?q=${cliente.lat},${cliente.lng}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
-          {cliente.telefono&&<a href={`https://wa.me/54${cliente.telefono}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>💬</a>}
-          <HeaderBotones/>
-        </div>
-      </div>
-      {/* Panel de info del cliente */}
-      <div style={{background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)",padding:"7px 14px",display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginTop:8}}>
         {cliente.saldo<0&&<span style={{fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:5,background:"var(--color-background-danger)",color:"var(--color-text-danger)"}}>Debe {fmt(Math.abs(cliente.saldo))}</span>}
         {cliente.saldo>0&&<span style={{fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:5,background:"var(--color-background-success)",color:"var(--color-text-success)"}}>A favor {fmt(cliente.saldo)}</span>}
         {cliente.sifon>0&&<span style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"var(--color-background-info)",color:"var(--color-text-info)"}}>Sifón×{cliente.sifon}</span>}
@@ -126,6 +126,7 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
         {cliente.dispenser>0&&<span style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)"}}>Disp×{cliente.dispenser}</span>}
         {(()=>{const aj=cliente.envAjuste||{};const items=[];if((aj.sifon||0)>0)items.push(`+${aj.sifon} sif.`);if((aj.bidon10||0)>0)items.push(`+${aj.bidon10} 10L`);if((aj.bidon20||0)>0)items.push(`+${aj.bidon20} 20L`);return items.length>0?<span style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"var(--color-background-warning)",color:"var(--color-text-warning)"}}>{items.join(" ")} prest.</span>:null;})()}
         {cliente.notas&&<span style={{fontSize:11,color:"var(--color-text-warning)"}}>📝 {cliente.notas}</span>}
+        </div>
       </div>
       {/* Barra de progreso del día */}
       {progressData&&(
