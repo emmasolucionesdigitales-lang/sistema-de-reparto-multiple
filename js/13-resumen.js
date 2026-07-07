@@ -114,15 +114,7 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Resumen</span>
-        <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>{
-          const total=filtradas.reduce((a,v)=>a+(v.neto||0),0);
-          const texto=`*Resumen Reparto App · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
-          window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`,"_blank");
-        }}>💬 WA</button>
-      </div>
+      <HeaderApp titulo="Resumen" onVolver={onVolver}/>
 
       {/* Selector de período */}
       <div style={{padding:"10px 14px 6px"}}>
@@ -131,6 +123,11 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
             <button key={v} style={{...s.btn,fontSize:12,padding:"5px 12px",background:filtro===v?"#185FA5":"var(--color-background-tertiary)",color:filtro===v?"#e2eaf4":"var(--color-text-secondary)",border:filtro===v?"none":"0.5px solid var(--color-border-secondary)"}}
               onClick={()=>setFiltro(v)}>{l}</button>
           ))}
+          <button style={{...s.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{
+            const total=filtradas.reduce((a,v)=>a+(v.neto||0),0);
+            const texto=`*Resumen Reparto App · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`,"_blank");
+          }}>💬 WA</button>
         </div>
         {(filtro==="mes"||filtro==="anio")&&(
           <input type="month" style={{...s.input,marginBottom:6}} value={mesSel}

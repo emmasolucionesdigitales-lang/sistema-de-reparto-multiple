@@ -4,6 +4,11 @@
 
 function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setProductos,cargasDia,setCargasDia,planillas,onVolver,onResumen}) {
   const [clientesAbierto,setClientesAbierto]=React.useState(false);
+  const [abiertoSoderia,setAbiertoSoderia]=React.useState(false);
+  const [abiertoDeposito,setAbiertoDeposito]=React.useState(false);
+  const [abiertoEnClientes,setAbiertoEnClientes]=React.useState(false);
+  const [abiertoProductos,setAbiertoProductos]=React.useState(false);
+  const [abiertoCarga,setAbiertoCarga]=React.useState(false);
   const hoyDia = DIAS[(new Date().getDay()+6)%7] || "Lunes";
   const [diaCarga,setDiaCarga]=React.useState(DIAS.includes(hoyDia)?hoyDia:"Lunes");
   const STOCK_KEY={1:"sifon",2:"bidon10",3:"bidon20",4:"dispenser"};
@@ -54,19 +59,21 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={{...s.headerTitle,flex:1}}>📦 Stock</span>
-        {onResumen&&<button style={s.btn} onClick={onResumen}>📊 Resumen</button>}
-      </div>
+      <HeaderApp titulo="📦 Stock" onVolver={onVolver}/>
 
       <div style={{padding:"10px 14px 40px"}}>
+        {onResumen&&<button style={{...s.btn,width:"100%",marginBottom:10,fontSize:13,fontWeight:500}} onClick={onResumen}>📊 Ver resumen</button>}
 
         <div style={{fontSize:11,color:"var(--color-text-info)",margin:"0 0 10px",padding:"7px 11px",background:"var(--color-background-info)",borderRadius:8}}>ℹ️ El <b>sifón</b> se cuenta en <b>unidades sueltas</b> (6 unidades = 1 cajón).</div>
 
         {/* SODERÍA */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",marginBottom:9}}>🏭 Sodería <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· de acá sale el camión</span></div>
+          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoSoderia?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+            onClick={()=>setAbiertoSoderia(!abiertoSoderia)}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🏭 Sodería <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· de acá sale el camión</span></span>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoSoderia?"▲":"▼"}</span>
+          </button>
+          {abiertoSoderia&&(<>
           <div style={{display:"grid",gridTemplateColumns:"1fr 52px 52px 46px",gap:6,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
             <span></span><span style={{textAlign:"center"}}>Llenos</span><span style={{textAlign:"center"}}>Vacíos</span><span style={{textAlign:"center",color:"var(--color-text-secondary)"}}>Total</span>
           </div>
@@ -81,11 +88,17 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               </div>
             );
           })}
+          </>)}
         </div>
 
         {/* DEPÓSITO */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",marginBottom:9}}>📦 Depósito <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· vacíos nuevos, sin uso</span></div>
+          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoDeposito?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+            onClick={()=>setAbiertoDeposito(!abiertoDeposito)}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>📦 Depósito <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· vacíos nuevos, sin uso</span></span>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoDeposito?"▲":"▼"}</span>
+          </button>
+          {abiertoDeposito&&(
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
             {PRODS.map(([k,lbl])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--color-background-tertiary)",borderRadius:8,padding:"6px 9px"}}>
@@ -94,11 +107,17 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* EN CLIENTES */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",marginBottom:7}}>👥 En clientes <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· prestados</span></div>
+          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoEnClientes?7:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+            onClick={()=>setAbiertoEnClientes(!abiertoEnClientes)}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>👥 En clientes <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· prestados</span></span>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoEnClientes?"▲":"▼"}</span>
+          </button>
+          {abiertoEnClientes&&(<>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
             <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>Sifón <b style={{color:"var(--color-text-primary)"}}>{totClientes.sifon}</b> <span style={{fontSize:10,color:"var(--color-text-tertiary)"}}>({Math.floor(totClientes.sifon/6)} caj)</span></span>
             <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>10L <b style={{color:"var(--color-text-primary)"}}>{totClientes.bidon10}</b></span>
@@ -124,11 +143,20 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               ))}
             </div>
           )}
+          </>)}
         </div>
 
         {/* PRODUCTOS Y PRECIOS */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",marginBottom:3}}>🏷️ Productos y precios</div>
+          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoProductos?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+            onClick={()=>setAbiertoProductos(!abiertoProductos)}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)"}}>🏷️ Productos y precios</div>
+              {!abiertoProductos&&<div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:2}}>De acá salen los precios de la planilla y todas las ventas</div>}
+            </div>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoProductos?"▲":"▼"}</span>
+          </button>
+          {abiertoProductos&&(<>
           <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:9}}>De acá salen los precios de la planilla y todas las ventas</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 66px 66px 24px",gap:5,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
             <span>Producto</span><span style={{textAlign:"center"}}>Llenado</span><span style={{textAlign:"center"}}>Venta</span><span></span>
@@ -145,11 +173,17 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
             </div>
           ))}
           <button onClick={agregarProducto} style={{...s.btn,width:"100%",marginTop:6,fontSize:13}}>+ Agregar producto</button>
+          </>)}
         </div>
 
         {/* CARGA DIARIA */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",marginBottom:9}}>🚐 Carga diaria del camión</div>
+          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoCarga?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+            onClick={()=>setAbiertoCarga(!abiertoCarga)}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🚐 Carga diaria del camión</span>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoCarga?"▲":"▼"}</span>
+          </button>
+          {abiertoCarga&&(<>
           <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
             {DIAS.map(d=>(
               <button key={d} onClick={()=>setDiaCarga(d)} style={{fontSize:12,padding:"4px 9px",borderRadius:7,border:"none",cursor:"pointer",background:diaCarga===d?"#185FA5":"var(--color-background-tertiary)",color:diaCarga===d?"#e2eaf4":"var(--color-text-secondary)",fontWeight:diaCarga===d?500:400}}>{d.slice(0,3)}</button>
@@ -163,6 +197,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               </div>
             ))}
           </div>
+          </>)}
         </div>
 
       </div>
@@ -191,10 +226,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
   const fechasConf = Object.keys(confirmadasPorFecha).sort().reverse();
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Transferencias · {dia}</span>
-      </div>
+      <HeaderApp titulo={`Transferencias · ${dia}`} onVolver={onVolver}/>
       <div style={{padding:"10px 14px 4px"}}>
         <div style={{display:"flex",gap:8,marginBottom:8}}>
           <div style={{...s.card,flex:1,margin:0,background:"#1e3a5f",border:"1px solid #f5b942",padding:"10px 12px"}}>

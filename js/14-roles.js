@@ -395,6 +395,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const noVisHoy  = noVisitas.filter(v=>v.fecha===fechaActual);
 
   return (
+    <>
+    <div style={{position:"fixed",top:10,right:14,zIndex:9999,display:"flex",gap:6}}>
+      <button onClick={()=>setScaleIdx(i=>(i+1)%4)} style={{padding:"6px 10px",borderRadius:8,border:"none",background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}} title="Tamaño de texto">{SCALE_LABELS[scaleIdx]}</button>
+    </div>
     <div style={{...s.app, zoom: SCALES[scaleIdx]}}>
       {pantalla==="inicio"&&(
         <InicioRepartidor
@@ -750,6 +754,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         />
       )}
     </div>
+    </>
   );
 }
 
@@ -1144,11 +1149,7 @@ function NuevoClienteForm({sectores, diaActual, onGuardar, onVolver}) {
   ];
 
   return React.createElement("div", {style: s.screen},
-    React.createElement("div", {style: s.header},
-      React.createElement("button", {style: s.backBtn, onClick: onVolver}, "← Volver"),
-      React.createElement("span", {style: s.headerTitle}, "Nuevo Cliente"),
-      React.createElement("div", null)
-    ),
+    React.createElement(HeaderApp, {titulo: "Nuevo Cliente", onVolver: onVolver}),
     React.createElement("div", {style: {padding:16, display:"flex", flexDirection:"column", gap:10}},
       React.createElement("div", null,
         React.createElement("label", {style: s.label}, "Nombre y apellido *"),

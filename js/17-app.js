@@ -250,6 +250,9 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       if (data.recordatorios?.length) setRecordatorios(data.recordatorios);
       if (data.mantVeh?.length)    localStorage.setItem("rm_mant_vehiculo_v1", JSON.stringify(data.mantVeh));
       if (data.histPrecios?.length) localStorage.setItem("rm_lc_hist_precios", JSON.stringify(data.histPrecios));
+      if (data.horaAvisoCierre)    localStorage.setItem("rm_hora_notif_cierre", data.horaAvisoCierre);
+      if (data.horasAvisoTrans)    localStorage.setItem("rm_horas_notif_trans", JSON.stringify(data.horasAvisoTrans));
+      if (data.diasAvisoMant)      localStorage.setItem("rm_dias_notif_mant", data.diasAvisoMant.join(','));
       if (data.zonasReparto && Object.keys(data.zonasReparto).length) setZonasReparto(data.zonasReparto);
       if (data.repartos?.length) { setRepartos(data.repartos); try{localStorage.setItem("rm_repartos_v1",JSON.stringify(data.repartos));}catch{} }
       // Refrescar logo desde licencia
@@ -343,7 +346,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     setSyncStatus("saving");
     const mantVehActual = (() => { try { return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
     const histPreciosActual = (() => { try { return JSON.parse(localStorage.getItem("rm_lc_hist_precios")||"[]"); } catch { return []; } })();
-    const data = { ...estadoRef.current, ...overrides, noVisitas: overrides.noVisitas!==undefined ? overrides.noVisitas : (estadoRef.current.noVisitas||[]), prospectos: overrides.prospectos!==undefined ? overrides.prospectos : (estadoRef.current.prospectos||[]), recordatorios: overrides.recordatorios!==undefined ? overrides.recordatorios : (estadoRef.current.recordatorios||[]), mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{}, repartos: overrides.repartos||estadoRef.current.repartos||[] };
+    const data = { ...estadoRef.current, ...overrides, noVisitas: overrides.noVisitas!==undefined ? overrides.noVisitas : (estadoRef.current.noVisitas||[]), prospectos: overrides.prospectos!==undefined ? overrides.prospectos : (estadoRef.current.prospectos||[]), recordatorios: overrides.recordatorios!==undefined ? overrides.recordatorios : (estadoRef.current.recordatorios||[]), mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{}, repartos: overrides.repartos||estadoRef.current.repartos||[], horaAvisoCierre: overrides.horaAvisoCierre || localStorage.getItem('rm_hora_notif_cierre') || '18:00', horasAvisoTrans: overrides.horasAvisoTrans || (()=>{try{return JSON.parse(localStorage.getItem('rm_horas_notif_trans')||'["13:00","19:00"]');}catch{return ['13:00','19:00'];}})(), diasAvisoMant: overrides.diasAvisoMant || (localStorage.getItem('rm_dias_notif_mant')||'3,2,1,0').split(',').map(n=>parseInt(n.trim(),10)).filter(n=>!isNaN(n)) };
     estadoRef.current = data;
     debounceSave(() => {
       if(!navigator.onLine) {
@@ -465,7 +468,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   };
   const [cargasDia, setCargasDia] = useLS("rm_cargas_dia_v1", CARGA_DIA_DEFAULT);
   const saveCargasDia = (v) => { setCargasDia(v); try{localStorage.setItem("rm_cargas_dia_v1",JSON.stringify(v));}catch{} };
-  const saveNoVisitas= (v) => { setNoVisitas(v); try{localStorage.setItem("rm_novisitas_v1",JSON.stringify(v));}catch{} };
+  const saveNoVisitas= (v) => { setNoVisitas(v); try{localStorage.setItem("rm_novisitas_v1",JSON.stringify(v));}catch{} syncData({noVisitas:v}); };
   const saveProspectos=(v)=>{ setProspectos(v); try{localStorage.setItem("rm_prospectos_v1",JSON.stringify(v));}catch{} syncData({prospectos:v}); };
 
   const cliente = clientes.find(c=>c.id===clienteId)||null;
@@ -659,6 +662,9 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     {operandoReparto ? (
       <AppRepartidor uid={uid} perfil={{nombre:operandoReparto.repartidorNombre,codigo:operandoReparto.codigo,sectores:[],rol:"repartidor",negocioId}} onSalir={()=>setOperandoReparto(null)} />
     ) : (<>
+    <div style={{position:"fixed",top:10,right:14,zIndex:9999,display:"flex",gap:6}}>
+      <button onClick={()=>setScaleIdx(i=>(i+1)%4)} style={{padding:"6px 10px",borderRadius:8,border:"none",background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}} title="Tamaño de texto">{SCALE_LABELS[scaleIdx]}</button>
+    </div>
     <div style={{...s.app, zoom: SCALES[scaleIdx]}}>
       <SyncBar status={syncStatus} isOnline={isOnline} />
       {pantalla==="portada" && <Portada onIngresar={()=>irA("menu")} />}

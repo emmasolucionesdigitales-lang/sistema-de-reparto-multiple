@@ -268,7 +268,7 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
           <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual+" · "+fechaActual}</div>
         </div>
         <button style={{...s.btn,fontSize:11,padding:"6px 10px"}} onClick={onSalir}>Salir</button>
-        {onToggleScale&&<button style={{...s.btn,padding:"5px 10px",fontSize:12,fontWeight:700,lineHeight:1,minWidth:28,marginLeft:6}} onClick={onToggleScale} title="Tamaño de texto">{scaleLabel}</button>}
+        <HeaderBotones/>
       </div>
 
       {recHoy.length>0&&(
@@ -496,14 +496,10 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Todos los clientes</span>
-        <button style={{...s.btn,padding:"6px 12px",fontSize:13}} onClick={onNuevoCliente}>+ Nuevo</button>
-      </div>
+      <HeaderApp titulo="Todos los clientes" onVolver={onVolver}/>
       <div style={{padding:"10px 14px 6px"}}>
         <input style={s.input} placeholder="Buscar cliente o barrio..." value={busq} onChange={e=>setBusq(e.target.value)} />
-        <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap"}}>
+        <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap",alignItems:"center"}}>
           {["todos",...DIAS].map(d=>(
             <button key={d} style={{...s.btn,fontSize:11,padding:"3px 9px",
               background:diaFiltro===d?"#185FA5":"var(--color-background-tertiary)",
@@ -511,6 +507,7 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
               border:diaFiltro===d?"none":"0.5px solid var(--color-border-secondary)"}}
               onClick={()=>setDiaFiltro(d)}>{d==="todos"?"Todos":d.slice(0,3)}</button>
           ))}
+          <button style={{...s.btn,fontSize:11,padding:"3px 10px",marginLeft:"auto",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={onNuevoCliente}>+ Nuevo</button>
         </div>
         <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6}}>{filtrados.length} clientes</div>
       </div>
@@ -570,10 +567,9 @@ function AgendaRepartidor({recordatorios,clientes,onConfirmar,onEliminar,onNuevo
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>📅 Agenda</span>
-        <button style={{...s.btn,padding:"6px 12px",fontSize:12,background:"#185FA5",color:"#e2eaf4",border:"none"}}
+      <HeaderApp titulo="📅 Agenda" onVolver={onVolver}/>
+      <div style={{padding:"10px 14px 0"}}>
+        <button style={{...s.btn,width:"100%",fontSize:13,background:"#185FA5",color:"#e2eaf4",border:"none"}}
           onClick={()=>setMostrarNuevo(true)}>+ Nuevo</button>
       </div>
       {pendientes.length===0&&!mostrarNuevo&&(
@@ -657,12 +653,7 @@ function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onI
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>📅 Agenda</span>
-        <button style={{...s.btn,padding:"6px 12px",fontSize:12,background:"#185FA5",color:"#e2eaf4",border:"none"}}
-          onClick={()=>setMostrarNuevo(true)}>+ Nuevo</button>
-      </div>
+      <HeaderApp titulo="📅 Agenda" onVolver={onVolver}/>
 
       {/* Métricas rápidas */}
       <div style={{display:"flex",gap:8,padding:"10px 14px 6px"}}>
@@ -691,9 +682,9 @@ function AgendaScreen({recordatorios,clientes,onConfirmar,onEliminar,onNuevo,onI
             border:filtro===v?"none":"0.5px solid var(--color-border-secondary)"}}
             onClick={()=>setFiltro(v)}>{l}</button>
         ))}
+        <button style={{...s.btn,fontSize:12,padding:"6px 12px",background:"#185FA5",color:"#e2eaf4",border:"none"}}
+          onClick={()=>setMostrarNuevo(true)}>+ Nuevo</button>
       </div>
-
-      {/* Lista */}
       {mostrar.length===0&&(
         <div style={{textAlign:"center",padding:"40px 20px",color:"var(--color-text-tertiary)"}}>
           <div style={{fontSize:36,marginBottom:10}}>📅</div>
@@ -1027,12 +1018,7 @@ function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onAgend
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={{...s.headerTitle,flex:1}}>Todos los clientes</span>
-        {onAgenda&&<button title="Agenda" style={{...s.btn,padding:"6px 10px",fontSize:15}} onClick={onAgenda}>📅</button>}
-        {onMapa&&<button title="Mapa" style={{...s.btn,padding:"6px 10px",fontSize:15}} onClick={onMapa}>🗺</button>}
-      </div>
+      <HeaderApp titulo="Todos los clientes" onVolver={onVolver}/>
 
       {/* Resumen general */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,padding:"10px 14px 6px"}}>
@@ -1049,6 +1035,12 @@ function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onAgend
           <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Total deuda</div>
         </div>
       </div>
+      {(onAgenda||onMapa)&&(
+        <div style={{display:"flex",gap:6,padding:"0 14px 6px"}}>
+          {onAgenda&&<button style={{...s.btn,flex:1,fontSize:12}} onClick={onAgenda}>📅 Agenda</button>}
+          {onMapa&&<button style={{...s.btn,flex:1,fontSize:12}} onClick={onMapa}>🗺 Mapa</button>}
+        </div>
+      )}
 
       {/* Búsqueda */}
       <div style={{padding:"0 14px 8px"}}>
@@ -1336,8 +1328,7 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver, reparto
 
   if(fase==="listo") return (
     <div style={s.screen}>
-      <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Importar clientes</span></div>
+      <HeaderApp titulo="Importar clientes" onVolver={onVolver}/>
       <div style={{padding:"60px 20px",textAlign:"center"}}>
         <div style={{fontSize:48,marginBottom:16}}>{"\u2705"}</div>
         <div style={{fontSize:18,fontWeight:700,color:"var(--color-text-primary)",marginBottom:8}}>
@@ -1353,8 +1344,7 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver, reparto
 
   if(fase==="preview") return (
     <div style={s.screen}>
-      <div style={s.header}><button style={s.backBtn} onClick={()=>setFase("inicio")}>← Volver</button>
-        <span style={s.headerTitle}>Revisa los datos</span></div>
+      <HeaderApp titulo="Revisa los datos" onVolver={()=>setFase("inicio")}/>
       {repartoPreseleccionado&&(
         <div style={{margin:"8px 14px 0",background:"var(--color-background-info)",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,padding:"10px 14px",fontSize:13,color:"var(--color-text-info)"}}>
           🚐 Todos los clientes se asignarán automáticamente a <b>{repartoPreseleccionado.repartidorNombre||repartoPreseleccionado.nombre}</b>
@@ -1410,8 +1400,7 @@ function ImportarClientesExcel({repartos, clientes, onGuardar, onVolver, reparto
 
   return (
     <div style={s.screen}>
-      <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Importar clientes</span></div>
+      <HeaderApp titulo="Importar clientes" onVolver={onVolver}/>
       <div style={{padding:"24px 14px",display:"flex",flexDirection:"column",gap:16}}>
         <div style={{...s.card,margin:0,background:"var(--color-background-info)",textAlign:"center",padding:"24px"}}>
           <div style={{fontSize:36,marginBottom:8}}>{"\u{1F4CA}"}</div>
@@ -1514,10 +1503,7 @@ function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, o
 
   return (
     <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Mapa de clientes</span>
-      </div>
+      <HeaderApp titulo="Mapa de clientes" onVolver={onVolver}/>
       {/* Filtro de dia */}
       <div style={{padding:"8px 14px",display:"flex",gap:6,overflowX:"auto",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
         {["todos",...DIAS].map(d=>(

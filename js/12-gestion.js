@@ -38,14 +38,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
   return (
     <>
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Gestión de clientes</span>
-        <button style={{...s.btn,padding:"6px 12px",fontSize:12,background:"#185FA5",color:"#e2eaf4",border:"none"}}
-          onClick={()=>{setModoNuevo(true);setEditandoId(null);}}>
-          + Nuevo
-        </button>
-      </div>
+      <HeaderApp titulo="Gestión de clientes" onVolver={onVolver}/>
 
       {/* Filtros */}
       <div style={{padding:"10px 14px 6px"}}>
@@ -60,7 +53,11 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
               {d==="todos"?"Todos":d}
             </button>
           ))}
-          <button style={{...s.btn,fontSize:11,padding:"3px 10px",marginLeft:"auto"}}
+          <button style={{...s.btn,fontSize:11,padding:"3px 10px",marginLeft:"auto",background:"#185FA5",color:"#e2eaf4",border:"none"}}
+            onClick={()=>{setModoNuevo(true);setEditandoId(null);}}>
+            + Nuevo
+          </button>
+          <button style={{...s.btn,fontSize:11,padding:"3px 10px"}}
           onClick={()=>{
             const porDia = {};
             DIAS.forEach(d=>{ porDia[d]=[...clientes].filter(c=>c.dia===d).sort((a,b)=>(a.orden||9999)-(b.orden||9999)); });
@@ -554,15 +551,7 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Resumen</span>
-        <button style={{...s.btn,fontSize:11,padding:"4px 10px"}} onClick={()=>{
-          const total=filtradas.reduce((a,v)=>a+(v.neto||0),0);
-          const texto=`*Resumen Sistema de Reparto 2026 · Multi · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
-          window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`,"_blank");
-        }}>💬 WA</button>
-      </div>
+      <HeaderApp titulo="Resumen" onVolver={onVolver}/>
 
       {/* Selector de período */}
       <div style={{padding:"10px 14px 6px"}}>
@@ -571,6 +560,11 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
             <button key={v} style={{...s.btn,fontSize:12,padding:"5px 12px",background:filtro===v?"#185FA5":"var(--color-background-tertiary)",color:filtro===v?"#e2eaf4":"var(--color-text-secondary)",border:filtro===v?"none":"0.5px solid var(--color-border-secondary)"}}
               onClick={()=>setFiltro(v)}>{l}</button>
           ))}
+          <button style={{...s.btn,fontSize:12,padding:"5px 12px"}} onClick={()=>{
+            const total=filtradas.reduce((a,v)=>a+(v.neto||0),0);
+            const texto=`*Resumen Sistema de Reparto 2026 · Multi · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`,"_blank");
+          }}>💬 WA</button>
         </div>
         {(filtro==="mes"||filtro==="anio")&&(
           <input type="month" style={{...s.input,marginBottom:6}} value={mesSel}
@@ -970,10 +964,7 @@ function CargaGPSMasiva({clientes, onActualizar, onVolver}) {
   const latOk=latVal&&lngVal&&!isNaN(parseFloat(latVal))&&!isNaN(parseFloat(lngVal));
   return (
     <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Cargar GPS · {idx+1}/{sinGPS.length}</span>
-      </div>
+      <HeaderApp titulo={`Cargar GPS · ${idx+1}/${sinGPS.length}`} onVolver={onVolver}/>
       <div style={{height:4,background:"var(--color-background-tertiary)"}}>
         <div style={{height:"100%",background:"#185FA5",width:`${progreso}%`,transition:"width 0.3s"}}/>
       </div>
@@ -1025,10 +1016,7 @@ function calcularRutaOptima(clientes) {
 function PreviaRuta({rutaOptima, ventasHoy, noVisHoy, onAplicar, onVolver}) {
   return (
     <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Ruta óptima sugerida</span>
-      </div>
+      <HeaderApp titulo="Ruta óptima sugerida" onVolver={onVolver}/>
       <div style={{padding:"10px 14px",background:"var(--color-background-info)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
         <div style={{fontSize:13,color:"var(--color-text-info)",lineHeight:1.6}}>Orden que minimiza la distancia total. Podés aplicarlo o volver sin cambios.</div>
       </div>
@@ -1118,17 +1106,14 @@ function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, o
 
   return (
     <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Mapa de clientes</span>
-        {clientesFiltrados.length>1&&<button style={{...s.btn,fontSize:11,padding:"5px 10px",background:"var(--color-background-info)",color:"var(--color-text-info)",border:"none"}} onClick={()=>setModoRuta(true)}>🗺 Ruta óptima</button>}
-      </div>
-      <div style={{display:"flex",gap:6,padding:"8px 14px",overflowX:"auto",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+      <HeaderApp titulo="Mapa de clientes" onVolver={onVolver}/>
+      <div style={{display:"flex",gap:6,padding:"8px 14px",overflowX:"auto",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)",alignItems:"center"}}>
         {["todos",...DIAS].map(d=>(
           <button key={d} style={{...s.btn,padding:"5px 12px",fontSize:12,flexShrink:0,background:filtroDia===d?"#185FA5":"var(--color-background-tertiary)",color:filtroDia===d?"#e2eaf4":"var(--color-text-secondary)",border:filtroDia===d?"none":"0.5px solid var(--color-border-secondary)"}} onClick={()=>setFiltroDia(d)}>
             {d==="todos"?"Todos":d}
           </button>
         ))}
+        {clientesFiltrados.length>1&&<button style={{...s.btn,fontSize:11,padding:"5px 10px",flexShrink:0,background:"var(--color-background-info)",color:"var(--color-text-info)",border:"none"}} onClick={()=>setModoRuta(true)}>🗺 Ruta óptima</button>}
       </div>
       <div style={{display:"flex",background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
         {[{val:clientesFiltrados.length,lbl:"Con GPS",color:"#5daaff"},{val:entregadosCount,lbl:"Entregados",color:"#4dd9a0"},{val:pendientesCount,lbl:"Pendientes",color:"#f5b942"},{val:sinCoordenadas,lbl:"Sin GPS",color:"var(--color-text-tertiary)"}].map((item,i)=>(

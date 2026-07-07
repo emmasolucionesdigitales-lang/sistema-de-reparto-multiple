@@ -189,3 +189,26 @@ function PieEnvases({c, ventas, onEditar, izquierda, children}) {
   );
 }
 
+
+// ════════════════════════════════════════════════════════════════════
+// ◆  HeaderBotones / HeaderApp — encabezado estándar: "Empresa · Pantalla" + M adentro
+//    (Multi usa selector de paletas completo, no toggle claro/oscuro simple)
+// ════════════════════════════════════════════════════════════════════
+const SCALE_LABELS_LC = ["S","M","L","XL"];
+function HeaderBotones() {
+  const [scaleIdx,setScaleIdxLocal] = React.useState(()=>{ try{return JSON.parse(localStorage.getItem("rm_scale_v1")||"1");}catch{return 1;} });
+  return (
+    <button onClick={()=>{ const nv=(scaleIdx+1)%4; setScaleIdxLocal(nv); if(window._setScaleIdxLC) window._setScaleIdxLC(nv); }}
+      style={{padding:"6px 10px",borderRadius:8,border:"none",background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} title="Tamaño de texto">{SCALE_LABELS_LC[scaleIdx]}</button>
+  );
+}
+function HeaderApp({titulo, onVolver}) {
+  const negocio = (()=>{ try{return JSON.parse(localStorage.getItem("rm_licencia")||"null")?.negocio;}catch{return null;} })() || "Sistema de Reparto";
+  return (
+    <div style={s.header}>
+      <button style={s.backBtn} onClick={onVolver}>← Volver</button>
+      <span style={{...s.headerTitle,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{titulo?`${negocio} · ${titulo}`:negocio}</span>
+      <HeaderBotones/>
+    </div>
+  );
+}

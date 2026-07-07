@@ -110,9 +110,10 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
             {cliente.calle?`${cliente.calle} ${cliente.nro||""}`:cliente.manzana?`Mz ${cliente.manzana} L ${cliente.lote}`:""}{cliente.barrio?` · ${cliente.barrio}`:""}{cliente.orden?` · #${cliente.orden}`:""}
           </div>
         </div>
-        <div style={{display:"flex",gap:6,fontSize:17,flexShrink:0}}>
+        <div style={{display:"flex",gap:6,fontSize:17,flexShrink:0,alignItems:"center"}}>
           {(cliente.maps||(cliente.lat&&cliente.lng))&&<a href={cliente.maps||`https://www.google.com/maps?q=${cliente.lat},${cliente.lng}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>📍</a>}
           {cliente.telefono&&<a href={`https://wa.me/54${cliente.telefono}`} target="_blank" rel="noreferrer" style={{textDecoration:"none"}} onClick={e=>e.stopPropagation()}>💬</a>}
+          <HeaderBotones/>
         </div>
       </div>
       {/* Panel de info del cliente */}
@@ -415,7 +416,7 @@ function NuevoCliente({diaActual,repartoActual,onGuardar,onVolver}) {
   const set=(k,v)=>setDatos(d=>({...d,[k]:v}));
   return (
     <div style={s.screen}>
-      <div style={s.header}><button style={s.backBtn} onClick={onVolver}>← Volver</button><span style={s.headerTitle}>Nuevo cliente</span></div>
+      <HeaderApp titulo="Nuevo cliente" onVolver={onVolver}/>
       <div style={{padding:16,display:"flex",flexDirection:"column",gap:10}}>
         <div><label style={s.label}>Día de reparto</label>
           <select style={s.select} value={datos.dia} onChange={e=>set("dia",e.target.value)}>

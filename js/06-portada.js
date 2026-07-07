@@ -84,10 +84,7 @@ function SelectorFecha({dia,planillas,ventas,noVisitas,onSeleccionar,onVolver}) 
 
   return (
     <div style={s.screen}>
-      <div style={s.header}>
-        <button style={s.backBtn} onClick={onVolver}>← Volver</button>
-        <span style={s.headerTitle}>Fechas de visita · {dia}</span>
-      </div>
+      <HeaderApp titulo={`Fechas de visita · ${dia}`} onVolver={onVolver}/>
       <div style={{padding:"8px 16px"}}>
         <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:8}}>Seleccioná la fecha de reparto para comenzar o continuar la jornada.</p>
         {meses.map(mes=>{
