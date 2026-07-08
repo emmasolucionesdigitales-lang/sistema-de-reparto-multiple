@@ -23,9 +23,16 @@ function useLS(key, fallback) {
     try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : fallback; }
     catch { return fallback; }
   });
+  // Acepta un valor directo O una función (prev => nuevoValor).
+  // La forma función es la segura: React siempre le pasa el estado MÁS
+  // reciente, incluso si hay varias llamadas seguidas antes de re-renderizar
+  // (evita perder cambios cuando dos acciones se disparan rápido).
   const save = (v) => {
-    setVal(v);
-    try { localStorage.setItem(key, JSON.stringify(v)); } catch {}
+    setVal(prev => {
+      const next = (typeof v === "function") ? v(prev) : v;
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
   return [val, save];
 }

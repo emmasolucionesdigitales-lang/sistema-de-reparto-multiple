@@ -254,6 +254,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const [scaleIdx, setScaleIdx] = useLS("rm_scale_v1", 1); // 0=S 1=M 2=L 3=XL
   const SCALES = [0.82, 1.0, 1.18, 1.36];
   const SCALE_LABELS = ["S","M","L","XL"];
+  // Guards anti doble-tap: evitan sumar/restar el saldo dos veces si el
+  // cartel de confirmación tarda en desaparecer y se vuelve a tocar el botón.
+  const ultimoRegistroRef = React.useRef({firma:null, ts:0});
+  const ultimoBorradoRef = React.useRef({id:null, ts:0});
 
   const diaHoy = () => diaActual; // mantener compatibilidad
 
@@ -298,22 +302,45 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const cliente = todosClientes.find(c=>c.id===clienteId)||null;
 
   const sync = (overrides={}) => {
-    // 1. Actualizar UI inmediatamente (feedback instantáneo para el usuario)
-    const localBase = { ...datos, ...overrides };
-    setDatos(localBase);
-    // 2. En el fondo: mergear con Firebase y guardar (no bloquea la UI)
-    cloudLoad(uid, perfil.negocioId).then(function(fresh){
-      if(!fresh){ cloudSave(localBase, uid, perfil.negocioId); return; }
-      const freshVentas = fresh.ventas || [];
-      const localVentas = overrides.ventas !== undefined ? overrides.ventas : (datos.ventas || []);
-      const merged = [...freshVentas];
-      localVentas.forEach(function(lv){
-        const idx = merged.findIndex(function(fv){ return fv.id === lv.id; });
-        if(idx === -1) merged.push(lv);
-        else merged[idx] = lv;
-      });
-      cloudSave({...fresh,...datos,...overrides,ventas:merged}, uid, perfil.negocioId);
-    }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId); });
+    setDatos(prevDatos => {
+      const localBase = { ...prevDatos, ...overrides };
+      // En el fondo: mergear con Firebase y guardar (no bloquea la UI).
+      // OJO: acá vivían dos bugs graves —
+      // 1) "eliminarVenta" nunca se propagaba a la nube: el merge de ventas
+      //    solo sabía agregar/actualizar por id, nunca sacar una que ya no
+      //    estaba en la lista local → una venta borrada podía "revivir".
+      // 2) clientes/planillas/noVisitas se pisaban SIEMPRE con la copia
+      //    local (que en este repartidor se descarga UNA sola vez al abrir
+      //    la app y nunca se refresca) → cualquier cambio hecho por el
+      //    dueño u otro repartidor mientras tanto se perdía en cada guardado.
+      cloudLoad(uid, perfil.negocioId).then(function(fresh){
+        if(!fresh){ cloudSave(localBase, uid, perfil.negocioId); return; }
+
+        // ── Ventas: merge por id que SÍ respeta los borrados ──────────────
+        const ventasLocalesPost = overrides.ventas !== undefined ? overrides.ventas : (prevDatos.ventas || []);
+        const ventasLocalesPre  = prevDatos.ventas || [];
+        const idsLocalesPost = new Set(ventasLocalesPost.map(v=>v.id));
+        const idsBorradosLocal = new Set(ventasLocalesPre.filter(v=>!idsLocalesPost.has(v.id)).map(v=>v.id));
+        const porIdVenta = {};
+        (fresh.ventas||[]).forEach(v=>{ if(!idsBorradosLocal.has(v.id)) porIdVenta[v.id]=v; }); // no revivir lo borrado acá
+        ventasLocalesPost.forEach(v=>{ porIdVenta[v.id]=v; }); // altas/ediciones locales, siempre presentes
+        const ventasFinal = Object.values(porIdVenta);
+
+        // ── Clientes: merge por id + _upd (no pisar cambios ajenos más nuevos) ──
+        const clientesLocales = overrides.clientes !== undefined ? overrides.clientes : (prevDatos.clientes || []);
+        const porIdCliente = {}; (fresh.clientes||[]).forEach(c=>{ porIdCliente[c.id]=c; });
+        clientesLocales.forEach(c=>{
+          const enNube = porIdCliente[c.id];
+          if(!enNube){ porIdCliente[c.id]=c; return; }
+          const uL = Number(c._upd)||0, uN = Number(enNube._upd)||0;
+          if(uL >= uN) porIdCliente[c.id]=c; // empate o local más nuevo → gana local (recién tocado acá)
+        });
+        const clientesFinal = Object.values(porIdCliente);
+
+        cloudSave({...fresh, ...localBase, ventas:ventasFinal, clientes:clientesFinal}, uid, perfil.negocioId);
+      }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId); });
+      return localBase;
+    });
   };
   const saveVentas   = (nv) => sync({ventas:nv});
   const saveClientes = (nc) => sync({clientes:nc});
@@ -322,8 +349,17 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   const irA = (p) => { setPantalla(p); window.scrollTo(0,0); };
 
-  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, mt2, sdOverride) => {
+  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, mt2, sdOverride, transConfirmadaInicial) => {
     const c = cliente;
+    // Guard anti doble-tap: ignora una llamada idéntica al mismo cliente
+    // dentro de 1.5s (botón sin lock + toque duplicado en el celular)
+    const firmaReg = JSON.stringify({cid:c.id, detalle, pago, montoPagado, opcionSaldo});
+    const ahoraReg = Date.now();
+    if(ultimoRegistroRef.current.firma===firmaReg && (ahoraReg-ultimoRegistroRef.current.ts)<1500){
+      console.warn("⚠️ Venta duplicada bloqueada (doble tap):", c.nombre);
+      return;
+    }
+    ultimoRegistroRef.current = {firma:firmaReg, ts:ahoraReg};
     const esMixto = opcionSaldo==="mixto_ef" || opcionSaldo==="mixto_tr";
     const pagoReal = esMixto?"mixto":pago;
     const ef = esMixto?(opcionSaldo==="mixto_ef"?Number(montoPagado):Number(mt2||0)):0;
@@ -339,10 +375,11 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       saldoAplicado:saldoAplicado||0, envPrest:(envPrest||[]).filter(e=>e.prod&&e.cant),
       envDev:(envDev||[]).filter(e=>e.prod&&e.cant), mt2:mt2||0, ...calc, saldoDelta,
       montoTrans:esMixto?tr:(mt2||0), montoEfec:esMixto?ef:0,
+      transConfirmada: !!transConfirmadaInicial, _upd:Date.now(),
       repartidor:perfil.nombre
     }];
-    const clientesActualizados = todosClientes.map(x=>x.id===c.id?{...x,saldo:(x.saldo||0)+saldoDelta}:x);
-    sync({...datos, ventas:nv, clientes:clientesActualizados});
+    const clientesActualizados = todosClientes.map(x=>x.id===c.id?{...x,saldo:(x.saldo||0)+saldoDelta,_upd:Date.now()}:x);
+    sync({ventas:nv, clientes:clientesActualizados});
   };
 
   const registrarVentaLibre = (detalle,pago,montoPagado,saldoAplicado,envPrest,envDev,obs,op,mt2,sd,fechaKl) => {
@@ -351,16 +388,25 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     const nVenta = {id:Date.now(), clienteId:c.id, cliente:c.nombre, dia:c.dia, fechaKey:fechaKl,
       fecha:new Date(fechaKl+"T12:00:00").toLocaleString("es-AR"), detalle, pago, obs:obs||"",
       saldoAplicado:saldoAplicado||0, envPrest:(envPrest||[]).filter(e=>e.prod&&e.cant),
-      envDev:(envDev||[]).filter(e=>e.prod&&e.cant), ...calc, repartidor:perfil.nombre};
-    saveVentas([...ventas, nVenta]);
-    saveClientes(clientes.map(x=>x.id===c.id?{...x,saldo:c.saldo+calc.saldoDelta}:x));
+      envDev:(envDev||[]).filter(e=>e.prod&&e.cant), ...calc, _upd:Date.now(), repartidor:perfil.nombre};
+    const clientesActualizados = todosClientes.map(x=>x.id===c.id?{...x,saldo:(x.saldo||0)+calc.saldoDelta,_upd:Date.now()}:x);
+    sync({ventas:[...ventas, nVenta], clientes:clientesActualizados});
   };
 
   const eliminarVenta = (ventaId) => {
+    // Guard anti doble-tap: ignora un segundo borrado del MISMO id dentro
+    // de 2s (el cartel de confirmación puede tardar en cerrarse).
+    const ahoraDel = Date.now();
+    if(ultimoBorradoRef.current.id===ventaId && (ahoraDel-ultimoBorradoRef.current.ts)<2000){
+      console.warn("⚠️ Borrado duplicado bloqueado (doble tap):", ventaId);
+      return;
+    }
+    ultimoBorradoRef.current = {id:ventaId, ts:ahoraDel};
     const v=ventas.find(x=>x.id===ventaId); if(!v) return;
-    saveVentas(ventas.filter(x=>x.id!==ventaId));
     const c2=clientes.find(x=>x.id===v.clienteId);
-    if(c2) saveClientes(clientes.map(x=>x.id===c2.id?{...x,saldo:c2.saldo-v.saldoDelta}:x));
+    const nuevasVentas = ventas.filter(x=>x.id!==ventaId);
+    const clientesActualizados = c2 ? clientes.map(x=>x.id===c2.id?{...x,saldo:(x.saldo||0)-v.saldoDelta,_upd:Date.now()}:x) : clientes;
+    sync({ventas:nuevasVentas, clientes:clientesActualizados});
   };
 
   const irAlSiguiente = () => {
@@ -410,7 +456,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           ventas={ventas}
           noVisitas={noVisitas}
           planillas={planillas}
-          savePlanilla={(key,p)=>sync({...datos,planillas:{...planillas,[key]:p}})}
+          savePlanilla={(key,p)=>sync({planillas:{...planillas,[key]:p}})}
           productos={productos}
           recordatorios={datos.recordatorios||[]}
           scaleIdx={scaleIdx}
@@ -418,11 +464,11 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           scaleLabel={SCALE_LABELS[scaleIdx]}
           onSaveRecordatorio={(r)=>{
             const lista=[...(datos.recordatorios||[]),r];
-            sync({...datos,recordatorios:lista});
+            sync({recordatorios:lista});
           }}
           onConfirmarRecordatorio={(id)=>{
             const lista=(datos.recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r);
-            sync({...datos,recordatorios:lista});
+            sync({recordatorios:lista});
           }}
           onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(clientes.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
           onIrCarga={()=>irA("cargaDia")}
@@ -549,10 +595,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           onCobrarSaldo={(monto, pago)=>{
             const cobro={id:Date.now(),clienteId:cliente.id,cliente:cliente.nombre,
               dia:diaActual,fechaKey:fechaActual,fecha:new Date().toLocaleString("es-AR"),
-              detalle:[],pago:pago,neto:monto,saldoDelta:monto,_esCobro:true,
+              detalle:[],pago:pago,neto:monto,saldoDelta:monto,_esCobro:true,_upd:Date.now(),
               repartidor:perfil.nombre};
-            const clientesActualizados=todosClientes.map(x=>x.id===cliente.id?{...x,saldo:(x.saldo||0)+monto}:x);
-            sync({...datos,ventas:[...ventas,cobro],clientes:clientesActualizados});
+            const clientesActualizados=todosClientes.map(x=>x.id===cliente.id?{...x,saldo:(x.saldo||0)+monto,_upd:Date.now()}:x);
+            sync({ventas:[...ventas,cobro],clientes:clientesActualizados});
           }}
         />
       )}
@@ -570,8 +616,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
             saveNoVisitas([...noVisitas.filter(v=>!(v.clienteId===clienteId&&v.fecha===fechaActual)),{clienteId,dia:diaClienteActual,fecha:fechaActual,motivo:"noquiso"}]);
             irAlSiguiente();
           }}
-          onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{
-            registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);
+          onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd,tc)=>{
+            registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd,tc);
             irAlSiguiente();
           }}
           onSaltar={()=>{
@@ -627,17 +673,17 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           repartidorNombre={perfil.nombre}
           onConfirmar={async (id)=>{
             const l=(datos.recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r);
-            sync({...datos,recordatorios:l});
+            sync({recordatorios:l});
           }}
           onEliminar={async (id)=>{
             const l=(datos.recordatorios||[]).filter(r=>r.id!==id);
-            sync({...datos,recordatorios:l});
+            sync({recordatorios:l});
           }}
           onNuevo={async (datos2)=>{
             const c=todosClientes.find(x=>x.id===datos2.clienteId);
             const nuevo={...datos2,id:Date.now(),clienteId:c?.id||null,clienteNombre:c?.nombre||datos2.clienteNombre||"Sin cliente",dia:c?.dia||"",confirmado:false,creadoPor:perfil.nombre,creadoEn:new Date().toISOString(),paraRepartidor:perfil.nombre};
             const l=[...(datos.recordatorios||[]),nuevo];
-            sync({...datos,recordatorios:l});
+            sync({recordatorios:l});
           }}
           onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(todosClientes.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
           onVolver={()=>irA("inicio")}
@@ -649,8 +695,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           clientes={todosClientes}
           planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()}
           productos={productos} stock={datos.stock||{}}
-          setStock={(ns)=>sync({...datos,stock:ns})}
-          syncData={(overrides)=>sync({...datos,...overrides})}
+          setStock={(ns)=>sync({stock:ns})}
+          syncData={(overrides)=>sync(overrides)}
           onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("inicio");}}
           onVolver={()=>irA("inicio")}
           onCerrarDia={async (imgData)=>{

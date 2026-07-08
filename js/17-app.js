@@ -129,7 +129,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [prospectos, setProspectos] = useLS("rm_prospectos_v1", []);
   const [recordatorios, setRecordatorios] = useLS("rm_recordatorios_v1", []);
   // recordatorio: {id, clienteId, clienteNombre, fecha, hora, motivo, dia, confirmado}
-  const saveRecordatorios = (r) => { setRecordatorios(r); syncData({recordatorios:r}); };
+  const saveRecordatorios = (r) => { setRecordatorios(prev => { const next=(typeof r==="function")?r(prev):r; syncData({recordatorios:next}); return next; }); };
   const recordatoriosActivos = (recordatorios||[]).filter(r=>!r.confirmado); // [{clienteId,dia,fecha,motivo}]
   const [clientes, setClientes]   = useLS("rm_clientes_v3", CLIENTES_INICIALES);
   const [ventasRaw, setVentasRaw] = useLS("rm_ventas_v3", []);
@@ -215,7 +215,21 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     setSyncStatus("loading");
     cloudLoad(uid, negocioId).then(function(data) {
       if(!data) { setSyncStatus("idle"); return; }
-      if (data.clientes?.length)   setClientes(data.clientes);
+      if (data.clientes?.length)   {
+        // ── Clientes: MERGEAR por id en vez de sobreescribir ──────────────
+        const clientesLocales = (()=>{ try{ return JSON.parse(localStorage.getItem("rm_clientes_v3")||"[]"); }catch{ return []; } })();
+        const porIdCli = {}; (data.clientes||[]).forEach(c=>{ porIdCli[c.id] = c; });
+        let cambiosLocalesCli = 0;
+        clientesLocales.forEach(c=>{
+          const enNube = porIdCli[c.id];
+          if(!enNube){ porIdCli[c.id] = c; cambiosLocalesCli++; return; }
+          const uL = Number(c._upd)||0, uN = Number(enNube._upd)||0;
+          if(uL > uN){ porIdCli[c.id] = c; cambiosLocalesCli++; }
+        });
+        const mergedCli = Object.values(porIdCli);
+        setClientes(mergedCli);
+        if(cambiosLocalesCli>0){ console.log("Merge: "+cambiosLocalesCli+" clientes locales más nuevos, sincronizando"); setTimeout(()=>syncData({clientes:mergedCli}),2000); }
+      }
       if (data.ventas?.length)     {
         // Merge: no pisar ventas locales más nuevas que Firebase
         // ── MERGE INTELIGENTE: por cada venta, quedarse con la versión MÁS NUEVA ──
@@ -234,7 +248,20 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         setVentasRaw(merged);
         if(cambiosLocales>0){console.log("Merge: "+cambiosLocales+" ventas locales más nuevas, sincronizando");setTimeout(()=>syncData({ventas:merged}),2000);}
       }
-      if (data.planillas)          setPlanillas(data.planillas);
+      if (data.planillas)          {
+        // ── Planillas: MERGEAR por día en vez de sobreescribir ────────────
+        const planillasLocales = (()=>{ try{ return JSON.parse(localStorage.getItem("rm_planillas_v1")||"{}"); }catch{ return {}; } })();
+        const mergedPla = {...data.planillas};
+        let cambiosLocalesPla = 0;
+        Object.keys(planillasLocales).forEach(dia=>{
+          const loc = planillasLocales[dia]; const nub = mergedPla[dia];
+          if(!nub){ mergedPla[dia] = loc; cambiosLocalesPla++; return; }
+          const uL = Number(loc?._upd)||0, uN = Number(nub?._upd)||0;
+          if(uL > uN){ mergedPla[dia] = loc; cambiosLocalesPla++; }
+        });
+        setPlanillas(mergedPla);
+        if(cambiosLocalesPla>0){ console.log("Merge: "+cambiosLocalesPla+" planillas locales más nuevas, sincronizando"); setTimeout(()=>syncData({planillas:mergedPla}),2000); }
+      }
       if (data.stock) {
         const ds = data.stock;
         const normStock = ds.soderia ? ds : {
@@ -245,7 +272,22 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         setStock(normStock);
       }
       if (data.productos?.length)  setProductos(data.productos);
-      if (data.noVisitas?.length)  setNoVisitas(data.noVisitas);
+      if (data.noVisitas?.length)  {
+        // ── noVisitas: MERGEAR por clave (cliente+día+fecha) ──────────────
+        const noVisitasLocales = (()=>{ try{ return JSON.parse(localStorage.getItem("rm_novisitas_v1")||"[]"); }catch{ return []; } })();
+        const clave = v => `${v.clienteId}|${v.dia}|${v.fecha}`;
+        const porClaveNV = {}; (data.noVisitas||[]).forEach(v=>{ porClaveNV[clave(v)] = v; });
+        let cambiosLocalesNV = 0;
+        noVisitasLocales.forEach(v=>{
+          const k = clave(v); const enNube = porClaveNV[k];
+          if(!enNube){ porClaveNV[k] = v; cambiosLocalesNV++; return; }
+          const uL = Number(v._upd)||0, uN = Number(enNube._upd)||0;
+          if(uL >= uN){ porClaveNV[k] = v; cambiosLocalesNV++; }
+        });
+        const mergedNV = Object.values(porClaveNV);
+        setNoVisitas(mergedNV);
+        if(cambiosLocalesNV>0){ console.log("Merge: "+cambiosLocalesNV+" marcas de visita locales más nuevas, sincronizando"); setTimeout(()=>syncData({noVisitas:mergedNV}),2000); }
+      }
       if (data.prospectos?.length) setProspectos(data.prospectos);
       if (data.recordatorios?.length) setRecordatorios(data.recordatorios);
       if (data.mantVeh?.length)    localStorage.setItem("rm_mant_vehiculo_v1", JSON.stringify(data.mantVeh));
@@ -272,19 +314,49 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       setTimeout(()=>setSyncStatus("idle"), 2000);
     });
 
-    // Refrescar ventas del repartidor cada 60 segundos automáticamente
+    // Refrescar ventas/clientes/planillas del repartidor cada 60 segundos automáticamente.
+    // OJO: acá NO hay que pisar nunca sin comparar — el dueño puede tener un
+    // cambio recién hecho (ej. cobrar un saldo) que todavía no terminó de
+    // sincronizarse cuando cae este refresh; si lo pisamos, se pierde.
     const _refreshInterval = setInterval(()=>{
       cloudLoad(uid, negocioId).then(function(data){
         if(!data) return;
-        if(data.ventas?.length) setVentasRaw(v => {
-          // Merge: agregar ventas nuevas del repartidor sin perder las del dueño
-          const ids = new Set(v.map(x=>x.id));
-          const nuevas = data.ventas.filter(x=>!ids.has(x.id));
-          if(!nuevas.length) return v;
-          return [...v, ...nuevas];
+        if(data.ventas?.length) setVentasRaw(prev => {
+          // Merge por id + _upd: agrega ventas nuevas del repartidor Y
+          // actualiza las que cambiaron en la nube, sin perder ediciones
+          // locales más nuevas que todavía no se subieron.
+          const porId = {}; prev.forEach(v=>{ porId[v.id]=v; });
+          let huboCambios = false;
+          data.ventas.forEach(v=>{
+            const local = porId[v.id];
+            if(!local){ porId[v.id]=v; huboCambios=true; return; }
+            const uL = Number(local._upd)||0, uN = Number(v._upd)||0;
+            if(uN > uL){ porId[v.id]=v; huboCambios=true; }
+          });
+          return huboCambios ? Object.values(porId) : prev;
         });
-        if(data.clientes?.length) setClientes(data.clientes);
-        if(data.planillas) setPlanillas(p=>({...data.planillas,...p}));
+        if(data.clientes?.length) setClientes(prev => {
+          const porId = {}; prev.forEach(c=>{ porId[c.id]=c; });
+          let huboCambios = false;
+          data.clientes.forEach(c=>{
+            const local = porId[c.id];
+            if(!local){ porId[c.id]=c; huboCambios=true; return; }
+            const uL = Number(local._upd)||0, uN = Number(c._upd)||0;
+            if(uN > uL){ porId[c.id]=c; huboCambios=true; }
+          });
+          return huboCambios ? Object.values(porId) : prev;
+        });
+        if(data.planillas) setPlanillas(prev => {
+          const merged = {...prev};
+          let huboCambios = false;
+          Object.keys(data.planillas).forEach(dia=>{
+            const nub = data.planillas[dia]; const loc = prev[dia];
+            if(!loc){ merged[dia]=nub; huboCambios=true; return; }
+            const uL = Number(loc?._upd)||0, uN = Number(nub?._upd)||0;
+            if(uN > uL){ merged[dia]=nub; huboCambios=true; }
+          });
+          return huboCambios ? merged : prev;
+        });
       }).catch(()=>{});
     }, 60000);
     return ()=>clearInterval(_refreshInterval);
@@ -292,6 +364,11 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
 
   // Ref siempre actualizado — evita datos viejos en el debounce
   const estadoRef = React.useRef({clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos});
+  // Guards anti doble-tap: evitan sumar/restar el saldo dos veces si el
+  // cartel de confirmación tarda en desaparecer y se vuelve a tocar el botón.
+  const ultimoRegistroRef = React.useRef({firma:null, ts:0});
+  const ultimoBorradoRef = React.useRef({id:null, ts:0});
+  const ultimoEditadoRef = React.useRef({firma:null, ts:0});
   React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos}; });
 
   // Respaldo COMPLETO descargable + restaurar (solo dueño)
@@ -375,9 +452,33 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     });
   };
 
-  const saveClientes = (v) => { setClientes(v); syncData({clientes:v}); };
-  const saveVentas   = (v) => { setVentasRaw(v);   syncData({ventas:v}); };
-  const savePlanillasCloud = (v) => { setPlanillas(v); syncData({planillas:v}); };
+  // Todas aceptan un valor directo O una función (prev => nuevoValor). Usar
+  // la forma función en cualquier lugar que calcule el nuevo valor a partir
+  // del estado actual — así no se pierden cambios si dos acciones se
+  // disparan casi juntas (incluye el refresh cada 60s de más arriba).
+  const saveClientes = (v) => {
+    setClientes(prev => {
+      const base = (typeof v === "function") ? v(prev) : v;
+      const _t = Date.now();
+      const vv = base.map(c=>({...c,_upd:_t}));
+      syncData({clientes:vv});
+      return vv;
+    });
+  };
+  const saveVentas = (v) => {
+    setVentasRaw(prev => {
+      const nv = (typeof v === "function") ? v(prev) : v;
+      syncData({ventas:nv});
+      return nv;
+    });
+  };
+  const savePlanillasCloud = (v) => {
+    setPlanillas(prev => {
+      const next = (typeof v === "function") ? v(prev) : v;
+      syncData({planillas:next});
+      return next;
+    });
+  };
 
   // Limpieza automática: partes-transferencia de pago mixto cuya venta principal ya no existe
   React.useEffect(()=>{
@@ -457,19 +558,23 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     setTimeout(()=>setSyncStatus("idle"),3000);
     return ok;
   };
-  const saveStock    = (v) => { setStock(v);    syncData({stock:v}); };
+  const saveStock    = (v) => { setStock(prev => { const next=(typeof v==="function")?v(prev):v; syncData({stock:next}); return next; }); };
   const saveProductos= (v) => {
-    // Registrar cambio de precio en historial
-    const hoy = (()=>{ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; })();
-    const histPrecios = JSON.parse(localStorage.getItem("rm_lc_hist_precios")||"[]");
-    histPrecios.push({fecha:hoy, productos:v.map(p=>({nombre:p.nombre,precio:p.precio,costo:p.costo}))});
-    localStorage.setItem("rm_lc_hist_precios", JSON.stringify(histPrecios.slice(-50)));
-    setProductos(v); syncData({productos:v});
+    setProductos(prev => {
+      const next = (typeof v === "function") ? v(prev) : v;
+      // Registrar cambio de precio en historial
+      const hoy = (()=>{ const d=new Date(); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; })();
+      const histPrecios = JSON.parse(localStorage.getItem("rm_lc_hist_precios")||"[]");
+      histPrecios.push({fecha:hoy, productos:next.map(p=>({nombre:p.nombre,precio:p.precio,costo:p.costo}))});
+      localStorage.setItem("rm_lc_hist_precios", JSON.stringify(histPrecios.slice(-50)));
+      syncData({productos:next});
+      return next;
+    });
   };
   const [cargasDia, setCargasDia] = useLS("rm_cargas_dia_v1", CARGA_DIA_DEFAULT);
-  const saveCargasDia = (v) => { setCargasDia(v); try{localStorage.setItem("rm_cargas_dia_v1",JSON.stringify(v));}catch{} };
-  const saveNoVisitas= (v) => { setNoVisitas(v); try{localStorage.setItem("rm_novisitas_v1",JSON.stringify(v));}catch{} syncData({noVisitas:v}); };
-  const saveProspectos=(v)=>{ setProspectos(v); try{localStorage.setItem("rm_prospectos_v1",JSON.stringify(v));}catch{} syncData({prospectos:v}); };
+  const saveCargasDia = (v) => { setCargasDia(prev => (typeof v==="function")?v(prev):v); };
+  const saveNoVisitas= (v) => { setNoVisitas(prev => { const next=(typeof v==="function")?v(prev):v; syncData({noVisitas:next}); return next; }); };
+  const saveProspectos=(v)=>{ setProspectos(prev => { const next=(typeof v==="function")?v(prev):v; syncData({prospectos:next}); return next; }); };
 
   const cliente = clientes.find(c=>c.id===clienteId)||null;
   const irA = (p) => {
@@ -494,12 +599,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   },[]);
 
   const updateCliente = (id, cambios) => {
-    const nueva = clientes.map(c=>c.id===id?{...c,...cambios}:c);
-    saveClientes(nueva);
+    saveClientes(prev => prev.map(c=>c.id===id?{...c,...cambios}:c));
   };
   const savePlanilla = (dia, datos) => {
-    const nueva = {...planillas,[dia]:datos};
-    savePlanillasCloud(nueva);
+    savePlanillasCloud(prev => ({...prev, [dia]: {...datos, _upd:Date.now()}}));
   };
   const getPlanilla = (dia) => planillas[dia]||planillaDiaVacia();
 
@@ -555,6 +658,15 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
 
   const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto, transConfirmadaInicial) => {
     const c = cliente;
+    // Guard anti doble-tap: ignora una llamada idéntica al mismo cliente
+    // dentro de 1.5s (botón sin lock + toque duplicado en el celular)
+    const firmaReg = JSON.stringify({cid:c.id, detalle, pago, montoPagado, opcionSaldo});
+    const ahoraReg = Date.now();
+    if(ultimoRegistroRef.current.firma===firmaReg && (ahoraReg-ultimoRegistroRef.current.ts)<1500){
+      console.warn("⚠️ Venta duplicada bloqueada (doble tap):", c.nombre);
+      return;
+    }
+    ultimoRegistroRef.current = {firma:firmaReg, ts:ahoraReg};
     // Auto-detectar envases prestados (solo si no es cobro de deuda)
     const envAutoDetect = [];
     if(opcionSaldo!=="cobro_deuda" && opcionSaldo!=="cambio_envase") {
@@ -593,12 +705,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     };
 
     // UNA sola venta — sin duplicar
-    let nuevasVentas = [...ventas, nuevaVenta];
-    let saldoExtra = calc.saldoDelta;
-
-    saveVentas(nuevasVentas);
-    const nuevosClientes = clientes.map(c2=>c2.id===c.id?{...c2,saldo:c.saldo+saldoExtra}:c2);
-    saveClientes(nuevosClientes);
+    saveVentas(prev => [...prev, nuevaVenta]);
+    saveClientes(prev => prev.map(c2=>c2.id===c.id?{...c2,saldo:(Number(c2.saldo)||0)+calc.saldoDelta}:c2));
   };
 
 
@@ -612,37 +720,55 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     );
   };
   const eliminarCliente = (clienteId) => {
-    const eliminado = clientes.find(c=>c.id===clienteId);
-    let nc = clientes.filter(c=>c.id!==clienteId);
-    if(eliminado) nc = renumerarTrasEliminar(nc, eliminado);
-    saveClientes(nc);
-    const nv = ventas.filter(v=>v.clienteId!==clienteId);
-    saveVentas(nv);
+    saveClientes(prev => {
+      const eliminado = prev.find(c=>c.id===clienteId);
+      let nc = prev.filter(c=>c.id!==clienteId);
+      if(eliminado) nc = renumerarTrasEliminar(nc, eliminado);
+      return nc;
+    });
+    saveVentas(prev => prev.filter(v=>v.clienteId!==clienteId));
     irA("clientes");
   };
 
   const eliminarVenta = (ventaId) => {
+    // Guard anti doble-tap: ignora un segundo borrado del MISMO id dentro
+    // de 2s (el cartel de confirmación puede tardar en cerrarse).
+    const ahoraDel = Date.now();
+    if(ultimoBorradoRef.current.id===ventaId && (ahoraDel-ultimoBorradoRef.current.ts)<2000){
+      console.warn("⚠️ Borrado duplicado bloqueado (doble tap):", ventaId);
+      return;
+    }
+    ultimoBorradoRef.current = {id:ventaId, ts:ahoraDel};
     const v = ventas.find(x=>x.id===ventaId); if(!v) return;
     const eraMixta = (Number(v.montoTrans)||0)>0;
     let ajusteSaldoExtra = 0;
-    let nv = ventas.filter(x=>{
-      if(x.id===ventaId) return false;
-      const ligada = x._esMixtoTrans && (
-        x._mixtoDe===ventaId ||
-        (x._mixtoDe===undefined && eraMixta && x.clienteId===v.clienteId && x.fechaKey===v.fechaKey)
-      );
-      if(ligada && (Number(x.saldoDelta)||0)!==0) ajusteSaldoExtra += Number(x.saldoDelta);
-      return !ligada;
+    saveVentas(prev => {
+      let nv = prev.filter(x=>{
+        if(x.id===ventaId) return false;
+        const ligada = x._esMixtoTrans && (
+          x._mixtoDe===ventaId ||
+          (x._mixtoDe===undefined && eraMixta && x.clienteId===v.clienteId && x.fechaKey===v.fechaKey)
+        );
+        if(ligada && (Number(x.saldoDelta)||0)!==0) ajusteSaldoExtra += Number(x.saldoDelta);
+        return !ligada;
+      });
+      nv = nv.filter(x=>!(x._esMixtoTrans && x._mixtoDe!==undefined && !nv.some(y=>y.id===x._mixtoDe)));
+      return nv;
     });
-    nv = nv.filter(x=>!(x._esMixtoTrans && x._mixtoDe!==undefined && !nv.some(y=>y.id===x._mixtoDe)));
-    saveVentas(nv);
-    const c = clientes.find(x=>x.id===v.clienteId);
-    if(c){ const nc=clientes.map(x=>x.id===c.id?{...x,saldo:c.saldo-v.saldoDelta-ajusteSaldoExtra}:x); saveClientes(nc); }
+    saveClientes(prev => prev.map(x=>x.id===v.clienteId?{...x,saldo:(Number(x.saldo)||0)-v.saldoDelta-ajusteSaldoExtra}:x));
   };
 
   const editarVenta = (ventaId, detalle, pago, montoPagado, saldoAplicado, obs, montoTrans2) => {
+    // Guard anti doble-tap: ignora una segunda edición IDÉNTICA de la
+    // MISMA venta dentro de 2s.
+    const firmaEdit = JSON.stringify({ventaId, detalle, pago, montoPagado, saldoAplicado, montoTrans2});
+    const ahoraEdit = Date.now();
+    if(ultimoEditadoRef.current.firma===firmaEdit && (ahoraEdit-ultimoEditadoRef.current.ts)<2000){
+      console.warn("⚠️ Edición duplicada bloqueada (doble tap):", ventaId);
+      return;
+    }
+    ultimoEditadoRef.current = {firma:firmaEdit, ts:ahoraEdit};
     const vV = ventas.find(v=>v.id===ventaId); if(!vV) return;
-    const c  = clientes.find(x=>x.id===vV.clienteId);
     const esMixto = pago==="mixto";
     const ef = esMixto?(Number(montoPagado)||0):0;
     const tr = esMixto?(Number(montoTrans2)||0):0;
@@ -650,11 +776,16 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     const calc = calcVenta(detalle, esMixto?"contado":pago, esMixto?String(ef+tr):montoPagado, saldoAplicado, productos);
     const obsLimpia = (obs||"").replace(/\s*\[Mixto:[^\]]*\]/g,"");
     const obsFinal  = esMixto ? obsLimpia+` [Mixto: ef $${ef} + tr $${tr}]` : obsLimpia;
-    let nev = ventas.filter(v=>!(v._esMixtoTrans && v._mixtoDe===ventaId)); // limpiar restos de versiones viejas
-    nev = nev.map(v=>v.id===ventaId?{...vV,detalle,pago:esMixto?"mixto":pago,obs:obsFinal,saldoAplicado:saldoAplicado||0,...calc,montoEfec:esMixto?ef:0,montoTrans:esMixto?tr:0,transConfirmada:esMixto?(vV.transConfirmada||false):vV.transConfirmada,_upd:Date.now()}:v);
-    const saldoNuevo = c ? (c.saldo - vV.saldoDelta + calc.saldoDelta) : 0;
-    saveVentas(nev);
-    if(c) saveClientes(clientes.map(x=>x.id===c.id?{...x,saldo:saldoNuevo}:x));
+    // netDeltaCambio: cuánto CAMBIA el saldo por esta edición — es un delta
+    // puro, no depende del saldo actual del cliente (seguro de aplicar
+    // después sobre el saldo más reciente, en vez del que había al abrir).
+    const netDeltaCambio = calc.saldoDelta - vV.saldoDelta;
+    saveVentas(prev => {
+      let nev = prev.filter(v=>!(v._esMixtoTrans && v._mixtoDe===ventaId)); // limpiar restos de versiones viejas
+      nev = nev.map(v=>v.id===ventaId?{...vV,detalle,pago:esMixto?"mixto":pago,obs:obsFinal,saldoAplicado:saldoAplicado||0,...calc,montoEfec:esMixto?ef:0,montoTrans:esMixto?tr:0,transConfirmada:esMixto?(vV.transConfirmada||false):vV.transConfirmada,_upd:Date.now()}:v);
+      return nev;
+    });
+    saveClientes(prev => prev.map(x=>x.id===vV.clienteId?{...x,saldo:(Number(x.saldo)||0)+netDeltaCambio}:x));
   };
 
   return (
@@ -710,7 +841,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         ventas={ventas.filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return cl?.repartoId===repartoActual.id;})}
         stock={stockNorm}
         recordatoriosActivos={recordatoriosActivos}
-        onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
+        onConfirmarRecordatorio={(id)=>saveRecordatorios(prev=>(prev||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
         onVerConfirmaciones={(dia)=>{setDiaActual(dia);irA("confirmacionesDia");}}
         transferenciasPendientes={DIAS.map(dia=>{
           const clientesRep=clientes.filter(c=>c.repartoId===repartoActual.id);
@@ -730,7 +861,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           dia={diaActual}
           ventas={ventas.filter(v=>(v.pago==="transferencia"||v.pago==="mixto")&&!v.transConfirmada)}
           clientes={clientes}
-          onConfirmar={(ventaId)=>{const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada,_upd:Date.now()}:v);saveVentas(nv);}}
+          onConfirmar={(ventaId)=>{saveVentas(prev=>prev.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada,_upd:Date.now()}:v));}}
           onVolver={()=>irA("menu")} />}
       {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&(v.pago==="transferencia"||(v.pago==="mixto"&&(Number(v.montoTrans)||0)>0))&&!v.transConfirmada).length} />}
       {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
@@ -756,30 +887,23 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           irA("clientes");
         }} onVolver={()=>irA("selectorFechaClientes")} />}
       {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id))} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual)} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual)} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
-          const otros=clientes.filter(c=>c.dia!==diaActual);
-          saveClientes([...otros,...lista]);
-        }} onRegistrarNoVisita={(clienteId,motivo)=>{const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo}];saveNoVisitas(nv);}} onQuitarNoVisita={(clienteId)=>{const nv=(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual));saveNoVisitas(nv);}}
+          saveClientes(prev => [...prev.filter(c=>c.dia!==diaActual), ...lista]);
+        }} onRegistrarNoVisita={(clienteId,motivo)=>{saveNoVisitas(prev=>[...(prev||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo,_upd:Date.now()}]);}} onQuitarNoVisita={(clienteId)=>{saveNoVisitas(prev=>(prev||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)));}}
         onConfirmarTransfer={(clienteId,ventaId)=>{
-          const nv=ventas.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada,_upd:Date.now()}:v);
-          saveVentas(nv);
+          saveVentas(prev => prev.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada,_upd:Date.now()}:v));
         }}
         prospectos={(prospectos||[]).filter(p=>p.dia===diaActual&&p.estado==="activo")}
         recordatorios={recordatorios}
         onVentaProspecto={(p)=>{
-          if(!clientes.find(c=>c.id===p.id)){
-            saveClientes([...clientes,{...p,saldo:0,_esProspecto:true}]);
-          }
+          saveClientes(prev => prev.find(c=>c.id===p.id) ? prev : [...prev,{...p,saldo:0,_esProspecto:true}]);
           setClienteId(p.id);
           irA("venta");
         }}
         onNoEstaProspecto={(id)=>{
-          const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
-          saveNoVisitas(nv);
+          saveNoVisitas(prev=>[...(prev||[]).filter(v=>!(v.clienteId===id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:id,dia:diaActual,fecha:fechaActual,motivo:"noesta",_upd:Date.now()}]);
         }}
         onVerProspecto={(p)=>{
-          if(!clientes.find(c=>c.id===p.id)){
-            saveClientes([...clientes,{...p,saldo:p.saldo||0,_esProspecto:true}]);
-          }
+          saveClientes(prev => prev.find(c=>c.id===p.id) ? prev : [...prev,{...p,saldo:p.saldo||0,_esProspecto:true}]);
           setClienteId(p.id);
           irA("detalleCliente");
         }}
@@ -789,11 +913,14 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         />}
       {pantalla==="detalleCliente" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual} fecha={fechaActual} productos={productos} onVenta={()=>irA("venta")} onVolver={()=>irA("clientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>eliminarCliente(cliente.id)}
           onNoEstaCliente={()=>{
-            const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
-            saveNoVisitas(nv);
+            let nvFinal=null;
+            saveNoVisitas(prev => {
+              const nv=[...(prev||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noesta",_upd:Date.now()}];
+              nvFinal=nv; return nv;
+            });
             const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
             const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
-            const noVMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
+            const noVMap={};nvFinal.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
             const terminados=new Set(clientesDia.filter(c=>ventasIds.has(c.id)||noVMap[c.id]==="noquiso"||noVMap[c.id]==="noesta2").map(c=>c.id));
             const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&noVMap[c.id]!=="noesta"&&c.id!==cliente.id);
             const noestaPend=clientesDia.filter(c=>noVMap[c.id]==="noesta"&&!terminados.has(c.id)&&c.id!==cliente.id);
@@ -801,11 +928,14 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             if(sig){setClienteId(sig.id);irA("detalleCliente");}else irA("clientes");
           }}
           onNoQuiereCliente={()=>{
-            const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
-            saveNoVisitas(nv);
+            let nvFinal=null;
+            saveNoVisitas(prev => {
+              const nv=[...(prev||[]).filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noquiso",_upd:Date.now()}];
+              nvFinal=nv; return nv;
+            });
             const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
             const ventasIds=new Set(ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
-            const noVMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
+            const noVMap={};nvFinal.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
             const terminados=new Set(clientesDia.filter(c=>ventasIds.has(c.id)||noVMap[c.id]==="noquiso"||noVMap[c.id]==="noesta2").map(c=>c.id));
             const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&noVMap[c.id]!=="noesta"&&c.id!==cliente.id);
             const noestaPend=clientesDia.filter(c=>noVMap[c.id]==="noesta"&&!terminados.has(c.id)&&c.id!==cliente.id);
@@ -813,21 +943,18 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
             if(sig){setClienteId(sig.id);irA("detalleCliente");}else irA("clientes");
           }}
           recordatorios={recordatorios}
-          onGuardarRecordatorio={(r)=>saveRecordatorios([...(recordatorios||[]),r])}
-          onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
+          onGuardarRecordatorio={(r)=>saveRecordatorios(prev=>[...(prev||[]),r])}
+          onConfirmarRecordatorio={(id)=>saveRecordatorios(prev=>(prev||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
           onCobrarSaldo={(monto,pago)=>{
             const c=cliente;
             const det=[{nombre:"Cobro de deuda",cantidad:1,precio:0,total:0}];
-            const calc=calcVenta(det,pago,String(monto),0,productos);
             const vt={id:Date.now(),clienteId:c.id,cliente:c.nombre,dia:diaActual,fechaKey:fechaActual,fecha:new Date().toLocaleString("es-AR"),
               detalle:det,pago,obs:`Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,saldoAplicado:0,
               neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],_esCobro:true,_upd:Date.now()};
-            const nv=[...ventas,vt];
-            saveVentas(nv);
-            const nc=clientes.map(x=>x.id===c.id?{...x,saldo:(c.saldo||0)+monto}:x);
-            saveClientes(nc);
+            saveVentas(prev=>[...prev,vt]);
+            saveClientes(prev=>prev.map(x=>x.id===c.id?{...x,saldo:(Number(x.saldo)||0)+monto}:x));
           }}
-          onGuardarCambio={(vt)=>{saveVentas([...ventas,vt]);}} />}
+          onGuardarCambio={(vt)=>{saveVentas(prev=>[...prev,vt]);}} />}
       {pantalla==="venta"          && cliente && <NuevaVenta key={clienteId} cliente={cliente} productos={productos} fecha={fechaActual} ventasCliente={ventas.filter(v=>v.clienteId===cliente.id)}
         progressData={(()=>{
           const clientesDia=clientes.filter(c=>c.dia===diaActual);
@@ -842,27 +969,34 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           return {visitados:visitadosIds.size,total:clientesDia.length,montoHoy,stock:{"Sif":Math.max(0,(Number(planillaHoy.productos?.soda?.llenos)||0)-sifs),"10L":Math.max(0,(Number(planillaHoy.productos?.b10?.llenos)||0)-b10),"20L":Math.max(0,(Number(planillaHoy.productos?.b20?.llenos)||0)-b20)}};
         })()}
         onNoEsta={()=>{
-          const prev=(noVisitas||[]).find(v=>v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual);
-          const motivo=prev?.motivo==="noesta"?"noesta2":"noesta";
-          const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo}];
-          saveNoVisitas(nv);
+          let nvFinal=null;
+          saveNoVisitas(prevNV => {
+            const base=prevNV||[];
+            const anterior=base.find(v=>v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual);
+            const motivo=anterior?.motivo==="noesta"?"noesta2":"noesta";
+            const nv=[...base.filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo,_upd:Date.now()}];
+            nvFinal=nv; return nv;
+          });
           const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...(nv).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
+          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...nvFinal.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
           visitadosIds.add(clienteId);
           const siguiente=clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
           if(siguiente){setClienteId(siguiente.id);irA("venta");}else irA("clientes");
         }}
         onNoQuiere={()=>{
-          const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo:"noquiso"}];
-          saveNoVisitas(nv);
+          let nvFinal=null;
+          saveNoVisitas(prevNV => {
+            const nv=[...(prevNV||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo:"noquiso",_upd:Date.now()}];
+            nvFinal=nv; return nv;
+          });
           const clientesDia=clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
+          const visitadosIds=new Set([...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),...nvFinal.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2"||v.motivo==="noesta")).map(v=>v.clienteId)]);
           visitadosIds.add(clienteId);
           const siguiente=clientesDia.find(c=>!visitadosIds.has(c.id)&&c.id!==clienteId);
           if(siguiente){setClienteId(siguiente.id);irA("venta");}else irA("clientes");
         }}
-        onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd)=>{
-  registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd);
+        onGuardar={(d,p,m,sa,ep,ed,obs,op,mt2,sd,tc)=>{
+  registrarVenta(d,p,m,sa,ep,ed,obs,op,mt2,sd,tc);
   const clientesDia = clientes.filter(c=>c.dia===diaActual).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
   const visitadosIds = new Set([
     ...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),
@@ -874,14 +1008,17 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   else irA("clientes");
 }}
         onSaltar={()=>{
-          const nv=[...(noVisitas||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),
-            {clienteId,dia:diaActual,fecha:fechaActual,motivo:"salteado"}];
-          saveNoVisitas(nv);
+          let nvFinal=null;
+          saveNoVisitas(prevNV => {
+            const nv=[...(prevNV||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),
+              {clienteId,dia:diaActual,fecha:fechaActual,motivo:"salteado",_upd:Date.now()}];
+            nvFinal=nv; return nv;
+          });
           const clientesDia=clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id)).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
-          const nvMap={};nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{nvMap[v.clienteId]=v.motivo;});
+          const nvMap={};nvFinal.filter(v=>v.dia===diaActual&&v.fecha===fechaActual).forEach(v=>{nvMap[v.clienteId]=v.motivo;});
           const terminados=new Set([
             ...ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&!v._esCobro&&!v._esAjuste).map(v=>v.clienteId),
-            ...nv.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2")).map(v=>v.clienteId)
+            ...nvFinal.filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(v.motivo==="noquiso"||v.motivo==="noesta2")).map(v=>v.clienteId)
           ]);
           const normalPend=clientesDia.filter(c=>!terminados.has(c.id)&&nvMap[c.id]!=="noesta"&&nvMap[c.id]!=="salteado"&&c.id!==clienteId);
           const noestaPend=clientesDia.filter(c=>nvMap[c.id]==="noesta"&&!terminados.has(c.id)&&c.id!==clienteId);
@@ -892,35 +1029,41 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onVolver={()=>irA("detalleCliente")} />}
       {pantalla==="nuevoCliente"   && <NuevoCliente diaActual={diaActual} repartoActual={repartoActual} onGuardar={(datos)=>{
           const orden=datos.orden;
-          let base=clientes;
-          if(orden&&clientes.some(c=>c.dia===datos.dia&&(c.orden||0)===Number(orden))){
-            base=clientes.map(c=>c.dia===datos.dia&&(c.orden||0)>=Number(orden)?{...c,orden:(c.orden||0)+1}:c);
-          }
-          const nc=[...base,{...datos,id:Date.now(),saldo:0,dispenser:datos.dispenser||0,repartoId:repartoActual?.id||null}]
-            .sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
-          saveClientes(nc);irA("clientes");
+          saveClientes(prevC => {
+            let base=prevC;
+            if(orden&&prevC.some(c=>c.dia===datos.dia&&(c.orden||0)===Number(orden))){
+              base=prevC.map(c=>c.dia===datos.dia&&(c.orden||0)>=Number(orden)?{...c,orden:(c.orden||0)+1}:c);
+            }
+            return [...base,{...datos,id:Date.now(),saldo:0,dispenser:datos.dispenser||0,repartoId:repartoActual?.id||null}]
+              .sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
+          });
+          irA("clientes");
         }} onVolver={()=>irA("clientes")} />}
-      {pantalla==="historial" && <CargaHistorica clientes={clientes} productos={productos} onGuardar={(vts)=>{saveVentas([...ventas,...vts]);irA("menu");}} onVolver={()=>irA("menu")} />}
+      {pantalla==="historial" && <CargaHistorica clientes={clientes} productos={productos} onGuardar={(vts)=>{saveVentas(prev=>[...prev,...vts]);irA("menu");}} onVolver={()=>irA("menu")} />}
       {pantalla==="promocion"       && <Promocion prospectos={prospectos} clientes={clientes} onSave={saveProspectos} onConvertir={(p)=>{
         const nuevo={...p,id:Date.now(),saldo:0,sifon:0,bidon10:1,bidon20:0};
-        saveClientes([...clientes,nuevo]);
-        saveProspectos(prospectos.map(x=>x.id===p.id?{...x,estado:"convertido"}:x));
+        saveClientes(prev=>[...prev,nuevo]);
+        saveProspectos(prev=>(prev||[]).map(x=>x.id===p.id?{...x,estado:"convertido"}:x));
         irA("promocion");
       }} onVolver={()=>irA("menu")} />}
-      {pantalla==="gestionClientes" && <GestionClientes clientes={clientes} repartos={repartos} repartoActual={repartoActual} onReordenarTodo={(lista)=>saveClientes(lista)} onEditar={(id,cambios)=>{saveClientes(clientes.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={(id)=>{
+      {pantalla==="gestionClientes" && <GestionClientes clientes={clientes} repartos={repartos} repartoActual={repartoActual} onReordenarTodo={(lista)=>saveClientes(lista)} onEditar={(id,cambios)=>{saveClientes(prev=>prev.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={(id)=>{
         if(window.confirm("¿Eliminar cliente?")){
-          const eliminado=clientes.find(c=>c.id===id);
-          let nc=clientes.filter(c=>c.id!==id);
-          if(eliminado) nc=renumerarTrasEliminar(nc,eliminado);
-          saveClientes(nc);
+          saveClientes(prev => {
+            const eliminado=prev.find(c=>c.id===id);
+            let nc=prev.filter(c=>c.id!==id);
+            if(eliminado) nc=renumerarTrasEliminar(nc,eliminado);
+            return nc;
+          });
         }}} onNuevo={(datos)=>{
         const orden = datos.orden;
-        let nuevos;
-        if(orden&&clientes.some(c=>c.dia===datos.dia&&c.orden===orden)){
-          // Shift all clients with same day and order >= new order
-          nuevos = clientes.map(c=>c.dia===datos.dia&&(c.orden||0)>=orden?{...c,orden:(c.orden||0)+1}:c);
-        } else { nuevos = [...clientes]; }
-        saveClientes([...nuevos,{...datos,id:Date.now(),saldo:0,dispenser:datos.dispenser||0}].sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999)));
+        saveClientes(prevC => {
+          let nuevos;
+          if(orden&&prevC.some(c=>c.dia===datos.dia&&c.orden===orden)){
+            // Shift all clients with same day and order >= new order
+            nuevos = prevC.map(c=>c.dia===datos.dia&&(c.orden||0)>=orden?{...c,orden:(c.orden||0)+1}:c);
+          } else { nuevos = [...prevC]; }
+          return [...nuevos,{...datos,id:Date.now(),saldo:0,dispenser:datos.dispenser||0}].sort((a,b)=>DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)||(a.orden||9999)-(b.orden||9999));
+        });
       }} onVolver={()=>irA("menu")} onRegistrarVenta={(c)=>{
           setClienteId(c.id);
           // Asegurar que fechaActual esté seteado a hoy
@@ -929,31 +1072,29 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           // Si no hay diaActual, usar el día del cliente como fallback
           if(!diaActual) setDiaActual(c.dia);
           irA("venta");
-        }} onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}} ventas={ventas} productos={productos} onGuardarCambio={(vt)=>{saveVentas([...ventas,vt]);}} />}
+        }} onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}} ventas={ventas} productos={productos} onGuardarCambio={(vt)=>{saveVentas(prev=>[...prev,vt]);}} />}
       {pantalla==="detalleDesdeGestion" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual||cliente.dia} fecha={fechaActual} productos={productos} onVenta={()=>{setDiaActual(cliente.dia);const hoy=new Date().toLocaleDateString("en-CA");if(!fechaActual)setFechaActual(hoy);irA("venta");}} onVolver={()=>irA("gestionClientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>{eliminarCliente(cliente.id);irA("gestionClientes");}}
           onNoEstaCliente={()=>{}} onNoQuiereCliente={()=>{}}
-          recordatorios={recordatorios} onGuardarRecordatorio={(r)=>saveRecordatorios([...(recordatorios||[]),r])} onConfirmarRecordatorio={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
+          recordatorios={recordatorios} onGuardarRecordatorio={(r)=>saveRecordatorios(prev=>[...(prev||[]),r])} onConfirmarRecordatorio={(id)=>saveRecordatorios(prev=>(prev||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
           onCobrarSaldo={(monto,pago)=>{
             if(cliente){
-              const saldoAntes=cliente.saldo||0;
-              const saldoDespues=saldoAntes+monto;
               const det=[{nombre:"Cobro de deuda",cantidad:1,precio:0,total:0}];
               const fk=fechaActual||new Date().toLocaleDateString("en-CA");
               const vt={id:Date.now(),clienteId:cliente.id,cliente:cliente.nombre,
                 dia:diaActual||cliente.dia,fechaKey:fk,fecha:new Date().toLocaleString("es-AR"),
                 detalle:det,pago,obs:`Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,saldoAplicado:0,
                 neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],
-                saldoAntes,saldoDespues,_esCobro:true,_upd:Date.now()};
-              saveVentas([...ventas,vt]);
-              saveClientes(clientes.map(x=>x.id===cliente.id?{...x,saldo:saldoDespues}:x));
+                saldoAntes:cliente.saldo||0, saldoDespues:(cliente.saldo||0)+monto, _esCobro:true,_upd:Date.now()};
+              saveVentas(prev=>[...prev,vt]);
+              saveClientes(prev=>prev.map(x=>x.id===cliente.id?{...x,saldo:(Number(x.saldo)||0)+monto}:x));
             }
           }}
-          onGuardarCambio={(vt)=>{saveVentas([...ventas,vt]);}} />}
+          onGuardarCambio={(vt)=>{saveVentas(prev=>[...prev,vt]);}} />}
       {pantalla==="importarClientes" && <ImportarClientesExcel
         repartos={repartos}
         clientes={clientes}
         repartoPreseleccionado={repartoActual}
-        onGuardar={(nuevos)=>{saveClientes([...clientes,...nuevos]);irA("menu");}}
+        onGuardar={(nuevos)=>{saveClientes(prev=>[...prev,...nuevos]);irA("menu");}}
         onVolver={()=>irA("menu")}
       />}
       {pantalla==="mapaClientes" && <MapaClientes
@@ -979,12 +1120,12 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         recordatorios={recordatorios||[]}
         clientes={clientes}
         repartidores={repartidoresUnicos}
-        onConfirmar={(id)=>saveRecordatorios((recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
-        onEliminar={(id)=>saveRecordatorios((recordatorios||[]).filter(r=>r.id!==id))}
+        onConfirmar={(id)=>saveRecordatorios(prev=>(prev||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
+        onEliminar={(id)=>saveRecordatorios(prev=>(prev||[]).filter(r=>r.id!==id))}
         onNuevo={(datos)=>{
           const c=clientes.find(x=>x.id===datos.clienteId);
           if(!c){alert("Seleccioná un cliente");return;}
-          saveRecordatorios([...(recordatorios||[]),{...datos,id:Date.now(),clienteId:c.id,clienteNombre:c.nombre,dia:c.dia,confirmado:false,paraRepartidor:datos.paraRepartidor||null}]);
+          saveRecordatorios(prev=>[...(prev||[]),{...datos,id:Date.now(),clienteId:c.id,clienteNombre:c.nombre,dia:c.dia,confirmado:false,paraRepartidor:datos.paraRepartidor||null}]);
         }}
         onIrCliente={(cId)=>{
           const c=clientes.find(x=>x.id===cId);
@@ -995,11 +1136,10 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDia} setCargasDia={saveCargasDia} planillas={planillas} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
       {pantalla==="fiadosPendientes" && <FiadosPendientes clientes={clientes} ventas={ventas} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onCobrar={(cId,monto,pago)=>{
         const cl=clientes.find(c=>c.id===cId);if(!cl)return;
-        const saldoAntes=cl.saldo||0;const saldoDespues=saldoAntes+monto;
         const vt={id:Date.now(),clienteId:cl.id,cliente:cl.nombre,dia:cl.dia,fechaKey:new Date().toLocaleDateString("en-CA"),fecha:new Date().toLocaleString("es-AR"),
           detalle:[{nombre:"Cobro de deuda",cantidad:1,precio:0,total:0}],pago,obs:`Cobro de deuda ${fmt(monto)} (${pago})`,
-          neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],saldoAntes,saldoDespues,_esCobro:true,_upd:Date.now()};
-        saveVentas([...ventas,vt]);saveClientes(clientes.map(c=>c.id===cId?{...c,saldo:saldoDespues}:c));
+          neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],saldoAntes:cl.saldo||0,saldoDespues:(cl.saldo||0)+monto,_esCobro:true,_upd:Date.now()};
+        saveVentas(prev=>[...prev,vt]);saveClientes(prev=>prev.map(c=>c.id===cId?{...c,saldo:(Number(c.saldo)||0)+monto}:c));
       }} onVolver={()=>irA("menu")} />}
       {pantalla==="resumen"        && <Resumen ventas={ventas} clientes={clientes} productos={productos} planillas={planillas} noVisitas={noVisitas||[]} onVolver={()=>irA("menu")} />}
       {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDia} setCargasDia={saveCargasDia} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} tabInicial={tabConfig} repartos={repartos} repartoActual={repartoActual} />}
