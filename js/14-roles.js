@@ -238,19 +238,23 @@ function AppRepartidorWrapper({uid, perfil, onSalir}) {
 }
 
 function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
-  // ── Calcular diaActual PRIMERO para poder usarlo en useState ────────
-  // IMPORTANTE: debe ir antes de cualquier useState que lo use
+  // ── Calcular el día de HOY como valor inicial ────────────────────────
   const _diasSemana = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const diaActual = _diasSemana[new Date().getDay()];
+  const diaDeHoy = _diasSemana[new Date().getDay()];
 
   // ── Estado del repartidor ───────────────────────────────────────────
   const [pantalla,   setPantalla]   = React.useState("inicio");
+  // diaActual ahora es editable — el repartidor puede elegir otro día
+  // además del de hoy (para adelantar reparto o ponerse al día con uno
+  // que quedó pendiente), no solo el dueño desde "Operar".
+  const [diaActual, setDiaActual]   = React.useState(diaDeHoy);
   const [fechaActual,setFechaActual]= React.useState(()=>new Date().toLocaleDateString("en-CA"));
   const [clienteId,  setClienteId]  = React.useState(null);
   const [ventaLibreFecha,setVentaLibreFecha] = React.useState(()=>new Date().toLocaleDateString("en-CA"));
-  const [diaClienteActual, setDiaClienteActual] = React.useState(diaActual); // ahora sí está definido
+  const [diaClienteActual, setDiaClienteActual] = React.useState(diaDeHoy);
   const [origenDetalle, setOrigenDetalle] = React.useState("clientes");
   const [datos,      setDatos]      = React.useState(null);
+  const [diaTemporal, setDiaTemporal] = React.useState(null); // día elegido en "elegirDia", pendiente de fecha
   const [scaleIdx, setScaleIdx] = useLS("rm_scale_v1", 1); // 0=S 1=M 2=L 3=XL
   const SCALES = [0.82, 1.0, 1.18, 1.36];
   const SCALE_LABELS = ["S","M","L","XL"];
@@ -452,6 +456,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           diaActual={diaActual}
           fechaActual={fechaActual}
           setFechaActual={setFechaActual}
+          repartoId={miReparto?.id}
           clientes={clientes}
           ventas={ventas}
           noVisitas={noVisitas}
@@ -477,6 +482,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           onIrTodosClientes={()=>irA("todosClientes")}
           onIrAgenda={()=>irA("agendaRep")}
           onIrTransfers={()=>irA("confirmTransferRep")}
+          onCambiarDia={()=>irA("elegirDia")}
           onSalir={onSalirProp||(()=>window.auth.signOut())}
           onEnviarInforme={async ()=>{
             if(typeof usarInformes!=="function"){ alert("Función de informe no disponible."); return; }
@@ -511,6 +517,40 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           }}
         />
       )}
+      {pantalla==="elegirDia"&&(
+        <div style={s.screen}>
+          <HeaderApp titulo="Elegir día de reparto" onVolver={()=>irA("inicio")}/>
+          <div style={{padding:"10px 14px"}}>
+            <p style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:12}}>
+              Por defecto ves el día de hoy ({diaDeHoy}). Elegí otro día si necesitás adelantar un reparto o ponerte al día con uno pendiente.
+            </p>
+            {DIAS.map(d=>(
+              <button key={d} style={{...s.card,width:"100%",textAlign:"left",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px",background:d===diaActual?"var(--color-background-info)":"var(--color-background-secondary)"}}
+                onClick={()=>{setDiaTemporal(d);irA("elegirFecha");}}>
+                <span style={{fontSize:15,fontWeight:500,color:d===diaActual?"var(--color-text-info)":"var(--color-text-primary)"}}>{d}{d===diaDeHoy?" · hoy":""}</span>
+                <span style={{color:"var(--color-text-tertiary)"}}>→</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {pantalla==="elegirFecha"&&diaTemporal&&(
+        <SelectorFecha
+          dia={diaTemporal}
+          repartoId={miReparto?.id}
+          planillas={planillas}
+          ventas={ventas.filter(v=>{const cl=todosClientes.find(c=>c.id===v.clienteId);return !miReparto||cl?.repartoId===miReparto.id;})}
+          noVisitas={(noVisitas||[]).filter(v=>{const cl=todosClientes.find(c=>c.id===v.clienteId);return !miReparto||cl?.repartoId===miReparto.id;})}
+          onSeleccionar={(fk,fo)=>{
+            setDiaActual(diaTemporal);
+            setDiaClienteActual(diaTemporal);
+            setFechaActual(fk);
+            setDiaTemporal(null);
+            irA("inicio");
+          }}
+          onVolver={()=>irA("elegirDia")}
+        />
+      )}
       {pantalla==="cargaDia"&&(
         <InicioReparto
           dia={diaActual} fecha={fechaActual}
@@ -536,7 +576,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               s.camiones[miReparto.id].bidon20=(s.camiones[miReparto.id].bidon20||0)+b20;
               sync({stock:s});
             }
-            irA("inicio");
+            irA("clientes");
           }}
           onVolver={()=>irA("inicio")}
         />

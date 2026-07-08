@@ -259,10 +259,10 @@ function NotifConfigRepartidor() {
   );
 }
 
-function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,ventas,noVisitas,planillas,savePlanilla,productos,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onSalir,onEnviarInforme,scaleIdx,onToggleScale,scaleLabel}) {
+function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,repartoId,clientes,ventas,noVisitas,planillas,savePlanilla,productos,recordatorios,onSaveRecordatorio,onConfirmarRecordatorio,onIrCliente,onIrCarga,onIrClientes,onIrPlanilla,onIrTodosClientes,onIrAgenda,onIrTransfers,onCambiarDia,onSalir,onEnviarInforme,scaleIdx,onToggleScale,scaleLabel}) {
   const ventasHoy = ventas.filter(v=>v.fechaKey===fechaActual);
   const noVisHoy  = (noVisitas||[]).filter(v=>v.fecha===fechaActual);
-  const planKey   = `${diaActual}_${fechaActual}`;
+  const planKey   = claveDiaReparto(diaActual,fechaActual,repartoId);
   const cargaHecha = !!(planillas||{})[planKey];
   const totalEntregados = ventasHoy.length;
   const totalPend = clientes.filter(c=>!ventasHoy.find(v=>v.clienteId===c.id)&&!noVisHoy.find(v=>v.clienteId===c.id)).length;
@@ -282,7 +282,12 @@ function InicioRepartidor({perfil,diaActual,fechaActual,setFechaActual,clientes,
       <div style={{...s.header,padding:"12px 14px"}}>
         <div style={{flex:1}}>
           <div style={{fontSize:16,fontWeight:500,color:"var(--color-text-primary)"}}>{"\u{1F690} "+perfil.nombre}</div>
-          <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual+" · "+fechaActual}</div>
+          {onCambiarDia
+            ? <button onClick={onCambiarDia} style={{background:"none",border:"none",padding:0,cursor:"pointer",fontSize:11,color:"var(--color-text-info)",textDecoration:"underline",display:"flex",alignItems:"center",gap:3}}>
+                {diaActual+" · "+fechaActual} <span style={{fontSize:9}}>▾</span>
+              </button>
+            : <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>{diaActual+" · "+fechaActual}</div>
+          }
         </div>
         <button style={{...s.btn,fontSize:11,padding:"6px 10px"}} onClick={onSalir}>Salir</button>
         <HeaderBotones/>
