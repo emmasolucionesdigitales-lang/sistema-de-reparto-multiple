@@ -498,7 +498,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               const licTemp = {email:emailDueno, negocio:perfil.nombre||"Reparto"};
               const prevLic = localStorage.getItem("rm_licencia");
               localStorage.setItem("rm_licencia", JSON.stringify(licTemp));
-              const inf = usarInformes({ventas,clientes,planillas,noVisitas,productos});
+              const inf = usarInformes({ventas,clientes,planillas,noVisitas,productos,repartoId:miReparto?.id});
               const ok = await inf.enviarDiario(fechaActual, diaActual);
               // Restaurar licencia original
               if(prevLic) localStorage.setItem("rm_licencia", prevLic);
@@ -514,11 +514,30 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       {pantalla==="cargaDia"&&(
         <InicioReparto
           dia={diaActual} fecha={fechaActual}
-          planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()}
+          planilla={planillas[claveDiaReparto(diaActual,fechaActual,miReparto?.id)]||planillaDiaVacia()}
           productos={productos}
-          cargasDia={datos.cargasDia||CARGA_DIA_DEFAULT}
+          cargasDia={(datos.cargasDia&&miReparto&&datos.cargasDia[miReparto.id])||CARGA_DIA_DEFAULT}
           stock={datos.stock||{}}
-          onGuardar={(p)=>{savePlanilla(`${diaActual}_${fechaActual}`,p);irA("inicio");}}
+          onGuardar={(p,descontar)=>{
+            savePlanilla(claveDiaReparto(diaActual,fechaActual,miReparto?.id),p);
+            if(descontar && miReparto){
+              const s=JSON.parse(JSON.stringify(datos.stock||{soderia:{},soderia_vacios:{},casa:{},camiones:{}}));
+              if(!s.soderia) s.soderia={sifon:0,bidon10:0,bidon20:0};
+              if(!s.camiones) s.camiones={};
+              if(!s.camiones[miReparto.id]) s.camiones[miReparto.id]={sifon:0,bidon10:0,bidon20:0,dispenser:0};
+              const soda=Number(p.productos?.soda?.llenos||0);
+              const b10=Number(p.productos?.b10?.llenos||0);
+              const b20=Number(p.productos?.b20?.llenos||0);
+              s.soderia.sifon  =Math.max(0,(s.soderia.sifon||0)-soda);
+              s.soderia.bidon10=Math.max(0,(s.soderia.bidon10||0)-b10);
+              s.soderia.bidon20=Math.max(0,(s.soderia.bidon20||0)-b20);
+              s.camiones[miReparto.id].sifon  =(s.camiones[miReparto.id].sifon||0)+soda;
+              s.camiones[miReparto.id].bidon10=(s.camiones[miReparto.id].bidon10||0)+b10;
+              s.camiones[miReparto.id].bidon20=(s.camiones[miReparto.id].bidon20||0)+b20;
+              sync({stock:s});
+            }
+            irA("inicio");
+          }}
           onVolver={()=>irA("inicio")}
         />
       )}
@@ -691,13 +710,14 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="planilla"&&(
         <PlanillaDelDia
-          dia={diaActual} fecha={fechaActual} ventas={ventas}
-          clientes={todosClientes}
-          planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()}
+          dia={diaActual} fecha={fechaActual} repartoId={miReparto?.id}
+          ventas={ventas.filter(v=>{const cl=todosClientes.find(c=>c.id===v.clienteId);return !miReparto||cl?.repartoId===miReparto.id;})}
+          clientes={clientes}
+          planilla={planillas[claveDiaReparto(diaActual,fechaActual,miReparto?.id)]||planillaDiaVacia()}
           productos={productos} stock={datos.stock||{}}
           setStock={(ns)=>sync({stock:ns})}
           syncData={(overrides)=>sync(overrides)}
-          onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("inicio");}}
+          onGuardar={d=>{savePlanilla(claveDiaReparto(diaActual,fechaActual,miReparto?.id),d);irA("inicio");}}
           onVolver={()=>irA("inicio")}
           onCerrarDia={async (imgData)=>{
             try {
@@ -714,7 +734,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               }
               if(!emailDueno) { alert("No se encontró el email del dueño."); return false; }
               // Datos del informe
-              const planKey = `${diaActual}_${fechaActual}`;
+              const planKey = claveDiaReparto(diaActual,fechaActual,miReparto?.id);
               const plan = planillas[planKey]||{};
               const misClientesIds = new Set(clientes.map(c=>c.id));
               const ventasDia = ventas.filter(v=>v.fechaKey===fechaActual&&!v._esCobro&&!v._esAjuste&&misClientesIds.has(v.clienteId));

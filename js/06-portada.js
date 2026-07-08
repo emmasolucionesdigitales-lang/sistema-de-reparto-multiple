@@ -54,7 +54,7 @@ function fechaKey(d) {
 
 function hoyKey() { return new Date().toISOString().slice(0,10); }
 
-function SelectorFecha({dia,planillas,ventas,noVisitas,onSeleccionar,onVolver}) {
+function SelectorFecha({dia,repartoId,planillas,ventas,noVisitas,onSeleccionar,onVolver}) {
   const fechas = getFechasDelAnio(dia);
   const hoy = hoyKey();
   const [mostrarTodas,setMostrarTodas] = useState(false);
@@ -100,7 +100,7 @@ function SelectorFecha({dia,planillas,ventas,noVisitas,onSeleccionar,onVolver}) 
                 <div style={{border:"0.5px solid var(--color-border-tertiary)",borderTop:"none",borderRadius:"0 0 12px 12px",overflow:"hidden"}}>
                   {porMes[mes].map(f=>{
                     const fk = fechaKey(f);
-                    const planKey = `${dia}_${fk}`;
+                    const planKey = claveDiaReparto(dia,fk,repartoId);
                     const tienePlanilla = !!planillas[planKey];
                     const nVentas = ventasPorFecha[fk]||0;
                     const nVisitas = visitasPorFecha[fk]||0;

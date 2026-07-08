@@ -2,9 +2,10 @@
 // ◆  07-stock.js — StockGeneral · ConfirmacionesDia
 // ════════════════════════════════════════════════════════════════════
 
-function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setProductos,cargasDia,setCargasDia,planillas,onVolver,onResumen}) {
+function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setProductos,cargasDia,setCargasDia,planillas,repartos,onVolver,onResumen}) {
   const [clientesAbierto,setClientesAbierto]=React.useState(false);
   const [abiertoSoderia,setAbiertoSoderia]=React.useState(false);
+  const [abiertoCamiones,setAbiertoCamiones]=React.useState(false);
   const [abiertoDeposito,setAbiertoDeposito]=React.useState(false);
   const [abiertoEnClientes,setAbiertoEnClientes]=React.useState(false);
   const [abiertoProductos,setAbiertoProductos]=React.useState(false);
@@ -19,6 +20,13 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
     const ns=JSON.parse(JSON.stringify(stock));
     if(!ns[loc]) ns[loc]={sifon:0,bidon10:0,bidon20:0,dispenser:0};
     ns[loc][key]=Math.max(0,Math.round(Number(val)||0));
+    setStock(ns);
+  };
+  const setCamion=(repartoId,key,val)=>{
+    const ns=JSON.parse(JSON.stringify(stock));
+    if(!ns.camiones) ns.camiones={};
+    if(!ns.camiones[repartoId]) ns.camiones[repartoId]=stockCamionVacio();
+    ns.camiones[repartoId][key]=Math.max(0,Math.round(Number(val)||0));
     setStock(ns);
   };
   const setClienteEnv=(id,key,val)=>{
@@ -91,6 +99,29 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
           </>)}
         </div>
 
+        {/* CAMIONES (uno por reparto) */}
+        {(repartos||[]).length>0 && (
+        <div style={{...s.card,margin:"0 0 10px"}}>
+          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoCamiones?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+            onClick={()=>setAbiertoCamiones(!abiertoCamiones)}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🚐 Camiones <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· lo que lleva cada reparto</span></span>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoCamiones?"▲":"▼"}</span>
+          </button>
+          {abiertoCamiones&&(repartos||[]).map(rep=>(
+            <div key={rep.id} style={{marginBottom:12,paddingBottom:10,borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+              <div style={{fontSize:12,fontWeight:600,color:"var(--color-text-primary)",marginBottom:6}}>Reparto {rep.numero} · {rep.repartidorNombre}</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+                {PRODS.map(([k,lbl])=>(
+                  <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--color-background-tertiary)",borderRadius:8,padding:"6px 9px"}}>
+                    <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl.replace(" 1.5L","")}{k==="sifon"&&<span style={{fontSize:9,color:"var(--color-text-tertiary)",display:"block"}}>{Math.floor((stock.camiones?.[rep.id]?.sifon||0)/6)} caj</span>}</span>
+                    <input type="number" value={stock.camiones?.[rep.id]?.[k]||0} onChange={e=>setCamion(rep.id,k,e.target.value)} style={{...inNum,width:48}} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        )}
         {/* DEPÓSITO */}
         <div style={{...s.card,margin:"0 0 10px"}}>
           <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoDeposito?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}

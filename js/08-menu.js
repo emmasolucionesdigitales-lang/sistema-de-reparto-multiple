@@ -8,6 +8,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
   const [modoNuevo, setModoNuevo] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState(null);
   const [form, setForm] = React.useState({numero:"",repartidorNombre:"",codigo:""});
+  const [qrReparto, setQrReparto] = React.useState(null); // reparto cuyo QR de invitación se está mostrando
 
   const genCodigo = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // sin I ni O para no confundir con 1/0
@@ -24,8 +25,10 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
     } else {
       const nuevo={id:Date.now(),numero:Number(form.numero),repartidorNombre:form.repartidorNombre.trim(),codigo:codUpper,nombre:`Reparto ${form.numero}`};
       saveRepartos([...repartos,nuevo].sort((a,b)=>a.numero-b.numero));
-      // ← Guardar el mismo código como invitación en Firestore para que el repartidor pueda ingresar
-      if(negocioId) crearInvitacion(negocioId, form.repartidorNombre.trim(), [], codUpper);
+      // La invitación en Firestore la crea sincronizarInvitaciones, que ya se
+      // dispara solo desde saveRepartos (16-extras.js) — no hace falta nada más acá.
+      // Mostrar el QR de inmediato para que el repartidor lo escanee ahí mismo
+      setQrReparto(nuevo);
     }
     setModoNuevo(false);setEditandoId(null);setForm({numero:"",repartidorNombre:"",codigo:""});
   };
@@ -182,6 +185,10 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
                   🚐 Operar
                 </button>
                 <button style={{...s.btn,fontSize:11,padding:"4px 10px"}}
+                  onClick={e=>{e.stopPropagation();setQrReparto(rep);}}>
+                  📱 QR
+                </button>
+                <button style={{...s.btn,fontSize:11,padding:"4px 10px"}}
                   onClick={e=>{e.stopPropagation();setForm({numero:String(rep.numero),repartidorNombre:rep.repartidorNombre,codigo:rep.codigo});setEditandoId(rep.id);setModoNuevo(false);}}>
                   ✏️ Editar
                 </button>
@@ -262,6 +269,41 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
           </div>
         </div>
       )}
+      {/* ══════════ MODAL: QR de invitación para el repartidor ══════════ */}
+      {qrReparto && (()=>{
+        const link = generarLinkInvitacionRepartidor(qrReparto.codigo);
+        const mensajeWsp = `Hola ${qrReparto.repartidorNombre}! Para entrar a la app de reparto, escaneá este link desde tu celular: ${link}\n\nO ingresá manualmente el código: ${qrReparto.codigo}`;
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9998,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}
+            onClick={()=>setQrReparto(null)}>
+            <div style={{background:"var(--color-background-secondary)",borderRadius:16,padding:24,maxWidth:340,width:"100%",textAlign:"center"}}
+              onClick={e=>e.stopPropagation()}>
+              <div style={{fontSize:15,fontWeight:700,color:"var(--color-text-primary)",marginBottom:2}}>
+                {qrReparto.repartidorNombre}
+              </div>
+              <div style={{fontSize:12,color:"var(--color-text-secondary)",marginBottom:16}}>
+                Escaneá este código con la cámara del celular del repartidor
+              </div>
+              <div style={{background:"#fff",borderRadius:12,padding:12,display:"inline-block"}}>
+                <img src={urlImagenQR(link,220)} alt="QR de invitación" width={220} height={220} style={{display:"block"}} />
+              </div>
+              <div style={{marginTop:14,fontSize:11,color:"var(--color-text-tertiary)"}}>
+                También puede ingresar el código a mano:
+              </div>
+              <div style={{fontFamily:"monospace",fontSize:22,fontWeight:700,letterSpacing:"0.15em",color:"#5daaff",marginTop:4}}>
+                {qrReparto.codigo}
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:18}}>
+                <a href={`https://wa.me/?text=${encodeURIComponent(mensajeWsp)}`} target="_blank" rel="noopener"
+                  style={{flex:1,textDecoration:"none",padding:"10px",borderRadius:10,background:"#0a2e1f",border:"1px solid #4dd9a0",color:"#4dd9a0",fontSize:13,fontWeight:600}}>
+                  💬 Enviar por WhatsApp
+                </a>
+                <button style={{...s.btn,padding:"10px 16px"}} onClick={()=>setQrReparto(null)}>Cerrar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -706,7 +748,7 @@ function DetalleVentasDia({ventas, clientes, prospectos, noVisitas, fecha}) {
   );
 }
 
-function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre,prospectos,noVisitas}) {
+function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre,prospectos,noVisitas}) {
   // Separar ventas del día propio vs ventas de clientes de otro día
   const [enviosInforme,setEnviosInforme] = React.useState(()=>Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`)||0));
   const clientesDia = new Set((clientes||[]).filter(c=>c.dia===dia).map(c=>c.id));
@@ -836,13 +878,15 @@ function PlanillaDelDia({dia,fecha,ventas,clientes,planilla,productos,stock,setS
     const s=JSON.parse(JSON.stringify(stock));
     if(!s.soderia)s.soderia={sifon:0,bidon10:0,bidon20:0};
     if(!s.soderia_vacios)s.soderia_vacios={sifon:0,bidon10:0,bidon20:0};
+    if(!s.camiones)s.camiones={};
     const conv={soda:"sifon",b10:"bidon10",b20:"bidon20"};
     ["soda","b10","b20"].forEach(pk=>{
       const sk=conv[pk];
       s.soderia[sk]=(s.soderia[sk]||0)+realesL[pk];
       s.soderia_vacios[sk]=(s.soderia_vacios[sk]||0)+realesV[pk];
     });
-    s.camion={sifon:0,bidon10:0,bidon20:0};
+    // Vaciar SOLO el camión de este reparto — el del otro reparto no se toca
+    if(repartoId) s.camiones[repartoId]=stockCamionVacio();
     setStock(s);syncData({stock:s});
     onGuardar({...datos,_diaCerrado:true,_stockActualizado:true,...(Object.keys(diffs).length>0?{_cierreDiffs:diffs}:{})});
     setMostrarCierre(false);

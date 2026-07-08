@@ -2,6 +2,23 @@
 // ◆  Repartidores — usa /repartidores/{codigo} (permitido por reglas Firebase)
 // ════════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════════
+// ◆  QR de invitación — arma el mismo link "#activar?d=..." que ya sabe
+//    leer PantallaActivacionRM (14-roles.js), y la imagen QR para ese link.
+// ════════════════════════════════════════════════════════════════════
+function _srB64EncodeUtf8(str) {
+  // Inverso exacto de: JSON.parse(decodeURIComponent(escape(atob(encoded))))
+  return btoa(unescape(encodeURIComponent(str)));
+}
+function generarLinkInvitacionRepartidor(codigo) {
+  const encoded = _srB64EncodeUtf8(JSON.stringify({c: (codigo||"").toUpperCase()}));
+  const base = window.location.origin + window.location.pathname;
+  return `${base}#activar?d=${encoded}`;
+}
+function urlImagenQR(texto, size) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size||220}x${size||220}&data=${encodeURIComponent(texto)}`;
+}
+
 // Sincroniza repartos → escribe en window.db.collection("repartidores")
 async function sincronizarInvitaciones(repartos, negocioId, licCodigo) {
   if(!window.db || !negocioId) return;
@@ -1621,7 +1638,7 @@ function SinGpsItem({cliente, onGuardar}) {
 }
 
 
-function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
+function usarInformes({ventas, clientes, planillas, noVisitas, productos, repartoId}) {
 
   const getLic = () => {
     try{
@@ -1667,7 +1684,7 @@ function usarInformes({ventas, clientes, planillas, noVisitas, productos}) {
       const todasFecha = (ventas||[]).filter(v=>v.fechaKey===fecha);
       const clientesDia = new Set((clientes||[]).filter(c=>c.dia===dia).map(c=>c.id));
       const todasVentasDia = [...todasFecha.filter(v=>clientesDia.has(v.clienteId)),...todasFecha.filter(v=>!clientesDia.has(v.clienteId))];
-      const plan = (planillas||{})[`${dia}_${fecha}`]||{};
+      const plan = (planillas||{})[claveDiaReparto(dia,fecha,repartoId)]||{};
       const planEf  = plan.efectivo   !== "" && plan.efectivo   !== undefined ? Number(plan.efectivo  ||0) : null;
       const planRet = plan.retenciones!== "" && plan.retenciones!== undefined ? Number(plan.retenciones||0) : null;
       const planFi  = plan.fiado      !== "" && plan.fiado      !== undefined ? Number(plan.fiado     ||0) : null;

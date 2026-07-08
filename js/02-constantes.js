@@ -37,6 +37,16 @@ const planillaDiaVacia = () => ({
 const fmt = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
 const num = (v) => Number(v)||0;
 
+// ════════════════════════════════════════════════════════════════════
+// ◆  claveDiaReparto — clave única de planilla/carga cuando hay más de
+//    un reparto trabajando el mismo día. Sin repartoId, se mantiene
+//    compatible con datos viejos de una sola ruta.
+// ════════════════════════════════════════════════════════════════════
+function claveDiaReparto(dia, fecha, repartoId) {
+  return repartoId ? `${dia}_${fecha}_${repartoId}` : `${dia}_${fecha}`;
+}
+const stockCamionVacio = () => ({sifon:0,bidon10:0,bidon20:0,dispenser:0});
+
 // ─── Cloud Storage (Firebase Firestore) ─────────────────────────────────────
 // cloudSave and cloudLoad are defined in the <script> tag above via Firebase SDK
 

@@ -151,20 +151,31 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const normStock = (s) => {
     const e = () => ({sifon:0,bidon10:0,bidon20:0,dispenser:0});
     const pick = (o) => { const r={sifon:0,bidon10:0,bidon20:0,dispenser:0}; if(o&&typeof o==="object"){ for(const k in o){ r[k]=Math.max(0,Math.round(Number(o[k])||0)); } } return r; };
-    const base = {soderia:e(),soderia_vacios:e(),casa:e(),camion:e()};
+    const pickCamiones = (o) => { const r={}; if(o&&typeof o==="object"){ for(const rid in o){ r[rid]=pick(o[rid]); } } return r; };
+    const base = {soderia:e(),soderia_vacios:e(),casa:e(),camiones:{}};
     if(!s||typeof s!=="object") return base;
     if(s.soderia&&typeof s.soderia==="object") {
+      let camiones = (s.camiones&&typeof s.camiones==="object") ? pickCamiones(s.camiones) : {};
+      // Migración única: el "camion" viejo (una sola ruta) se asigna al primer
+      // reparto configurado, así no se pierde el stock que ya estaba cargado.
+      // Si en realidad estaba repartido entre 2 camiones, se corrige a mano
+      // desde la pantalla de Stock una sola vez.
+      if(Object.keys(camiones).length===0 && s.camion && typeof s.camion==="object"){
+        const legacy = pick(s.camion);
+        if(Object.values(legacy).some(v=>v>0) && repartos && repartos[0]) camiones[repartos[0].id] = legacy;
+      }
       return {
         soderia:    pick(s.soderia),
         soderia_vacios: pick(s.soderia_vacios),
         casa:       pick(s.casa),
-        camion:     pick(s.camion),
+        camiones,
       };
     }
-    return {soderia:pick(s), soderia_vacios:e(), casa:e(), camion:e()};
+    return {soderia:pick(s), soderia_vacios:e(), casa:e(), camiones:{}};
   };
-  const [stockRaw, setStockRaw] = useLS("rm_stock_v4", {soderia:{sifon:0,bidon10:0,bidon20:0,dispenser:0},soderia_vacios:{sifon:0,bidon10:0,bidon20:0,dispenser:0},casa:{sifon:0,bidon10:0,bidon20:0,dispenser:0},camion:{sifon:0,bidon10:0,bidon20:0,dispenser:0}});
-  const stockNorm = React.useMemo(()=>normStock(stockRaw), [JSON.stringify(stockRaw)]);
+  const [stockRaw, setStockRaw] = useLS("rm_stock_v4", {soderia:{sifon:0,bidon10:0,bidon20:0,dispenser:0},soderia_vacios:{sifon:0,bidon10:0,bidon20:0,dispenser:0},casa:{sifon:0,bidon10:0,bidon20:0,dispenser:0},camiones:{}});
+  const stockNorm = React.useMemo(()=>normStock(stockRaw), [JSON.stringify(stockRaw), JSON.stringify(repartos)]);
+  const getCamion = (repartoId) => (stockNorm.camiones && stockNorm.camiones[repartoId]) || stockCamionVacio();
   const setStock = (sOrFn) => {
     if(typeof sOrFn === "function") {
       setStockRaw(prev => normStock(sOrFn(normStock(prev))));
@@ -178,14 +189,15 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     const normalized = normStock(stockRaw);
     if(JSON.stringify(normalized) !== JSON.stringify(stockRaw)) setStockRaw(normalized);
   },[]);
-  // Helper: transferir del camión a sodería al cerrar el día
-  const cerrarCamion = (sobrLlenos, vacios) => {
+  // Helper: transferir del camión de UN reparto a sodería al cerrar el día
+  const cerrarCamion = (repartoId, sobrLlenos, vacios) => {
     setStock(prev=>{
       const s = JSON.parse(JSON.stringify(normStock(prev)));
+      if(!s.camiones[repartoId]) s.camiones[repartoId] = stockCamionVacio();
       ["sifon","bidon10","bidon20","dispenser"].forEach(k=>{
         s.soderia[k]    = (s.soderia[k]||0) + (sobrLlenos[k]||0);
         s.soderia_vacios[k] = (s.soderia_vacios[k]||0) + (vacios[k]||0);
-        s.camion[k]  = Math.max(0, (s.camion[k]||0) - (sobrLlenos[k]||0) - (vacios[k]||0));
+        s.camiones[repartoId][k]  = Math.max(0, (s.camiones[repartoId][k]||0) - (sobrLlenos[k]||0) - (vacios[k]||0));
       });
       syncData({stock:s});
       return s;
@@ -369,7 +381,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const ultimoRegistroRef = React.useRef({firma:null, ts:0});
   const ultimoBorradoRef = React.useRef({id:null, ts:0});
   const ultimoEditadoRef = React.useRef({firma:null, ts:0});
-  React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos}; });
+  React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos,cargasDia:cargasDiaRaw}; });
 
   // Respaldo COMPLETO descargable + restaurar (solo dueño)
   React.useEffect(()=>{
@@ -530,7 +542,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   },[]);
 
   // ── INFORMES PDF ─────────────────────────────────────────────────
-  const {enviarDiario, enviarSemanal, enviarMensual} = usarInformes({ventas,clientes,planillas,noVisitas:noVisitas||[],productos});
+  const {enviarDiario, enviarSemanal, enviarMensual} = usarInformes({ventas,clientes,planillas,noVisitas:noVisitas||[],productos,repartoId:repartoActual?.id});
 
   const cerrarDia = async (fecha, dia, imgData) => {
     const key = `sr_informe_${fecha}_${dia}`;
@@ -571,8 +583,28 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       return next;
     });
   };
-  const [cargasDia, setCargasDia] = useLS("rm_cargas_dia_v1", CARGA_DIA_DEFAULT);
-  const saveCargasDia = (v) => { setCargasDia(prev => (typeof v==="function")?v(prev):v); };
+  // cargasDia ahora vive por reparto: {[repartoId]: {Lunes:{...}, Martes:{...}, ...}}.
+  // Migración: si lo guardado es el formato viejo (plano, sin reparto — las
+  // claves de primer nivel son directamente los días), se asigna al primer
+  // reparto configurado la primera vez que se detecta.
+  const [cargasDiaRaw, setCargasDiaRaw] = useLS("rm_cargas_dia_v1", {});
+  const cargasDiaPorReparto = React.useMemo(()=>{
+    const c = cargasDiaRaw||{};
+    const esFormatoViejo = DIAS.some(d=>c[d]);
+    if(esFormatoViejo && repartos && repartos[0]) return {[repartos[0].id]: c};
+    return c;
+  }, [JSON.stringify(cargasDiaRaw), JSON.stringify(repartos)]);
+  const saveCargasDia = (v) => { setCargasDiaRaw(prev => (typeof v==="function")?v(prev):v); };
+  // Carga diaria de UN reparto puntual — lo que usan InicioReparto/StockGeneral
+  const cargasDiaDe = (repartoId) => (repartoId && cargasDiaPorReparto[repartoId]) || CARGA_DIA_DEFAULT;
+  const saveCargasDiaDe = (repartoId, v) => {
+    if(!repartoId) return;
+    saveCargasDia(prev => {
+      const base = (prev&&prev[repartoId]) || CARGA_DIA_DEFAULT;
+      const nuevo = (typeof v==="function") ? v(base) : v;
+      return {...prev, [repartoId]: nuevo};
+    });
+  };
   const saveNoVisitas= (v) => { setNoVisitas(prev => { const next=(typeof v==="function")?v(prev):v; syncData({noVisitas:next}); return next; }); };
   const saveProspectos=(v)=>{ setProspectos(prev => { const next=(typeof v==="function")?v(prev):v; syncData({prospectos:next}); return next; }); };
 
@@ -609,10 +641,11 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   // Auto-guardado de planilla cuando todos los clientes del día tienen estado
   React.useEffect(()=>{
     if(!diaActual||!fechaActual) return;
-    const clientesDia = clientes.filter(c=>c.dia===diaActual);
+    const clientesDia = clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id));
     if(clientesDia.length===0) return;
-    const ventasDia   = ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual);
-    const noVisitasDia= (noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual);
+    const clientesDiaIds = new Set(clientesDia.map(c=>c.id));
+    const ventasDia   = ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual&&clientesDiaIds.has(v.clienteId));
+    const noVisitasDia= (noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&clientesDiaIds.has(v.clienteId));
     const atendidos   = new Set(ventasDia.filter(v=>!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
     const conEstado   = new Set([...atendidos,...noVisitasDia.map(v=>v.clienteId)]);
     const todosVisitados = clientesDia.every(c=>conEstado.has(c.id));
@@ -639,7 +672,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       return a;
     },0);
     const cobTransDesc=Math.round(cobTransBruto*0.025);
-    const planillaKey=`${diaActual}_${fechaActual}`;
+    const planillaKey=claveDiaReparto(diaActual,fechaActual,repartoActual?.id);
     const planillaActual=planillas[planillaKey]||planillaDiaVacia();
     // Solo auto-completar campos vacíos, nunca pisar lo que el usuario editó
     const nueva={
@@ -654,7 +687,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     if(JSON.stringify(nueva)!==JSON.stringify(planillaActual)){
       savePlanilla(planillaKey, nueva);
     }
-  }, [ventas, noVisitas, clientes, diaActual, fechaActual]);
+  }, [ventas, noVisitas, clientes, diaActual, fechaActual, repartoActual]);
 
   const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto, transConfirmadaInicial) => {
     const c = cliente;
@@ -853,7 +886,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         zonasReparto={zonasReparto}
         onSetZona={(dia,zona)=>{const nz={...zonasReparto,[dia]:zona};setZonasReparto(nz);syncData({zonasReparto:nz});}}
         onDiaHoy={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));irA("inicioReparto");}}
-        onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setInitCierre(!planillas[`${dia}_${fechaKey}`]?._diaCerrado);irA("planilla");}}
+        onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setInitCierre(!planillas[claveDiaReparto(dia,fechaKey,repartoActual?.id)]?._diaCerrado);irA("planilla");}}
         noVisitas={noVisitas||[]}
         prospectos={prospectos||[]}
         onFiados={()=>irA("fiadosPendientes")} />}
@@ -864,23 +897,24 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           onConfirmar={(ventaId)=>{saveVentas(prev=>prev.map(v=>v.id===ventaId?{...v,transConfirmada:!v.transConfirmada,_upd:Date.now()}:v));}}
           onVolver={()=>irA("menu")} />}
       {pantalla==="diaPrincipal"   && <DiaPrincipal dia={diaActual} onIrClientes={()=>irA("selectorFechaClientes")} onIrPlanilla={()=>irA("selectorFechaPlanilla")} onVolver={()=>irA("menu")} onVerConfirmaciones={()=>irA("confirmacionesDia")} ventasPendientesTransfer={ventas.filter(v=>v.dia===diaActual&&(v.pago==="transferencia"||(v.pago==="mixto"&&(Number(v.montoTrans)||0)>0))&&!v.transConfirmada).length} />}
-      {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
-      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual)} clientes={clientes} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(`${diaActual}_${fechaActual}`,d);irA("planilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={(img)=>cerrarDia(fechaActual,diaActual,img)} initCierre={initCierre} prospectos={prospectos||[]} noVisitas={noVisitas||[]} />}
-      {pantalla==="selectorFechaClientes" && <SelectorFecha dia={diaActual} planillas={planillas} ventas={ventas} noVisitas={noVisitas} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("inicioReparto");}} onVolver={()=>irA("diaPrincipal")} />}
-      {pantalla==="inicioReparto"  && <InicioReparto dia={diaActual} fecha={fechaActual} planilla={planillas[`${diaActual}_${fechaActual}`]||planillaDiaVacia()} productos={productos} cargasDia={cargasDia} stock={stockNorm}
+      {pantalla==="selectorFechaPlanilla" && <SelectorFecha dia={diaActual} repartoId={repartoActual?.id} planillas={planillas} ventas={ventas.filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return !repartoActual||cl?.repartoId===repartoActual.id;})} noVisitas={(noVisitas||[]).filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return !repartoActual||cl?.repartoId===repartoActual.id;})} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("planilla");}} onVolver={()=>irA("diaPrincipal")} />}
+      {pantalla==="planilla"       && <PlanillaDelDia dia={diaActual} fecha={fechaActual} repartoId={repartoActual?.id} ventas={ventas.filter(v=>v.dia===diaActual&&v.fechaKey===fechaActual&&(!repartoActual||clientes.find(c=>c.id===v.clienteId)?.repartoId===repartoActual.id))} clientes={clientes.filter(c=>!repartoActual||c.repartoId===repartoActual.id)} planilla={planillas[claveDiaReparto(diaActual,fechaActual,repartoActual?.id)]||planillaDiaVacia()} productos={productos} stock={stockNorm} setStock={setStock} syncData={syncData} onGuardar={d=>{savePlanilla(claveDiaReparto(diaActual,fechaActual,repartoActual?.id),d);irA("planilla");}} onVolver={()=>irA("selectorFechaPlanilla")} onCerrarDia={(img)=>cerrarDia(fechaActual,diaActual,img)} initCierre={initCierre} prospectos={prospectos||[]} noVisitas={noVisitas||[]} />}
+      {pantalla==="selectorFechaClientes" && <SelectorFecha dia={diaActual} repartoId={repartoActual?.id} planillas={planillas} ventas={ventas.filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return !repartoActual||cl?.repartoId===repartoActual.id;})} noVisitas={(noVisitas||[]).filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return !repartoActual||cl?.repartoId===repartoActual.id;})} onSeleccionar={(fk,fo)=>{setFechaActual(fk);setFechaObj(fo);irA("inicioReparto");}} onVolver={()=>irA("diaPrincipal")} />}
+      {pantalla==="inicioReparto"  && <InicioReparto dia={diaActual} fecha={fechaActual} planilla={planillas[claveDiaReparto(diaActual,fechaActual,repartoActual?.id)]||planillaDiaVacia()} productos={productos} cargasDia={cargasDiaDe(repartoActual?.id)} stock={stockNorm}
         onGuardar={(p,descontar)=>{
-          savePlanilla(`${diaActual}_${fechaActual}`,p);
-          if(descontar){
+          savePlanilla(claveDiaReparto(diaActual,fechaActual,repartoActual?.id),p);
+          if(descontar && repartoActual){
             const s=JSON.parse(JSON.stringify(normStock(stockNorm)));
             const soda=Number(p.productos?.soda?.llenos||0);
             const b10=Number(p.productos?.b10?.llenos||0);
             const b20=Number(p.productos?.b20?.llenos||0);
+            if(!s.camiones[repartoActual.id]) s.camiones[repartoActual.id]=stockCamionVacio();
             s.soderia.sifon  =Math.max(0,(s.soderia.sifon||0)-soda);
             s.soderia.bidon10=Math.max(0,(s.soderia.bidon10||0)-b10);
             s.soderia.bidon20=Math.max(0,(s.soderia.bidon20||0)-b20);
-            s.camion.sifon   =(s.camion.sifon||0)+soda;
-            s.camion.bidon10 =(s.camion.bidon10||0)+b10;
-            s.camion.bidon20 =(s.camion.bidon20||0)+b20;
+            s.camiones[repartoActual.id].sifon   =(s.camiones[repartoActual.id].sifon||0)+soda;
+            s.camiones[repartoActual.id].bidon10 =(s.camiones[repartoActual.id].bidon10||0)+b10;
+            s.camiones[repartoActual.id].bidon20 =(s.camiones[repartoActual.id].bidon20||0)+b20;
             setStock(normStock(s));
             syncData({stock:normStock(s)});
           }
@@ -907,7 +941,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           setClienteId(p.id);
           irA("detalleCliente");
         }}
-        onIrPlanilla={()=>{ setInitCierre(!planillas[`${diaActual}_${fechaActual}`]?._diaCerrado); irA("planilla"); }}
+        onIrPlanilla={()=>{ setInitCierre(!planillas[claveDiaReparto(diaActual,fechaActual,repartoActual?.id)]?._diaCerrado); irA("planilla"); }}
         onIrMenu={()=>irA("menu")}
         onAbrirMapa={()=>irA("mapaClientes")}
         />}
@@ -965,7 +999,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           const sifs=ventasHoy.reduce((a,v)=>a+(v.detalle||[]).filter(d=>d.nombre==="Sifón 1.5L").reduce((b,d)=>b+d.cantidad,0),0);
           const b10=ventasHoy.reduce((a,v)=>a+(v.detalle||[]).filter(d=>d.nombre==="Bidón 10L").reduce((b,d)=>b+d.cantidad,0),0);
           const b20=ventasHoy.reduce((a,v)=>a+(v.detalle||[]).filter(d=>d.nombre==="Bidón 20L").reduce((b,d)=>b+d.cantidad,0),0);
-          const planillaHoy=planillas[`${diaActual}_${fechaActual}`]||{};
+          const planillaHoy=planillas[claveDiaReparto(diaActual,fechaActual,repartoActual?.id)]||{};
           return {visitados:visitadosIds.size,total:clientesDia.length,montoHoy,stock:{"Sif":Math.max(0,(Number(planillaHoy.productos?.soda?.llenos)||0)-sifs),"10L":Math.max(0,(Number(planillaHoy.productos?.b10?.llenos)||0)-b10),"20L":Math.max(0,(Number(planillaHoy.productos?.b20?.llenos)||0)-b20)}};
         })()}
         onNoEsta={()=>{
@@ -1133,7 +1167,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         }}
         onVolver={()=>irA("menu")}
       />}
-      {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDia} setCargasDia={saveCargasDia} planillas={planillas} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
+      {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDiaDe(repartoActual?.id)} setCargasDia={(v)=>saveCargasDiaDe(repartoActual?.id,v)} planillas={planillas} repartos={repartos} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
       {pantalla==="fiadosPendientes" && <FiadosPendientes clientes={clientes} ventas={ventas} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onCobrar={(cId,monto,pago)=>{
         const cl=clientes.find(c=>c.id===cId);if(!cl)return;
         const vt={id:Date.now(),clienteId:cl.id,cliente:cl.nombre,dia:cl.dia,fechaKey:new Date().toLocaleDateString("en-CA"),fecha:new Date().toLocaleString("es-AR"),
@@ -1142,7 +1176,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         saveVentas(prev=>[...prev,vt]);saveClientes(prev=>prev.map(c=>c.id===cId?{...c,saldo:(Number(c.saldo)||0)+monto}:c));
       }} onVolver={()=>irA("menu")} />}
       {pantalla==="resumen"        && <Resumen ventas={ventas} clientes={clientes} productos={productos} planillas={planillas} noVisitas={noVisitas||[]} onVolver={()=>irA("menu")} />}
-      {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDia} setCargasDia={saveCargasDia} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} tabInicial={tabConfig} repartos={repartos} repartoActual={repartoActual} />}
+      {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDiaDe(repartoActual?.id)} setCargasDia={(v)=>saveCargasDiaDe(repartoActual?.id,v)} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} tabInicial={tabConfig} repartos={repartos} repartoActual={repartoActual} />}
     </div>
     {/* fin del zoom */}
     </>)}{modalResumenDia&&(()=>{
