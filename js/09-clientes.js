@@ -4,8 +4,7 @@
 
 function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onEntregar,onNuevoCliente,onVolver,onReordenar,onEditarCliente,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto,onAbrirMapa,onIrPlanilla,onIrMenu}) {
   const [busqueda,setBusqueda] = useState("");
-  const [editandoOrden,setEditandoOrden] = useState(null);
-  const [ordenTemp,setOrdenTemp] = useState("");
+  const [clienteMoviendo,setClienteMoviendo] = useState(null); // id del cliente "levantado", esperando destino
   // ventas y noVisitas ya filtradas por fecha+dia desde App
   const atendidos = new Set(ventas.filter(v=>!v._esCobro&&!v._esAjuste).map(v=>v.clienteId));
   const noVMap = {}; (noVisitas||[]).filter(v=>v.fecha===fecha).forEach(v=>{noVMap[v.clienteId]=v.motivo;});
@@ -42,10 +41,17 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
     window.open(`https://www.google.com/maps/dir/?api=1${wps?`&waypoints=${wps}`:""}&destination=${dest}&travelmode=driving`,"_blank");
   };
 
-  const guardarOrden=(c)=>{
-    const n=parseInt(ordenTemp);
-    if(!isNaN(n)&&n>0) onReordenar(clientes.map(x=>x.id===c.id?{...x,orden:n}:x));
-    setEditandoOrden(null);setOrdenTemp("");
+  const moverCliente=(idOrigen,idDestino)=>{
+    if(idOrigen===idDestino) return;
+    const ordenActual = clientesOrdenados.map(c=>c.id);
+    const idxOrigen = ordenActual.indexOf(idOrigen);
+    const idxDestino = ordenActual.indexOf(idDestino);
+    if(idxOrigen===-1||idxDestino===-1) return;
+    const nuevoOrden = [...ordenActual];
+    const [item] = nuevoOrden.splice(idxOrigen,1);
+    nuevoOrden.splice(idxDestino,0,item);
+    const posMap = {}; nuevoOrden.forEach((id,i)=>{posMap[id]=i+1;});
+    onReordenar(clientes.map(c=>posMap[c.id]!==undefined?{...c,orden:posMap[c.id]}:c));
   };
 
   const Card=({c})=>{
@@ -60,17 +66,20 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
       <>
       <div style={{...s.card,borderLeft:`3px solid ${bc}`,opacity:(visitados.has(c.id))?0.65:est==="noesta"?0.85:1}}>
         <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-          <div style={{flexShrink:0,paddingTop:2}} onClick={()=>{if(!atendido){setEditandoOrden(c.id);setOrdenTemp(String(c.orden||""));}}}>
-            {editandoOrden===c.id
-              ? <input autoFocus type="number" min={1} value={ordenTemp}
-                  onChange={e=>setOrdenTemp(e.target.value)}
-                  onBlur={()=>guardarOrden(c)}
-                  onKeyDown={e=>e.key==="Enter"&&guardarOrden(c)}
-                  style={{width:40,textAlign:"center",padding:"3px",borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",fontSize:14}} />
-              : <div style={{width:34,height:34,borderRadius:8,background:"var(--color-background-secondary)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:"var(--color-text-secondary)",cursor:"pointer",border:"0.5px solid var(--color-border-tertiary)"}}>
-                  {c.orden||"#"}
-                </div>
-            }
+          <div style={{flexShrink:0,paddingTop:2}} onClick={()=>{
+              if(atendido) return;
+              if(clienteMoviendo===null) setClienteMoviendo(c.id);
+              else if(clienteMoviendo===c.id) setClienteMoviendo(null);
+              else { moverCliente(clienteMoviendo,c.id); setClienteMoviendo(null); }
+            }}>
+            <div style={{width:34,height:34,borderRadius:8,
+                background:clienteMoviendo===c.id?"#185FA5":(clienteMoviendo&&!atendido)?"var(--color-background-warning)":"var(--color-background-secondary)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,
+                color:clienteMoviendo===c.id?"#fff":(clienteMoviendo&&!atendido)?"var(--color-text-warning)":"var(--color-text-secondary)",
+                cursor:atendido?"default":"pointer",
+                border:clienteMoviendo===c.id?"1.5px solid #5daaff":"0.5px solid var(--color-border-tertiary)"}}>
+              {clienteMoviendo===c.id?"✓":c.orden||"#"}
+            </div>
           </div>
           <div style={{flex:1,cursor:"pointer",minWidth:0}} onClick={handleClick}>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -182,7 +191,11 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
           <button style={{...s.btn,fontSize:11,padding:"3px 10px",marginLeft:"auto",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={onNuevoCliente}>+ Nuevo</button>
           <button style={{...s.btn,fontSize:11,padding:"3px 10px"}} onClick={onAbrirMapa||abrirRuta}>🗺 Mapa</button>
         </div>
-        <p style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6}}>Tocá el # para editar el número de orden del cliente</p>
+        <p style={{fontSize:11,color:clienteMoviendo?"var(--color-text-warning)":"var(--color-text-tertiary)",marginTop:6,fontWeight:clienteMoviendo?600:400}}>
+          {clienteMoviendo
+            ? `📍 Tocá el # de dónde debería ir "${clientes.find(c=>c.id===clienteMoviendo)?.nombre||""}" (tocá el mismo para cancelar)`
+            : "Tocá el # de un cliente para moverlo, después tocá dónde debería ir"}
+        </p>
       </div>
       {filtrados.length===0&&<div style={{textAlign:"center",padding:"40px 20px",color:"var(--color-text-tertiary)",fontSize:14}}>No hay clientes para {dia}.</div>}
       {pendientesNormales.length>0&&<><span style={s.sectionTitle}>Pendientes ({pendientesNormales.length})</span>{pendientesNormales.map(c=><Card key={c.id} c={c}/>)}</>}

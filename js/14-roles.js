@@ -574,7 +574,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
               s.camiones[miReparto.id].sifon  =(s.camiones[miReparto.id].sifon||0)+soda;
               s.camiones[miReparto.id].bidon10=(s.camiones[miReparto.id].bidon10||0)+b10;
               s.camiones[miReparto.id].bidon20=(s.camiones[miReparto.id].bidon20||0)+b20;
-              sync({stock:s});
+              // La carga real de hoy queda como sugerencia para la próxima vez que
+              // este reparto salga este mismo día — no depende de un número fijo.
+              const cargasDiaNuevo={...(datos.cargasDia||{}),[miReparto.id]:{...((datos.cargasDia||{})[miReparto.id]||{}),[diaActual]:{soda,b10,b20}}};
+              sync({stock:s,cargasDia:cargasDiaNuevo});
             }
             irA("clientes");
           }}
@@ -763,6 +766,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           clientes={clientes}
           planilla={planillas[claveDiaReparto(diaActual,fechaActual,miReparto?.id)]||planillaDiaVacia()}
           productos={productos} stock={datos.stock||{}}
+          cargasDia={(datos.cargasDia&&miReparto&&datos.cargasDia[miReparto.id])||CARGA_DIA_DEFAULT}
           setStock={(ns)=>sync({stock:ns})}
           syncData={(overrides)=>sync(overrides)}
           onGuardar={d=>{savePlanilla(claveDiaReparto(diaActual,fechaActual,miReparto?.id),d);irA("inicio");}}

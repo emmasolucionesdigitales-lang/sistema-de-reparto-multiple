@@ -748,7 +748,7 @@ function DetalleVentasDia({ventas, clientes, prospectos, noVisitas, fecha}) {
   );
 }
 
-function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre,prospectos,noVisitas}) {
+function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,stock,setStock,syncData,onGuardar,onVolver,onCerrarDia,initCierre,prospectos,noVisitas,cargasDia}) {
   // Separar ventas del día propio vs ventas de clientes de otro día
   const [enviosInforme,setEnviosInforme] = React.useState(()=>Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`)||0));
   const clientesDia = new Set((clientes||[]).filter(c=>c.dia===dia).map(c=>c.id));
@@ -859,6 +859,11 @@ function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,
   const soderiaActual = stock?.soderia||{};
   const soderiaVaciosActual = stock?.soderia_vacios||{};
 
+  // Cuánto necesitás para la salida del PRÓXIMO día de este mismo reparto
+  const DIAS_ORDEN = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  const diaSiguiente = DIAS_ORDEN[(DIAS_ORDEN.indexOf(dia)+1) % DIAS_ORDEN.length];
+  const necesarioManana = (cargasDia && cargasDia[diaSiguiente]) || {soda:0,b10:0,b20:0};
+
   const confirmarCierre = () => {
     const realesL={
       soda: realesLlenos.soda!==""?Number(realesLlenos.soda)*CAJON_SODA:sobrantes.soda,
@@ -959,12 +964,13 @@ function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,
           <span style={{...s.sectionTitle,padding:"0 0 8px"}}>LO QUE VUELVE A SODERÍA</span>
           <p style={{fontSize:12,color:"var(--color-text-tertiary)",margin:"-4px 0 10px"}}>Contá lo que tenés en mano. Si coincide con el cálculo, dejalo así.</p>
           <div style={{...s.card,margin:"0 0 16px",padding:"10px 12px"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr",gap:4,marginBottom:8}}>
-              {["","Calculado","Tenés en mano"].map(h=>(
-                <div key={h} style={{fontSize:11,color:h==="Calculado"?"#5daaff":"var(--color-text-secondary)",textAlign:h?"center":"left",fontWeight:500}}>{h}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1.3fr 0.75fr 0.95fr 0.8fr",gap:3,marginBottom:6}}>
+              {["","Calc.","En mano","Sodería"].map(h=>(
+                <div key={h} style={{fontSize:10,color:h==="Calc."?"#5daaff":h==="Sodería"?"var(--color-text-success)":"var(--color-text-secondary)",textAlign:h?"center":"left",fontWeight:500}}>{h}</div>
               ))}
             </div>
             {[
+              ["Soda\n(sobrante lleno)","soda","llenos"],
               ["Soda\n(vacíos)","soda","vacios"],
               ["10L\n(sobrante lleno)","b10","llenos"],
               ["10L\n(vacíos)","b10","vacios"],
@@ -983,25 +989,31 @@ function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,
               // (para soda, todo en cajones — la sodería lo guarda en unidades)
               const actualSoderia=tipo==="vacios"?(soderiaVaciosActual[sk]||0):(soderiaActual[sk]||0);
               const quedaEn=pk==="soda"?Math.floor(actualSoderia/CAJON_SODA)+realVal:actualSoderia+realVal;
+              const necManPk=necesarioManana[pk]||0;
+              const necManVal=pk==="soda"?Math.ceil(necManPk/CAJON_SODA):necManPk;
+              const faltaLlenar=tipo==="llenos"?Math.max(0,necManVal-quedaEn):0;
               return (
-                <div key={pk+"_"+tipo} style={{borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:10,marginTop:6}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr",gap:8,alignItems:"center"}}>
-                    <span style={{fontSize:12,color:"var(--color-text-primary)",whiteSpace:"pre-line"}}>{label}</span>
-                    <div style={{textAlign:"center",fontSize:24,fontWeight:500,color:"#5daaff"}}>{calcVal}</div>
+                <div key={pk+"_"+tipo} style={{borderTop:"0.5px solid var(--color-border-tertiary)",padding:"8px 0"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1.3fr 0.75fr 0.95fr 0.8fr",gap:5,alignItems:"center"}}>
+                    <span style={{fontSize:11,color:"var(--color-text-primary)",whiteSpace:"pre-line",lineHeight:1.25}}>{label}</span>
+                    <div style={{textAlign:"center",fontSize:17,fontWeight:500,color:"#5daaff"}}>{calcVal}</div>
                     <input type="number" min={0}
                       value={stateObj[pk]}
                       placeholder={String(calcVal)}
-                      style={{padding:"8px 4px",borderRadius:8,border:"1.5px solid var(--color-border-secondary)",background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",fontSize:20,textAlign:"center",width:"100%",boxSizing:"border-box"}}
+                      style={{padding:"6px 2px",borderRadius:7,border:"1.5px solid var(--color-border-secondary)",background:"var(--color-background-tertiary)",color:"var(--color-text-primary)",fontSize:16,textAlign:"center",width:"100%",boxSizing:"border-box"}}
                       onChange={e=>setFn(r=>({...r,[pk]:e.target.value}))}
                     />
+                    <div style={{textAlign:"center",fontSize:15,fontWeight:600,color:"var(--color-text-success)"}}>{quedaEn}</div>
                   </div>
-                  <div style={{textAlign:"center",marginTop:4,fontSize:11,color:"var(--color-text-tertiary)"}}>
-                    Quedará en sodería: <span style={{color:"var(--color-text-secondary)",fontWeight:600}}>{quedaEn}</span>
-                  </div>
+                  {tipo==="llenos"&&(
+                    <div style={{textAlign:"right",marginTop:3,fontSize:11,color:faltaLlenar>0?"var(--color-text-warning)":"var(--color-text-tertiary)",fontWeight:faltaLlenar>0?600:400}}>
+                      {faltaLlenar>0?`⚠️ Hay que llenar ${faltaLlenar} más para mañana`:`✓ Alcanza para mañana (necesitás ${necManVal})`}
+                    </div>
+                  )}
                   {diff!==0&&(
-                    <div style={{textAlign:"center",marginTop:3,fontSize:12,fontWeight:600,
+                    <div style={{textAlign:"right",marginTop:3,fontSize:11,fontWeight:600,
                       color:diff>0?"var(--color-text-warning)":"var(--color-text-danger)"}}>
-                      {`${diff>0?"+":""}${diff} diferencia`}
+                      {`${diff>0?"+":""}${diff} dif.`}
                     </div>
                   )}
                 </div>
