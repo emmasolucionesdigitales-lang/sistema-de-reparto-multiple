@@ -926,7 +926,13 @@ function PantallaActivacionRM({onActivado}) {
       if(lic.app && lic.app !== "reparto-multi"){ setError("Este código no es para Reparto Multi."); setCargando(false); return; }
       if(lic.estado === "inactivo"){ setError("Licencia desactivada. Contactá al soporte."); setCargando(false); return; }
       if(lic.estado === "pendiente"){ setError("Licencia pendiente de activación. Contactá a Emma Soluciones."); setCargando(false); return; }
-      if(lic.estado === "usado" && lic.deviceId && lic.deviceId !== getDeviceId()){ setError("Este código ya fue usado en otro dispositivo."); setCargando(false); return; }
+      if(lic.estado === "usado") {
+        const miDevice = getDeviceId();
+        const miTipo = tipoDispositivoRM();
+        const dispositivos = slotsLicenciaRM(lic, miDevice, miTipo);
+        const slotOcupado = dispositivos[miTipo];
+        if(slotOcupado && slotOcupado !== miDevice){ setError(`Este código ya está en uso en ${miTipo==="pc"?"otra computadora":"otro celular"}.`); setCargando(false); return; }
+      }
       setTipo("dueno"); setLicData(lic); setPaso(2);
     } catch(e){ setError("Error de conexión. Verificá tu internet."); }
     setCargando(false);
@@ -944,6 +950,12 @@ function PantallaActivacionRM({onActivado}) {
       if(licData.email&&licData.email.trim().toLowerCase()!==email.trim().toLowerCase()){setError("El email no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
       if(licData.celular&&licData.celular.trim()!==celular.trim()){setError("El celular no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
       if(String(licData.pin)!==pinIngresado.trim()){setError("El PIN no es correcto. Revisá el que te enviaron.");setCargando(false);return;}
+      // Re-chequear el casillero (pudo ocuparse entre el paso 1 y este paso)
+      const miTipo = tipoDispositivoRM();
+      const dispositivos = slotsLicenciaRM(licData, deviceId, miTipo);
+      const slotOcupado = dispositivos[miTipo];
+      if(slotOcupado && slotOcupado !== deviceId){ setError(`Este código ya está en uso en ${miTipo==="pc"?"otra computadora":"otro celular"}.`); setCargando(false); return; }
+      dispositivos[miTipo] = deviceId;
       // Buscar negocioId en app-reparto-multiple
       let negocioId = licData.negocioId || cod;
       try {
@@ -952,7 +964,7 @@ function PantallaActivacionRM({onActivado}) {
         if(!negSnap.empty) negocioId = negSnap.docs[0].id;
       } catch(_) {}
       await window.dbLicencias.collection("licencias").doc(cod).update({
-        estado:"usado", deviceId, celular:celular.trim(), email:email.trim(),
+        estado:"usado", deviceId, dispositivos, celular:celular.trim(), email:email.trim(),
         negocio:nombre.trim(), activadoEn:new Date().toISOString()
       });
       const profile = {

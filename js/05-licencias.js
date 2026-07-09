@@ -36,8 +36,14 @@ function PantallaActivacion({onActivado}) {
       const lic = doc.data();
       if(lic.estado === "inactivo") { setError("Esta licencia está desactivada. Contactá al soporte."); setCargando(false); return; }
       if(lic.estado === "pendiente") { setError("Tu licencia está pendiente de activación por el administrador. Contactá a Emma Soluciones."); setCargando(false); return; }
-      if(lic.estado === "usado" && lic.deviceId && lic.deviceId !== getDeviceId()) {
-        setError("Este código ya fue usado en otro dispositivo."); setCargando(false); return;
+      if(lic.estado === "usado") {
+        const miDevice = getDeviceId();
+        const miTipo = tipoDispositivoRM();
+        const dispositivos = slotsLicenciaRM(lic, miDevice, miTipo);
+        const slotOcupado = dispositivos[miTipo];
+        if(slotOcupado && slotOcupado !== miDevice) {
+          setError(`Este código ya está en uso en ${miTipo==="pc"?"otra computadora":"otro celular"}.`); setCargando(false); return;
+        }
       }
       setPaso(2);
     } catch(e) { setError("Error de conexión. Verificá tu internet."); }
@@ -56,8 +62,15 @@ function PantallaActivacion({onActivado}) {
       if(lic.email&&lic.email.trim().toLowerCase()!==email.trim().toLowerCase()){setError("El email no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
       if(lic.celular&&lic.celular.trim()!==celular.trim()){setError("El celular no coincide con el registrado. Contactá al administrador.");setCargando(false);return;}
       const deviceId = getDeviceId();
+      const miTipo = tipoDispositivoRM();
+      const dispositivos = slotsLicenciaRM(lic, deviceId, miTipo);
+      const slotOcupado = dispositivos[miTipo];
+      if(slotOcupado && slotOcupado !== deviceId) {
+        setError(`Este código ya está en uso en ${miTipo==="pc"?"otra computadora":"otro celular"}.`); setCargando(false); return;
+      }
+      dispositivos[miTipo] = deviceId;
       await window.dbLicencias.collection("licencias").doc(codigoUp).update({
-        estado: "usado", deviceId, celular: celular.trim(),
+        estado: "usado", deviceId, dispositivos, celular: celular.trim(),
         email: email.trim(), negocio: negocio.trim(),
         aceptoTerminos: true, fechaAceptoTerminos: new Date().toISOString(),
         activadoEn: new Date().toISOString()
@@ -267,6 +280,30 @@ function getDeviceId() {
   let id = localStorage.getItem("sr_device_id");
   if(!id) { id = "dev_"+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem("sr_device_id",id); }
   return id;
+}
+
+// ── Tipo de dispositivo (PC o móvil) — para el licenciamiento de 2 aparatos del dueño ──
+function tipoDispositivoRM() {
+  const ua = navigator.userAgent || "";
+  const esMovilUA = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
+  // iPadOS 13+ se identifica como "Macintosh" pero tiene pantalla táctil
+  const esIpadDisfrazado = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+  return (esMovilUA || esIpadDisfrazado) ? "movil" : "pc";
+}
+
+// Arma (sin guardar todavía) el objeto {pc,movil} de una licencia de DUEÑO,
+// migrando el esquema viejo de un solo "deviceId" la primera vez que se ve.
+// OJO: esto es solo para la licencia del dueño — los repartidores siguen
+// atados a 1 solo dispositivo, sin tocar.
+function slotsLicenciaRM(d, miDevice, miTipo) {
+  let dispositivos = d.dispositivos;
+  if(!dispositivos) {
+    dispositivos = {pc:"", movil:""};
+    if(d.deviceId) {
+      dispositivos[d.deviceId === miDevice ? miTipo : (miTipo === "pc" ? "movil" : "pc")] = d.deviceId;
+    }
+  }
+  return dispositivos;
 }
 
 function getLogo() {
