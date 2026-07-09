@@ -854,6 +854,10 @@ function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,
     b10: Math.max(0,vendidosDia.b10+devueltosDia.b10-prestadosDia.b10),
     b20: Math.max(0,vendidosDia.b20+devueltosDia.b20-prestadosDia.b20),
   };
+  // Sodería actual (antes del cierre) — para mostrar "quedará en" por fila
+  const convPk={soda:"sifon",b10:"bidon10",b20:"bidon20"};
+  const soderiaActual = stock?.soderia||{};
+  const soderiaVaciosActual = stock?.soderia_vacios||{};
 
   const confirmarCierre = () => {
     const realesL={
@@ -908,57 +912,64 @@ function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,
         <HeaderApp titulo={`Cierre del día · ${dia}`} onVolver={()=>setMostrarCierre(false)}/>
         <div style={{padding:16}}>
 
-          {/* LO QUE CARGASTE HOY */}
-          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>LO QUE CARGASTE HOY</span>
-          <div style={{...s.card,margin:"0 0 12px"}}>
-            {[
-              ["Soda",      llenosCargados.soda>0?`${Math.floor(llenosCargados.soda/CAJON_SODA)} cajones (${llenosCargados.soda} un)`:"—"],
-              ["Bidón 10L", llenosCargados.b10>0?`${llenosCargados.b10} unidades`:"—"],
-              ["Bidón 20L", llenosCargados.b20>0?`${llenosCargados.b20} unidades`:"—"],
-            ].map(([l,v])=>(
-              <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
-                <span style={{fontSize:14,color:"var(--color-text-secondary)"}}>{l}</span>
-                <span style={{fontSize:15,fontWeight:500,color:"var(--color-text-primary)"}}>{v}</span>
+          {/* Detalle del día — colapsado por defecto, para el que quiera revisar */}
+          <details style={{marginBottom:12}}>
+            <summary style={{cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--color-background-tertiary)",borderRadius:8,padding:"10px 14px"}}>
+              <span style={{fontSize:13,fontWeight:500,color:"var(--color-text-primary)"}}>Ver detalle del día (lo cargado y los movimientos)</span>
+              <span style={{fontSize:11,color:"var(--color-text-tertiary)"}}>▾</span>
+            </summary>
+            <div style={{marginTop:8}}>
+              <div style={{...s.card,margin:"0 0 8px",padding:"10px 12px"}}>
+                {[
+                  ["Soda",      llenosCargados.soda>0?`${Math.floor(llenosCargados.soda/CAJON_SODA)} cajones (${llenosCargados.soda} un)`:"—"],
+                  ["Bidón 10L", llenosCargados.b10>0?`${llenosCargados.b10} unidades`:"—"],
+                  ["Bidón 20L", llenosCargados.b20>0?`${llenosCargados.b20} unidades`:"—"],
+                ].map(([l,v])=>(
+                  <div key={l} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+                    <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>{l} cargado</span>
+                    <span style={{fontSize:14,fontWeight:500,color:"var(--color-text-primary)"}}>{v}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-
-          {/* MOVIMIENTOS DEL DÍA */}
-          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>MOVIMIENTOS DEL DÍA (REGISTRADOS)</span>
-          <div style={{...s.card,margin:"0 0 12px",padding:"10px 12px"}}>
-            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",marginBottom:8}}>
-              {["","Vendido","Prestado","Devuelto"].map(h=>(
-                <div key={h} style={{fontSize:11,color:"var(--color-text-tertiary)",textAlign:h?"center":"left",fontWeight:500}}>{h}</div>
-              ))}
+              <div style={{...s.card,margin:"0 0 8px",padding:"10px 12px"}}>
+                <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",marginBottom:8}}>
+                  {["","Vendido","Prestado","Devuelto"].map(h=>(
+                    <div key={h} style={{fontSize:11,color:"var(--color-text-tertiary)",textAlign:h?"center":"left",fontWeight:500}}>{h}</div>
+                  ))}
+                </div>
+                {[["Soda","soda"],["10L","b10"],["20L","b20"]].map(([label,pk])=>(
+                  <div key={pk} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",padding:"7px 0",borderTop:"0.5px solid var(--color-border-tertiary)",alignItems:"center"}}>
+                    <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{label}</span>
+                    <span style={{textAlign:"center",fontSize:15,fontWeight:600,color:"var(--color-text-warning)"}}>
+                      {vendidosDia[pk]>0?`−${pk==="soda"?Math.floor(vendidosDia[pk]/CAJON_SODA):vendidosDia[pk]}`:"—"}
+                    </span>
+                    <span style={{textAlign:"center",fontSize:15,fontWeight:600,color:prestadosDia[pk]>0?"var(--color-text-warning)":"var(--color-text-tertiary)"}}>
+                      {prestadosDia[pk]>0?`−${pk==="soda"?Math.floor(prestadosDia[pk]/CAJON_SODA):prestadosDia[pk]}`:"0"}
+                    </span>
+                    <span style={{textAlign:"center",fontSize:15,fontWeight:600,color:devueltosDia[pk]>0?"var(--color-text-success)":"var(--color-text-tertiary)"}}>
+                      {devueltosDia[pk]>0?`+${pk==="soda"?Math.floor(devueltosDia[pk]/CAJON_SODA):devueltosDia[pk]}`:"0"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            {[["Soda","soda"],["10L","b10"],["20L","b20"]].map(([label,pk])=>(
-              <div key={pk} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",padding:"7px 0",borderTop:"0.5px solid var(--color-border-tertiary)",alignItems:"center"}}>
-                <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{label}</span>
-                <span style={{textAlign:"center",fontSize:15,fontWeight:600,color:"var(--color-text-warning)"}}>
-                  {vendidosDia[pk]>0?`−${pk==="soda"?Math.floor(vendidosDia[pk]/CAJON_SODA):vendidosDia[pk]}`:"—"}
-                </span>
-                <span style={{textAlign:"center",fontSize:15,fontWeight:600,color:prestadosDia[pk]>0?"var(--color-text-warning)":"var(--color-text-tertiary)"}}>
-                  {prestadosDia[pk]>0?`−${pk==="soda"?Math.floor(prestadosDia[pk]/CAJON_SODA):prestadosDia[pk]}`:"0"}
-                </span>
-                <span style={{textAlign:"center",fontSize:15,fontWeight:600,color:devueltosDia[pk]>0?"var(--color-text-success)":"var(--color-text-tertiary)"}}>
-                  {devueltosDia[pk]>0?`+${pk==="soda"?Math.floor(devueltosDia[pk]/CAJON_SODA):devueltosDia[pk]}`:"0"}
-                </span>
-              </div>
-            ))}
-          </div>
+          </details>
 
-          {/* CONFIRMÁ LO QUE TRAÉS DE VUELTA */}
-          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>CONFIRMÁ LO QUE TRAÉS DE VUELTA</span>
-          <div style={{...s.card,margin:"0 0 12px",padding:"10px 12px"}}>
+          {/* LO QUE VUELVE A SODERÍA — confirmar o corregir, todo en un solo lugar */}
+          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>LO QUE VUELVE A SODERÍA</span>
+          <p style={{fontSize:12,color:"var(--color-text-tertiary)",margin:"-4px 0 10px"}}>Contá lo que tenés en mano. Si coincide con el cálculo, dejalo así.</p>
+          <div style={{...s.card,margin:"0 0 16px",padding:"10px 12px"}}>
             <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr",gap:4,marginBottom:8}}>
-              {["","Debería tener","Tenés en mano"].map(h=>(
-                <div key={h} style={{fontSize:11,color:h==="Debería tener"?"#5daaff":"var(--color-text-secondary)",textAlign:h?"center":"left",fontWeight:500}}>{h}</div>
+              {["","Calculado","Tenés en mano"].map(h=>(
+                <div key={h} style={{fontSize:11,color:h==="Calculado"?"#5daaff":"var(--color-text-secondary)",textAlign:h?"center":"left",fontWeight:500}}>{h}</div>
               ))}
             </div>
             {[
               ["Soda\n(vacíos)","soda","vacios"],
-              ["10L\n(sobrante)","b10","llenos"],
-              ["20L\n(sobrante)","b20","llenos"],
+              ["10L\n(sobrante lleno)","b10","llenos"],
+              ["10L\n(vacíos)","b10","vacios"],
+              ["20L\n(sobrante lleno)","b20","llenos"],
+              ["20L\n(vacíos)","b20","vacios"],
             ].map(([label,pk,tipo])=>{
               const calcVal=tipo==="vacios"
                 ?(pk==="soda"?Math.floor(vaciosRec[pk]/CAJON_SODA):vaciosRec[pk])
@@ -967,8 +978,13 @@ function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,
               const setFn=tipo==="vacios"?setRealesVacios:setRealesLlenos;
               const realVal=stateObj[pk]!==""?Number(stateObj[pk]):calcVal;
               const diff=realVal-calcVal;
+              const sk=convPk[pk];
+              // Cuánto queda en sodería: lo que ya había + lo que confirmaste en esta fila
+              // (para soda, todo en cajones — la sodería lo guarda en unidades)
+              const actualSoderia=tipo==="vacios"?(soderiaVaciosActual[sk]||0):(soderiaActual[sk]||0);
+              const quedaEn=pk==="soda"?Math.floor(actualSoderia/CAJON_SODA)+realVal:actualSoderia+realVal;
               return (
-                <div key={pk} style={{borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:10,marginTop:6}}>
+                <div key={pk+"_"+tipo} style={{borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:10,marginTop:6}}>
                   <div style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr",gap:8,alignItems:"center"}}>
                     <span style={{fontSize:12,color:"var(--color-text-primary)",whiteSpace:"pre-line"}}>{label}</span>
                     <div style={{textAlign:"center",fontSize:24,fontWeight:500,color:"#5daaff"}}>{calcVal}</div>
@@ -979,30 +995,18 @@ function PlanillaDelDia({dia,fecha,repartoId,ventas,clientes,planilla,productos,
                       onChange={e=>setFn(r=>({...r,[pk]:e.target.value}))}
                     />
                   </div>
-                  <div style={{textAlign:"center",marginTop:5,fontSize:12,fontWeight:600,
-                    color:diff===0?"var(--color-text-success)":diff>0?"var(--color-text-warning)":"var(--color-text-danger)"}}>
-                    {diff===0?"sin diferencia":`${diff>0?"+":""}${diff} diferencia`}
+                  <div style={{textAlign:"center",marginTop:4,fontSize:11,color:"var(--color-text-tertiary)"}}>
+                    Quedará en sodería: <span style={{color:"var(--color-text-secondary)",fontWeight:600}}>{quedaEn}</span>
                   </div>
+                  {diff!==0&&(
+                    <div style={{textAlign:"center",marginTop:3,fontSize:12,fontWeight:600,
+                      color:diff>0?"var(--color-text-warning)":"var(--color-text-danger)"}}>
+                      {`${diff>0?"+":""}${diff} diferencia`}
+                    </div>
+                  )}
                 </div>
               );
             })}
-          </div>
-
-          {/* VUELVE A SODERÍA */}
-          <div style={{...s.card,margin:"0 0 16px",background:"var(--color-background-success)",border:"1.5px solid var(--color-text-success)",padding:"14px 16px"}}>
-            <div style={{fontSize:12,fontWeight:600,color:"var(--color-text-success)",marginBottom:10}}>Vuelve a sodería</div>
-            <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid rgba(77,217,160,0.2)"}}>
-              <span style={{fontSize:13,color:"var(--color-text-success)"}}>Soda (vacíos)</span>
-              <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-success)"}}>{vaciosVuelta.soda} caj</span>
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:"0.5px solid rgba(77,217,160,0.2)"}}>
-              <span style={{fontSize:13,color:"var(--color-text-success)"}}>Bidón 10L</span>
-              <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-success)"}}>{llenosVuelta.b10} un</span>
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",padding:"5px 0"}}>
-              <span style={{fontSize:13,color:"var(--color-text-success)"}}>Bidón 20L</span>
-              <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-success)"}}>{llenosVuelta.b20} un</span>
-            </div>
           </div>
 
           <button
