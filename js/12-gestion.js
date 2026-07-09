@@ -14,6 +14,24 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
   const [productoViejoCambio,setProductoViejoCambio] = useState("Bidón 20L");
   const [productoNuevoCambio,setProductoNuevoCambio] = useState("Bidón 20L");
   const [motivoCambio,setMotivoCambio] = useState("Agua en mal estado");
+  const [clienteMoviendo, setClienteMoviendo] = useState(null); // id del cliente "levantado", esperando destino (mismo día)
+
+  const moverCliente=(idOrigen,idDestino)=>{
+    if(idOrigen===idDestino) return;
+    const origen=clientes.find(c=>c.id===idOrigen);
+    const destino=clientes.find(c=>c.id===idDestino);
+    if(!origen||!destino) return;
+    if(origen.dia!==destino.dia){ alert("Solo podés reordenar dentro del mismo día."); return; }
+    const delDia=[...clientes].filter(c=>c.dia===origen.dia).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
+    const idsDelDia=delDia.map(c=>c.id);
+    const idxOrigen=idsDelDia.indexOf(idOrigen), idxDestino=idsDelDia.indexOf(idDestino);
+    if(idxOrigen===-1||idxDestino===-1) return;
+    const nuevoOrden=[...idsDelDia];
+    const [item]=nuevoOrden.splice(idxOrigen,1);
+    nuevoOrden.splice(idxDestino,0,item);
+    const posMap={}; nuevoOrden.forEach((id,i)=>{posMap[id]=i+1;});
+    onReordenarTodo(clientes.map(c=>posMap[c.id]!==undefined?{...c,orden:posMap[c.id]}:c));
+  };
 
   // Calcular envases extra por cliente
   const extraEnvases = React.useMemo(()=>{
@@ -71,8 +89,10 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
           ↺ Reordenar
         </button>
         </div>
-        <p style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:6}}>
-          {filtrados.length} clientes{filtroDia!=="todos"?` · ${filtroDia}`:""}
+        <p style={{fontSize:11,color:clienteMoviendo?"var(--color-text-warning)":"var(--color-text-tertiary)",marginTop:6,fontWeight:clienteMoviendo?600:400}}>
+          {clienteMoviendo
+            ? `📍 Tocá el # de dónde debería ir "${clientes.find(c=>c.id===clienteMoviendo)?.nombre||""}" (mismo día · tocá el mismo para cancelar)`
+            : `${filtrados.length} clientes${filtroDia!=="todos"?` · ${filtroDia}`:""} · Tocá el # de un cliente para moverlo dentro de su día`}
         </p>
       </div>
 
@@ -143,9 +163,19 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
             <>
               <div style={{display:"flex",alignItems:"flex-start",gap:10,cursor:onVerDetalle?"pointer":"default"}}
                 onClick={()=>onVerDetalle&&onVerDetalle(c)}>
-                {/* Número de orden */}
-                <div style={{width:32,height:32,borderRadius:8,background:"var(--color-background-tertiary)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:"var(--color-text-tertiary)",flexShrink:0}}>
-                  {c.orden||"#"}
+                {/* Número de orden — tocar para mover (independiente del resto de la fila) */}
+                <div style={{width:32,height:32,borderRadius:8,flexShrink:0,
+                    background:clienteMoviendo===c.id?"#185FA5":(clienteMoviendo&&clientes.find(x=>x.id===clienteMoviendo)?.dia===c.dia)?"var(--color-background-warning)":"var(--color-background-tertiary)",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,
+                    color:clienteMoviendo===c.id?"#fff":(clienteMoviendo&&clientes.find(x=>x.id===clienteMoviendo)?.dia===c.dia)?"var(--color-text-warning)":"var(--color-text-tertiary)",
+                    border:clienteMoviendo===c.id?"1.5px solid #5daaff":"none"}}
+                  onClick={e=>{
+                    e.stopPropagation();
+                    if(clienteMoviendo===null) setClienteMoviendo(c.id);
+                    else if(clienteMoviendo===c.id) setClienteMoviendo(null);
+                    else { moverCliente(clienteMoviendo,c.id); setClienteMoviendo(null); }
+                  }}>
+                  {clienteMoviendo===c.id?"✓":c.orden||"#"}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:500,fontSize:14,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.nombre}</div>
