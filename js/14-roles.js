@@ -586,6 +586,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           clientes={clientes}
           dia={diaActual} fecha={fechaActual} ventas={ventasHoy} todasVentas={ventas} noVisitas={noVisHoy}
           onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("clientes");irA("detalleCliente");}}
+          onEntregar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);irA("venta");}}
           onNuevoCliente={null} onVolver={()=>irA("inicio")}
           onEditarCliente={(id,cambios)=>{
             const clientesActualizados = todosClientes.map(x=>x.id===id?{...x,...cambios,_upd:Date.now()}:x);

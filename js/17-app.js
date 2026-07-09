@@ -891,7 +891,11 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         }).filter(Boolean)}
         zonasReparto={zonasReparto}
         onSetZona={(dia,zona)=>{const nz={...zonasReparto,[dia]:zona};setZonasReparto(nz);syncData({zonasReparto:nz});}}
-        onDiaHoy={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));irA("inicioReparto");}}
+        onDiaHoy={(dia,fechaKey)=>{
+          setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));
+          const yaIniciado = planillas[claveDiaReparto(dia,fechaKey,repartoActual?.id)]?.iniciado;
+          irA(yaIniciado ? "clientes" : "inicioReparto");
+        }}
         onDiaResumen={(dia,fechaKey)=>{setDiaActual(dia);setFechaActual(fechaKey);setFechaObj(new Date(fechaKey+"T12:00:00"));setInitCierre(!planillas[claveDiaReparto(dia,fechaKey,repartoActual?.id)]?._diaCerrado);irA("planilla");}}
         noVisitas={(noVisitas||[]).filter(v=>{const cl=clientes.find(c=>c.id===v.clienteId);return cl?.repartoId===repartoActual.id;})}
         prospectos={prospectos||[]}
@@ -926,7 +930,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           }
           irA("clientes");
         }} onVolver={()=>irA("selectorFechaClientes")} />}
-      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id))} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&(!repartoActual||clientes.find(c=>c.id===v.clienteId)?.repartoId===repartoActual.id))} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(!repartoActual||clientes.find(c=>c.id===v.clienteId)?.repartoId===repartoActual.id))} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
+      {pantalla==="clientes"       && <ListaClientes clientes={clientes.filter(c=>c.dia===diaActual&&(!repartoActual||c.repartoId===repartoActual.id))} dia={diaActual} fecha={fechaActual} ventas={ventas.filter(v=>v.fechaKey===fechaActual&&v.dia===diaActual&&(!repartoActual||clientes.find(c=>c.id===v.clienteId)?.repartoId===repartoActual.id))} todasVentas={ventas} noVisitas={(noVisitas||[]).filter(v=>v.dia===diaActual&&v.fecha===fechaActual&&(!repartoActual||clientes.find(c=>c.id===v.clienteId)?.repartoId===repartoActual.id))} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onSeleccionar={c=>{setClienteId(c.id);irA("detalleCliente");}} onEntregar={c=>{setClienteId(c.id);irA("venta");}} onNuevoCliente={()=>irA("nuevoCliente")} onVolver={()=>irA("selectorFechaClientes")} onReordenar={lista=>{
           saveClientes(prev => [...prev.filter(c=>c.dia!==diaActual), ...lista]);
         }} onRegistrarNoVisita={(clienteId,motivo)=>{saveNoVisitas(prev=>[...(prev||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId,dia:diaActual,fecha:fechaActual,motivo,_upd:Date.now()}]);}} onQuitarNoVisita={(clienteId)=>{saveNoVisitas(prev=>(prev||[]).filter(v=>!(v.clienteId===clienteId&&v.dia===diaActual&&v.fecha===fechaActual)));}}
         onConfirmarTransfer={(clienteId,ventaId)=>{

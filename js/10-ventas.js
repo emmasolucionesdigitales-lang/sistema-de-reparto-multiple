@@ -102,9 +102,11 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
   );
   return (
     <div style={s.screen}>
-      <HeaderApp titulo={`Clientes · ${cliente.dia||""}`} onVolver={onVolver}/>
-      {/* Tarjeta de datos del cliente */}
-      <div style={{background:"var(--color-background-secondary)",borderRadius:10,margin:"8px 14px 0",padding:"10px 14px"}}>
+      {/* Header + tarjeta de cliente van juntos y quedan FIJOS arriba al scrollear */}
+      <div style={{position:"sticky",top:0,zIndex:15,background:"var(--color-background-primary)"}}>
+        <HeaderApp titulo={`Clientes · ${cliente.dia||""}`} onVolver={onVolver}/>
+        {/* Tarjeta de datos del cliente — flotante */}
+        <div style={{background:"var(--color-background-secondary)",borderBottom:"0.5px solid var(--color-border-tertiary)",boxShadow:"0 3px 8px rgba(0,0,0,0.18)",padding:"10px 14px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)"}}>{cliente.nombre}</div>
@@ -126,6 +128,7 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
         {cliente.dispenser>0&&<span style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)"}}>Disp×{cliente.dispenser}</span>}
         {(()=>{const aj=cliente.envAjuste||{};const items=[];if((aj.sifon||0)>0)items.push(`+${aj.sifon} sif.`);if((aj.bidon10||0)>0)items.push(`+${aj.bidon10} 10L`);if((aj.bidon20||0)>0)items.push(`+${aj.bidon20} 20L`);return items.length>0?<span style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"var(--color-background-warning)",color:"var(--color-text-warning)"}}>{items.join(" ")} prest.</span>:null;})()}
         {cliente.notas&&<span style={{fontSize:11,color:"var(--color-text-warning)"}}>📝 {cliente.notas}</span>}
+        </div>
         </div>
       </div>
       {/* Barra de progreso del día */}
