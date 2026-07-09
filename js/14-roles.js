@@ -584,9 +584,13 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       {pantalla==="clientes"&&(
         <ListaClientes
           clientes={clientes}
-          dia={diaActual} fecha={fechaActual} ventas={ventasHoy} noVisitas={noVisHoy}
+          dia={diaActual} fecha={fechaActual} ventas={ventasHoy} todasVentas={ventas} noVisitas={noVisHoy}
           onSeleccionar={c=>{setClienteId(c.id);setDiaClienteActual(c.dia||diaActual);setOrigenDetalle("clientes");irA("detalleCliente");}}
           onNuevoCliente={null} onVolver={()=>irA("inicio")}
+          onEditarCliente={(id,cambios)=>{
+            const clientesActualizados = todosClientes.map(x=>x.id===id?{...x,...cambios,_upd:Date.now()}:x);
+            sync({clientes:clientesActualizados});
+          }}
           onReordenar={lista=>{
             const otros = todosClientes.filter(c=>!(c.dia===diaActual && (sectores.length===0||sectores.some(s=>(c.barrio||"").toLowerCase().includes(s.toLowerCase())))));
             saveClientes([...otros,...lista]);
@@ -641,7 +645,10 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           onVenta={()=>irA("venta")}
           onVentaLibre={null}
           onVolver={()=>irA(origenDetalle)}
-          onEditar={()=>{}} onEliminarVenta={()=>{}} onEditarVenta={()=>{}} onEliminarCliente={()=>{}}
+          onEditar={(cambios)=>{
+            const clientesActualizados = todosClientes.map(x=>x.id===cliente.id?{...x,...cambios,_upd:Date.now()}:x);
+            sync({clientes:clientesActualizados});
+          }} onEliminarVenta={()=>{}} onEditarVenta={()=>{}} onEliminarCliente={()=>{}}
           onNoEstaCliente={()=>{
             const nv=[...noVisitas.filter(v=>!(v.clienteId===cliente.id&&v.dia===diaActual&&v.fecha===fechaActual)),{clienteId:cliente.id,dia:diaActual,fecha:fechaActual,motivo:"noesta"}];
             saveNoVisitas(nv);
