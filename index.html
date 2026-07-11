@@ -76,6 +76,7 @@ self.addEventListener('notificationclick',e=>{
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
   
   <script>
     var firebaseConfig = {
@@ -97,6 +98,11 @@ self.addEventListener('notificationclick',e=>{
         if(err.code==="failed-precondition"){console.warn("Persistencia offline: múltiples pestañas abiertas");}
         else if(err.code==="unimplemented"){console.warn("Persistencia offline: navegador no compatible");}
       });
+
+      // Cloud Messaging — para las notificaciones push (activarNotif la usa
+      // más abajo con window.messagingLC.getToken(...))
+      try { if(firebase.messaging.isSupported()) window.messagingLC = firebase.messaging(); }
+      catch(e) { console.warn("Cloud Messaging no disponible en este navegador:", e); }
 
       var licenciasApp = firebase.apps.find(function(a){ return a.name === "licencias"; });
       if(!licenciasApp) {
@@ -352,7 +358,7 @@ self.addEventListener('notificationclick',e=>{
 
 <script>
   // ── Push Notifications (dueño y repartidor) ──────────────────────────
-  const VAPID_PUB_KEY = 'BCddH8J9o3uc7RnLKD2PV9Ut4FfoQPBnlN0y1CbDGJptSqNYsPU5kiVCWDsXmuR4xv1yFUuKyJdwO2ar2B0lBFQ';
+  const VAPID_PUB_KEY = 'BHH2hWofIa095xI4jVYJ1qt9D-958m0PHaiSXePU073yY9xS9HIyg1YiM-BRELwexkpfzronSt2rjSnuyyRcHew';
   function urlB64ToUint8(b){
     const p='='.repeat((4-b.length%4)%4);
     const s=(b+p).replace(/-/g,'+').replace(/_/g,'/');
@@ -367,30 +373,26 @@ self.addEventListener('notificationclick',e=>{
     if(!id){ id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10); localStorage.setItem('rm_device_id', id); }
     return id;
   }
-  async function guardarSub(sub){
+  async function guardarSub(token){
     if(!window.db) return;
     const lic=getLic();
     if(!lic.negocioId) return;
     const deviceId = getDeviceId();
     // Se etiqueta con rol y nombre — así el servidor sabe si mandarle avisos
     // de dueño (cierre, transferencias, mantenimiento) o de repartidor (agenda).
-    const payload = {}; payload[deviceId] = { sub: JSON.stringify(sub), ts: Date.now(), rol: lic.rol||'dueño', nombre: lic.nombre||'' };
+    const payload = {}; payload[deviceId] = { token: token, ts: Date.now(), rol: lic.rol||'dueño', nombre: lic.nombre||'' };
     await window.db.collection('negocios').doc(lic.negocioId).collection('datos').doc('push_subs').set(payload, {merge:true});
   }
   async function activarNotif(){
-    if(!('serviceWorker' in navigator)||!('PushManager' in window)){alert('Tu navegador no soporta notificaciones.');return false;}
+    if(!window.messagingLC){alert('Tu navegador no soporta notificaciones.');return false;}
     const p=await Notification.requestPermission();
     if(p!=='granted') return false;
     const reg=await navigator.serviceWorker.ready;
-    const subVieja = await reg.pushManager.getSubscription();
-    if(subVieja){ try{ await subVieja.unsubscribe(); }catch(e){} } // siempre limpio
-    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_PUB_KEY)});
-    await guardarSub(sub); return true;
+    const token=await window.messagingLC.getToken({vapidKey:VAPID_PUB_KEY, serviceWorkerRegistration:reg});
+    await guardarSub(token); return true;
   }
   async function desactivarNotif(){
-    const reg=await navigator.serviceWorker.ready;
-    const sub=await reg.pushManager.getSubscription();
-    if(sub) await sub.unsubscribe();
+    if(window.messagingLC){ try{ await window.messagingLC.deleteToken(); }catch(e){} }
     if(window.db){
       const lic=getLic();
       if(lic.negocioId){
@@ -401,10 +403,12 @@ self.addEventListener('notificationclick',e=>{
     }
   }
   async function estadoNotif(){
-    if(!('PushManager' in window)) return false;
-    const reg=await navigator.serviceWorker.ready;
-    const sub=await reg.pushManager.getSubscription();
-    return !!sub;
+    if(!window.messagingLC) return false;
+    try {
+      const reg=await navigator.serviceWorker.ready;
+      const token=await window.messagingLC.getToken({vapidKey:VAPID_PUB_KEY, serviceWorkerRegistration:reg});
+      return !!token;
+    } catch(e){ return false; }
   }
   // El activar/desactivar/estado ahora se maneja desde Configuración
   // (NotifConfig en 15-config.js), no con un botón flotante acá.
