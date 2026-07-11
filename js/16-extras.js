@@ -229,23 +229,58 @@ function NotifConfigRepartidor() {
   const [permiso,setPermiso] = React.useState('Notification' in window ? Notification.permission : 'no-soportado');
   const [probando,setProbando] = React.useState(false);
   const [resultado,setResultado] = React.useState(null);
+  // OJO: antes, con solo tener el permiso del navegador ya se mostraba el
+  // tilde verde — aunque el guardado real de la suscripción hubiera
+  // fallado en silencio. Ahora se verifica de verdad, y si falla queda
+  // un botón para reintentar (no se traba mostrando "activado" a medias).
+  const [verificando,setVerificando] = React.useState(true);
+  const [subOk,setSubOk] = React.useState(null); // null=verificando, true/false=resultado real
+
+  const activarDeVerdad = async () => {
+    if(typeof window.activarNotif!=='function'){ setSubOk(false); return false; }
+    try { const ok = await window.activarNotif(); setSubOk(ok); return ok; }
+    catch(e){ setSubOk(false); return false; }
+  };
+
+  React.useEffect(()=>{
+    if(permiso!=='granted'){ setVerificando(false); return; }
+    // Si el navegador ya tenía el permiso concedido de antes, igual hay que
+    // confirmar que la suscripción esté guardada — por eso se reintenta acá.
+    (async()=>{ await activarDeVerdad(); setVerificando(false); })();
+  },[]);
+
   const pedirYActivar = async () => {
     if(!('Notification' in window)) return;
     setProbando(true); setResultado(null);
     const r = await Notification.requestPermission();
     setPermiso(r);
-    if(r==='granted' && typeof window.activarNotif==='function'){
-      const ok = await window.activarNotif();
+    if(r==='granted'){
+      const ok = await activarDeVerdad();
       setResultado(ok?{ok:true,msg:'Notificaciones activadas.'}:{ok:false,msg:'No se pudo completar la suscripción.'});
     }
     setProbando(false);
   };
-  if(permiso==='granted') return (
+
+  if(permiso==='no-soportado') return null;
+  if(verificando) return (
+    <div style={{margin:"10px 14px 0",fontSize:12,color:"var(--color-text-tertiary)"}}>Verificando notificaciones…</div>
+  );
+  if(permiso==='granted' && subOk===true) return (
     <div style={{margin:"10px 14px 0",fontSize:12,color:"var(--color-text-success)",display:"flex",alignItems:"center",gap:6}}>
       <span>✅</span><span>Notificaciones activadas</span>
     </div>
   );
-  if(permiso==='no-soportado') return null;
+  // permiso concedido pero la suscripción falló — no dejar "atascado" acá:
+  // mostrar el problema y una forma de reintentar.
+  if(permiso==='granted' && subOk===false) return (
+    <button style={{margin:"10px 14px 0",width:"calc(100% - 28px)",background:"var(--color-background-danger)",border:"0.5px solid var(--color-text-danger)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left"}}
+      onClick={async()=>{setProbando(true);await activarDeVerdad();setProbando(false);}} disabled={probando}>
+      <span style={{fontSize:18}}>⚠️</span>
+      <div style={{flex:1}}>
+        <div style={{fontSize:13,fontWeight:500,color:"var(--color-text-danger)"}}>{probando?"Reintentando...":"No se pudo activar — tocar para reintentar"}</div>
+      </div>
+    </button>
+  );
   return (
     <button style={{margin:"10px 14px 0",width:"calc(100% - 28px)",background:"var(--color-background-tertiary)",border:"0.5px solid var(--color-border-secondary)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left"}}
       onClick={pedirYActivar} disabled={probando}>
