@@ -80,6 +80,13 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
     const c=stock.camiones?.[rep.id]||{};
     ["sifon","bidon10","bidon20","dispenser"].forEach(k=>{totCamiones[k]+=Number(c[k])||0;});
   });
+  // Total general por producto: Sodería (llenos+vacíos+todos los camiones) + Depósito + Clientes (fijos+prestados)
+  const totalGeneralDe=(k)=>{
+    const enSoderia=(stock.soderia?.[k]||0)+(stock.soderia_vacios?.[k]||0)+(totCamiones[k]||0);
+    const enDeposito=stock.casa?.[k]||0;
+    const enClientes=(totClientes[k]||0)+(totPrestados[k]||0);
+    return enSoderia+enDeposito+enClientes;
+  };
 
   const confirmarPerdida=()=>{
     const cant=Math.round(Number(formPerdida.cantidad)||0);
@@ -304,20 +311,23 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
           </button>
           {abiertoProductos&&(<>
           <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:9}}>De acá salen los precios de la planilla y todas las ventas</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 66px 66px 24px",gap:5,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
-            <span>Producto</span><span style={{textAlign:"center"}}>Llenado</span><span style={{textAlign:"center"}}>Venta</span><span></span>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 50px 20px",gap:5,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
+            <span>Producto</span><span style={{textAlign:"center"}}>Llenado</span><span style={{textAlign:"center"}}>Venta</span><span style={{textAlign:"center",color:"var(--color-text-success)"}}>Stock</span><span></span>
           </div>
-          {(productos||[]).map(p=>(
-            <div key={p.id} style={{display:"grid",gridTemplateColumns:"1fr 66px 66px 24px",gap:5,alignItems:"center",marginBottom:5}}>
+          {(productos||[]).map(p=>{
+            const k=keyDe(p);
+            return (
+            <div key={p.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 50px 20px",gap:5,alignItems:"center",marginBottom:5}}>
               <input type="text" value={p.nombre||""} onChange={e=>setProdNombre(p.id,e.target.value)} style={{...inNum,textAlign:"left",fontSize:12}} />
               <input type="number" value={p.costo||0} onChange={e=>setProdPrecio(p.id,"costo",e.target.value)} style={{...inNum,fontSize:12}} />
               {p.esDispenser
                 ? <span style={{textAlign:"center",fontSize:10,color:"var(--color-text-warning)"}}>comod.</span>
                 : <input type="number" value={p.precio||0} onChange={e=>setProdPrecio(p.id,"precio",e.target.value)} style={{...inNum,fontSize:12}} />
               }
+              <span style={{textAlign:"center",fontSize:13,fontWeight:700,color:"var(--color-text-success)"}}>{totalGeneralDe(k)}</span>
               <button onClick={()=>eliminarProducto(p.id)} title="Eliminar" style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"var(--color-text-danger)",padding:0}}>🗑</button>
             </div>
-          ))}
+          );})}
           <button onClick={agregarProducto} style={{...s.btn,width:"100%",marginTop:6,fontSize:13}}>+ Agregar producto</button>
           </>)}
         </div>

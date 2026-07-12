@@ -186,8 +186,18 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                     {direccionCliente(c)}
                   </div>
                   {c.notas&&<div style={{fontSize:11,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
-                  {/* Badge repartidor asignado */}
-                  {c.repartoId&&repartos&&(()=>{const rep=repartos.find(r=>r.id===c.repartoId||String(r.id)===String(c.repartoId));return rep?<div style={{fontSize:11,color:"var(--color-text-info)",marginTop:2}}>🚚 {rep.repartidorNombre}</div>:null;})()}
+                  {/* Repartidor asignado — tocarlo abre el mismo panel de reasignar
+                      que antes tenía un botón aparte. Si no tiene ninguno todavía,
+                      muestra "Sin asignar" e igual sirve para asignarlo. */}
+                  {repartos&&repartos.length>0&&(()=>{
+                    const rep=repartos.find(r=>r.id===c.repartoId||String(r.id)===String(c.repartoId));
+                    return (
+                      <div style={{fontSize:11,color:rep?"var(--color-text-info)":"var(--color-text-tertiary)",marginTop:2,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:3,textDecoration:"underline",textDecorationStyle:"dotted"}}
+                        onClick={e=>{e.stopPropagation();setReasignandoId(c.id);}}>
+                        🚚 {rep?rep.repartidorNombre:"Sin asignar"}
+                      </div>
+                    );
+                  })()}
                   <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:7}}>
                     {c.saldo<0&&<span style={s.badge("danger")}>Debe {fmt(Math.abs(c.saldo))}</span>}
                     {c.saldo>0&&<span style={s.badge("success")}>A favor {fmt(c.saldo)}</span>}
@@ -220,7 +230,6 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
               <PieEnvases c={c} ventas={ventas} onEditar={onEditar}
                 izquierda={<button style={{width:28,height:28,borderRadius:8,cursor:"pointer",background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"1px solid var(--color-border-danger)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}} onClick={e=>{e.stopPropagation();onEliminar(c.id);}} title="Eliminar cliente">🗑️</button>}>
                 {onRegistrarVenta&&<button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={e=>{e.stopPropagation();onRegistrarVenta(c);}}>💰 Venta</button>}
-                {repartos&&repartos.length>0&&<button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"rgba(93,170,255,0.15)",color:"var(--color-text-info)",border:"1px solid rgba(93,170,255,0.4)"}} onClick={e=>{e.stopPropagation();setReasignandoId(c.id);}}>↔ Reasignar</button>}
                 <button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)"}} onClick={e=>{e.stopPropagation();setCambioId(cambioId===c.id?null:c.id);}}>🔄 Cambio</button>
                 <button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)"}} onClick={e=>{e.stopPropagation();setEditandoId(c.id);}}>✏️ Editar</button>
               </PieEnvases>
