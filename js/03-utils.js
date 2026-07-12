@@ -2,6 +2,49 @@
 // ◆  03-utils.js — debounceSave · useLS · calcVenta · comprimirFoto
 // ════════════════════════════════════════════════════════════════════
 
+// ── Arma la dirección completa de un cliente, combinando TODOS los campos
+//    que tenga cargados — sector, manzana, lote, casa/dpto, calle, número,
+//    barrio. No todos los clientes usan los mismos campos — esta función
+//    junta lo que haya, sin dejar afuera nada de lo cargado. Usarla en
+//    TODOS lados en vez de armar la dirección a mano cada vez.
+function direccionCliente(c) {
+  if (!c) return "";
+  const partes = [];
+  if (c.calle) {
+    partes.push(`${c.calle} ${c.nro||""}`.trim());
+  } else if (c.manzana || c.lote || c.sector) {
+    let base = "";
+    if (c.sector) base += `S${c.sector} `;
+    if (c.manzana) base += `Mz ${c.manzana} `;
+    if (c.lote) base += `L ${c.lote}`;
+    if (base.trim()) partes.push(base.trim());
+  }
+  if (c.aclaracion) partes.push(c.aclaracion);
+  if (c.barrio) partes.push(c.barrio);
+  return partes.join(" · ");
+}
+// Los prospectos (clientes potenciales, todavía no confirmados) usan un
+// esquema de campos un poco distinto — sector, piso y depto por separado,
+// en vez del campo único "Casa/Dpto" de los clientes ya confirmados.
+function direccionProspecto(p) {
+  if (!p) return "";
+  const partes = [];
+  if (p.calle) {
+    let base = `${p.calle} ${p.nro||""}`.trim();
+    if (p.piso) base += ` P${p.piso}`;
+    if (p.depto) base += ` D${p.depto}`;
+    partes.push(base);
+  } else if (p.manzana || p.lote || p.sector) {
+    let base = "";
+    if (p.sector) base += `S${p.sector} `;
+    if (p.manzana) base += `Mz ${p.manzana} `;
+    if (p.lote) base += `L ${p.lote}`;
+    if (base.trim()) partes.push(base.trim());
+  }
+  if (p.barrio) partes.push(p.barrio);
+  return partes.join(" · ");
+}
+
 function debounceSave(fn) {
   _saveQueue = fn;
   if(_saveTimer) clearTimeout(_saveTimer);
@@ -159,13 +202,11 @@ function PieEnvases({c, ventas, onEditar, izquierda, children}) {
   const abierto=!!draft;
   return (
     <>
-      <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",alignItems:"center",gap:6,marginTop:10,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
-        <div>{izquierda||null}</div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          <button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:abierto?"var(--color-background-warning)":"var(--color-background-tertiary)",color:abierto?"var(--color-text-warning)":"var(--color-text-secondary)",border:abierto?"1px solid var(--color-border-warning)":"0.5px solid var(--color-border-secondary)"}}
-            onClick={e=>{e.stopPropagation();abierto?setDraft(null):abrir();}}>♻️ Envases</button>
-          {children}
-        </div>
+      <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:6,marginTop:10,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
+        {izquierda||null}
+        <button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:abierto?"var(--color-background-warning)":"var(--color-background-tertiary)",color:abierto?"var(--color-text-warning)":"var(--color-text-secondary)",border:abierto?"1px solid var(--color-border-warning)":"0.5px solid var(--color-border-secondary)"}}
+          onClick={e=>{e.stopPropagation();abierto?setDraft(null):abrir();}}>♻️ Envases</button>
+        {children}
       </div>
       {abierto&&(
         <div style={{marginTop:8,background:"var(--color-background-tertiary)",borderRadius:8,padding:"8px 10px"}} onClick={e=>e.stopPropagation()}>

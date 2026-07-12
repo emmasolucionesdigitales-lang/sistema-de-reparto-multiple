@@ -111,7 +111,7 @@ function NuevaVenta({cliente,productos,fecha,onGuardar,onNoEsta,onNoQuiere,onVol
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-primary)"}}>{cliente.nombre}</div>
             <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:1}}>
-              {cliente.calle?`${cliente.calle} ${cliente.nro||""}`:cliente.manzana?`Mz ${cliente.manzana} L ${cliente.lote}`:""}{cliente.barrio?` · ${cliente.barrio}`:""}{cliente.orden?` · #${cliente.orden}`:""}
+              {direccionCliente(cliente)}{cliente.orden?` · #${cliente.orden}`:""}
             </div>
           </div>
           <div style={{display:"flex",gap:10,fontSize:17,flexShrink:0}}>

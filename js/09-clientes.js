@@ -106,7 +106,7 @@ function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospect
               })()}
             </div>
             <div style={{fontSize:17,color:"var(--color-text-secondary)",marginTop:2}}>
-              {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
+              {direccionCliente(c)}
             </div>
             {c.notas&&<div style={{fontSize:12,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
             <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
@@ -339,8 +339,7 @@ function DetalleCliente({cliente,ventas,dia,fecha,productos,onVenta,onVolver,onE
             <div style={{flex:1}}>
               <div style={{fontWeight:500,fontSize:16,color:"var(--color-text-primary)"}}>{cliente.nombre}</div>
               <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>
-                {cliente.calle?`${cliente.calle} ${cliente.nro||""} · `:cliente.manzana?`Mz ${cliente.manzana} L ${cliente.lote} · `:""}
-                {cliente.barrio} · {cliente.dia}
+                {direccionCliente(cliente)}{cliente.dia?` · ${cliente.dia}`:""}
               </div>
               {cliente.notas&&<div style={{fontSize:12,color:"var(--color-text-warning)",marginTop:3}}>📝 {cliente.notas}</div>}
             </div>

@@ -183,7 +183,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                     <span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20,background:"var(--color-background-success)",color:"var(--color-text-success)",flexShrink:0}}>{c.dia}</span>
                   </div>
                   <div style={{fontSize:13,color:"var(--color-text-secondary)",marginTop:3}}>
-                    {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
+                    {direccionCliente(c)}
                   </div>
                   {c.notas&&<div style={{fontSize:11,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
                   {/* Badge repartidor asignado */}
@@ -993,7 +993,7 @@ function CargaGPSMasiva({clientes, onActualizar, onVolver}) {
     </div>
   );
   const progreso=Math.round((idx/sinGPS.length)*100);
-  const dir=cliente.calle?`${cliente.calle} ${cliente.nro||""}`.trim():cliente.manzana?`Mz ${cliente.manzana} L ${cliente.lote||""} · ${cliente.barrio||""}`:cliente.barrio||"";
+  const dir=direccionCliente(cliente);
   const latOk=latVal&&lngVal&&!isNaN(parseFloat(latVal))&&!isNaN(parseFloat(lngVal));
   return (
     <div style={{...s.screen,display:"flex",flexDirection:"column"}}>
@@ -1057,7 +1057,7 @@ function PreviaRuta({rutaOptima, ventasHoy, noVisHoy, onAplicar, onVolver}) {
         {rutaOptima.map((c,i)=>{
           const entregado=ventasHoy.some(v=>v.clienteId===c.id);
           const noVis=noVisHoy.some(v=>v.clienteId===c.id);
-          const dir=c.calle?c.calle+" "+(c.nro||""):c.manzana?"Mz "+c.manzana+" L "+(c.lote||""):c.barrio||"";
+          const dir=direccionCliente(c);
           return (
             <div key={c.id} style={{...s.card,margin:"6px 14px",display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:32,height:32,borderRadius:"50%",background:"#185FA5",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{i+1}</div>
@@ -1119,7 +1119,7 @@ function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, o
       const num=mostrarRuta?ri+1:(c.orden||"·");
       const icon=L.divIcon({className:"",html:`<div style="width:30px;height:30px;border-radius:50%;background:${color};border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">${num}</div>`,iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-16]});
       const marker=L.marker([c.lat,c.lng],{icon}).addTo(map);
-      const dir=c.calle?c.calle+" "+(c.nro||""):c.manzana?"Mz "+c.manzana+" L "+(c.lote||""):c.barrio||"";
+      const dir=direccionCliente(c);
       const estado=entregado?"<span style='color:#059669;font-weight:600'>✓ Entregado</span>":noVis?"<span style='color:#dc2626;font-weight:600'>✗ No visitado</span>":"<span style='color:#2563eb;font-weight:600'>⏳ Pendiente</span>";
       const pid=`popup_btn_${c.id}`;
       marker.bindPopup(`<div style="font-family:sans-serif;min-width:170px;padding:4px 0"><div style="font-size:14px;font-weight:700;margin-bottom:2px">${c.nombre}</div><div style="font-size:11px;color:#666;margin-bottom:4px">${c.dia} · ${dir}</div><div style="margin-bottom:8px">${estado}</div>${!entregado?`<button id="${pid}" style="background:#185FA5;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%">Entregar →</button>`:""}</div>`);

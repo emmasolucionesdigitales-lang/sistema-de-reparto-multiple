@@ -580,7 +580,7 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
                 <span style={{fontSize:10,background:"#185FA5",color:"#fff",padding:"1px 6px",borderRadius:10,fontWeight:600}}>{c.dia}</span>
               </div>
               <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>
-                {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
+                {direccionCliente(c)}
               </div>
               {c.saldo<0&&<span style={{...s.badge("danger"),fontSize:10,marginTop:3,display:"inline-block"}}>Debe {fmt(Math.abs(c.saldo))}</span>}
               {c.saldo>0&&<span style={{...s.badge("success"),fontSize:10,marginTop:3,display:"inline-block"}}>A favor {fmt(c.saldo)}</span>}
@@ -603,7 +603,7 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
                   <span style={{fontSize:10,background:"#2e1f06",color:"#f5b942",padding:"1px 6px",borderRadius:10,fontWeight:600}}>Prospecto</span>
                   <span style={{fontSize:10,background:"#185FA5",color:"#fff",padding:"1px 6px",borderRadius:10,fontWeight:600}}>{p.dia}</span>
                 </div>
-                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{p.calle?`${p.calle} ${p.nro||""}`:""}{p.barrio?` · ${p.barrio}`:""}</div>
+                <div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>{direccionProspecto(p)}</div>
               </div>
               <span style={{color:"var(--color-text-tertiary)"}}>→</span>
             </div>
@@ -1222,7 +1222,7 @@ function VistaClientesGeneral({clientes, repartos, ventas, onVerDetalle, onAgend
                               {c.nombre}
                             </div>
                             <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:1}}>
-                              {c.barrio||""}{c.calle?` · ${c.calle} ${c.nro||""}`:c.manzana?` · Mz ${c.manzana} L ${c.lote}`:""}
+                              {direccionCliente(c)}
                             </div>
                             {ult&&<div style={{fontSize:10,color:"var(--color-text-tertiary)",marginTop:1}}>Última venta: {ult}</div>}
                           </div>
@@ -1543,7 +1543,7 @@ function MapaClientes({clientes, dia, fecha, ventas, noVisitas, onSeleccionar, o
         iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-14]
       });
       const marker = L.marker([c.lat,c.lng],{icon}).addTo(map);
-      marker.bindPopup(`<div style="font-family:sans-serif;min-width:160px"><b style="font-size:13px">${c.nombre}</b><br/><span style="font-size:11px;color:#666">${c.dia} · orden ${c.orden||"-"}</span><br/>${c.calle?c.calle+" "+c.nro:c.manzana?"Mz "+c.manzana+" L "+c.lote:c.barrio||""}<br/>${entregado?"<span style='color:#059669;font-weight:600'>✓ Entregado</span>":noVisitado?"<span style='color:#dc2626'>✗ No visitado</span>":"<span style='color:#2563eb'>Pendiente</span>"}</div>`);
+      marker.bindPopup(`<div style="font-family:sans-serif;min-width:160px"><b style="font-size:13px">${c.nombre}</b><br/><span style="font-size:11px;color:#666">${c.dia} · orden ${c.orden||"-"}</span><br/>${direccionCliente(c)}<br/>${entregado?"<span style='color:#059669;font-weight:600'>✓ Entregado</span>":noVisitado?"<span style='color:#dc2626'>✗ No visitado</span>":"<span style='color:#2563eb'>Pendiente</span>"}</div>`);
       if(onSeleccionar) marker.on("popupopen",()=>marker.getPopup().getElement()?.addEventListener("click",()=>onSeleccionar(c)));
       bounds.push([c.lat,c.lng]);
       markersRef.current.push(marker);

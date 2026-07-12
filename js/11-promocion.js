@@ -391,7 +391,7 @@ function Promocion({prospectos,onSave,onConvertir,onVolver}) {
                 <div style={{flex:1}}>
                   <div style={{fontWeight:500,fontSize:14,color:"var(--color-text-primary)"}}>{p.nombre}</div>
                   <div style={{fontSize:11,color:"var(--color-text-secondary)",marginTop:2}}>
-                    {p.barrio}{p.calle?` · ${p.calle} ${p.nro||""}`:p.manzana?` · Mz ${p.manzana} L ${p.lote}`:""}
+                    {direccionProspecto(p)}
                   </div>
                   {p.fechaInicio&&<div style={{fontSize:10,color:"var(--color-text-tertiary)",marginTop:1}}>Cargado: {new Date(p.fechaInicio).toLocaleDateString("es-AR")}</div>}
                   <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:5}}>
@@ -644,8 +644,7 @@ function PromoDetalle({prospecto:p,listo,comprasCount,semanasCount,visitadoHoy,o
         <div style={{...s.card,borderLeft:"3px solid #5daaff",marginBottom:10}}>
           <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>
             {p.dia} · {p.fechaInicio&&<span style={{color:"var(--color-text-tertiary)"}}>Desde {new Date(p.fechaInicio).toLocaleDateString("es-AR")} · </span>}
-            {p.barrio||""}{p.sector?` Sec ${p.sector}`:""}{p.manzana?` Mz ${p.manzana} L ${p.lote}`:""}
-            {p.calle?` · ${p.calle} ${p.nro||""}`:""}{p.piso?` P${p.piso}`:""}{p.depto?` D${p.depto}`:""}
+            {direccionProspecto(p)}
           </div>
           {p.dni&&<div style={{fontSize:12,color:"var(--color-text-secondary)",marginTop:2}}>DNI: {p.dni}</div>}
           {p.notas&&<div style={{fontSize:12,color:"var(--color-text-warning)",marginTop:4}}>📝 {p.notas}</div>}
