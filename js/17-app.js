@@ -126,6 +126,21 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const [clienteId, setClienteId] = useState(null);
   const [initCierre, setInitCierre] = useState(false);
   const [noVisitas, setNoVisitas] = useLS("rm_novisitas_v1", []);
+  // Registro de envases perdidos — rotos durante el reparto, o no
+  // recuperados al eliminar un cliente (se mudó y no avisó, etc).
+  const [perdidas, setPerdidas] = useLS("rm_perdidas_v1", []);
+  const registrarPerdida = (items, motivo, clienteNombre) => {
+    setPerdidas(prev => {
+      const next = [...prev, {
+        id: Date.now()+"_"+Math.random().toString(36).slice(2,7),
+        fecha: new Date().toISOString(),
+        motivo, clienteNombre: clienteNombre||null,
+        sifon: items.sifon||0, bidon10: items.bidon10||0, bidon20: items.bidon20||0,
+      }];
+      syncData({perdidas: next});
+      return next;
+    });
+  };
   const [prospectos, setProspectos] = useLS("rm_prospectos_v1", []);
   const [recordatorios, setRecordatorios] = useLS("rm_recordatorios_v1", []);
   // recordatorio: {id, clienteId, clienteNombre, fecha, hora, motivo, dia, confirmado}
@@ -381,7 +396,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const ultimoRegistroRef = React.useRef({firma:null, ts:0});
   const ultimoBorradoRef = React.useRef({id:null, ts:0});
   const ultimoEditadoRef = React.useRef({firma:null, ts:0});
-  React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos,cargasDia:cargasDiaRaw}; });
+  const ultimoClienteBorradoRef = React.useRef({id:null, ts:0});
+  React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos,cargasDia:cargasDiaRaw,perdidas}; });
 
   // Descarga un archivo JSON al PC — usado por la limpieza automática de
   // abajo, para que quede un registro a mano además del que se guarda en
@@ -493,6 +509,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         if(data.stock) setStock(normStock(data.stock));
         if(data.productos!==undefined) setProductos(data.productos||[]);
         if(data.noVisitas!==undefined) setNoVisitas(data.noVisitas||[]);
+        if(data.perdidas!==undefined) setPerdidas(data.perdidas||[]);
         if(data.prospectos!==undefined) setProspectos(data.prospectos||[]);
         if(data.recordatorios!==undefined) setRecordatorios(data.recordatorios||[]);
         if(data.mantVeh!==undefined){ try{localStorage.setItem("rm_mant_vehiculo_v1",JSON.stringify(data.mantVeh||[]));}catch{} }
@@ -841,8 +858,38 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     );
   };
   const eliminarCliente = (clienteId) => {
+    // Guard anti doble-toque: ignora un segundo borrado del MISMO cliente
+    // dentro de 3s (dos confirmaciones seguidas pueden hacer que el dedo
+    // vuelva a tocar por las dudas).
+    const ahoraDel = Date.now();
+    if(ultimoClienteBorradoRef.current.id===clienteId && (ahoraDel-ultimoClienteBorradoRef.current.ts)<3000){
+      console.warn("⚠️ Borrado de cliente duplicado bloqueado (doble toque):", clienteId);
+      return;
+    }
+    ultimoClienteBorradoRef.current = {id:clienteId, ts:ahoraDel};
+    const eliminado = clientes.find(c=>c.id===clienteId);
+    if(eliminado){
+      const env = {sifon:Number(eliminado.sifon)||0, bidon10:Number(eliminado.bidon10)||0, bidon20:Number(eliminado.bidon20)||0};
+      const totalEnv = env.sifon+env.bidon10+env.bidon20;
+      if(totalEnv>0){
+        const det = [env.sifon&&`${env.sifon} Sifón 1.5L`, env.bidon10&&`${env.bidon10} Bidón 10L`, env.bidon20&&`${env.bidon20} Bidón 20L`].filter(Boolean).join(" · ");
+        const devolvio = window.confirm(`Borrando a "${eliminado.nombre}"...\n\nTenía estos envases:\n${det}\n\n¿Los devolvió?\n\n• Aceptar = SÍ, sumarlos al stock (Depósito)\n• Cancelar = NO, se dan por perdidos\n\n(Cualquiera de las dos opciones borra al cliente igual)`);
+        if(devolvio){
+          setStock(prev=>{
+            const s = JSON.parse(JSON.stringify(prev));
+            if(!s.casa) s.casa={sifon:0,bidon10:0,bidon20:0,dispenser:0};
+            s.casa.sifon   = (s.casa.sifon||0)   + env.sifon;
+            s.casa.bidon10 = (s.casa.bidon10||0) + env.bidon10;
+            s.casa.bidon20 = (s.casa.bidon20||0) + env.bidon20;
+            syncData({stock:s});
+            return s;
+          });
+        } else {
+          registrarPerdida(env, "Cliente eliminado sin recuperar envases", eliminado.nombre);
+        }
+      }
+    }
     saveClientes(prev => {
-      const eliminado = prev.find(c=>c.id===clienteId);
       let nc = prev.filter(c=>c.id!==clienteId);
       if(eliminado) nc = renumerarTrasEliminar(nc, eliminado);
       return nc;
@@ -1253,7 +1300,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         }}
         onVolver={()=>irA("menu")}
       />}
-      {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDiaDe(repartoActual?.id)} setCargasDia={(v)=>saveCargasDiaDe(repartoActual?.id,v)} planillas={planillas} repartos={repartos} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
+      {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDiaDe(repartoActual?.id)} setCargasDia={(v)=>saveCargasDiaDe(repartoActual?.id,v)} planillas={planillas} repartos={repartos} perdidas={perdidas} registrarPerdida={registrarPerdida} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
       {pantalla==="fiadosPendientes" && <FiadosPendientes clientes={clientes} ventas={ventas} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onCobrar={(cId,monto,pago)=>{
         const cl=clientes.find(c=>c.id===cId);if(!cl)return;
         const vt={id:Date.now(),clienteId:cl.id,cliente:cl.nombre,dia:cl.dia,fechaKey:new Date().toLocaleDateString("en-CA"),fecha:new Date().toLocaleString("es-AR"),

@@ -2,7 +2,7 @@
 // ◆  07-stock.js — StockGeneral · ConfirmacionesDia
 // ════════════════════════════════════════════════════════════════════
 
-function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setProductos,cargasDia,setCargasDia,planillas,repartos,onVolver,onResumen}) {
+function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setProductos,cargasDia,setCargasDia,planillas,repartos,perdidas,registrarPerdida,onVolver,onResumen}) {
   const [clientesAbierto,setClientesAbierto]=React.useState(false);
   const [abiertoSoderia,setAbiertoSoderia]=React.useState(false);
   const [abiertoCamiones,setAbiertoCamiones]=React.useState(false);
@@ -10,6 +10,8 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
   const [abiertoEnClientes,setAbiertoEnClientes]=React.useState(false);
   const [abiertoProductos,setAbiertoProductos]=React.useState(false);
   const [abiertoCarga,setAbiertoCarga]=React.useState(false);
+  const [abiertoPerdidas,setAbiertoPerdidas]=React.useState(false);
+  const [formPerdida,setFormPerdida]=React.useState({producto:"sifon",cantidad:"",ubicacion:"soderia",motivo:"Roto en el reparto"});
   const hoyDia = DIAS[(new Date().getDay()+6)%7] || "Lunes";
   const [diaCarga,setDiaCarga]=React.useState(DIAS.includes(hoyDia)?hoyDia:"Lunes");
   const STOCK_KEY={1:"sifon",2:"bidon10",3:"bidon20",4:"dispenser"};
@@ -62,6 +64,37 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
     totClientes.bidon20 +=Number(c.bidon20)||0;
     totClientes.dispenser+=Number(c.dispenser)||0;
   });
+
+  // Prestado EXTRA (más allá de lo fijo) calculado del historial de ventas
+  const KEY_PROD={"Sifón 1.5L":"sifon","Bidón 10L":"bidon10","Bidón 20L":"bidon20","Dispenser":"dispenser"};
+  const totPrestados={sifon:0,bidon10:0,bidon20:0,dispenser:0};
+  (ventas||[]).forEach(v=>{
+    (v.envPrest||[]).forEach(e=>{const k=KEY_PROD[e.prod];if(k)totPrestados[k]+=Number(e.cant)||0;});
+    (v.envDev||[]).forEach(e=>{const k=KEY_PROD[e.prod];if(k)totPrestados[k]-=Number(e.cant)||0;});
+  });
+  clientesReales.forEach(c=>{ const aj=c.envAjuste||{}; ["sifon","bidon10","bidon20","dispenser"].forEach(k=>{totPrestados[k]+=Number(aj[k])||0;}); });
+
+  // Todos los camiones juntos (uno por reparto) — para el total general
+  const totCamiones={sifon:0,bidon10:0,bidon20:0,dispenser:0};
+  (repartos||[]).forEach(rep=>{
+    const c=stock.camiones?.[rep.id]||{};
+    ["sifon","bidon10","bidon20","dispenser"].forEach(k=>{totCamiones[k]+=Number(c[k])||0;});
+  });
+
+  const confirmarPerdida=()=>{
+    const cant=Math.round(Number(formPerdida.cantidad)||0);
+    if(cant<=0) return;
+    if(formPerdida.ubicacion!=="clientes"){
+      const ns=JSON.parse(JSON.stringify(stock));
+      if(!ns[formPerdida.ubicacion]) ns[formPerdida.ubicacion]={sifon:0,bidon10:0,bidon20:0,dispenser:0};
+      ns[formPerdida.ubicacion][formPerdida.producto]=Math.max(0,(ns[formPerdida.ubicacion][formPerdida.producto]||0)-cant);
+      setStock(ns);
+    }
+    registrarPerdida&&registrarPerdida({[formPerdida.producto]:cant}, formPerdida.motivo, null);
+    setFormPerdida({producto:"sifon",cantidad:"",ubicacion:"soderia",motivo:"Roto en el reparto"});
+  };
+  const totalPerdidas={sifon:0,bidon10:0,bidon20:0};
+  (perdidas||[]).forEach(p=>{ totalPerdidas.sifon+=p.sifon||0; totalPerdidas.bidon10+=p.bidon10||0; totalPerdidas.bidon20+=p.bidon20||0; });
 
   const inNum={...s.inputNum,padding:"5px 2px",fontSize:13};
 
@@ -172,6 +205,88 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
                   <input type="number" value={c.dispenser||0} onChange={e=>setClienteEnv(c.id,"dispenser",e.target.value)} style={{...inNum,padding:"4px 2px",fontSize:12}} />
                 </div>
               ))}
+            </div>
+          )}
+          </>)}
+        </div>
+
+        {/* TOTAL GENERAL — Sodería + Depósito + En clientes (fijos+prestados).
+            Los camiones no son un lugar aparte, son sodería en tránsito —
+            se suman todos juntos (uno por reparto) dentro de Sodería. */}
+        <div style={{...s.card,margin:"0 0 10px",border:"1px solid var(--color-border-secondary)"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",marginBottom:2}}>Σ Total general</div>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:9}}>El número real que existe en total, sea cual sea la ubicación.</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 60px 60px 60px 60px",gap:6,fontSize:10,color:"var(--color-text-tertiary)",marginBottom:5}}>
+            <span></span><span style={{textAlign:"center"}}>Sodería</span><span style={{textAlign:"center"}}>Depós.</span><span style={{textAlign:"center"}}>Client.</span><span style={{textAlign:"center",color:"var(--color-text-success)",fontWeight:600}}>Total</span>
+          </div>
+          {PRODS.map(([k,lbl])=>{
+            const enSoderia=(stock.soderia?.[k]||0)+(stock.soderia_vacios?.[k]||0)+(totCamiones[k]||0);
+            const enDeposito=stock.casa?.[k]||0;
+            const enClientes=(totClientes[k]||0)+(totPrestados[k]||0);
+            const total=enSoderia+enDeposito+enClientes;
+            return (
+              <div key={k} style={{display:"grid",gridTemplateColumns:"1fr 60px 60px 60px 60px",gap:6,alignItems:"center",padding:"5px 0",borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                <span style={{fontSize:12,color:"var(--color-text-primary)"}}>{lbl.replace(" 1.5L","")}</span>
+                <span style={{textAlign:"center",fontSize:12,color:"var(--color-text-secondary)"}}>{enSoderia}</span>
+                <span style={{textAlign:"center",fontSize:12,color:"var(--color-text-secondary)"}}>{enDeposito}</span>
+                <span style={{textAlign:"center",fontSize:12,color:"var(--color-text-secondary)"}}>{enClientes}</span>
+                <span style={{textAlign:"center",fontSize:14,fontWeight:700,color:"var(--color-text-success)"}}>{total}{k==="sifon"&&<span style={{display:"block",fontSize:9,color:"var(--color-text-tertiary)",fontWeight:400}}>{Math.floor(total/6)} caj</span>}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* PÉRDIDAS — envases rotos o no recuperados, para no perderles el rastro */}
+        <div style={{...s.card,margin:"0 0 10px"}}>
+          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoPerdidas?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+            onClick={()=>setAbiertoPerdidas(!abiertoPerdidas)}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-danger)",flex:1}}>💔 Pérdidas <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· rotos o no recuperados</span></span>
+            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoPerdidas?"▲":"▼"}</span>
+          </button>
+          {abiertoPerdidas&&(<>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+            <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>Sifón <b style={{color:"var(--color-text-danger)"}}>{totalPerdidas.sifon}</b></span>
+            <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>10L <b style={{color:"var(--color-text-danger)"}}>{totalPerdidas.bidon10}</b></span>
+            <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>20L <b style={{color:"var(--color-text-danger)"}}>{totalPerdidas.bidon20}</b></span>
+          </div>
+
+          <div style={{background:"var(--color-background-tertiary)",borderRadius:8,padding:"10px",marginBottom:10}}>
+            <div style={{fontSize:12,fontWeight:500,color:"var(--color-text-primary)",marginBottom:8}}>Registrar una pérdida</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 70px",gap:6,marginBottom:6}}>
+              <select value={formPerdida.producto} onChange={e=>setFormPerdida(f=>({...f,producto:e.target.value}))} style={{...inNum,textAlign:"left"}}>
+                {PRODS.map(([k,lbl])=><option key={k} value={k}>{lbl}</option>)}
+              </select>
+              <input type="number" min={1} placeholder="Cant." value={formPerdida.cantidad} onChange={e=>setFormPerdida(f=>({...f,cantidad:e.target.value}))} style={inNum} />
+            </div>
+            <div style={{marginBottom:6}}>
+              <label style={{fontSize:11,color:"var(--color-text-tertiary)",display:"block",marginBottom:3}}>¿De dónde salía?</label>
+              <select value={formPerdida.ubicacion} onChange={e=>setFormPerdida(f=>({...f,ubicacion:e.target.value}))} style={{...inNum,textAlign:"left",width:"100%"}}>
+                <option value="soderia">Sodería (llenos)</option>
+                <option value="soderia_vacios">Sodería (vacíos)</option>
+                <option value="casa">Depósito</option>
+                <option value="clientes">De un cliente (no descuenta stock acá)</option>
+              </select>
+            </div>
+            <div style={{marginBottom:8}}>
+              <label style={{fontSize:11,color:"var(--color-text-tertiary)",display:"block",marginBottom:3}}>Motivo</label>
+              <input type="text" value={formPerdida.motivo} onChange={e=>setFormPerdida(f=>({...f,motivo:e.target.value}))} style={{...inNum,textAlign:"left",width:"100%"}} placeholder="Roto en el reparto, se cayó del camión, etc." />
+            </div>
+            <button onClick={confirmarPerdida} style={{...s.btn,width:"100%",background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"1px solid var(--color-border-danger)"}}>💔 Registrar pérdida</button>
+          </div>
+
+          {(perdidas||[]).length>0 && (
+            <div>
+              <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:6}}>Historial ({perdidas.length})</div>
+              {[...perdidas].reverse().slice(0,20).map(p=>{
+                const items=[p.sifon&&`${p.sifon} Sifón`,p.bidon10&&`${p.bidon10} 10L`,p.bidon20&&`${p.bidon20} 20L`].filter(Boolean).join(" · ");
+                const fecha=new Date(p.fecha).toLocaleDateString("es-AR");
+                return (
+                  <div key={p.id} style={{padding:"6px 0",borderTop:"0.5px solid var(--color-border-tertiary)"}}>
+                    <div style={{fontSize:12,color:"var(--color-text-primary)"}}>{items}</div>
+                    <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{fecha} · {p.motivo}{p.clienteNombre?` · ${p.clienteNombre}`:""}</div>
+                  </div>
+                );
+              })}
             </div>
           )}
           </>)}
