@@ -178,34 +178,37 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                   {clienteMoviendo===c.id?"✓":c.orden||"#"}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:500,fontSize:14,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.nombre}</div>
-                  <div style={{fontSize:16,color:"var(--color-text-secondary)",marginTop:2}}>
-                    {c.dia} · {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                    <span style={{fontWeight:600,fontSize:14,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.nombre}</span>
+                    <span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20,background:"var(--color-background-success)",color:"var(--color-text-success)",flexShrink:0}}>{c.dia}</span>
+                  </div>
+                  <div style={{fontSize:13,color:"var(--color-text-secondary)",marginTop:3}}>
+                    {c.calle?`${c.calle} ${c.nro||""}`:c.manzana?`Mz ${c.manzana} L ${c.lote}`:""}{c.barrio?` · ${c.barrio}`:""}
                   </div>
                   {c.notas&&<div style={{fontSize:11,color:"var(--color-text-warning)",marginTop:2}}>📝 {c.notas}</div>}
                   {/* Badge repartidor asignado */}
                   {c.repartoId&&repartos&&(()=>{const rep=repartos.find(r=>r.id===c.repartoId||String(r.id)===String(c.repartoId));return rep?<div style={{fontSize:11,color:"var(--color-text-info)",marginTop:2}}>🚚 {rep.repartidorNombre}</div>:null;})()}
-                  <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:5}}>
-                    {/* Saldo */}
+                  <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:7}}>
                     {c.saldo<0&&<span style={s.badge("danger")}>Debe {fmt(Math.abs(c.saldo))}</span>}
                     {c.saldo>0&&<span style={s.badge("success")}>A favor {fmt(c.saldo)}</span>}
-                    {/* Envases habituales */}
-                    {c.sifon>0&&<span style={s.tag}>Sifón×{c.sifon}</span>}
-                    {c.bidon10>0&&<span style={s.tag}>10L×{c.bidon10}</span>}
-                    {c.bidon20>0&&<span style={s.tag}>20L×{c.bidon20}</span>}
-                    {c.dispenser>0&&<span style={{...s.tag,color:"#5daaff"}}>Disp×{c.dispenser}</span>}
-                    {/* Envases extra prestados */}
+                    {/* Un solo número real por producto: lo asignado + todo lo prestado/
+                        devuelto de su historial — no dos números por separado */}
                     {(()=>{
                       const ex=extraEnvases[c.id]||{};
                       const aj=c.envAjuste||{};
-                      const total={sifon:(ex.sifon||0)+(aj.sifon||0),bidon10:(ex.bidon10||0)+(aj.bidon10||0),bidon20:(ex.bidon20||0)+(aj.bidon20||0)};
+                      const real={
+                        sifon:Math.max(0,(Number(c.sifon)||0)+(ex.sifon||0)+(aj.sifon||0)),
+                        bidon10:Math.max(0,(Number(c.bidon10)||0)+(ex.bidon10||0)+(aj.bidon10||0)),
+                        bidon20:Math.max(0,(Number(c.bidon20)||0)+(ex.bidon20||0)+(aj.bidon20||0)),
+                      };
+                      const pill=(txt)=><span style={{fontSize:11,fontWeight:600,padding:"3px 9px",borderRadius:20,background:"var(--color-background-info)",color:"var(--color-text-info)"}}>{txt}</span>;
                       return (<>
-                        {total.sifon>0&&<span style={{...s.tag,color:"var(--color-text-warning)",fontWeight:500}}>+{total.sifon} sif extra</span>}
-                        {total.bidon10>0&&<span style={{...s.tag,color:"var(--color-text-warning)",fontWeight:500}}>+{total.bidon10} 10L extra</span>}
-                        {total.bidon20>0&&<span style={{...s.tag,color:"var(--color-text-warning)",fontWeight:500}}>+{total.bidon20} 20L extra</span>}
+                        {real.sifon>0&&pill(`Sif ×${real.sifon}`)}
+                        {real.bidon10>0&&pill(`10L ×${real.bidon10}`)}
+                        {real.bidon20>0&&pill(`20L ×${real.bidon20}`)}
+                        {c.dispenser>0&&pill(`Disp ×${c.dispenser}`)}
                       </>);
                     })()}
-                    
                   </div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0,alignItems:"center"}}>
@@ -215,11 +218,11 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
                 </div>
               </div>
               <PieEnvases c={c} ventas={ventas} onEditar={onEditar}
-                izquierda={<button style={{...s.btnDanger,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();onEliminar(c.id);}}>Eliminar</button>}>
-                {onRegistrarVenta&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={e=>{e.stopPropagation();onRegistrarVenta(c);}}>📦 Venta</button>}
-                {repartos&&repartos.length>0&&<button style={{...s.btn,fontSize:11,padding:"4px 12px",background:"rgba(93,170,255,0.15)",color:"var(--color-text-info)",border:"1px solid rgba(93,170,255,0.4)",fontWeight:500}} onClick={e=>{e.stopPropagation();setReasignandoId(c.id);}}>↔ Reasignar</button>}
-                <button style={{...s.btn,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();setCambioId(cambioId===c.id?null:c.id);}}>🔄 Cambio</button>
-                <button style={{...s.btn,fontSize:11,padding:"4px 12px"}} onClick={e=>{e.stopPropagation();setEditandoId(c.id);}}>Editar</button>
+                izquierda={<button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"1px solid var(--color-border-danger)"}} onClick={e=>{e.stopPropagation();onEliminar(c.id);}}>🗑️ Eliminar</button>}>
+                {onRegistrarVenta&&<button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"#185FA5",color:"#e2eaf4",border:"none"}} onClick={e=>{e.stopPropagation();onRegistrarVenta(c);}}>💰 Venta</button>}
+                {repartos&&repartos.length>0&&<button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"rgba(93,170,255,0.15)",color:"var(--color-text-info)",border:"1px solid rgba(93,170,255,0.4)"}} onClick={e=>{e.stopPropagation();setReasignandoId(c.id);}}>↔ Reasignar</button>}
+                <button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)"}} onClick={e=>{e.stopPropagation();setCambioId(cambioId===c.id?null:c.id);}}>🔄 Cambio</button>
+                <button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:"var(--color-background-tertiary)",color:"var(--color-text-secondary)",border:"0.5px solid var(--color-border-secondary)"}} onClick={e=>{e.stopPropagation();setEditandoId(c.id);}}>✏️ Editar</button>
               </PieEnvases>
               {cambioId===c.id&&(
                 <div style={{...s.card,margin:"8px 0 0",border:"1px solid #818cf8"}} onClick={e=>e.stopPropagation()}>

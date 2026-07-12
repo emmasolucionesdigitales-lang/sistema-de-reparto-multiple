@@ -159,10 +159,10 @@ function PieEnvases({c, ventas, onEditar, izquierda, children}) {
   const abierto=!!draft;
   return (
     <>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
+      <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",alignItems:"center",gap:6,marginTop:10,borderTop:"0.5px solid var(--color-border-tertiary)",paddingTop:8}}>
         <div>{izquierda||null}</div>
-        <div style={{display:"flex",gap:6}}>
-          <button style={{...s.btn,fontSize:11,padding:"4px 10px",background:abierto?"#2e1f06":"var(--color-background-tertiary)",color:abierto?"#f5b942":"var(--color-text-secondary)",border:abierto?"1px solid #f5b942":"0.5px solid var(--color-border-secondary)"}}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          <button style={{fontSize:11,fontWeight:600,padding:"5px 12px",borderRadius:20,cursor:"pointer",background:abierto?"var(--color-background-warning)":"var(--color-background-tertiary)",color:abierto?"var(--color-text-warning)":"var(--color-text-secondary)",border:abierto?"1px solid var(--color-border-warning)":"0.5px solid var(--color-border-secondary)"}}
             onClick={e=>{e.stopPropagation();abierto?setDraft(null):abrir();}}>♻️ Envases</button>
           {children}
         </div>

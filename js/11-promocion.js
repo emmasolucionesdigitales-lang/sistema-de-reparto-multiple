@@ -870,13 +870,15 @@ function TagsCliente({cliente,ventas,style}) {
   const _aj=cl.envAjuste||{}; ex.sifon+=Number(_aj.sifon)||0; ex.b10+=Number(_aj.bidon10)||0; ex.b20+=Number(_aj.bidon20)||0;
   return(
     <div style={{display:"flex",flexWrap:"wrap",gap:5,...(style||{})}}>
-      {cl.sifon>0&&<span style={TH}>Sif ×{cl.sifon}</span>}
-      {cl.bidon10>0&&<span style={TH}>10L ×{cl.bidon10}</span>}
-      {cl.bidon20>0&&<span style={TH}>20L ×{cl.bidon20}</span>}
-      {cl.dispenser>0&&<span style={TH}>Disp ×{cl.dispenser}</span>}
-      {ex.sifon>0&&<span style={TP}>+{ex.sifon} sif prest.</span>}
-      {ex.b10>0&&<span style={TP}>+{ex.b10} 10L prest.</span>}
-      {ex.b20>0&&<span style={TP}>+{ex.b20} 20L prest.</span>}
+      {(()=>{
+        const real={sifon:Math.max(0,(Number(cl.sifon)||0)+ex.sifon),b10:Math.max(0,(Number(cl.bidon10)||0)+ex.b10),b20:Math.max(0,(Number(cl.bidon20)||0)+ex.b20)};
+        return (<>
+          {real.sifon>0&&<span style={TH}>Sif ×{real.sifon}</span>}
+          {real.b10>0&&<span style={TH}>10L ×{real.b10}</span>}
+          {real.b20>0&&<span style={TH}>20L ×{real.b20}</span>}
+          {cl.dispenser>0&&<span style={TH}>Disp ×{cl.dispenser}</span>}
+        </>);
+      })()}
       {(cl.saldo||0)<0&&<span style={TD}>Debe {fmt(Math.abs(cl.saldo))}</span>}
       {(cl.saldo||0)>0&&<span style={TF}>A favor {fmt(cl.saldo)}</span>}
     </div>

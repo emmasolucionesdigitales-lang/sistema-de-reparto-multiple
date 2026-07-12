@@ -383,6 +383,94 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const ultimoEditadoRef = React.useRef({firma:null, ts:0});
   React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos,cargasDia:cargasDiaRaw}; });
 
+  // Descarga un archivo JSON al PC — usado por la limpieza automática de
+  // abajo, para que quede un registro a mano además del que se guarda en
+  // Firebase (por si algún día hace falta mirarlo sin entrar a la nube).
+  const _descargarArchivoLC = (nombre, contenido) => {
+    try {
+      const blob = new Blob([JSON.stringify(contenido, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = nombre;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 1500);
+    } catch(e) { console.warn("No se pudo descargar el archivo de respaldo:", e); }
+  };
+
+  // ── LIMPIEZA AUTOMÁTICA de ventas y marcas "no está/no quiere" antiguas ──
+  // Esta app todavía no tenía ninguna de las dos — sin este límite, con el
+  // tiempo se acumulan miles de registros que hacen cada vez más lenta la
+  // carga (esto ya pasó en La Catalina, con 1027 marcas acumuladas sin
+  // límite). Archiva a Firebase y borra localmente lo de más de 3 meses.
+  React.useEffect(()=>{
+    if(!window.db || !negocioId) return;
+    const hoy = new Date();
+    const limite = new Date(hoy.getFullYear(), hoy.getMonth()-3, hoy.getDate());
+    const limiteKey = limite.toLocaleDateString("en-CA");
+    const col = window.db.collection("negocios").doc(negocioId).collection("datos");
+    if(ventas && ventas.length){
+      const yaHasta = localStorage.getItem("rm_archivado_ventas_hasta") || "";
+      if(yaHasta < limiteKey){
+      const viejas = ventas.filter(v=>v.fechaKey && v.fechaKey < limiteKey);
+      if(!viejas.length){ localStorage.setItem("rm_archivado_ventas_hasta", limiteKey); }
+      if(viejas.length){
+        col.doc("archivo_ventas_"+limiteKey).set({d: viejas, archivadasEl: hoy.toISOString()})
+          .then(()=>{
+            const recientes = ventas.filter(v=>!v.fechaKey || v.fechaKey >= limiteKey);
+            if(recientes.length < ventas.length){
+              console.log("Limpieza automática: archivadas "+viejas.length+" ventas antiguas en Firebase");
+              setVentasRaw(recientes);
+              syncData({ventas: recientes});
+              _descargarArchivoLC(`ventas-archivadas_${limiteKey}.json`, viejas);
+              // Avisar por email: de los clientes con ventas en este archivado,
+              // ¿cuáles tienen deuda (saldo negativo) ahora mismo? El saldo total
+              // sigue siendo correcto — lo que se va del panel principal es el
+              // DETALLE de esas ventas puntuales (queda en el archivo descargado).
+              const idsAfectados = new Set(viejas.map(v=>v.clienteId));
+              const deudores = clientes.filter(c=>idsAfectados.has(c.id) && (Number(c.saldo)||0)<0);
+              if(deudores.length && window.enviarEmailBrevoRM && emailProp){
+                const filas = deudores.map(c=>`<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${c.nombre}</td><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;color:#c93030">$${Math.abs(Number(c.saldo)||0).toLocaleString("es-AR")}</td></tr>`).join("");
+                window.enviarEmailBrevoRM({
+                  to: emailProp, toName: perfil?.negocio||"",
+                  subject: `⚠️ ${deudores.length} cliente(s) con deuda — historial archivado`,
+                  htmlContent: `<div style="font-family:sans-serif;padding:20px;max-width:500px">
+                    <h2 style="color:#c93030">⚠️ Ojo con estos clientes</h2>
+                    <p>Se acaba de archivar el historial de ventas de más de 3 meses. Los siguientes clientes tienen ventas en ese archivado y <b>siguen debiendo</b> a día de hoy:</p>
+                    <table style="width:100%;border-collapse:collapse;margin:12px 0">${filas}</table>
+                    <p style="font-size:13px;color:#666">El saldo de cada uno sigue siendo el correcto — lo que ya no vas a ver en la app es el DETALLE de esas ventas puntuales. Quedaron guardadas en el archivo <b>ventas-archivadas_${limiteKey}.json</b> que se descargó en la PC, y también en Firebase por las dudas.</p>
+                  </div>`
+                }).catch(()=>{});
+              }
+            }
+            localStorage.setItem("rm_archivado_ventas_hasta", limiteKey);
+          })
+          .catch(e=>console.warn("No se pudieron archivar ventas antiguas:", e));
+      }
+      }
+    }
+    if(noVisitas && noVisitas.length){
+      const yaHastaNV = localStorage.getItem("rm_archivado_novisitas_hasta") || "";
+      if(yaHastaNV < limiteKey){
+      const viejasNV = noVisitas.filter(v=>v.fecha && v.fecha < limiteKey);
+      if(!viejasNV.length){ localStorage.setItem("rm_archivado_novisitas_hasta", limiteKey); }
+      if(viejasNV.length){
+        col.doc("archivo_novisitas_"+limiteKey).set({d: viejasNV, archivadasEl: hoy.toISOString()})
+          .then(()=>{
+            const recientesNV = noVisitas.filter(v=>!v.fecha || v.fecha >= limiteKey);
+            if(recientesNV.length < noVisitas.length){
+              console.log("Limpieza automática: archivadas "+viejasNV.length+" marcas de visita antiguas en Firebase");
+              setNoVisitas(recientesNV);
+              syncData({noVisitas: recientesNV});
+              _descargarArchivoLC(`visitas-archivadas_${limiteKey}.json`, viejasNV);
+            }
+            localStorage.setItem("rm_archivado_novisitas_hasta", limiteKey);
+          })
+          .catch(e=>console.warn("No se pudieron archivar marcas de visita antiguas:", e));
+      }
+      }
+    }
+  },[]); // solo al arrancar
+
   // Respaldo COMPLETO descargable + restaurar (solo dueño)
   React.useEffect(()=>{
     window._descargarRespaldo = () => {
