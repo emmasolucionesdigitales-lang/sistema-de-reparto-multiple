@@ -242,6 +242,19 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     setSyncStatus("loading");
     cloudLoad(uid, negocioId).then(function(data) {
       if(!data) { setSyncStatus("idle"); return; }
+      // ═══════════════════════════════════════════════════════════════════
+      // LEER ESTO ANTES DE TOCAR CUALQUIER MERGE DE ACÁ ABAJO
+      // ═══════════════════════════════════════════════════════════════════
+      // Patrón que se repite para clientes/ventas/noVisitas: al cargar de la
+      // nube, se compara registro por registro usando `_upd`, y gana el más
+      // nuevo — NUNCA pisar el array local entero con el de la nube.
+      // REGLA DE ORO: comparar con > estricto, nunca con >=. Un empate
+      // significa "ya sincronizado sin cambios" — tratarlo como cambio hace
+      // que se re-suba de nuevo en cada carga. Esto ya pasó de verdad en La
+      // Catalina: un >= en el merge de noVisitas gastó toda la cuota gratis
+      // de Firestore en un día (julio 2026). Si la cuota se agota sin
+      // explicación, ACÁ es el primer lugar para revisar.
+      // ═══════════════════════════════════════════════════════════════════
       if (data.clientes?.length)   {
         // ── Clientes: MERGEAR por id en vez de sobreescribir ──────────────
         const clientesLocales = (()=>{ try{ return JSON.parse(localStorage.getItem("rm_clientes_v3")||"[]"); }catch{ return []; } })();
@@ -395,6 +408,8 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   // cartel de confirmación tarda en desaparecer y se vuelve a tocar el botón.
   const ultimoRegistroRef = React.useRef({firma:null, ts:0});
   const ultimoBorradoRef = React.useRef({id:null, ts:0});
+  const [deshacerVenta, setDeshacerVenta] = React.useState(null);
+  const deshacerTimerRef = React.useRef(null);
   const ultimoEditadoRef = React.useRef({firma:null, ts:0});
   const ultimoClienteBorradoRef = React.useRef({id:null, ts:0});
   React.useEffect(()=>{ estadoRef.current={clientes,ventas,planillas,stock:stockNorm,productos,noVisitas,recordatorios,prospectos,zonasReparto,repartos,cargasDia:cargasDiaRaw,perdidas}; });
@@ -559,12 +574,12 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           // Puede que Firestore esté cacheando (persistence activa) → guardar cola igual
           try { localStorage.setItem("sr_offline_pending", JSON.stringify(data)); } catch {}
           setPendingOfflineSync(true);
-          setSyncStatus("offline_pending");
+          setSyncStatus(navigator.onLine ? "error" : "offline_pending");
         }
       }).catch(function(){
         try { localStorage.setItem("sr_offline_pending", JSON.stringify(data)); } catch {}
         setPendingOfflineSync(true);
-        setSyncStatus("offline_pending");
+        setSyncStatus(navigator.onLine ? "error" : "offline_pending");
       });
     });
   };
@@ -634,7 +649,13 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
     const goOffline = () => { setIsOnline(false); setSyncStatus("offline"); };
     window.addEventListener("online",  goOnline);
     window.addEventListener("offline", goOffline);
-    return ()=>{ window.removeEventListener("online",goOnline); window.removeEventListener("offline",goOffline); };
+    // Reintento periódico: cubre el caso de un guardado que falló ESTANDO
+    // online (permisos, cuota momentánea) — sin esto, solo se reintentaba
+    // al pasar de sin señal a con señal.
+    const reintentoPeriodico = setInterval(()=>{
+      if(navigator.onLine && localStorage.getItem("sr_offline_pending")) goOnline();
+    }, 45000);
+    return ()=>{ window.removeEventListener("online",goOnline); window.removeEventListener("offline",goOffline); clearInterval(reintentoPeriodico); };
   },[]);
 
   // ── NOTIFICACIONES ─────────────────────────────────────────────────
@@ -924,12 +945,27 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         if((Number(x.saldoDelta)||0)!==0) ajusteSaldoExtra += Number(x.saldoDelta);
       }
     });
+    // Guardar lo borrado para poder "Deshacer" — antes de tocar nada
+    const ventasBorradas = ventas.filter(x=>idsABorrar.has(x.id));
+    const ajusteTotal = v.saldoDelta + ajusteSaldoExtra;
+    if(deshacerTimerRef.current) clearTimeout(deshacerTimerRef.current);
+    setDeshacerVenta({ventasBorradas, clienteId:v.clienteId, ajusteTotal, ts:Date.now()});
+    deshacerTimerRef.current = setTimeout(()=>setDeshacerVenta(null), 8000);
     saveVentas(prev => {
       let nv = prev.filter(x=>!idsABorrar.has(x.id));
       nv = nv.filter(x=>!(x._esMixtoTrans && x._mixtoDe!==undefined && !nv.some(y=>y.id===x._mixtoDe)));
       return nv;
     });
     saveClientes(prev => prev.map(x=>x.id===v.clienteId?{...x,saldo:(Number(x.saldo)||0)-v.saldoDelta-ajusteSaldoExtra}:x));
+  };
+
+  const deshacerUltimaVenta = () => {
+    if(!deshacerVenta) return;
+    if(deshacerTimerRef.current) clearTimeout(deshacerTimerRef.current);
+    const {ventasBorradas, clienteId, ajusteTotal} = deshacerVenta;
+    saveVentas(prev => [...prev, ...ventasBorradas]);
+    saveClientes(prev => prev.map(x=>x.id===clienteId?{...x,saldo:(Number(x.saldo)||0)+ajusteTotal}:x));
+    setDeshacerVenta(null);
   };
 
   const editarVenta = (ventaId, detalle, pago, montoPagado, saldoAplicado, obs, montoTrans2) => {
@@ -988,6 +1024,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         saveRepartos={saveRepartos}
         onOperarReparto={(rep)=>setOperandoReparto(rep)}
         onTodosClientes={()=>irA("gestionClientes")}
+        onDormidos={()=>irA("clientesDormidos")}
         onImportarClientes={()=>irA("importarClientes")}
         onMapaClientes={()=>irA("mapaClientes")}
         tabInicial={tabMenu}
@@ -1240,6 +1277,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           if(!diaActual) setDiaActual(c.dia);
           irA("venta");
         }} onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}} ventas={ventas} productos={productos} onGuardarCambio={(vt)=>{saveVentas(prev=>[...prev,vt]);}} />}
+      {pantalla==="clientesDormidos" && <ClientesDormidos clientes={clientes} ventas={ventas} repartos={repartos} onVolver={()=>irA("gestionClientes")} onSeleccionar={c=>{setClienteId(c.id);irA("detalleDesdeGestion");}} onEditarCliente={(id,cambios)=>{saveClientes(prev=>prev.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={eliminarCliente} onPerdida={registrarPerdida} />}
       {pantalla==="detalleDesdeGestion" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual||cliente.dia} fecha={fechaActual} productos={productos} onVenta={()=>{setDiaActual(cliente.dia);const hoy=new Date().toLocaleDateString("en-CA");if(!fechaActual)setFechaActual(hoy);irA("venta");}} onVolver={()=>irA("gestionClientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>{eliminarCliente(cliente.id);irA("gestionClientes");}}
           onNoEstaCliente={()=>{}} onNoQuiereCliente={()=>{}}
           recordatorios={recordatorios} onGuardarRecordatorio={(r)=>saveRecordatorios(prev=>[...(prev||[]),r])} onConfirmarRecordatorio={(id)=>saveRecordatorios(prev=>(prev||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
@@ -1331,6 +1369,12 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           </div>
         );
       })()}
+      {deshacerVenta && (
+        <div style={{position:"fixed",left:14,right:14,bottom:18,zIndex:999,background:"var(--color-background-tertiary)",border:"1px solid var(--color-border-secondary)",borderRadius:12,padding:"12px 14px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 4px 16px rgba(0,0,0,0.35)"}}>
+          <span style={{fontSize:13,color:"var(--color-text-primary)",flex:1}}>🗑️ Venta eliminada</span>
+          <button style={{background:"#185FA5",color:"#e2eaf4",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:600,cursor:"pointer"}} onClick={deshacerUltimaVenta}>↩️ Deshacer</button>
+        </div>
+      )}
     </div>
   );
 }

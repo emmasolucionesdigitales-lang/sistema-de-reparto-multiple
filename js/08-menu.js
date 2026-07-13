@@ -2,7 +2,7 @@
 // ◆  08-menu.js — MenuRepartos · MenuDias · DiaPrincipal · PlanillaDelDia · InicioReparto
 // ════════════════════════════════════════════════════════════════════
 
-function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,tabInicial,onTabChange,scaleIdx,onToggleScale,scaleLabel}) {
+function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,onDormidos,tabInicial,onTabChange,scaleIdx,onToggleScale,scaleLabel}) {
   const [tab, setTab] = React.useState(tabInicial||"repartos");
   const cambiarTab = (t) => { setTab(t); if(onTabChange) onTabChange(t); };
   const [modoNuevo, setModoNuevo] = React.useState(false);
@@ -235,6 +235,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
             {[
               {ico:"📊",lbl:"Resumen",sub:"Ventas del período",fn:onResumen,color:"#185FA5"},
               {ico:"👥",lbl:"Todos los clientes",sub:"Clientes, agenda y mapa",fn:onTodosClientes,color:"#0e7c6b"},
+              {ico:"😴",lbl:"Dormidos",sub:"Sin comprar hace semanas",fn:onDormidos,color:"#b45309"},
               {ico:"📦",lbl:"Stock",sub:"Sodería, depósito, carga",fn:onStock,color:"#065f46"},
               {ico:"⚙️",lbl:"Configuración",sub:"Productos, precios, datos",fn:()=>onConfig&&onConfig("datos"),color:"#555"},
             ].map(({ico,lbl,sub,fn,color})=>(
@@ -330,8 +331,24 @@ function MenuDias({dias,reparto,onDia,onResumen,onConfig,onGestionClientes,onPro
   return (
     <div style={s.screen}>
       <HeaderApp onVolver={onVolver}/>
-      
-      
+
+      {(()=>{
+        const ultimo = localStorage.getItem("rm_lc_ultimo_backup");
+        const hoy = new Date().toLocaleDateString("en-CA");
+        const esHoy = ultimo===hoy;
+        return (
+          <div style={{margin:"8px 14px 0",display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:8,background:"var(--color-background-tertiary)"}}>
+            <span style={{fontSize:12,color:esHoy?"var(--color-text-success)":"var(--color-text-warning)",flex:1}}>
+              💾 {ultimo ? `Último respaldo: ${esHoy?"hoy":ultimo}` : "Todavía no se hizo ningún respaldo"}
+            </span>
+            <button style={{background:"none",border:"none",color:"var(--color-text-info)",fontSize:12,fontWeight:600,cursor:"pointer",padding:"2px 6px"}}
+              onClick={()=>{ if(typeof window._descargarRespaldo==="function") window._descargarRespaldo(); }}>
+              Descargar ahora
+            </button>
+          </div>
+        );
+      })()}
+
       {recordatoriosActivos&&recordatoriosActivos.length>0&&(
         <div style={{margin:"8px 14px 4px"}}>
           <div style={{fontSize:11,fontWeight:500,color:"#5daaff",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>🔔 Recordatorios pendientes</div>

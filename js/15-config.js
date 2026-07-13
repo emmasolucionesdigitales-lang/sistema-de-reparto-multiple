@@ -178,6 +178,26 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
   const [abiertoRespaldo,setAbiertoRespaldo]=useState(false);
   const [abiertoMant,setAbiertoMant]=useState(false);
   const [editandoId,setEditandoId]=useState(null);
+  // Exportar ventas a CSV — para llevarle algo armado a un contador, o
+  // simplemente tener el historial en una planilla aparte de la app.
+  const exportarVentasCSV = () => {
+    if(!ventas||!ventas.length){ alert("No hay ventas para exportar."); return; }
+    const clientePorId = {}; (clientes||[]).forEach(c=>{ clientePorId[c.id]=c.nombre; });
+    const esc = (v) => `"${String(v??"").replace(/"/g,'""')}"`;
+    const filas = [["Fecha","Día","Cliente","Productos","Monto","Forma de pago","Observaciones"].map(esc).join(",")];
+    [...ventas].sort((a,b)=>(a.fechaKey||"").localeCompare(b.fechaKey||"")).forEach(v=>{
+      if(v._esCobro||v._esAjuste||v._esAjusteEnvases) return;
+      const prods = (v.detalle||[]).map(d=>`${d.nombre} x${d.cantidad}`).join(" · ");
+      filas.push([v.fechaKey||"", v.dia||"", clientePorId[v.clienteId]||"", prods, v.neto||v.pagadoNum||0, v.pago||"", v.obs||""].map(esc).join(","));
+    });
+    const csv = "\uFEFF"+filas.join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `ventas_${new Date().toLocaleDateString("en-CA")}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  };
   const [importando,setImportando]=useState(false);
   const [importReparto,setImportReparto]=useState(repartoActual?.id??"");
   // ▶ Fix: filtroReparto faltaba declarado — causaba crash al abrir Datos
@@ -406,6 +426,7 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
                 if(typeof window._descargarRespaldo==="function") window._descargarRespaldo();
                 else alert("No se pudo generar el respaldo. Recargá la app e intentá de nuevo.");
               }}>💾 Descargar respaldo (.json)</button>
+              <button style={{...s.btn,width:"100%",marginBottom:8}} onClick={exportarVentasCSV}>📊 Exportar ventas (.csv, para Excel/contador)</button>
               <label style={{...s.btn,width:"100%",padding:"10px",display:"block",textAlign:"center",cursor:"pointer",boxSizing:"border-box",fontSize:13,marginBottom:10}}>
                 ♻️ Restaurar desde un respaldo
                 <input type="file" accept=".json,application/json" style={{display:"none"}} onChange={(e)=>{
