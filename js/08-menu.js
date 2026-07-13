@@ -2,7 +2,7 @@
 // ◆  08-menu.js — MenuRepartos · MenuDias · DiaPrincipal · PlanillaDelDia · InicioReparto
 // ════════════════════════════════════════════════════════════════════
 
-function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,onDormidos,tabInicial,onTabChange,scaleIdx,onToggleScale,scaleLabel}) {
+function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSeleccionar,onConfig,onResumen,onStock,onAgenda,onVolver,saveRepartos,onOperarReparto,onTodosClientes,onImportarClientes,onMapaClientes,tabInicial,onTabChange,scaleIdx,onToggleScale,scaleLabel}) {
   const [tab, setTab] = React.useState(tabInicial||"repartos");
   const cambiarTab = (t) => { setTab(t); if(onTabChange) onTabChange(t); };
   const [modoNuevo, setModoNuevo] = React.useState(false);
@@ -235,7 +235,6 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
             {[
               {ico:"📊",lbl:"Resumen",sub:"Ventas del período",fn:onResumen,color:"#185FA5"},
               {ico:"👥",lbl:"Todos los clientes",sub:"Clientes, agenda y mapa",fn:onTodosClientes,color:"#0e7c6b"},
-              {ico:"😴",lbl:"Dormidos",sub:"Sin comprar hace semanas",fn:onDormidos,color:"#b45309"},
               {ico:"📦",lbl:"Stock",sub:"Sodería, depósito, carga",fn:onStock,color:"#065f46"},
               {ico:"⚙️",lbl:"Configuración",sub:"Productos, precios, datos",fn:()=>onConfig&&onConfig("datos"),color:"#555"},
             ].map(({ico,lbl,sub,fn,color})=>(
@@ -1494,4 +1493,3 @@ function InicioReparto({dia,fecha,planilla,productos,cargasDia,stock,onGuardar,o
     </div>
   );
 }
-
