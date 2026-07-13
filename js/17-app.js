@@ -1024,7 +1024,6 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         saveRepartos={saveRepartos}
         onOperarReparto={(rep)=>setOperandoReparto(rep)}
         onTodosClientes={()=>irA("gestionClientes")}
-        onDormidos={()=>irA("clientesDormidos")}
         onImportarClientes={()=>irA("importarClientes")}
         onMapaClientes={()=>irA("mapaClientes")}
         tabInicial={tabMenu}
