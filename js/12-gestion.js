@@ -8,6 +8,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
   const fotoCliente = fotoClienteId ? clientes.find(c=>c.id===fotoClienteId) : null;
   const [busqueda,setBusqueda]   = useState("");
   const [filtroDia,setFiltroDia] = useState("todos");
+  const [filtroRepartidor,setFiltroRepartidor] = useState("todos");
   const [modoNuevo,setModoNuevo] = useState(false);
   const [editandoId,setEditandoId] = useState(null);
   const [cambioId,setCambioId] = useState(null);
@@ -46,6 +47,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
 
   const filtrados = clientes
     .filter(c=>filtroDia==="todos"||c.dia===filtroDia)
+    .filter(c=>filtroRepartidor==="todos"||c.repartoId===filtroRepartidor)
     .filter(c=>buscarCliente(c,busqueda)>0)
     .sort((a,b)=>{
       if(busqueda.trim()){ const dif=buscarCliente(b,busqueda)-buscarCliente(a,busqueda); if(dif!==0) return dif; }
@@ -89,6 +91,22 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
           ↺ Reordenar
         </button>
         </div>
+        {repartos&&repartos.length>0&&(
+          <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap",overflowX:"auto"}}>
+            <button style={{...s.btn,fontSize:11,padding:"3px 10px",
+              background:filtroRepartidor==="todos"?"#0e7c6b":"var(--color-background-tertiary)",
+              color:filtroRepartidor==="todos"?"#e2eaf4":"var(--color-text-secondary)",
+              border:filtroRepartidor==="todos"?"none":"0.5px solid var(--color-border-secondary)"}}
+              onClick={()=>setFiltroRepartidor("todos")}>🚚 Todos</button>
+            {[...repartos].sort((a,b)=>(a.numero||0)-(b.numero||0)).map(r=>(
+              <button key={r.id} style={{...s.btn,fontSize:11,padding:"3px 10px",flexShrink:0,
+                background:filtroRepartidor===r.id?"#0e7c6b":"var(--color-background-tertiary)",
+                color:filtroRepartidor===r.id?"#e2eaf4":"var(--color-text-secondary)",
+                border:filtroRepartidor===r.id?"none":"0.5px solid var(--color-border-secondary)"}}
+                onClick={()=>setFiltroRepartidor(r.id)}>Rep.{r.numero} · {(r.repartidorNombre||"").split(" ")[0]}</button>
+            ))}
+          </div>
+        )}
         <p style={{fontSize:11,color:clienteMoviendo?"var(--color-text-warning)":"var(--color-text-tertiary)",marginTop:6,fontWeight:clienteMoviendo?600:400}}>
           {clienteMoviendo
             ? `📍 Tocá el # de dónde debería ir "${clientes.find(c=>c.id===clienteMoviendo)?.nombre||""}" (mismo día · tocá el mismo para cancelar)`
