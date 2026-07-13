@@ -112,17 +112,17 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
       <div style={{padding:"10px 14px 40px"}}>
         {onResumen&&<button style={{...s.btn,width:"100%",marginBottom:10,fontSize:13,fontWeight:500}} onClick={onResumen}>📊 Ver resumen</button>}
 
-        <div style={{fontSize:11,color:"var(--color-text-info)",margin:"0 0 10px",padding:"7px 11px",background:"var(--color-background-info)",borderRadius:8}}>ℹ️ El <b>sifón</b> se cuenta en <b>unidades sueltas</b> (6 unidades = 1 cajón).</div>
+        <div style={{fontSize:12,color:"var(--color-text-info)",margin:"0 0 10px",padding:"7px 11px",background:"var(--color-background-info)",borderRadius:8}}>ℹ️ El <b>sifón</b> se cuenta en <b>unidades sueltas</b> (6 unidades = 1 cajón).</div>
 
         {/* SODERÍA */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoSoderia?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+          <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",marginBottom:abiertoSoderia?10:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
             onClick={()=>setAbiertoSoderia(!abiertoSoderia)}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🏭 Sodería <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· de acá sale el camión</span></span>
-            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoSoderia?"▲":"▼"}</span>
+            <span style={{fontSize:15,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🏭 Sodería <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:12}}>· de acá sale el camión</span></span>
+            <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoSoderia?"▲":"▼"}</span>
           </button>
           {abiertoSoderia&&(<>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 52px 52px 46px",gap:6,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 52px 52px 46px",gap:6,fontSize:12,color:"var(--color-text-tertiary)",marginBottom:5}}>
             <span></span><span style={{textAlign:"center"}}>Llenos</span><span style={{textAlign:"center"}}>Vacíos</span><span style={{textAlign:"center",color:"var(--color-text-secondary)"}}>Total</span>
           </div>
           {PRODS.map(([k,lbl])=>{
@@ -132,7 +132,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
                 <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl}</span>
                 <input type="number" value={ll} onChange={e=>setLoc("soderia",k,e.target.value)} style={inNum} />
                 <input type="number" value={va} onChange={e=>setLoc("soderia_vacios",k,e.target.value)} style={inNum} />
-                <span style={{textAlign:"center",fontSize:13,color:"var(--color-text-secondary)",fontWeight:500}}>{ll+va}{k==="sifon"&&<span style={{display:"block",fontSize:9,color:"var(--color-text-tertiary)",fontWeight:400}}>{Math.floor((ll+va)/6)} caj</span>}</span>
+                <span style={{textAlign:"center",fontSize:13,color:"var(--color-text-secondary)",fontWeight:500}}>{ll+va}{k==="sifon"&&<span style={{display:"block",fontSize:11,color:"var(--color-text-tertiary)",fontWeight:400}}>{Math.floor((ll+va)/6)} caj</span>}</span>
               </div>
             );
           })}
@@ -142,10 +142,10 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
         {/* CAMIONES (uno por reparto) */}
         {(repartos||[]).length>0 && (
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoCamiones?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+          <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",marginBottom:abiertoCamiones?10:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
             onClick={()=>setAbiertoCamiones(!abiertoCamiones)}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🚐 Camiones <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· lo que lleva cada reparto</span></span>
-            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoCamiones?"▲":"▼"}</span>
+            <span style={{fontSize:15,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🚐 Camiones <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:12}}>· lo que lleva cada reparto</span></span>
+            <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoCamiones?"▲":"▼"}</span>
           </button>
           {abiertoCamiones&&(repartos||[]).map(rep=>(
             <div key={rep.id} style={{marginBottom:12,paddingBottom:10,borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
@@ -153,7 +153,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
                 {PRODS.map(([k,lbl])=>(
                   <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--color-background-tertiary)",borderRadius:8,padding:"6px 9px"}}>
-                    <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl.replace(" 1.5L","")}{k==="sifon"&&<span style={{fontSize:9,color:"var(--color-text-tertiary)",display:"block"}}>{Math.floor((stock.camiones?.[rep.id]?.sifon||0)/6)} caj</span>}</span>
+                    <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl.replace(" 1.5L","")}{k==="sifon"&&<span style={{fontSize:11,color:"var(--color-text-tertiary)",display:"block"}}>{Math.floor((stock.camiones?.[rep.id]?.sifon||0)/6)} caj</span>}</span>
                     <input type="number" value={stock.camiones?.[rep.id]?.[k]||0} onChange={e=>setCamion(rep.id,k,e.target.value)} style={{...inNum,width:48}} />
                   </div>
                 ))}
@@ -164,16 +164,16 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
         )}
         {/* DEPÓSITO */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoDeposito?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+          <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",marginBottom:abiertoDeposito?10:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
             onClick={()=>setAbiertoDeposito(!abiertoDeposito)}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>📦 Depósito <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· vacíos nuevos, sin uso</span></span>
-            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoDeposito?"▲":"▼"}</span>
+            <span style={{fontSize:15,fontWeight:600,color:"var(--color-text-info)",flex:1}}>📦 Depósito <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:12}}>· vacíos nuevos, sin uso</span></span>
+            <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoDeposito?"▲":"▼"}</span>
           </button>
           {abiertoDeposito&&(
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
             {PRODS.map(([k,lbl])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--color-background-tertiary)",borderRadius:8,padding:"6px 9px"}}>
-                <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl.replace(" 1.5L","")}{k==="sifon"&&<span style={{fontSize:9,color:"var(--color-text-tertiary)",display:"block"}}>{Math.floor((stock.casa?.sifon||0)/6)} caj</span>}</span>
+                <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl.replace(" 1.5L","")}{k==="sifon"&&<span style={{fontSize:11,color:"var(--color-text-tertiary)",display:"block"}}>{Math.floor((stock.casa?.sifon||0)/6)} caj</span>}</span>
                 <input type="number" value={stock.casa?.[k]||0} onChange={e=>setLoc("casa",k,e.target.value)} style={{...inNum,width:48}} />
               </div>
             ))}
@@ -183,14 +183,14 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
 
         {/* EN CLIENTES */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoEnClientes?7:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+          <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",marginBottom:abiertoEnClientes?10:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
             onClick={()=>setAbiertoEnClientes(!abiertoEnClientes)}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>👥 En clientes <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· prestados</span></span>
-            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoEnClientes?"▲":"▼"}</span>
+            <span style={{fontSize:15,fontWeight:600,color:"var(--color-text-info)",flex:1}}>👥 En clientes <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:12}}>· prestados</span></span>
+            <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoEnClientes?"▲":"▼"}</span>
           </button>
           {abiertoEnClientes&&(<>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
-            <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>Sifón <b style={{color:"var(--color-text-primary)"}}>{totClientes.sifon}</b> <span style={{fontSize:10,color:"var(--color-text-tertiary)"}}>({Math.floor(totClientes.sifon/6)} caj)</span></span>
+            <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>Sifón <b style={{color:"var(--color-text-primary)"}}>{totClientes.sifon}</b> <span style={{fontSize:12,color:"var(--color-text-tertiary)"}}>({Math.floor(totClientes.sifon/6)} caj)</span></span>
             <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>10L <b style={{color:"var(--color-text-primary)"}}>{totClientes.bidon10}</b></span>
             <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>20L <b style={{color:"var(--color-text-primary)"}}>{totClientes.bidon20}</b></span>
             <span style={{background:"var(--color-background-tertiary)",borderRadius:6,padding:"3px 8px",fontSize:12,color:"var(--color-text-secondary)"}}>Disp <b style={{color:"var(--color-text-primary)"}}>{totClientes.dispenser}</b></span>
@@ -200,7 +200,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
           </button>
           {clientesAbierto&&(
             <div style={{marginTop:8}}>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 42px 42px 42px 42px",gap:4,fontSize:10,color:"var(--color-text-tertiary)",marginBottom:5}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 42px 42px 42px 42px",gap:4,fontSize:12,color:"var(--color-text-tertiary)",marginBottom:5}}>
                 <span></span><span style={{textAlign:"center"}}>Sif</span><span style={{textAlign:"center"}}>10L</span><span style={{textAlign:"center"}}>20L</span><span style={{textAlign:"center"}}>Disp</span>
               </div>
               {clientesReales.sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||"")).map(c=>(
@@ -222,8 +222,8 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
             se suman todos juntos (uno por reparto) dentro de Sodería. */}
         <div style={{...s.card,margin:"0 0 10px",border:"1px solid var(--color-border-secondary)"}}>
           <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",marginBottom:2}}>Σ Total general</div>
-          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:9}}>El número real que existe en total, sea cual sea la ubicación.</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 60px 60px 60px 60px",gap:6,fontSize:10,color:"var(--color-text-tertiary)",marginBottom:5}}>
+          <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:9}}>El número real que existe en total, sea cual sea la ubicación.</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 60px 60px 60px 60px",gap:6,fontSize:12,color:"var(--color-text-tertiary)",marginBottom:5}}>
             <span></span><span style={{textAlign:"center"}}>Sodería</span><span style={{textAlign:"center"}}>Depós.</span><span style={{textAlign:"center"}}>Client.</span><span style={{textAlign:"center",color:"var(--color-text-success)",fontWeight:600}}>Total</span>
           </div>
           {PRODS.map(([k,lbl])=>{
@@ -237,7 +237,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
                 <span style={{textAlign:"center",fontSize:12,color:"var(--color-text-secondary)"}}>{enSoderia}</span>
                 <span style={{textAlign:"center",fontSize:12,color:"var(--color-text-secondary)"}}>{enDeposito}</span>
                 <span style={{textAlign:"center",fontSize:12,color:"var(--color-text-secondary)"}}>{enClientes}</span>
-                <span style={{textAlign:"center",fontSize:14,fontWeight:700,color:"var(--color-text-success)"}}>{total}{k==="sifon"&&<span style={{display:"block",fontSize:9,color:"var(--color-text-tertiary)",fontWeight:400}}>{Math.floor(total/6)} caj</span>}</span>
+                <span style={{textAlign:"center",fontSize:14,fontWeight:700,color:"var(--color-text-success)"}}>{total}{k==="sifon"&&<span style={{display:"block",fontSize:11,color:"var(--color-text-tertiary)",fontWeight:400}}>{Math.floor(total/6)} caj</span>}</span>
               </div>
             );
           })}
@@ -245,10 +245,10 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
 
         {/* PÉRDIDAS — envases rotos o no recuperados, para no perderles el rastro */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoPerdidas?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+          <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",marginBottom:abiertoPerdidas?10:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
             onClick={()=>setAbiertoPerdidas(!abiertoPerdidas)}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-danger)",flex:1}}>💔 Pérdidas <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:11}}>· rotos o no recuperados</span></span>
-            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoPerdidas?"▲":"▼"}</span>
+            <span style={{fontSize:15,fontWeight:600,color:"var(--color-text-danger)",flex:1}}>💔 Pérdidas <span style={{fontWeight:400,color:"var(--color-text-tertiary)",fontSize:12}}>· rotos o no recuperados</span></span>
+            <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoPerdidas?"▲":"▼"}</span>
           </button>
           {abiertoPerdidas&&(<>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
@@ -266,7 +266,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               <input type="number" min={1} placeholder="Cant." value={formPerdida.cantidad} onChange={e=>setFormPerdida(f=>({...f,cantidad:e.target.value}))} style={inNum} />
             </div>
             <div style={{marginBottom:6}}>
-              <label style={{fontSize:11,color:"var(--color-text-tertiary)",display:"block",marginBottom:3}}>¿De dónde salía?</label>
+              <label style={{fontSize:12,color:"var(--color-text-tertiary)",display:"block",marginBottom:3}}>¿De dónde salía?</label>
               <select value={formPerdida.ubicacion} onChange={e=>setFormPerdida(f=>({...f,ubicacion:e.target.value}))} style={{...inNum,textAlign:"left",width:"100%"}}>
                 <option value="soderia">Sodería (llenos)</option>
                 <option value="soderia_vacios">Sodería (vacíos)</option>
@@ -275,7 +275,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               </select>
             </div>
             <div style={{marginBottom:8}}>
-              <label style={{fontSize:11,color:"var(--color-text-tertiary)",display:"block",marginBottom:3}}>Motivo</label>
+              <label style={{fontSize:12,color:"var(--color-text-tertiary)",display:"block",marginBottom:3}}>Motivo</label>
               <input type="text" value={formPerdida.motivo} onChange={e=>setFormPerdida(f=>({...f,motivo:e.target.value}))} style={{...inNum,textAlign:"left",width:"100%"}} placeholder="Roto en el reparto, se cayó del camión, etc." />
             </div>
             <button onClick={confirmarPerdida} style={{...s.btn,width:"100%",background:"var(--color-background-danger)",color:"var(--color-text-danger)",border:"1px solid var(--color-border-danger)"}}>💔 Registrar pérdida</button>
@@ -283,14 +283,14 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
 
           {(perdidas||[]).length>0 && (
             <div>
-              <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:6}}>Historial ({perdidas.length})</div>
+              <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:6}}>Historial ({perdidas.length})</div>
               {[...perdidas].reverse().slice(0,20).map(p=>{
                 const items=[p.sifon&&`${p.sifon} Sifón`,p.bidon10&&`${p.bidon10} 10L`,p.bidon20&&`${p.bidon20} 20L`].filter(Boolean).join(" · ");
                 const fecha=new Date(p.fecha).toLocaleDateString("es-AR");
                 return (
                   <div key={p.id} style={{padding:"6px 0",borderTop:"0.5px solid var(--color-border-tertiary)"}}>
                     <div style={{fontSize:12,color:"var(--color-text-primary)"}}>{items}</div>
-                    <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{fecha} · {p.motivo}{p.clienteNombre?` · ${p.clienteNombre}`:""}</div>
+                    <div style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{fecha} · {p.motivo}{p.clienteNombre?` · ${p.clienteNombre}`:""}</div>
                   </div>
                 );
               })}
@@ -301,17 +301,17 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
 
         {/* PRODUCTOS Y PRECIOS */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoProductos?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+          <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",marginBottom:abiertoProductos?10:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
             onClick={()=>setAbiertoProductos(!abiertoProductos)}>
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)"}}>🏷️ Productos y precios</div>
-              {!abiertoProductos&&<div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:2}}>De acá salen los precios de la planilla y todas las ventas</div>}
+              <div style={{fontSize:15,fontWeight:600,color:"var(--color-text-info)"}}>🏷️ Productos y precios</div>
+              {!abiertoProductos&&<div style={{fontSize:12,color:"var(--color-text-tertiary)",marginTop:2}}>De acá salen los precios de la planilla y todas las ventas</div>}
             </div>
-            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoProductos?"▲":"▼"}</span>
+            <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoProductos?"▲":"▼"}</span>
           </button>
           {abiertoProductos&&(<>
-          <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:9}}>De acá salen los precios de la planilla y todas las ventas</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 50px 20px",gap:5,fontSize:11,color:"var(--color-text-tertiary)",marginBottom:5}}>
+          <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginBottom:9}}>De acá salen los precios de la planilla y todas las ventas</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 50px 20px",gap:5,fontSize:12,color:"var(--color-text-tertiary)",marginBottom:5}}>
             <span>Producto</span><span style={{textAlign:"center"}}>Llenado</span><span style={{textAlign:"center"}}>Venta</span><span style={{textAlign:"center",color:"var(--color-text-success)"}}>Stock</span><span></span>
           </div>
           {(productos||[]).map(p=>{
@@ -321,7 +321,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
               <input type="text" value={p.nombre||""} onChange={e=>setProdNombre(p.id,e.target.value)} style={{...inNum,textAlign:"left",fontSize:12}} />
               <input type="number" value={p.costo||0} onChange={e=>setProdPrecio(p.id,"costo",e.target.value)} style={{...inNum,fontSize:12}} />
               {p.esDispenser
-                ? <span style={{textAlign:"center",fontSize:10,color:"var(--color-text-warning)"}}>comod.</span>
+                ? <span style={{textAlign:"center",fontSize:12,color:"var(--color-text-warning)"}}>comod.</span>
                 : <input type="number" value={p.precio||0} onChange={e=>setProdPrecio(p.id,"precio",e.target.value)} style={{...inNum,fontSize:12}} />
               }
               <span style={{textAlign:"center",fontSize:13,fontWeight:700,color:"var(--color-text-success)"}}>{totalGeneralDe(k)}</span>
@@ -334,10 +334,10 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
 
         {/* CARGA DIARIA */}
         <div style={{...s.card,margin:"0 0 10px"}}>
-          <button style={{width:"100%",background:"none",border:"none",padding:0,marginBottom:abiertoCarga?9:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
+          <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",marginBottom:abiertoCarga?10:0,display:"flex",alignItems:"center",cursor:"pointer",textAlign:"left"}}
             onClick={()=>setAbiertoCarga(!abiertoCarga)}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🚐 Carga diaria del camión</span>
-            <span style={{color:"var(--color-text-tertiary)",fontSize:12}}>{abiertoCarga?"▲":"▼"}</span>
+            <span style={{fontSize:15,fontWeight:600,color:"var(--color-text-info)",flex:1}}>🚐 Carga diaria del camión</span>
+            <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoCarga?"▲":"▼"}</span>
           </button>
           {abiertoCarga&&(<>
           <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
@@ -348,7 +348,7 @@ function StockGeneral({stock,setStock,clientes,setClientes,ventas,productos,setP
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
             {[["soda","Sifón"],["b10","Bidón 10L"],["b20","Bidón 20L"],["disp","Dispenser"]].map(([k,lbl])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--color-background-tertiary)",borderRadius:8,padding:"6px 9px"}}>
-                <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl.replace("Bidón ","").replace(" 1.5L","")}{k==="soda"&&<span style={{fontSize:9,color:"var(--color-text-tertiary)",display:"block"}}>{Math.floor(((cargasDia?.[diaCarga]?.soda)||0)/6)} caj</span>}</span>
+                <span style={{fontSize:13,color:"var(--color-text-primary)"}}>{lbl.replace("Bidón ","").replace(" 1.5L","")}{k==="soda"&&<span style={{fontSize:11,color:"var(--color-text-tertiary)",display:"block"}}>{Math.floor(((cargasDia?.[diaCarga]?.soda)||0)/6)} caj</span>}</span>
                 <input type="number" value={(cargasDia?.[diaCarga]?.[k])||0} onChange={e=>setCarga(diaCarga,k,e.target.value)} style={{...inNum,width:48}} />
               </div>
             ))}
@@ -386,14 +386,14 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
       <div style={{padding:"10px 14px 4px"}}>
         <div style={{display:"flex",gap:8,marginBottom:8}}>
           <div style={{...s.card,flex:1,margin:0,background:"#1e3a5f",border:"1px solid #f5b942",padding:"10px 12px"}}>
-            <div style={{fontSize:10,color:"#f5b942",fontWeight:500,textTransform:"uppercase",marginBottom:4}}>🔴 Pendientes</div>
+            <div style={{fontSize:12,color:"#f5b942",fontWeight:500,textTransform:"uppercase",marginBottom:4}}>🔴 Pendientes</div>
             <div style={{fontSize:18,fontWeight:700,color:"#f5b942"}}>{fmt(totalPendiente)}</div>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{pendientes.length} transfer.</div>
+            <div style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{pendientes.length} transfer.</div>
           </div>
           <div style={{...s.card,flex:1,margin:0,background:"#0a2e1f",border:"1px solid #4dd9a0",padding:"10px 12px"}}>
-            <div style={{fontSize:10,color:"#4dd9a0",fontWeight:500,textTransform:"uppercase",marginBottom:4}}>✓ Confirmadas</div>
+            <div style={{fontSize:12,color:"#4dd9a0",fontWeight:500,textTransform:"uppercase",marginBottom:4}}>✓ Confirmadas</div>
             <div style={{fontSize:18,fontWeight:700,color:"#4dd9a0"}}>{fmt(totalConfirmado)}</div>
-            <div style={{fontSize:11,color:"var(--color-text-tertiary)"}}>{confirmadas.length} transfer.</div>
+            <div style={{fontSize:12,color:"var(--color-text-tertiary)"}}>{confirmadas.length} transfer.</div>
           </div>
         </div>
         {grupos.length===0&&<p style={{textAlign:"center",padding:"20px 0",color:"var(--color-text-tertiary)",fontSize:14}}>✓ No hay transferencias pendientes para {dia}</p>}
@@ -423,7 +423,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
         ))}
         {fechasConf.length>0&&(
           <div style={{marginTop:8}}>
-            <div style={{fontSize:10,color:"var(--color-text-tertiary)",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.05em",margin:"8px 0 6px"}}>✓ Ya confirmadas</div>
+            <div style={{fontSize:12,color:"var(--color-text-tertiary)",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.05em",margin:"8px 0 6px"}}>✓ Ya confirmadas</div>
             {fechasConf.map(fk=>{
               const vtsFecha=confirmadasPorFecha[fk];
               const totalFecha=vtsFecha.reduce((a,v)=>a+(montoT(v)),0);
@@ -433,7 +433,7 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}} onClick={()=>toggleFecha(fk)}>
                     <div>
                       <div style={{fontSize:13,fontWeight:500,color:"#4dd9a0"}}>📅 {fk}</div>
-                      <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:2}}>{vtsFecha.length} transferencia{vtsFecha.length!==1?"s":""}</div>
+                      <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginTop:2}}>{vtsFecha.length} transferencia{vtsFecha.length!==1?"s":""}</div>
                     </div>
                     <div style={{textAlign:"right"}}>
                       <div style={{fontSize:15,fontWeight:600,color:"#4dd9a0"}}>{fmt(totalFecha)}</div>
@@ -447,11 +447,11 @@ function ConfirmacionesDia({dia,ventas,clientes,onConfirmar,onVolver}) {
                         <div key={v.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"0.5px solid rgba(77,217,160,0.15)"}}>
                           <div>
                             <div style={{fontSize:13,color:"var(--color-text-primary)"}}>{c?.nombre||"Cliente"}</div>
-                            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:1}}>{(v.detalle||[]).map(d=>`${d.nombre}×${d.cantidad}`).join(" · ")}</div>
+                            <div style={{fontSize:12,color:"var(--color-text-tertiary)",marginTop:1}}>{(v.detalle||[]).map(d=>`${d.nombre}×${d.cantidad}`).join(" · ")}</div>
                           </div>
                           <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
                             <div style={{fontSize:13,fontWeight:500,color:"#4dd9a0"}}>{fmt(montoT(v))}</div>
-                            <button style={{fontSize:10,color:"var(--color-text-tertiary)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",textDecoration:"underline"}} onClick={()=>onConfirmar(v.id)}>desmarcar</button>
+                            <button style={{fontSize:12,color:"var(--color-text-tertiary)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",textDecoration:"underline"}} onClick={()=>onConfirmar(v.id)}>desmarcar</button>
                           </div>
                         </div>
                       );

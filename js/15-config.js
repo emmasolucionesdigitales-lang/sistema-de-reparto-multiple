@@ -370,33 +370,33 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
 
             {/* NOTIFICACIONES */}
             <div style={{...s.card,margin:0}}>
-              <button style={{width:"100%",background:"none",border:"none",padding:0,display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
+              <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
                 onClick={()=>setAbiertoNotif(!abiertoNotif)}>
                 <span style={{fontSize:18}}>🔔</span>
-                <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Notificaciones</span>
-                <span style={{color:"var(--color-text-tertiary)",fontSize:13}}>{abiertoNotif?"▲":"▼"}</span>
+                <span style={{fontSize:16,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Notificaciones</span>
+                <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoNotif?"▲":"▼"}</span>
               </button>
               {abiertoNotif&&<div style={{marginTop:10}}><NotifConfig syncData={syncData} /></div>}
             </div>
 
             {/* SEGURIDAD — acceso con huella (dueño) */}
             <div style={{...s.card,margin:0}}>
-              <button style={{width:"100%",background:"none",border:"none",padding:0,display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
+              <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
                 onClick={()=>setAbiertoHuella(!abiertoHuella)}>
                 <span style={{fontSize:18}}>🔒</span>
-                <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Acceso con huella</span>
-                <span style={{color:"var(--color-text-tertiary)",fontSize:13}}>{abiertoHuella?"▲":"▼"}</span>
+                <span style={{fontSize:16,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Acceso con huella</span>
+                <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoHuella?"▲":"▼"}</span>
               </button>
               {abiertoHuella&&<div style={{marginTop:10}}><SeguridadHuella /></div>}
             </div>
 
             {/* RESPALDO */}
             <div style={{...s.card,margin:0}}>
-              <button style={{width:"100%",background:"none",border:"none",padding:0,display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
+              <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
                 onClick={()=>setAbiertoRespaldo(!abiertoRespaldo)}>
                 <span style={{fontSize:18}}>💾</span>
-                <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Respaldo</span>
-                <span style={{color:"var(--color-text-tertiary)",fontSize:13}}>{abiertoRespaldo?"▲":"▼"}</span>
+                <span style={{fontSize:16,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Respaldo</span>
+                <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoRespaldo?"▲":"▼"}</span>
               </button>
               {abiertoRespaldo&&(<div style={{marginTop:10}}>
               <p style={{fontSize:12,color:"var(--color-text-tertiary)",margin:"0 0 12px",lineHeight:1.5}}>
@@ -504,11 +504,11 @@ function Config({productos,setProductos,clientes,setClientes,ventas,setVentas,pl
 
             {/* MANTENIMIENTO DE DATOS */}
             <div style={{...s.card,margin:0}}>
-              <button style={{width:"100%",background:"none",border:"none",padding:0,display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
+              <button style={{width:"100%",background:"var(--color-background-tertiary)",border:"none",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:8,cursor:"pointer",textAlign:"left"}}
                 onClick={()=>setAbiertoMant(!abiertoMant)}>
                 <span style={{fontSize:18}}>🔧</span>
-                <span style={{fontSize:14,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Mantenimiento de datos</span>
-                <span style={{color:"var(--color-text-tertiary)",fontSize:13}}>{abiertoMant?"▲":"▼"}</span>
+                <span style={{fontSize:16,fontWeight:600,color:"var(--color-text-primary)",flex:1}}>Mantenimiento de datos</span>
+                <span style={{width:26,height:26,borderRadius:"50%",background:"var(--color-background-primary)",color:"var(--color-text-info)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,flexShrink:0}}>{abiertoMant?"▲":"▼"}</span>
               </button>
               {abiertoMant&&(<div style={{marginTop:10}}>
               <button style={{...s.btn,width:"100%",padding:"10px",fontSize:13,marginBottom:8}}
