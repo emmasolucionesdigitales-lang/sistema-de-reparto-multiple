@@ -1250,7 +1250,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         saveProspectos(prev=>(prev||[]).map(x=>x.id===p.id?{...x,estado:"convertido"}:x));
         irA("promocion");
       }} onVolver={()=>irA("menu")} />}
-      {pantalla==="gestionClientes" && <GestionClientes clientes={clientes} repartos={repartos} repartoActual={repartoActual} onReordenarTodo={(lista)=>saveClientes(lista)} onEditar={(id,cambios)=>{saveClientes(prev=>prev.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={(id)=>{
+      {pantalla==="gestionClientes" && <GestionClientes clientes={clientes} repartos={repartos} repartoActual={repartoActual} onIrTab={irA} onReordenarTodo={(lista)=>saveClientes(lista)} onEditar={(id,cambios)=>{saveClientes(prev=>prev.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={(id)=>{
         if(window.confirm("¿Eliminar cliente?")){
           saveClientes(prev => {
             const eliminado=prev.find(c=>c.id===id);
@@ -1277,7 +1277,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
           if(!diaActual) setDiaActual(c.dia);
           irA("venta");
         }} onVerDetalle={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}} ventas={ventas} productos={productos} onGuardarCambio={(vt)=>{saveVentas(prev=>[...prev,vt]);}} />}
-      {pantalla==="clientesDormidos" && <ClientesDormidos clientes={clientes} ventas={ventas} repartos={repartos} onVolver={()=>irA("gestionClientes")} onSeleccionar={c=>{setClienteId(c.id);irA("detalleDesdeGestion");}} onEditarCliente={(id,cambios)=>{saveClientes(prev=>prev.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={eliminarCliente} onPerdida={registrarPerdida} />}
+      {pantalla==="clientesDormidos" && <React.Fragment><ClientesTabs activo="dormidos" onIr={irA}/><ClientesDormidos clientes={clientes} ventas={ventas} repartos={repartos} onVolver={()=>irA("gestionClientes")} onSeleccionar={c=>{setClienteId(c.id);irA("detalleDesdeGestion");}} onEditarCliente={(id,cambios)=>{saveClientes(prev=>prev.map(c=>c.id===id?{...c,...cambios}:c));}} onEliminar={eliminarCliente} onPerdida={registrarPerdida} /></React.Fragment>}
       {pantalla==="detalleDesdeGestion" && cliente && <DetalleCliente cliente={cliente} ventas={ventas.filter(v=>v.clienteId===cliente.id)} dia={diaActual||cliente.dia} fecha={fechaActual} productos={productos} onVenta={()=>{setDiaActual(cliente.dia);const hoy=new Date().toLocaleDateString("en-CA");if(!fechaActual)setFechaActual(hoy);irA("venta");}} onVolver={()=>irA("gestionClientes")} onEditar={cambios=>updateCliente(cliente.id,cambios)} onEliminarVenta={eliminarVenta} onEditarVenta={editarVenta} onEliminarCliente={()=>{eliminarCliente(cliente.id);irA("gestionClientes");}}
           onNoEstaCliente={()=>{}} onNoQuiereCliente={()=>{}}
           recordatorios={recordatorios} onGuardarRecordatorio={(r)=>saveRecordatorios(prev=>[...(prev||[]),r])} onConfirmarRecordatorio={(id)=>saveRecordatorios(prev=>(prev||[]).map(r=>r.id===id?{...r,confirmado:true}:r))}
@@ -1302,7 +1302,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onGuardar={(nuevos)=>{saveClientes(prev=>[...prev,...nuevos]);irA("menu");}}
         onVolver={()=>irA("menu")}
       />}
-      {pantalla==="mapaClientes" && <MapaClientes
+      {pantalla==="mapaClientes" && <React.Fragment><ClientesTabs activo="mapa" onIr={irA}/><MapaClientes
         clientes={clientes}
         dia={diaActual}
         fecha={fechaActual}
@@ -1311,7 +1311,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onSeleccionar={(c)=>{setClienteId(c.id);irA("detalleDesdeGestion");}}
         onActualizar={(nuevosClientes)=>saveClientes(nuevosClientes)}
         onVolver={()=>irA("menu")}
-      />}
+      /></React.Fragment>}
       {pantalla==="agenda" && <AgendaScreen
         recordatorios={recordatorios||[]}
         clientes={clientes}
@@ -1330,13 +1330,13 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         onVolver={()=>irA("menu")}
       />}
       {pantalla==="stock"          && <StockGeneral stock={stockNorm} setStock={(ns)=>{setStock(ns);syncData({stock:ns});}} clientes={clientes} setClientes={saveClientes} ventas={ventas} productos={productos} setProductos={saveProductos} cargasDia={cargasDiaDe(repartoActual?.id)} setCargasDia={(v)=>saveCargasDiaDe(repartoActual?.id,v)} planillas={planillas} repartos={repartos} perdidas={perdidas} registrarPerdida={registrarPerdida} onVolver={()=>irA("menu")} onResumen={()=>irA("resumen")} />}
-      {pantalla==="fiadosPendientes" && <FiadosPendientes clientes={clientes} ventas={ventas} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onCobrar={(cId,monto,pago)=>{
+      {pantalla==="fiadosPendientes" && <React.Fragment><ClientesTabs activo="fiados" onIr={irA}/><FiadosPendientes clientes={clientes} ventas={ventas} onEditarCliente={(id,cambios)=>updateCliente(id,cambios)} onCobrar={(cId,monto,pago)=>{
         const cl=clientes.find(c=>c.id===cId);if(!cl)return;
         const vt={id:Date.now(),clienteId:cl.id,cliente:cl.nombre,dia:cl.dia,fechaKey:new Date().toLocaleDateString("en-CA"),fecha:new Date().toLocaleString("es-AR"),
           detalle:[{nombre:"Cobro de deuda",cantidad:1,precio:0,total:0}],pago,obs:`Cobro de deuda ${fmt(monto)} (${pago})`,
           neto:0,bruto:0,desc:0,costo:0,ganancia:0,pagadoNum:monto,saldoDelta:monto,envPrest:[],envDev:[],saldoAntes:cl.saldo||0,saldoDespues:(cl.saldo||0)+monto,_esCobro:true,_upd:Date.now()};
         saveVentas(prev=>[...prev,vt]);saveClientes(prev=>prev.map(c=>c.id===cId?{...c,saldo:(Number(c.saldo)||0)+monto}:c));
-      }} onVolver={()=>irA("menu")} />}
+      }} onVolver={()=>irA("menu")} /></React.Fragment>}
       {pantalla==="resumen"        && <Resumen ventas={ventas} clientes={clientes} productos={productos} planillas={planillas} noVisitas={noVisitas||[]} onVolver={()=>irA("menu")} />}
       {pantalla==="config"         && <Config productos={productos} setProductos={saveProductos} clientes={clientes} setClientes={saveClientes} ventas={ventas} setVentas={saveVentas} planillas={planillas} setPlanillas={savePlanillasCloud} stock={stockNorm} setStock={(s)=>{const ns=normStock(s);setStockRaw(ns);syncData({stock:ns});}} cargasDia={cargasDiaDe(repartoActual?.id)} setCargasDia={(v)=>saveCargasDiaDe(repartoActual?.id,v)} syncData={syncData} onVolver={()=>irA("menu")} negocioId={negocioId} tabInicial={tabConfig} repartos={repartos} repartoActual={repartoActual} />}
     </div>

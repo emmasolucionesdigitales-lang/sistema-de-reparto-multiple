@@ -2,7 +2,7 @@
 // ◆  12-gestion.js — GestionClientes · FormCliente · Resumen · exportar · importar · Calculadora
 // ════════════════════════════════════════════════════════════════════
 
-function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReordenarTodo,onRegistrarVenta,onVerDetalle,ventas,repartos,productos,onGuardarCambio}) {
+function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReordenarTodo,onRegistrarVenta,onVerDetalle,ventas,repartos,productos,onGuardarCambio,onIrTab}) {
   const [fotoClienteId,setFotoClienteId] = React.useState(null);
   const [reasignandoId,setReasignandoId] = useState(null);
   const fotoCliente = fotoClienteId ? clientes.find(c=>c.id===fotoClienteId) : null;
@@ -59,6 +59,7 @@ function GestionClientes({clientes,onEditar,onEliminar,onNuevo,onVolver,onReorde
     <>
     <div style={s.screen}>
       <HeaderApp titulo="Gestión de clientes" onVolver={onVolver}/>
+      {onIrTab&&<ClientesTabs activo="todos" onIr={onIrTab}/>}
 
       {/* Filtros */}
       <div style={{padding:"10px 14px 6px"}}>

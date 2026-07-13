@@ -2,6 +2,31 @@
 // ◆  09-clientes.js — ListaClientes · DetalleCliente · EditCliente · EditVenta · Modals
 // ════════════════════════════════════════════════════════════════════
 
+// Barra de pestañas compartida entre Gestión/Fiados/Dormidos/Mapa — antes
+// esto no existía en Multi, por eso esas 4 pantallas no se sentían
+// conectadas entre sí como en La Catalina y la Individual.
+function ClientesTabs({activo, onIr}) {
+  const tabs = [
+    ["todos","👥","Todos","gestionClientes"],
+    ["fiados","💰","Fiados","fiadosPendientes"],
+    ["dormidos","😴","Dormidos","clientesDormidos"],
+    ["mapa","🗺","Mapa","mapaClientes"],
+  ];
+  return (
+    <div style={{display:"flex",gap:4,overflowX:"auto",padding:"8px 10px",borderBottom:"0.5px solid var(--color-border-tertiary)",background:"var(--color-background-secondary)"}}>
+      {tabs.map(([id,ico,lbl,pant])=>(
+        <button key={id} onClick={()=>activo!==id&&onIr&&onIr(pant)}
+          style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 10px",borderRadius:9,cursor:"pointer",flexShrink:0,
+            border:"none",background:activo===id?"var(--color-background-tertiary)":"transparent",
+            borderBottom:activo===id?"2px solid var(--color-accent)":"2px solid transparent"}}>
+          <span style={{fontSize:16}}>{ico}</span>
+          <span style={{fontSize:10,fontWeight:activo===id?600:400,color:activo===id?"var(--color-text-primary)":"var(--color-text-tertiary)"}}>{lbl}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ListaClientes({clientes,dia,fecha,ventas,todasVentas,noVisitas,prospectos,recordatorios,onSeleccionar,onEntregar,onNuevoCliente,onVolver,onReordenar,onEditarCliente,onRegistrarNoVisita,onQuitarNoVisita,onVentaProspecto,onNoEstaProspecto,onNoQuiereProspecto,onConfirmarTransfer,onVerProspecto,onAbrirMapa,onIrPlanilla,onIrMenu}) {
   const [busqueda,setBusqueda] = useState("");
   const [clienteMoviendo,setClienteMoviendo] = useState(null); // id del cliente "levantado", esperando destino
