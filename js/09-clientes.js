@@ -13,10 +13,10 @@ function ClientesTabs({activo, onIr}) {
     ["mapa","🗺","Mapa","mapaClientes"],
   ];
   return (
-    <div style={{display:"flex",gap:4,overflowX:"auto",padding:"8px 10px",borderBottom:"0.5px solid var(--color-border-tertiary)",background:"var(--color-background-secondary)"}}>
+    <div style={{display:"flex",gap:4,padding:"8px 8px",borderBottom:"0.5px solid var(--color-border-tertiary)",background:"var(--color-background-secondary)"}}>
       {tabs.map(([id,ico,lbl,pant])=>(
         <button key={id} onClick={()=>activo!==id&&onIr&&onIr(pant)}
-          style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 10px",borderRadius:9,cursor:"pointer",flexShrink:0,
+          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"6px 2px",borderRadius:9,cursor:"pointer",
             border:"none",background:activo===id?"var(--color-background-tertiary)":"transparent",
             borderBottom:activo===id?"2px solid var(--color-accent)":"2px solid transparent"}}>
           <span style={{fontSize:16}}>{ico}</span>
