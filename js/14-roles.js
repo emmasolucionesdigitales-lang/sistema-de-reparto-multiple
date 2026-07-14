@@ -309,7 +309,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     setDatos(prevDatos => {
       const localBase = { ...prevDatos, ...overrides };
       // En el fondo: mergear con Firebase y guardar (no bloquea la UI).
-      // OJO: acá vivían dos bugs graves —
+      // OJO: acá vivían varios bugs graves —
       // 1) "eliminarVenta" nunca se propagaba a la nube: el merge de ventas
       //    solo sabía agregar/actualizar por id, nunca sacar una que ya no
       //    estaba en la lista local → una venta borrada podía "revivir".
@@ -317,6 +317,12 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       //    local (que en este repartidor se descarga UNA sola vez al abrir
       //    la app y nunca se refresca) → cualquier cambio hecho por el
       //    dueño u otro repartidor mientras tanto se perdía en cada guardado.
+      //    Esto se arregló para ventas y clientes, pero noVisitas y planillas
+      //    quedaron sin arreglar por error — eso causó, en la práctica, que
+      //    abrir la app en un dispositivo nuevo (ej. la PC después de venir
+      //    usando el celular) pisara los "no quiere/no está" ya guardados
+      //    con la copia vacía/vieja de ese dispositivo. Ya está arreglado
+      //    para las 4 cosas ahora (ventas, clientes, noVisitas, planillas).
       cloudLoad(uid, perfil.negocioId).then(function(fresh){
         if(!fresh){ cloudSave(localBase, uid, perfil.negocioId); return; }
 
@@ -341,7 +347,27 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         });
         const clientesFinal = Object.values(porIdCliente);
 
-        cloudSave({...fresh, ...localBase, ventas:ventasFinal, clientes:clientesFinal}, uid, perfil.negocioId);
+        // ── noVisitas: merge por clave (clienteId+fecha) que respeta borrados ──
+        // Mismo problema que tenían ventas antes de arreglarse: sin esto, un
+        // dispositivo recién abierto (con su copia local vacía o vieja) podía
+        // pisar por completo los "no quiere"/"no está" ya guardados por otro
+        // dispositivo — haciendo que aparezcan clientes marcados sin haberlos
+        // tocado, o perdiendo marcas reales ya hechas.
+        const claveNV = (v) => `${v.clienteId}_${v.fecha}`;
+        const noVisLocalesPost = overrides.noVisitas !== undefined ? overrides.noVisitas : (prevDatos.noVisitas || []);
+        const noVisLocalesPre  = prevDatos.noVisitas || [];
+        const clavesLocalesPostNV = new Set(noVisLocalesPost.map(claveNV));
+        const clavesBorradasLocalNV = new Set(noVisLocalesPre.filter(v=>!clavesLocalesPostNV.has(claveNV(v))).map(claveNV));
+        const porClaveNV = {};
+        (fresh.noVisitas||[]).forEach(v=>{ if(!clavesBorradasLocalNV.has(claveNV(v))) porClaveNV[claveNV(v)]=v; });
+        noVisLocalesPost.forEach(v=>{ porClaveNV[claveNV(v)]=v; });
+        const noVisitasFinal = Object.values(porClaveNV);
+
+        // ── planillas: merge por clave de día — combinar en vez de pisar ──
+        const planillasLocales = overrides.planillas !== undefined ? overrides.planillas : (prevDatos.planillas || {});
+        const planillasFinal = { ...(fresh.planillas||{}), ...planillasLocales };
+
+        cloudSave({...fresh, ...localBase, ventas:ventasFinal, clientes:clientesFinal, noVisitas:noVisitasFinal, planillas:planillasFinal}, uid, perfil.negocioId);
       }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId); });
       return localBase;
     });
@@ -718,7 +744,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="todosClientes"&&(
         <TodosClientesRepartidor
-          clientes={todosClientes}
+          clientes={todosClientes.filter(c=>!miReparto||!c.repartoId||c.repartoId===miReparto.id)}
           prospectos={prospectos}
           ventas={ventas}
           onSeleccionar={(c)=>{
