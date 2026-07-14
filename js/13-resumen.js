@@ -2,21 +2,35 @@
 // ◆  12-resumen.js — Resumen · exportar · importar · CalculadoraCostoReal
 // ════════════════════════════════════════════════════════════════════
 
-function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
+function Resumen({ventas,clientes,productos,planillas,noVisitas,repartos,onVolver}) {
   const [filtro,setFiltro]   = React.useState("mes");   // mes | anio | todo | dia
   const [mesSel,setMesSel]   = React.useState(()=>new Date().toISOString().slice(0,7)); // YYYY-MM
   const [diaSel,setDiaSel]   = React.useState("todos");
+  const [repartoFiltro,setRepartoFiltro] = React.useState("todos");
   const chartRefs = {bar:React.useRef(null),donut:React.useRef(null),line:React.useRef(null)};
   const chartInst = React.useRef({});
 
+  // ── Filtro por repartidor ────────────────────────────────────────────────
+  // Antes este resumen sumaba SIEMPRE la plata de todos los repartidores
+  // juntos, sin poder desglosar. Ahora, si el negocio tiene más de un
+  // reparto cargado, se puede elegir "todos" o uno puntual.
+  const hayRepartos = repartos && repartos.length > 0;
+  const clientesR = (!hayRepartos || repartoFiltro==="todos")
+    ? clientes
+    : clientes.filter(c=>c.repartoId===repartoFiltro);
+  const idsClientesR = new Set(clientesR.map(c=>c.id));
+  const ventasR = (!hayRepartos || repartoFiltro==="todos")
+    ? ventas
+    : ventas.filter(v=>idsClientesR.has(v.clienteId));
+
   // ── Filtrado ──────────────────────────────────────────────────────────────
   const filtradas = React.useMemo(()=>{
-    let r = ventas;
+    let r = ventasR;
     if(filtro==="mes")  r = r.filter(v=>(v.fechaKey||v.fecha||"").slice(0,7)===mesSel);
     if(filtro==="anio") r = r.filter(v=>(v.fechaKey||v.fecha||"").slice(0,4)===mesSel.slice(0,4));
     if(filtro==="dia")  r = diaSel==="todos" ? r : r.filter(v=>v.dia===diaSel);
     return r;
-  },[ventas,filtro,mesSel,diaSel]);
+  },[ventasR,filtro,mesSel,diaSel]);
 
   // ── Métricas ──────────────────────────────────────────────────────────────
   const totalNeto    = filtradas.reduce((a,v)=>a+(v.neto||0),0);
@@ -30,8 +44,8 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
   const cantidades   = {};
   productos.forEach(p=>{cantidades[p.nombre]=0;});
   filtradas.forEach(v=>v.detalle.forEach(d=>{cantidades[d.nombre]=(cantidades[d.nombre]||0)+d.cantidad;}));
-  const conDeuda     = clientes.filter(c=>c.saldo<0);
-  const conFavor     = clientes.filter(c=>c.saldo>0);
+  const conDeuda     = clientesR.filter(c=>c.saldo<0);
+  const conFavor     = clientesR.filter(c=>c.saldo>0);
   const rankingClientes = React.useMemo(()=>{
     const mapa = {};
     filtradas.filter(v=>!v._esCobro&&!v._esAjuste&&!v._esCambio).forEach(v=>{
@@ -44,7 +58,7 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
 
   // ── Agrupación por mes (para vista anual e histórico) ─────────────────────
   const porMes = {};
-  ventas.forEach(v=>{
+  ventasR.forEach(v=>{
     const fk = (v.fechaKey||v.fecha||"").slice(0,7);
     if(!fk) return;
     const anio = fk.slice(0,4);
@@ -107,7 +121,7 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
       });
     }
     return ()=>{Object.values(chartInst.current).forEach(c=>c?.destroy());};
-  },[filtro,mesSel,diaSel,ventas]);
+  },[filtro,mesSel,diaSel,ventasR]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   const tituloFiltro = filtro==="mes"?`${mesSel.slice(5)}/${mesSel.slice(0,4)}`:filtro==="anio"?mesSel.slice(0,4):"Histórico completo";
@@ -115,6 +129,18 @@ function Resumen({ventas,clientes,productos,planillas,noVisitas,onVolver}) {
   return (
     <div style={s.screen}>
       <HeaderApp titulo="Resumen" onVolver={onVolver}/>
+
+      {/* Selector de repartidor (sólo si hay más de un reparto cargado) */}
+      {hayRepartos && (
+        <div style={{padding:"10px 14px 0"}}>
+          <select style={s.select} value={repartoFiltro} onChange={e=>setRepartoFiltro(e.target.value)}>
+            <option value="todos">Todos los repartidores</option>
+            {repartos.map(r=>(
+              <option key={r.id} value={r.id}>{r.repartidorNombre||r.nombre||r.id}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Selector de período */}
       <div style={{padding:"10px 14px 6px"}}>
@@ -320,9 +346,23 @@ function exportarExcel(clientes,ventas,productos,planillas,repartos,filtroRepart
   });
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fv.length?fv:[{}]),"Ventas");
 
-  // Hoja Planillas
+  // Hoja Planillas — antes ignoraba filtroReparto y siempre exportaba las
+  // planillas de TODOS los repartidores, aunque se hubiera elegido uno
+  // solo. La clave de cada planilla es "dia_fecha_repartoId" (claveDiaReparto);
+  // se compara esa tercera parte contra filtroReparto igual que en las
+  // demás hojas.
   const fp=[];
-  Object.entries(planillas).forEach(([dia,p])=>fp.push({"Día":dia,Fecha:p.fecha||"",Peso:p.peso||"",Bultos:p.bultos||"","10L Llenos":p.productos?.b10?.llenos||0,"10L Vacíos":p.productos?.b10?.vacios||0,"10L Plata":p.productos?.b10?.plata||0,"10L Llenar":p.productos?.b10?.llenar||0,"20L Llenos":p.productos?.b20?.llenos||0,"20L Vacíos":p.productos?.b20?.vacios||0,"20L Plata":p.productos?.b20?.plata||0,"20L Llenar":p.productos?.b20?.llenar||0,"Soda Llenos":p.productos?.soda?.llenos||0,"Soda Vacíos":p.productos?.soda?.vacios||0,"Soda Plata":p.productos?.soda?.plata||0,"Soda Llenar":p.productos?.soda?.llenar||0,Efectivo:p.efectivo||0,Fiado:p.fiado||0,Retenciones:p.retenciones||0,Gastos:(p.gastos||[]).map(g=>`${g.cat}: $${g.monto}`).join(" | "),"Total Gastos":(p.gastos||[]).reduce((a,g)=>a+(Number(g.monto)||0),0),Obs:p.obs||""}));
+  Object.entries(planillas).forEach(([clave,p])=>{
+    if(filtroReparto && filtroReparto!=="todos"){
+      const partes = clave.split("_");
+      const repartoIdClave = partes.length>2 ? partes.slice(2).join("_") : null;
+      if(repartoIdClave !== filtroReparto) return;
+    }
+    const partesRep = clave.split("_");
+    const repartoIdRep = partesRep.length>2 ? partesRep.slice(2).join("_") : null;
+    const nomRepPlanilla = repartoIdRep ? ((repartos||[]).find(r=>r.id===repartoIdRep)?.repartidorNombre||"") : "";
+    fp.push({"Día":clave,Repartidor:nomRepPlanilla,Fecha:p.fecha||"",Peso:p.peso||"",Bultos:p.bultos||"","10L Llenos":p.productos?.b10?.llenos||0,"10L Vacíos":p.productos?.b10?.vacios||0,"10L Plata":p.productos?.b10?.plata||0,"10L Llenar":p.productos?.b10?.llenar||0,"20L Llenos":p.productos?.b20?.llenos||0,"20L Vacíos":p.productos?.b20?.vacios||0,"20L Plata":p.productos?.b20?.plata||0,"20L Llenar":p.productos?.b20?.llenar||0,"Soda Llenos":p.productos?.soda?.llenos||0,"Soda Vacíos":p.productos?.soda?.vacios||0,"Soda Plata":p.productos?.soda?.plata||0,"Soda Llenar":p.productos?.soda?.llenar||0,Efectivo:p.efectivo||0,Fiado:p.fiado||0,Retenciones:p.retenciones||0,Gastos:(p.gastos||[]).map(g=>`${g.cat}: $${g.monto}`).join(" | "),"Total Gastos":(p.gastos||[]).reduce((a,g)=>a+(Number(g.monto)||0),0),Obs:p.obs||""});
+  });
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fp.length?fp:[{}]),"Planillas");
 
   // Hoja Saldos — con columna Repartidor

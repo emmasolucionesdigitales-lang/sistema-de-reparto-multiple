@@ -61,6 +61,97 @@ window.addEventListener("visibilitychange",()=>{
   }
 });
 
+// ════════════════════════════════════════════════════════════════════
+// ◆  Helpers de merge para sync()/syncData() — evitar que un guardado
+//    (del dueño o de un repartidor) pise cambios concurrentes que hizo
+//    OTRO usuario en campos que ese guardado puntual no tocó. La idea
+//    en las cuatro funciones es la misma: partir siempre de lo último
+//    que hay en la nube ("fresco") y aplicar sólo el cambio real que
+//    hizo este guardado, no la copia local entera (que puede estar
+//    desactualizada en todo lo demás).
+// ════════════════════════════════════════════════════════════════════
+
+// Arrays de objetos con identidad propia (ventas, recordatorios,
+// noVisitas, prospectos, pérdidas...). "claveFn" define qué identifica
+// a cada elemento (normalmente el id, a veces una clave compuesta).
+// Reglas: si un elemento estaba antes (prevArr) y ya no está en
+// nuevoArr, se lo saca también de "fresco" (borrado real, no revive).
+// Si un elemento está en nuevoArr, gana la versión local (es la que
+// se acaba de tocar en este guardado).
+function mergeArrayPorClave(prevArr, nuevoArr, frescoArr, claveFn) {
+  const post = nuevoArr || [];
+  const pre  = prevArr || [];
+  const idsPost = new Set(post.map(claveFn));
+  const idsBorrados = new Set(pre.filter(x => !idsPost.has(claveFn(x))).map(claveFn));
+  const porClave = {};
+  (frescoArr || []).forEach(x => { const k = claveFn(x); if (!idsBorrados.has(k)) porClave[k] = x; });
+  post.forEach(x => { porClave[claveFn(x)] = x; });
+  return Object.values(porClave);
+}
+
+// Clientes: mismo espíritu, pero en vez de "gana siempre lo local" se
+// compara el sello _upd — así una edición del dueño (ej. dirección) y
+// una del repartidor (ej. saldo tras una venta) casi al mismo tiempo no
+// se pisan entre sí; gana la más nueva.
+function mergeClientesPorUpd(prevArr, nuevoArr, frescoArr) {
+  const nuevo = nuevoArr !== undefined ? nuevoArr : (prevArr || []);
+  const porId = {};
+  (frescoArr || []).forEach(c => { porId[c.id] = c; });
+  nuevo.forEach(c => {
+    const enNube = porId[c.id];
+    if (!enNube) { porId[c.id] = c; return; }
+    const uL = Number(c._upd) || 0, uN = Number(enNube._upd) || 0;
+    if (uL >= uN) porId[c.id] = c;
+  });
+  return Object.values(porId);
+}
+
+// Objetos numéricos anidados (stock, cargasDia): en vez de reemplazar
+// el objeto entero, calcula cuánto cambió cada número puntual entre
+// "antes" (prev) y "ahora" (nuevo) en la copia local, y aplica ESE
+// delta sobre el valor que haya en la nube ("fresco"). Si este
+// guardado no tocó un número (ej. el camión de otro repartidor), el
+// delta da 0 y el valor de la nube queda intacto — así dos
+// repartidores pueden tocar el mismo objeto de stock sin borrarse
+// cambios entre sí.
+function mergeNumericoConDeltas(prev, nuevo, fresco) {
+  const esObjetoPlano = v => v && typeof v === "object" && !Array.isArray(v);
+  const p = prev || {}, n = nuevo || {}, f = fresco || {};
+  const claves = new Set([...Object.keys(p), ...Object.keys(n), ...Object.keys(f)]);
+  const out = {};
+  claves.forEach(k => {
+    const pv = p[k], nv = n[k], fv = f[k];
+    if (esObjetoPlano(pv) || esObjetoPlano(nv) || esObjetoPlano(fv)) {
+      out[k] = mergeNumericoConDeltas(pv, nv, fv);
+    } else {
+      const pNum = Number(pv), nNum = Number(nv);
+      const pEsNum = pv !== undefined && !isNaN(pNum);
+      const nEsNum = nv !== undefined && !isNaN(nNum);
+      if (pEsNum || nEsNum) {
+        const delta = (nEsNum ? nNum : 0) - (pEsNum ? pNum : 0);
+        out[k] = (Number(fv) || 0) + delta;
+      } else {
+        out[k] = nv !== undefined ? nv : fv;
+      }
+    }
+  });
+  return out;
+}
+
+// Objetos tipo diccionario donde cada clave es un registro completo que
+// se reemplaza entero al guardarse (planillas: clave = día+fecha+reparto).
+// Sólo pisa en la nube las claves que efectivamente cambiaron en este
+// guardado (comparando contra "prev"); el resto de las claves —planillas
+// de otros repartidores, de otros días— quedan como estén en la nube.
+function mergePorClavesCambiadas(prev, nuevo, fresco) {
+  const p = prev || {}, n = nuevo || {};
+  const out = { ...(fresco || {}) };
+  Object.keys(n).forEach(k => {
+    if (JSON.stringify(n[k]) !== JSON.stringify(p[k])) out[k] = n[k];
+  });
+  return out;
+}
+
 function useLS(key, fallback) {
   const [val, setVal] = useState(() => {
     try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : fallback; }

@@ -317,40 +317,51 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const sync = (overrides={}) => {
     setDatos(prevDatos => {
       const localBase = { ...prevDatos, ...overrides };
-      // En el fondo: mergear con Firebase y guardar (no bloquea la UI).
-      // OJO: acá vivían dos bugs graves —
-      // 1) "eliminarVenta" nunca se propagaba a la nube: el merge de ventas
-      //    solo sabía agregar/actualizar por id, nunca sacar una que ya no
-      //    estaba en la lista local → una venta borrada podía "revivir".
-      // 2) clientes/planillas/noVisitas se pisaban SIEMPRE con la copia
-      //    local (que en este repartidor se descarga UNA sola vez al abrir
-      //    la app y nunca se refresca) → cualquier cambio hecho por el
-      //    dueño u otro repartidor mientras tanto se perdía en cada guardado.
+      // Guardado seguro: SIEMPRE se trae lo último de la nube (fresh) y se
+      // pisa sólo lo que ESTE guardado puntual cambia (lo que viene en
+      // "overrides"), usando los helpers de 03-utils.js. Todo lo demás
+      // (stock/planilla/agenda de otro repartidor, cambios del dueño...)
+      // se respeta tal cual está en la nube. Antes acá vivían bugs graves:
+      // 1) "eliminarVenta" nunca se propagaba (una venta borrada podía revivir).
+      // 2) TODO lo demás (stock, planillas, cargasDia, recordatorios...) se
+      //    pisaba siempre con la copia local (descargada una sola vez al
+      //    abrir la app) → un repartidor guardando su venta podía revertir
+      //    el stock o el cierre de caja que otro repartidor acababa de
+      //    guardar segundos antes.
       cloudLoad(uid, perfil.negocioId).then(function(fresh){
         if(!fresh){ cloudSave(localBase, uid, perfil.negocioId); return; }
 
-        // ── Ventas: merge por id que SÍ respeta los borrados ──────────────
-        const ventasLocalesPost = overrides.ventas !== undefined ? overrides.ventas : (prevDatos.ventas || []);
-        const ventasLocalesPre  = prevDatos.ventas || [];
-        const idsLocalesPost = new Set(ventasLocalesPost.map(v=>v.id));
-        const idsBorradosLocal = new Set(ventasLocalesPre.filter(v=>!idsLocalesPost.has(v.id)).map(v=>v.id));
-        const porIdVenta = {};
-        (fresh.ventas||[]).forEach(v=>{ if(!idsBorradosLocal.has(v.id)) porIdVenta[v.id]=v; }); // no revivir lo borrado acá
-        ventasLocalesPost.forEach(v=>{ porIdVenta[v.id]=v; }); // altas/ediciones locales, siempre presentes
-        const ventasFinal = Object.values(porIdVenta);
+        const merged = { ...fresh };
 
-        // ── Clientes: merge por id + _upd (no pisar cambios ajenos más nuevos) ──
-        const clientesLocales = overrides.clientes !== undefined ? overrides.clientes : (prevDatos.clientes || []);
-        const porIdCliente = {}; (fresh.clientes||[]).forEach(c=>{ porIdCliente[c.id]=c; });
-        clientesLocales.forEach(c=>{
-          const enNube = porIdCliente[c.id];
-          if(!enNube){ porIdCliente[c.id]=c; return; }
-          const uL = Number(c._upd)||0, uN = Number(enNube._upd)||0;
-          if(uL >= uN) porIdCliente[c.id]=c; // empate o local más nuevo → gana local (recién tocado acá)
-        });
-        const clientesFinal = Object.values(porIdCliente);
+        if(overrides.ventas !== undefined){
+          merged.ventas = mergeArrayPorClave(prevDatos.ventas, overrides.ventas, fresh.ventas, v=>v.id);
+        }
+        if(overrides.clientes !== undefined){
+          merged.clientes = mergeClientesPorUpd(prevDatos.clientes, overrides.clientes, fresh.clientes);
+        }
+        if(overrides.stock !== undefined){
+          merged.stock = mergeNumericoConDeltas(prevDatos.stock, overrides.stock, fresh.stock);
+        }
+        if(overrides.cargasDia !== undefined){
+          merged.cargasDia = mergeNumericoConDeltas(prevDatos.cargasDia, overrides.cargasDia, fresh.cargasDia);
+        }
+        if(overrides.planillas !== undefined){
+          merged.planillas = mergePorClavesCambiadas(prevDatos.planillas, overrides.planillas, fresh.planillas);
+        }
+        if(overrides.recordatorios !== undefined){
+          merged.recordatorios = mergeArrayPorClave(prevDatos.recordatorios, overrides.recordatorios, fresh.recordatorios, r=>r.id);
+        }
+        if(overrides.noVisitas !== undefined){
+          merged.noVisitas = mergeArrayPorClave(prevDatos.noVisitas, overrides.noVisitas, fresh.noVisitas, v=>`${v.clienteId}|${v.dia}|${v.fecha}`);
+        }
+        if(overrides.prospectos !== undefined){
+          merged.prospectos = mergeArrayPorClave(prevDatos.prospectos, overrides.prospectos, fresh.prospectos, p=>p.id);
+        }
+        // productos, negocio, repartos, zonasReparto, etc.: este repartidor
+        // no los edita desde acá — se dejan tal cual estén en "fresh" en
+        // vez de pisarlos con la copia local desactualizada.
 
-        cloudSave({...fresh, ...localBase, ventas:ventasFinal, clientes:clientesFinal}, uid, perfil.negocioId);
+        cloudSave(merged, uid, perfil.negocioId);
       }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId); });
       return localBase;
     });
@@ -977,6 +988,23 @@ function PantallaActivacionRM({onActivado}) {
           .where("codigoActivacion","==",cod).limit(1).get();
         if(!negSnap.empty) negocioId = negSnap.docs[0].id;
       } catch(_) {}
+      // Vincular esta sesión como dueño del negocio (server-side, vía Cloud
+      // Function) y obtener los custom claims {rol:"dueño", negocioId} que
+      // usan las reglas de Firestore. Sin esto, cualquiera con el código
+      // de licencia podría escribir "estado:usado" y listo — ahora la
+      // identidad de dueño queda firmada en el token de Firebase Auth.
+      if(window.functions){
+        try {
+          const vincular = window.functions.httpsCallable("vincularDueno");
+          const rVinc = await vincular({codigoActivacion:cod});
+          if(rVinc.data && rVinc.data.negocioId) negocioId = rVinc.data.negocioId;
+          await window.auth.currentUser.getIdToken(true);
+        } catch(e) {
+          setError("No se pudo vincular tu cuenta como dueño: "+(e&&e.message?e.message:"error desconocido")+". Contactá a soporte.");
+          setCargando(false);
+          return;
+        }
+      }
       await window.dbLicencias.collection("licencias").doc(cod).update({
         estado:"usado", deviceId, dispositivos, celular:celular.trim(), email:email.trim(),
         negocio:nombre.trim(), activadoEn:new Date().toISOString()
