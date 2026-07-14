@@ -238,7 +238,10 @@ self.addEventListener('notificationclick',e=>{
       return window.db.collection("negocios").doc(negocioId).collection("compartido").doc("general");
     }
     function pathReparto(negocioId, repartoId) {
-      var rid = repartoId || "_sinreparto";
+      // Firestore exige que el id del documento sea texto — algunos
+      // repartos viejos tienen "id" numérico (ej: el mismo que "numero"),
+      // así que se convierte siempre a string antes de armar la ruta.
+      var rid = (repartoId===undefined || repartoId===null || repartoId==="") ? "_sinreparto" : String(repartoId);
       return window.db.collection("negocios").doc(negocioId).collection("repartos").doc(rid).collection("datos").doc("info");
     }
 
