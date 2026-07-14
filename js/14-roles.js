@@ -266,7 +266,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
   const diaHoy = () => diaActual; // mantener compatibilidad
 
   React.useEffect(()=>{
-    cloudLoad(uid, perfil.negocioId).then(function(d){
+    cloudLoad(uid, perfil.negocioId, perfil.codigo).then(function(d){
       setDatos(d||{clientes:[],ventas:[],productos:[],planillas:{},stock:{},noVisitas:[],prospectos:[],recordatorios:[],repartos:[]});
     });
   },[]);
@@ -328,8 +328,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       //    abrir la app) → un repartidor guardando su venta podía revertir
       //    el stock o el cierre de caja que otro repartidor acababa de
       //    guardar segundos antes.
-      cloudLoad(uid, perfil.negocioId).then(function(fresh){
-        if(!fresh){ cloudSave(localBase, uid, perfil.negocioId); return; }
+      cloudLoad(uid, perfil.negocioId, perfil.codigo).then(function(fresh){
+        if(!fresh){ cloudSave(localBase, uid, perfil.negocioId, perfil.codigo); return; }
 
         const merged = { ...fresh };
 
@@ -361,8 +361,8 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         // no los edita desde acá — se dejan tal cual estén en "fresh" en
         // vez de pisarlos con la copia local desactualizada.
 
-        cloudSave(merged, uid, perfil.negocioId);
-      }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId); });
+        cloudSave(merged, uid, perfil.negocioId, perfil.codigo);
+      }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId, perfil.codigo); });
       return localBase;
     });
   };

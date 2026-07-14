@@ -221,68 +221,165 @@ self.addEventListener('notificationclick',e=>{
       if(!window.db) return Promise.resolve();
       return window.db.collection("users").doc(uid).delete();
     }
+    // ── Almacenamiento por reparto ───────────────────────────────────
+    // Cada reparto (cada repartidor) tiene su PROPIO documento en Firestore,
+    // separado del resto. Lo que es del negocio entero (catálogo de
+    // productos, lista de repartos, depósito compartido, etc.) vive en un
+    // único documento "compartido". Así, guardar algo de un reparto nunca
+    // puede tocar el documento de otro reparto — antes todo vivía junto en
+    // un solo paquete grande y un guardado podía pisar datos ajenos.
     function negocioCol(negocioId) {
+      // Colección vieja: se sigue usando SOLO para las notificaciones push
+      // y el archivo histórico de ventas viejas (no tiene que ver con el
+      // problema de mezcla entre repartidores).
       return window.db.collection("negocios").doc(negocioId).collection("datos");
     }
-    function cloudSave(data, uid, negocioId) {
-      if(!window.db || !negocioId) return Promise.resolve(false);
-      var col = negocioCol(negocioId);
-      var saves = [
-        col.doc("config").set({
-          planillas: data.planillas || {},
-          stock: data.stock || {},
-          productos: data.productos || [],
-          noVisitas: data.noVisitas || [],
-          cargasDia: data.cargasDia || {},
-          recordatorios: data.recordatorios || [],
-          prospectos: data.prospectos || [],
-          mantVeh: data.mantVeh || [],
-          histPrecios: data.histPrecios || [],
-          zonasReparto: data.zonasReparto || {},
-          negocio: data.negocio || {},
-          repartos: data.repartos || []
-        })
-      ];
-      var cl = data.clientes || [];
-      var nc = Math.ceil(cl.length/50)||1;
-      saves.push(col.doc("clientes_meta").set({n:nc,total:cl.length}));
-      for(var i=0;i<nc;i++) saves.push(col.doc("cl_"+i).set({d:cl.slice(i*50,i*50+50)}));
-      var vt = data.ventas || [];
-      var nv = Math.ceil(vt.length/80)||1;
-      saves.push(col.doc("ventas_meta").set({n:nv,total:vt.length}));
-      for(var j=0;j<nv;j++) saves.push(col.doc("vt_"+j).set({d:vt.slice(j*80,j*80+80)}));
-      saves.push(col.doc("prospectos").set({d:data.prospectos||[]}));
-      return Promise.all(saves).then(function(){return true;}).catch(function(e){console.error("Save err",e);return false;});
+    function pathCompartido(negocioId) {
+      return window.db.collection("negocios").doc(negocioId).collection("compartido").doc("general");
     }
-    function cloudLoad(uid, negocioId) {
+    function pathReparto(negocioId, repartoId) {
+      var rid = repartoId || "_sinreparto";
+      return window.db.collection("negocios").doc(negocioId).collection("repartos").doc(rid).collection("datos").doc("info");
+    }
+
+    function cloudSave(data, uid, negocioId, codigoRepartidor) {
+      if(!window.db || !negocioId) return Promise.resolve(false);
+
+      var stockObj = data.stock || {};
+      var compartido = {
+        productos: data.productos || [],
+        zonasReparto: data.zonasReparto || {},
+        repartos: data.repartos || [],
+        mantVeh: data.mantVeh || [],
+        histPrecios: data.histPrecios || [],
+        negocio: data.negocio || {},
+        stockGeneral: {
+          soderia: stockObj.soderia || {},
+          soderia_vacios: stockObj.soderia_vacios || {},
+          casa: stockObj.casa || {}
+        }
+      };
+      if(data.horaAvisoCierre !== undefined)  compartido.horaAvisoCierre  = data.horaAvisoCierre;
+      if(data.horasAvisoTrans !== undefined)  compartido.horasAvisoTrans  = data.horasAvisoTrans;
+      if(data.diasAvisoMant !== undefined)    compartido.diasAvisoMant    = data.diasAvisoMant;
+
+      // Mapa clienteId -> repartoId, para poder ubicar ventas y noVisitas
+      // (no llevan repartoId propio, pero sí clienteId).
+      var clientesPorId = {};
+      (data.clientes||[]).forEach(function(c){ clientesPorId[c.id] = c; });
+
+      // Los recordatorios llevan "paraRepartidor" (nombre, no id). Se
+      // resuelve contra la lista de repartos; si no matchea a nadie es un
+      // recordatorio del propio dueño → balde especial "_dueno".
+      var repartoPorNombre = {};
+      (data.repartos||[]).forEach(function(r){ if(r.repartidorNombre) repartoPorNombre[r.repartidorNombre] = r.id; });
+
+      var porReparto = {};
+      function bucket(rid) {
+        var k = rid || "_sinreparto";
+        if(!porReparto[k]) porReparto[k] = {clientes:[],ventas:[],noVisitas:[],recordatorios:[],prospectos:[],planillas:{},cargasDia:null,stockCamion:null};
+        return porReparto[k];
+      }
+
+      (data.clientes||[]).forEach(function(c){ bucket(c.repartoId).clientes.push(c); });
+      (data.ventas||[]).forEach(function(v){
+        var cli = clientesPorId[v.clienteId];
+        bucket(cli && cli.repartoId).ventas.push(v);
+      });
+      (data.noVisitas||[]).forEach(function(v){
+        var cli = clientesPorId[v.clienteId];
+        bucket(cli && cli.repartoId).noVisitas.push(v);
+      });
+      (data.prospectos||[]).forEach(function(p){ bucket(p.repartoId).prospectos.push(p); });
+      (data.recordatorios||[]).forEach(function(r){
+        var rid = r.paraRepartidor ? repartoPorNombre[r.paraRepartidor] : null;
+        bucket(rid || "_dueno").recordatorios.push(r);
+      });
+      // La clave de cada planilla trae el repartoId incrustado: "dia_fecha_repartoId"
+      Object.keys(data.planillas||{}).forEach(function(clave){
+        var partes = clave.split("_");
+        var rid = partes.length>2 ? partes.slice(2).join("_") : null;
+        bucket(rid).planillas[clave] = data.planillas[clave];
+      });
+      // cargasDia: la clave del objeto YA es el repartoId
+      Object.keys(data.cargasDia||{}).forEach(function(rid){
+        bucket(rid).cargasDia = data.cargasDia[rid];
+      });
+      // Stock de camión: la clave dentro de stock.camiones YA es el repartoId
+      Object.keys(stockObj.camiones||{}).forEach(function(rid){
+        bucket(rid).stockCamion = stockObj.camiones[rid];
+      });
+
+      var writes = [ pathCompartido(negocioId).set(compartido, {merge:true}) ];
+      Object.keys(porReparto).forEach(function(rid){
+        var b = porReparto[rid];
+        var payload = {
+          clientes: b.clientes, ventas: b.ventas, noVisitas: b.noVisitas,
+          recordatorios: b.recordatorios, prospectos: b.prospectos
+        };
+        if(Object.keys(b.planillas).length) payload.planillas = b.planillas;
+        if(b.cargasDia) payload.cargasDia = b.cargasDia;
+        if(b.stockCamion) payload.stockCamion = b.stockCamion;
+        writes.push(pathReparto(negocioId, rid).set(payload, {merge:true}));
+      });
+
+      return Promise.all(writes).then(function(){return true;}).catch(function(e){console.error("Save err",e);return false;});
+    }
+
+    function cloudLoad(uid, negocioId, codigoRepartidor) {
       if(!window.db || !negocioId) return Promise.resolve(null);
-      var col = negocioCol(negocioId);
-      return Promise.all([
-        col.doc("config").get(),
-        col.doc("clientes_meta").get(),
-        col.doc("ventas_meta").get(),
-        col.doc("prospectos").get()
-      ]).then(function(results) {
-        var cfg=results[0], cMeta=results[1], vMeta=results[2], prDoc=results[3];
-        if(!cfg.exists) return null;
-        var data = cfg.data();
-        if(!data.recordatorios)  data.recordatorios = [];
-        if(!data.prospectos)     data.prospectos = [];
-        if(!data.mantVeh)        data.mantVeh = [];
-        if(!data.histPrecios)    data.histPrecios = [];
-        if(!data.zonasReparto)   data.zonasReparto = {};
-        if(!data.negocio)        data.negocio = {};
-        if(!data.repartos)       data.repartos = [];
-        var nc = cMeta.exists ? (cMeta.data().n||0) : 0;
-        var vn = vMeta.exists ? (vMeta.data().n||0) : 0;
-        var cFetches = []; for(var i=0;i<nc;i++) cFetches.push(col.doc("cl_"+i).get());
-        var vFetches = []; for(var j=0;j<vn;j++) vFetches.push(col.doc("vt_"+j).get());
-        return Promise.all(cFetches.concat(vFetches)).then(function(docs) {
-          data.clientes   = docs.slice(0,nc).reduce(function(a,d){return a.concat(d.exists?d.data().d:[]);}, []);
-          data.ventas     = docs.slice(nc).reduce(function(a,d){return a.concat(d.exists?d.data().d:[]);}, []);
-          data.prospectos = prDoc.exists ? (prDoc.data().d||[]) : [];
-          return data;
-        });
+
+      return pathCompartido(negocioId).get().then(function(compSnap){
+        if(!compSnap.exists) return null;
+        var comp = compSnap.data();
+        var repartosLista = comp.repartos || [];
+
+        var idsAConsultar;
+        if(codigoRepartidor) {
+          // Repartidor: SOLO pide su propio documento. Nunca lee (ni
+          // siquiera de a uno) los documentos de sus compañeros.
+          var miReparto = repartosLista.filter(function(r){ return r.codigo === codigoRepartidor; })[0];
+          idsAConsultar = [ miReparto ? miReparto.id : "_sinreparto" ];
+        } else {
+          // Dueño: todos los repartos conocidos + los baldes especiales.
+          idsAConsultar = repartosLista.map(function(r){ return r.id; });
+          idsAConsultar.push("_sinreparto", "_dueno");
+        }
+
+        return Promise.all(idsAConsultar.map(function(rid){ return pathReparto(negocioId, rid).get(); }))
+          .then(function(snaps){
+            var clientes=[], ventas=[], noVisitas=[], recordatorios=[], prospectos=[];
+            var planillas={}, cargasDia={}, stockCamiones={};
+            snaps.forEach(function(snap, idx){
+              if(!snap.exists) return;
+              var d = snap.data();
+              var rid = idsAConsultar[idx];
+              clientes = clientes.concat(d.clientes||[]);
+              ventas = ventas.concat(d.ventas||[]);
+              noVisitas = noVisitas.concat(d.noVisitas||[]);
+              recordatorios = recordatorios.concat(d.recordatorios||[]);
+              prospectos = prospectos.concat(d.prospectos||[]);
+              Object.assign(planillas, d.planillas||{});
+              if(d.cargasDia) cargasDia[rid] = d.cargasDia;
+              if(d.stockCamion) stockCamiones[rid] = d.stockCamion;
+            });
+            var stockGen = comp.stockGeneral || {};
+            return {
+              clientes: clientes, ventas: ventas, noVisitas: noVisitas,
+              recordatorios: recordatorios, prospectos: prospectos,
+              planillas: planillas, cargasDia: cargasDia,
+              stock: { soderia: stockGen.soderia||{}, soderia_vacios: stockGen.soderia_vacios||{}, casa: stockGen.casa||{}, camiones: stockCamiones },
+              productos: comp.productos || [],
+              zonasReparto: comp.zonasReparto || {},
+              repartos: repartosLista,
+              mantVeh: comp.mantVeh || [],
+              histPrecios: comp.histPrecios || [],
+              negocio: comp.negocio || {},
+              horaAvisoCierre: comp.horaAvisoCierre,
+              horasAvisoTrans: comp.horasAvisoTrans,
+              diasAvisoMant: comp.diasAvisoMant
+            };
+          });
       }).catch(function(e){console.error("Load err",e);return null;});
     }
 
