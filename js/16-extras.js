@@ -553,7 +553,7 @@ function TodosClientesRepartidor({clientes,prospectos,ventas,onSeleccionar,onNue
 
   return (
     <div style={s.screen}>
-      <HeaderApp titulo="Todos los clientes" onVolver={onVolver}/>
+      <HeaderApp titulo="Mis clientes" onVolver={onVolver}/>
       <div style={{padding:"10px 14px 6px"}}>
         <input style={s.input} placeholder="Buscar cliente o barrio..." value={busq} onChange={e=>setBusq(e.target.value)} />
         <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap",alignItems:"center"}}>

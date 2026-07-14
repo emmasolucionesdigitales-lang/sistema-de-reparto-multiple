@@ -298,18 +298,27 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     return true;
   }).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
 
+  // Todos los clientes asignados a este repartidor, sin importar el día
+  // (para "Mis clientes", detalle de cliente y carga de ventas atrasadas).
+  // Un repartidor NUNCA debe ver ni operar sobre clientes de otro reparto.
+  const misClientesTodos = todosClientes.filter(c => {
+    if(miReparto && c.repartoId && c.repartoId !== miReparto.id) return false;
+    if(sectores.length > 0 && !sectores.some(s => (c.barrio||"").toLowerCase().includes(s.toLowerCase()))) return false;
+    return true;
+  });
+
   // Prospectos asignados a este repartidor
   const prospectos = (datos.prospectos||[]).filter(p=>
     !p.repartoId || !miReparto || p.repartoId === miReparto.id
   );
 
-  const cliente = todosClientes.find(c=>c.id===clienteId)||null;
+  const cliente = misClientesTodos.find(c=>c.id===clienteId)||null;
 
   const sync = (overrides={}) => {
     setDatos(prevDatos => {
       const localBase = { ...prevDatos, ...overrides };
       // En el fondo: mergear con Firebase y guardar (no bloquea la UI).
-      // OJO: acá vivían varios bugs graves —
+      // OJO: acá vivían dos bugs graves —
       // 1) "eliminarVenta" nunca se propagaba a la nube: el merge de ventas
       //    solo sabía agregar/actualizar por id, nunca sacar una que ya no
       //    estaba en la lista local → una venta borrada podía "revivir".
@@ -317,12 +326,6 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       //    local (que en este repartidor se descarga UNA sola vez al abrir
       //    la app y nunca se refresca) → cualquier cambio hecho por el
       //    dueño u otro repartidor mientras tanto se perdía en cada guardado.
-      //    Esto se arregló para ventas y clientes, pero noVisitas y planillas
-      //    quedaron sin arreglar por error — eso causó, en la práctica, que
-      //    abrir la app en un dispositivo nuevo (ej. la PC después de venir
-      //    usando el celular) pisara los "no quiere/no está" ya guardados
-      //    con la copia vacía/vieja de ese dispositivo. Ya está arreglado
-      //    para las 4 cosas ahora (ventas, clientes, noVisitas, planillas).
       cloudLoad(uid, perfil.negocioId).then(function(fresh){
         if(!fresh){ cloudSave(localBase, uid, perfil.negocioId); return; }
 
@@ -347,27 +350,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         });
         const clientesFinal = Object.values(porIdCliente);
 
-        // ── noVisitas: merge por clave (clienteId+fecha) que respeta borrados ──
-        // Mismo problema que tenían ventas antes de arreglarse: sin esto, un
-        // dispositivo recién abierto (con su copia local vacía o vieja) podía
-        // pisar por completo los "no quiere"/"no está" ya guardados por otro
-        // dispositivo — haciendo que aparezcan clientes marcados sin haberlos
-        // tocado, o perdiendo marcas reales ya hechas.
-        const claveNV = (v) => `${v.clienteId}_${v.fecha}`;
-        const noVisLocalesPost = overrides.noVisitas !== undefined ? overrides.noVisitas : (prevDatos.noVisitas || []);
-        const noVisLocalesPre  = prevDatos.noVisitas || [];
-        const clavesLocalesPostNV = new Set(noVisLocalesPost.map(claveNV));
-        const clavesBorradasLocalNV = new Set(noVisLocalesPre.filter(v=>!clavesLocalesPostNV.has(claveNV(v))).map(claveNV));
-        const porClaveNV = {};
-        (fresh.noVisitas||[]).forEach(v=>{ if(!clavesBorradasLocalNV.has(claveNV(v))) porClaveNV[claveNV(v)]=v; });
-        noVisLocalesPost.forEach(v=>{ porClaveNV[claveNV(v)]=v; });
-        const noVisitasFinal = Object.values(porClaveNV);
-
-        // ── planillas: merge por clave de día — combinar en vez de pisar ──
-        const planillasLocales = overrides.planillas !== undefined ? overrides.planillas : (prevDatos.planillas || {});
-        const planillasFinal = { ...(fresh.planillas||{}), ...planillasLocales };
-
-        cloudSave({...fresh, ...localBase, ventas:ventasFinal, clientes:clientesFinal, noVisitas:noVisitasFinal, planillas:planillasFinal}, uid, perfil.negocioId);
+        cloudSave({...fresh, ...localBase, ventas:ventasFinal, clientes:clientesFinal}, uid, perfil.negocioId);
       }).catch(function(){ cloudSave(localBase, uid, perfil.negocioId); });
       return localBase;
     });
@@ -489,7 +472,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           planillas={planillas}
           savePlanilla={(key,p)=>sync({planillas:{...planillas,[key]:p}})}
           productos={productos}
-          recordatorios={datos.recordatorios||[]}
+          recordatorios={(datos.recordatorios||[]).filter(r=>r.paraRepartidor===perfil.nombre)}
           scaleIdx={scaleIdx}
           onToggleScale={()=>setScaleIdx(i=>(i+1)%4)}
           scaleLabel={SCALE_LABELS[scaleIdx]}
@@ -744,9 +727,9 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="todosClientes"&&(
         <TodosClientesRepartidor
-          clientes={todosClientes.filter(c=>!miReparto||!c.repartoId||c.repartoId===miReparto.id)}
+          clientes={misClientesTodos}
           prospectos={prospectos}
-          ventas={ventas}
+          ventas={ventas.filter(v=>misClientesTodos.some(c=>c.id===v.clienteId))}
           onSeleccionar={(c)=>{
             setClienteId(c.id);
             setDiaClienteActual(c.dia||diaActual);
@@ -763,25 +746,25 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
       )}
       {pantalla==="agendaRep"&&(
         <AgendaRepartidor
-          recordatorios={datos.recordatorios||[]}
-          clientes={todosClientes}
+          recordatorios={(datos.recordatorios||[]).filter(r=>r.paraRepartidor===perfil.nombre)}
+          clientes={misClientesTodos}
           negocioId={perfil.negocioId}
           repartidorNombre={perfil.nombre}
           onConfirmar={async (id)=>{
-            const l=(datos.recordatorios||[]).map(r=>r.id===id?{...r,confirmado:true}:r);
+            const l=(datos.recordatorios||[]).map(r=>r.id===id&&r.paraRepartidor===perfil.nombre?{...r,confirmado:true}:r);
             sync({recordatorios:l});
           }}
           onEliminar={async (id)=>{
-            const l=(datos.recordatorios||[]).filter(r=>r.id!==id);
+            const l=(datos.recordatorios||[]).filter(r=>!(r.id===id&&r.paraRepartidor===perfil.nombre));
             sync({recordatorios:l});
           }}
           onNuevo={async (datos2)=>{
-            const c=todosClientes.find(x=>x.id===datos2.clienteId);
+            const c=misClientesTodos.find(x=>x.id===datos2.clienteId);
             const nuevo={...datos2,id:Date.now(),clienteId:c?.id||null,clienteNombre:c?.nombre||datos2.clienteNombre||"Sin cliente",dia:c?.dia||"",confirmado:false,creadoPor:perfil.nombre,creadoEn:new Date().toISOString(),paraRepartidor:perfil.nombre};
             const l=[...(datos.recordatorios||[]),nuevo];
             sync({recordatorios:l});
           }}
-          onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(todosClientes.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
+          onIrCliente={(cId)=>{setClienteId(cId);setDiaClienteActual(misClientesTodos.find(c=>c.id===cId)?.dia||diaActual);irA("venta");}}
           onVolver={()=>irA("inicio")}
         />
       )}
