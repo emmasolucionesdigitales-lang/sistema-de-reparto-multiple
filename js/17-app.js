@@ -23,40 +23,30 @@ function App() {
   const [temaElegido, setTemaElegido] = React.useState(()=>!!localStorage.getItem("rm_tema"));
 
   // ── Recuperar sesión de repartidor desde Firebase si se borró el caché ──
-  // Antes: buscaba por "deviceId" (un string que arma el propio navegador,
-  // sin ninguna verificación) en TODOS los repartidores de TODOS los
-  // negocios — cualquiera podía autoasignarse cualquier sesión con solo
-  // conocer o adivinar ese valor. Ahora la identidad vive en los custom
-  // claims del token de Firebase Auth (asignados server-side por la Cloud
-  // Function canjearCodigoRepartidor), y sólo se puede recuperar si el uid
-  // anónimo de este dispositivo sigue siendo el mismo de cuando se activó
-  // (si se borra TODO el storage del navegador, incluida la sesión de
-  // Firebase Auth, hay que volver a canjear el código — es lo esperado).
   React.useEffect(()=>{
     if(!buscandoSesion) return; // ya tenía sesión local, no buscar
-    if(!window.auth || !window.db){ setBuscandoSesion(false); return; }
-    window.auth.onAuthStateChanged(async (user)=>{
-      if(!user){ setBuscandoSesion(false); return; }
-      try {
-        const tokenRes = await user.getIdTokenResult();
-        const claims = tokenRes.claims||{};
-        if(claims.rol === "repartidor" && claims.negocioId){
-          const snap = await window.db.collection("negocios").doc(claims.negocioId)
-            .collection("repartidores").where("authUid","==",user.uid).limit(1).get();
-          if(!snap.empty){
-            const d = snap.docs[0].data();
-            const perfil = {
-              rol:"repartidor", negocioId:claims.negocioId,
-              nombre:d.nombre||"Repartidor", sectores:d.sectores||[],
-              codigo:snap.docs[0].id, activado:true
-            };
-            localStorage.setItem("rm_licencia", JSON.stringify(perfil));
-            setPerfilRecuperado(perfil);
-          }
+    const deviceId = localStorage.getItem("sr_device_id");
+    if(!deviceId || !window.db){ setBuscandoSesion(false); return; }
+    // ▶ Buscar en subcolección: negocios/{negocioId}/repartidores/
+    window.db.collectionGroup("repartidores")
+      .where("deviceId","==",deviceId)
+      .where("activado","==",true)
+      .limit(1)
+      .get()
+      .then(snap=>{
+        if(!snap.empty){
+          const d = snap.docs[0].data();
+          const perfil = {
+            rol:"repartidor", negocioId:d.negocioId,
+            nombre:d.nombre||"Repartidor", sectores:d.sectores||[],
+            deviceId, codigo:snap.docs[0].id, activado:true
+          };
+          localStorage.setItem("rm_licencia", JSON.stringify(perfil));
+          setPerfilRecuperado(perfil);
         }
-      } catch(e){ console.error("Recuperar sesión:", e); }
-      setBuscandoSesion(false);
-    });
+        setBuscandoSesion(false);
+      })
+      .catch(()=>setBuscandoSesion(false));
   },[]);
 
   const handleActivado = (lic) => {
@@ -563,70 +553,76 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
   const syncData = (overrides={}) => {
     if(!window.db) return;
     setSyncStatus("saving");
-    const prevLocal = estadoRef.current; // snapshot ANTES de este cambio (para mergear bien contra la nube)
+    // Foto de cómo estaban las cosas ACÁ (en esta pantalla) antes de este
+    // cambio puntual — hace falta para poder mergear bien con la nube más
+    // abajo (para saber, por ejemplo, qué venta se borró de verdad acá y
+    // cuál simplemente no se tocó en este guardado).
+    const prevData = estadoRef.current;
     const mantVehActual = (() => { try { return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1")||"[]"); } catch { return []; } })();
     const histPreciosActual = (() => { try { return JSON.parse(localStorage.getItem("rm_lc_hist_precios")||"[]"); } catch { return []; } })();
-    const data = { ...estadoRef.current, ...overrides, noVisitas: overrides.noVisitas!==undefined ? overrides.noVisitas : (estadoRef.current.noVisitas||[]), prospectos: overrides.prospectos!==undefined ? overrides.prospectos : (estadoRef.current.prospectos||[]), recordatorios: overrides.recordatorios!==undefined ? overrides.recordatorios : (estadoRef.current.recordatorios||[]), mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||estadoRef.current.zonasReparto||{}, repartos: overrides.repartos||estadoRef.current.repartos||[], horaAvisoCierre: overrides.horaAvisoCierre || localStorage.getItem('rm_hora_notif_cierre') || '18:00', horasAvisoTrans: overrides.horasAvisoTrans || (()=>{try{return JSON.parse(localStorage.getItem('rm_horas_notif_trans')||'["13:00","19:00"]');}catch{return ['13:00','19:00'];}})(), diasAvisoMant: overrides.diasAvisoMant || (localStorage.getItem('rm_dias_notif_mant')||'3,2,1,0').split(',').map(n=>parseInt(n.trim(),10)).filter(n=>!isNaN(n)) };
+    const data = { ...prevData, ...overrides, noVisitas: overrides.noVisitas!==undefined ? overrides.noVisitas : (prevData.noVisitas||[]), prospectos: overrides.prospectos!==undefined ? overrides.prospectos : (prevData.prospectos||[]), recordatorios: overrides.recordatorios!==undefined ? overrides.recordatorios : (prevData.recordatorios||[]), mantVeh: overrides.mantVeh||mantVehActual, histPrecios: overrides.histPrecios||histPreciosActual, zonasReparto: overrides.zonasReparto||prevData.zonasReparto||{}, repartos: overrides.repartos||prevData.repartos||[], horaAvisoCierre: overrides.horaAvisoCierre || localStorage.getItem('rm_hora_notif_cierre') || '18:00', horasAvisoTrans: overrides.horasAvisoTrans || (()=>{try{return JSON.parse(localStorage.getItem('rm_horas_notif_trans')||'["13:00","19:00"]');}catch{return ['13:00','19:00'];}})(), diasAvisoMant: overrides.diasAvisoMant || (localStorage.getItem('rm_dias_notif_mant')||'3,2,1,0').split(',').map(n=>parseInt(n.trim(),10)).filter(n=>!isNaN(n)) };
     estadoRef.current = data;
     debounceSave(() => {
-      const guardarPayload = (payload) => {
-        if(!navigator.onLine) {
-          // Sin red → guardar en cola local
-          try { localStorage.setItem("sr_offline_pending", JSON.stringify(payload)); } catch {}
-          setPendingOfflineSync(true);
-          setSyncStatus("offline_pending");
-          return;
-        }
-        cloudSave(payload, uid, negocioId).then(function(ok){
+      const guardarFinal = (toSave) => {
+        cloudSave(toSave, uid, negocioId).then(function(ok){
           if(ok){
             localStorage.removeItem("sr_offline_pending");
             setPendingOfflineSync(false);
             setSyncStatus("saved");
           } else {
             // Puede que Firestore esté cacheando (persistence activa) → guardar cola igual
-            try { localStorage.setItem("sr_offline_pending", JSON.stringify(payload)); } catch {}
+            try { localStorage.setItem("sr_offline_pending", JSON.stringify(toSave)); } catch {}
             setPendingOfflineSync(true);
             setSyncStatus(navigator.onLine ? "error" : "offline_pending");
           }
         }).catch(function(){
-          try { localStorage.setItem("sr_offline_pending", JSON.stringify(payload)); } catch {}
+          try { localStorage.setItem("sr_offline_pending", JSON.stringify(toSave)); } catch {}
           setPendingOfflineSync(true);
           setSyncStatus(navigator.onLine ? "error" : "offline_pending");
         });
       };
-
-      if(!navigator.onLine){ guardarPayload(data); return; }
-
-      // Guardado seguro: traer lo último de la nube y pisar SOLO los
-      // campos que ESTE guardado realmente cambia (los que vienen en
-      // "overrides"). Antes acá se guardaba directo "data" (una mezcla
-      // de estadoRef.current + overrides) sin volver a mirar la nube —
-      // si un repartidor había actualizado su stock o cerrado su caja
-      // segundos antes, cualquier guardado del dueño (aunque fuera para
-      // editar un cliente) lo pisaba y lo perdía.
+      if(!navigator.onLine) {
+        // Sin red → guardar en cola local
+        try { localStorage.setItem("sr_offline_pending", JSON.stringify(data)); } catch {}
+        setPendingOfflineSync(true);
+        setSyncStatus("offline_pending");
+        return;
+      }
+      // Guardado seguro: traer lo último de la nube y pisar SOLO lo que este
+      // guardado puntual cambió (según "overrides"), no toda la copia local.
+      // Antes acá vivía el bug raíz de la app: el dueño (o un repartidor
+      // guardando algo suyo segundos antes) podía perder su cambio de stock,
+      // cierre de caja o agenda porque este guardado pisaba todo con una
+      // copia local vieja.
       cloudLoad(uid, negocioId).then(function(fresh){
-        if(!fresh){ guardarPayload(data); return; }
-        const merged = { ...fresh };
-        if(overrides.ventas !== undefined) merged.ventas = mergeArrayPorClave(prevLocal.ventas, overrides.ventas, fresh.ventas, v=>v.id);
-        if(overrides.clientes !== undefined) merged.clientes = mergeClientesPorUpd(prevLocal.clientes, overrides.clientes, fresh.clientes);
-        if(overrides.stock !== undefined) merged.stock = mergeNumericoConDeltas(prevLocal.stock, overrides.stock, fresh.stock);
-        if(overrides.cargasDia !== undefined) merged.cargasDia = mergeNumericoConDeltas(prevLocal.cargasDia, overrides.cargasDia, fresh.cargasDia);
-        if(overrides.planillas !== undefined) merged.planillas = mergePorClavesCambiadas(prevLocal.planillas, overrides.planillas, fresh.planillas);
-        if(overrides.recordatorios !== undefined) merged.recordatorios = mergeArrayPorClave(prevLocal.recordatorios, overrides.recordatorios, fresh.recordatorios, r=>r.id);
-        if(overrides.noVisitas !== undefined) merged.noVisitas = mergeArrayPorClave(prevLocal.noVisitas, overrides.noVisitas, fresh.noVisitas, v=>`${v.clienteId}|${v.dia}|${v.fecha}`);
-        if(overrides.prospectos !== undefined) merged.prospectos = mergeArrayPorClave(prevLocal.prospectos, overrides.prospectos, fresh.prospectos, p=>p.id);
-        if(overrides.perdidas !== undefined) merged.perdidas = mergeArrayPorClave(prevLocal.perdidas, overrides.perdidas, fresh.perdidas, x=>x.id);
-        if(overrides.productos !== undefined) merged.productos = overrides.productos;
-        if(overrides.zonasReparto !== undefined) merged.zonasReparto = overrides.zonasReparto;
-        if(overrides.repartos !== undefined) merged.repartos = overrides.repartos;
-        if(overrides.mantVeh !== undefined) merged.mantVeh = overrides.mantVeh;
-        if(overrides.histPrecios !== undefined) merged.histPrecios = overrides.histPrecios;
-        if(overrides.horaAvisoCierre !== undefined) merged.horaAvisoCierre = overrides.horaAvisoCierre;
-        if(overrides.horasAvisoTrans !== undefined) merged.horasAvisoTrans = overrides.horasAvisoTrans;
-        if(overrides.diasAvisoMant !== undefined) merged.diasAvisoMant = overrides.diasAvisoMant;
-        if(overrides.negocio !== undefined) merged.negocio = overrides.negocio;
-        guardarPayload(merged);
-      }).catch(function(){ guardarPayload(data); });
+        if(!fresh){ guardarFinal(data); return; }
+        const merged = { ...fresh, ...data };
+        if(overrides.ventas !== undefined){
+          merged.ventas = mergeArrayPorClave(prevData.ventas, data.ventas, fresh.ventas, v=>v.id);
+        }
+        if(overrides.clientes !== undefined){
+          merged.clientes = mergeClientesPorUpd(prevData.clientes, data.clientes, fresh.clientes);
+        }
+        if(overrides.planillas !== undefined){
+          merged.planillas = mergePorClavesCambiadas(prevData.planillas, data.planillas, fresh.planillas);
+        }
+        if(overrides.stock !== undefined){
+          merged.stock = mergeNumericoConDeltas(prevData.stock, data.stock, fresh.stock);
+        }
+        if(overrides.cargasDia !== undefined){
+          merged.cargasDia = mergeNumericoConDeltas(prevData.cargasDia, data.cargasDia, fresh.cargasDia);
+        }
+        if(overrides.recordatorios !== undefined){
+          merged.recordatorios = mergeArrayPorClave(prevData.recordatorios, data.recordatorios, fresh.recordatorios, r=>r.id);
+        }
+        if(overrides.noVisitas !== undefined){
+          merged.noVisitas = mergeArrayPorClave(prevData.noVisitas, data.noVisitas, fresh.noVisitas, v=>`${v.clienteId}|${v.dia}|${v.fecha}`);
+        }
+        if(overrides.prospectos !== undefined){
+          merged.prospectos = mergeArrayPorClave(prevData.prospectos, data.prospectos, fresh.prospectos, p=>p.id);
+        }
+        guardarFinal(merged);
+      }).catch(function(){ guardarFinal(data); });
     });
   };
 

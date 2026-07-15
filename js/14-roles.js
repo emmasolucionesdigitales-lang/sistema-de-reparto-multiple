@@ -988,19 +988,17 @@ function PantallaActivacionRM({onActivado}) {
           .where("codigoActivacion","==",cod).limit(1).get();
         if(!negSnap.empty) negocioId = negSnap.docs[0].id;
       } catch(_) {}
-      // Vincular esta sesión como dueño del negocio (server-side, vía Cloud
-      // Function) y obtener los custom claims {rol:"dueño", negocioId} que
-      // usan las reglas de Firestore. Sin esto, cualquiera con el código
-      // de licencia podría escribir "estado:usado" y listo — ahora la
-      // identidad de dueño queda firmada en el token de Firebase Auth.
-      if(window.functions){
+      // Quedar registrado como el dueño real de este negocio (una sola vez:
+      // el primero que activa un negocio queda como su dueño para siempre,
+      // nadie más puede pisar esto después — lo controla la regla de
+      // seguridad de Firestore, no hace falta backend aparte).
+      if(window.auth && window.auth.currentUser){
         try {
-          const vincular = window.functions.httpsCallable("vincularDueno");
-          const rVinc = await vincular({codigoActivacion:cod});
-          if(rVinc.data && rVinc.data.negocioId) negocioId = rVinc.data.negocioId;
-          await window.auth.currentUser.getIdToken(true);
+          await window.db.collection("negocios").doc(negocioId).update({
+            ownerAuthUid: window.auth.currentUser.uid
+          });
         } catch(e) {
-          setError("No se pudo vincular tu cuenta como dueño: "+(e&&e.message?e.message:"error desconocido")+". Contactá a soporte.");
+          setError("No se pudo vincular tu cuenta como dueño de este negocio. Contactá a soporte.");
           setCargando(false);
           return;
         }

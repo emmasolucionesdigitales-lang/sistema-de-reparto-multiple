@@ -39,16 +39,26 @@ async function sincronizarInvitaciones(repartos, negocioId, licCodigo) {
   } catch(e) { console.error("sincronizarInvitaciones:", e.message); }
 }
 
-// El repartidor activa con su código de 6 letras
+// El repartidor activa con su código de 6 letras.
+// Además de lo de siempre (deviceId, para el aviso de "ya en uso"),
+// ahora TAMBIÉN vincula la sesión real de Firebase Auth (authUid) —
+// eso es lo que usan las reglas de seguridad nuevas para saber quién
+// es quién. El deviceId por sí solo era un texto que cualquiera podía
+// inventar; el authUid lo entrega Firebase, nadie lo puede falsificar.
 async function canjearInvitacion(deviceId, email, codigo) {
   if(!window.db) return {ok:false, msg:"Base de datos no disponible."};
+  if(!window.auth || !window.auth.currentUser) return {ok:false, msg:"Todavía se está iniciando la conexión, esperá un segundo y probá de nuevo."};
+  const miUid = window.auth.currentUser.uid;
   try {
     const snap = await window.db.collection("repartidores").doc(codigo).get();
     if(!snap.exists) return {ok:false, msg:"Código no encontrado. Pedile al dueño que abra su app — el código se activa automáticamente."};
     const d = snap.data();
     if(!d.activo) return {ok:false, msg:"Este reparto fue desactivado."};
     if(d.deviceId && d.deviceId !== "" && d.deviceId !== deviceId) return {ok:false, msg:"Este código ya está en uso en otro dispositivo. El dueño puede resetearlo."};
-    await snap.ref.update({deviceId, activado:true, usadoEn:new Date().toISOString()});
+    await snap.ref.update({deviceId, authUid:miUid, activado:true, usadoEn:new Date().toISOString()});
+    // Vínculo repartidor → negocio, para que las reglas de Firestore
+    // sepan a qué negocio pertenece esta sesión sin tener que buscar.
+    await window.db.collection("repartidorUid").doc(miUid).set({negocioId:d.negocioId, codigo}, {merge:true});
     return {ok:true, negocioId:d.negocioId, nombre:d.nombre||"Repartidor", sectores:d.sectores||[]};
   } catch(e) { return {ok:false, msg:"Error de conexión: "+e.message}; }
 }
@@ -75,14 +85,17 @@ async function eliminarRepartidor(uid) {
   if(!window.db) return;
   try {
     const snap = await window.db.collection("repartidores").where("deviceId","==",uid).limit(1).get();
-    if(!snap.empty) await snap.docs[0].ref.update({activo:false,activado:false,deviceId:null});
+    if(!snap.empty) await snap.docs[0].ref.update({activo:false,activado:false,deviceId:null,authUid:null});
   } catch(e) { console.error("eliminarRepartidor:", e); }
 }
 
 async function resetearDispositivoEnLicencia(uid, codigo) {
   if(!window.db || !codigo) return false;
   try {
-    await window.db.collection("repartidores").doc(codigo).update({deviceId:null, activado:false});
+    // Se limpia también authUid — si no, el repartidor no podría volver a
+    // vincularse desde un dispositivo nuevo (las reglas exigen que el
+    // código esté "libre" para poder reclamarlo).
+    await window.db.collection("repartidores").doc(codigo).update({deviceId:null, authUid:null, activado:false});
     return true;
   } catch(e) { console.error("resetear:", e); return false; }
 }
