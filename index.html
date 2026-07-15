@@ -287,6 +287,7 @@ self.addEventListener('notificationclick',e=>{
       (data.clientes||[]).forEach(function(c){ bucket(c.repartoId).clientes.push(c); });
       (data.ventas||[]).forEach(function(v){
         var cli = clientesPorId[v.clienteId];
+        if(!cli) console.warn("cloudSave: venta de un cliente no encontrado en este guardado (id venta "+v.id+", cliente "+v.clienteId+") — se guarda en \"_sinreparto\", revisar si el cliente existe.");
         bucket(cli && cli.repartoId).ventas.push(v);
       });
       (data.noVisitas||[]).forEach(function(v){

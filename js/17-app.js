@@ -615,9 +615,17 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
         if(overrides.ventas !== undefined){
           merged.ventas = mergeArrayPorClave(prevData.ventas, data.ventas, fresh.ventas, v=>v.id);
         }
-        if(overrides.clientes !== undefined){
-          merged.clientes = mergeClientesPorUpd(prevData.clientes, data.clientes, fresh.clientes);
-        }
+        // "clientes" se mergea SIEMPRE, no sólo cuando este guardado los
+        // tocó: cloudSave usa el cliente de cada venta para saber a qué
+        // reparto pertenece. Si la copia local del dueño estuviera un
+        // poco vieja (por ejemplo, un repartidor agregó un cliente nuevo
+        // mientras esta pantalla estaba abierta), una venta se podía
+        // guardar en el reparto equivocado y aparecer duplicada.
+        merged.clientes = mergeClientesPorUpd(
+          prevData.clientes,
+          overrides.clientes !== undefined ? data.clientes : prevData.clientes,
+          fresh.clientes
+        );
         if(overrides.planillas !== undefined){
           merged.planillas = mergePorClavesCambiadas(prevData.planillas, data.planillas, fresh.planillas);
         }

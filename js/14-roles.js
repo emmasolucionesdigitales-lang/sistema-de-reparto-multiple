@@ -348,9 +348,16 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
         if(overrides.ventas !== undefined){
           merged.ventas = mergeArrayPorClave(prevDatos.ventas, overrides.ventas, fresh.ventas, v=>v.id);
         }
-        if(overrides.clientes !== undefined){
-          merged.clientes = mergeClientesPorUpd(prevDatos.clientes, overrides.clientes, fresh.clientes);
-        }
+        // "clientes" se mergea SIEMPRE, no sólo cuando este guardado los
+        // tocó: cloudSave usa el cliente de cada venta para saber a qué
+        // reparto pertenece. Si acá faltara un cliente nuevo (agregado
+        // por el dueño mientras esta app estaba abierta), una venta se
+        // podía guardar en el reparto equivocado y aparecer duplicada.
+        merged.clientes = mergeClientesPorUpd(
+          prevDatos.clientes,
+          overrides.clientes !== undefined ? overrides.clientes : prevDatos.clientes,
+          fresh.clientes
+        );
         if(overrides.stock !== undefined){
           merged.stock = mergeNumericoConDeltas(prevDatos.stock, overrides.stock, fresh.stock);
         }
