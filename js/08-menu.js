@@ -46,13 +46,56 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
     return (recordatorios||[]).filter(r=>!r.confirmado && ids.has(r.clienteId));
   };
 
+  // ── Resumen general (pestaña entre "Repartos" y "Herramientas") ─────────
+  // Junta la plata de TODOS los repartos en una sola tabla + el detalle de
+  // cada uno, para no tener que entrar reparto por reparto a sumarlo a mano.
+  const [periodoResGen, setPeriodoResGen] = React.useState("hoy"); // hoy | mes | todo
+  const resumenPorReparto = React.useMemo(()=>{
+    const hoyKey = new Date().toLocaleDateString("en-CA");
+    const mesKey = hoyKey.slice(0,7);
+    return [...repartos].sort((a,b)=>a.numero-b.numero).map(rep=>{
+      const cliIds = new Set(clientesPorReparto(rep.id).map(c=>c.id));
+      const todasDelReparto = (ventas||[]).filter(v=>cliIds.has(v.clienteId) && !v._esCobro && !v._esAjuste && !v._esCambio);
+      const vs = todasDelReparto.filter(v=>{
+        const fk = v.fechaKey||v.fecha||"";
+        if(periodoResGen==="hoy")  return fk===hoyKey;
+        if(periodoResGen==="mes")  return fk.slice(0,7)===mesKey;
+        return true; // todo
+      });
+      const vendido       = vs.reduce((a,v)=>a+(v.neto||0),0);
+      const efectivo      = vs.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.neto||0)),0);
+      const transferencia = vs.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.neto||0)),0);
+      const fiado          = vs.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
+      const ganancia       = vs.reduce((a,v)=>a+(v.ganancia||0),0);
+      // Envases prestados pendientes: es un saldo corriente (no depende del
+      // período elegido) — se calcula sobre TODAS las ventas del reparto.
+      const envNeto = {};
+      todasDelReparto.forEach(v=>{
+        (v.envPrest||[]).forEach(e=>{ if(e.prod&&e.cant) envNeto[e.prod]=(envNeto[e.prod]||0)+(Number(e.cant)||0); });
+        (v.envDev||[]).forEach(e=>{ if(e.prod&&e.cant) envNeto[e.prod]=(envNeto[e.prod]||0)-(Number(e.cant)||0); });
+      });
+      const envasesPend = Object.entries(envNeto).filter(([,n])=>n>0);
+      const envasesPendTotal = envasesPend.reduce((a,[,n])=>a+n,0);
+      return {
+        id:rep.id, nombre:rep.repartidorNombre, entregas:vs.length,
+        vendido, efectivo, transferencia, fiado, ganancia,
+        envasesPend, envasesPendTotal,
+      };
+    });
+  },[repartos, clientes, ventas, periodoResGen]);
+  const totalesGlobalesResGen = React.useMemo(()=>resumenPorReparto.reduce((a,r)=>({
+    entregas:a.entregas+r.entregas, vendido:a.vendido+r.vendido, efectivo:a.efectivo+r.efectivo,
+    transferencia:a.transferencia+r.transferencia, fiado:a.fiado+r.fiado, ganancia:a.ganancia+r.ganancia,
+    envasesPendTotal:a.envasesPendTotal+r.envasesPendTotal,
+  }),{entregas:0,vendido:0,efectivo:0,transferencia:0,fiado:0,ganancia:0,envasesPendTotal:0}),[resumenPorReparto]);
+
   return (
     <div style={s.screen}>
       <HeaderApp titulo="Panel del dueño" onVolver={onVolver}/>
 
       {/* ── PESTAÑAS ── */}
       <div style={{display:"flex",borderBottom:"2px solid var(--color-border-secondary)"}}>
-        {[["repartos","🚚  Repartos"],["herramientas","🛠  Herramientas"]].map(([id,lbl])=>(
+        {[["repartos","🚚  Repartos"],["resumenGeneral","📊  Resumen"],["herramientas","🛠  Herramientas"]].map(([id,lbl])=>(
           <button key={id} onClick={()=>cambiarTab(id)}
             style={{flex:1,padding:"11px 4px",fontSize:12,fontWeight:700,border:"none",cursor:"pointer",
               background:"transparent",
@@ -224,6 +267,88 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
       </div>
 
       </>}
+
+      {/* ══════════ TAB: RESUMEN GENERAL (todos los repartos) ══════════ */}
+      {tab==="resumenGeneral" && (
+        <div style={{padding:"10px 14px 32px"}}>
+          {/* Selector de período */}
+          <div style={{display:"flex",gap:6,marginBottom:12}}>
+            {[["hoy","Hoy"],["mes","Este mes"],["todo","Histórico"]].map(([v,l])=>(
+              <button key={v} style={{...s.btn,flex:1,fontSize:12,padding:"7px 4px",
+                background:periodoResGen===v?"#185FA5":"var(--color-background-tertiary)",
+                color:periodoResGen===v?"#e2eaf4":"var(--color-text-secondary)",
+                border:periodoResGen===v?"none":"0.5px solid var(--color-border-secondary)"}}
+                onClick={()=>setPeriodoResGen(v)}>{l}</button>
+            ))}
+          </div>
+
+          {repartos.length===0 ? (
+            <div style={{textAlign:"center",padding:"50px 20px",color:"var(--color-text-tertiary)"}}>
+              <div style={{fontSize:48,marginBottom:12}}>📊</div>
+              <div style={{fontSize:14}}>Creá un reparto para ver el resumen acá.</div>
+            </div>
+          ) : (<>
+
+          {/* Tabla general */}
+          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>Todos los repartos</span>
+          <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:16}}>
+            <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",padding:"7px 10px",background:"var(--color-background-tertiary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
+              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500}}>Repartidor</div>
+              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500,textAlign:"right"}}>Vendido</div>
+              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500,textAlign:"right"}}>Fiado</div>
+              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500,textAlign:"right"}}>Envases</div>
+            </div>
+            {resumenPorReparto.map(r=>(
+              <div key={r.id} style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",padding:"8px 10px",borderBottom:"0.5px solid var(--color-border-tertiary)",alignItems:"center"}}>
+                <div style={{fontSize:12,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nombre}</div>
+                <div style={{textAlign:"right",fontSize:12,color:"#5daaff"}}>{fmt(r.vendido)}</div>
+                <div style={{textAlign:"right",fontSize:12,color:"#f5b942"}}>{fmt(r.fiado)}</div>
+                <div style={{textAlign:"right",fontSize:12,color:r.envasesPendTotal>0?"#f07070":"var(--color-text-tertiary)"}}>{r.envasesPendTotal||"—"}</div>
+              </div>
+            ))}
+            <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",padding:"9px 10px",background:"var(--color-background-tertiary)"}}>
+              <div style={{fontSize:11,color:"var(--color-text-primary)",fontWeight:700}}>Total global</div>
+              <div style={{textAlign:"right",fontSize:13,color:"#5daaff",fontWeight:700}}>{fmt(totalesGlobalesResGen.vendido)}</div>
+              <div style={{textAlign:"right",fontSize:13,color:"#f5b942",fontWeight:700}}>{fmt(totalesGlobalesResGen.fiado)}</div>
+              <div style={{textAlign:"right",fontSize:13,color:totalesGlobalesResGen.envasesPendTotal>0?"#f07070":"var(--color-text-tertiary)",fontWeight:700}}>{totalesGlobalesResGen.envasesPendTotal||"—"}</div>
+            </div>
+          </div>
+
+          {/* Detalle por repartidor */}
+          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>Detalle por repartidor</span>
+          {resumenPorReparto.map(r=>(
+            <div key={r.id} style={{...s.card,marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-primary)"}}>{r.nombre}</span>
+                <span style={{fontSize:12,color:"var(--color-text-success)"}}>{r.entregas} entrega{r.entregas!==1?"s":""}</span>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:r.envasesPend.length?8:0}}>
+                <div style={{background:"var(--color-background-tertiary)",borderRadius:8,padding:8,textAlign:"center"}}>
+                  <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Efectivo</div>
+                  <div style={{fontSize:13,color:"var(--color-text-primary)"}}>{fmt(r.efectivo)}</div>
+                </div>
+                <div style={{background:"var(--color-background-tertiary)",borderRadius:8,padding:8,textAlign:"center"}}>
+                  <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Transfer.</div>
+                  <div style={{fontSize:13,color:"#5daaff"}}>{fmt(r.transferencia)}</div>
+                </div>
+                <div style={{background:"var(--color-background-tertiary)",borderRadius:8,padding:8,textAlign:"center"}}>
+                  <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Ganancia</div>
+                  <div style={{fontSize:13,color:"var(--color-text-success)"}}>{fmt(r.ganancia)}</div>
+                </div>
+              </div>
+              {r.envasesPend.length>0 && (
+                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>
+                  Envases prestados sin devolver: <span style={{color:"#f07070"}}>
+                    {r.envasesPend.map(([prod,n])=>`${n} ${prod}`).join(", ")}
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
+
+          </>)}
+        </div>
+      )}
 
       {/* ══════════ TAB: HERRAMIENTAS ══════════ */}
       {tab==="herramientas" && (
@@ -1493,4 +1618,3 @@ function InicioReparto({dia,fecha,planilla,productos,cargasDia,stock,onGuardar,o
     </div>
   );
 }
-
