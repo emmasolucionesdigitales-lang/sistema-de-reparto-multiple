@@ -265,6 +265,18 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
 
   const diaHoy = () => diaActual; // mantener compatibilidad
 
+  // Vínculo de seguridad: si este repartidor viene de antes de este
+  // cambio (activado con una versión vieja de la app), todavía no tiene
+  // guardada su sesión real vinculada a su código. Se re-canjea acá mismo
+  // al abrir la app — es la misma función que usa la pantalla de
+  // activación, y no hace nada raro si ya estaba vinculado (sólo confirma
+  // que sigue siendo el mismo).
+  React.useEffect(()=>{
+    if(perfil && perfil.codigo && typeof canjearInvitacion === "function"){
+      canjearInvitacion(getDeviceId(), perfil.email||"", String(perfil.codigo)).catch(()=>{});
+    }
+  },[]);
+
   React.useEffect(()=>{
     cloudLoad(uid, perfil.negocioId, perfil.codigo).then(function(d){
       setDatos(d||{clientes:[],ventas:[],productos:[],planillas:{},stock:{},noVisitas:[],prospectos:[],recordatorios:[],repartos:[]});

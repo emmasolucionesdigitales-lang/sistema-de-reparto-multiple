@@ -90,6 +90,21 @@ function App() {
 
 function AppPrincipal({uid, email: emailProp, perfil}) {
   const negocioId = perfil?.negocioId || uid;
+
+  // Vínculo de seguridad: el negocio queda atado a la sesión real de este
+  // dueño (no al "uid" viejo de arriba, que es sólo un identificador de
+  // dispositivo). Si este negocio es de antes de este cambio y todavía
+  // nadie lo reclamó, queda reclamado acá mismo, la primera vez que el
+  // dueño abre la app. Si ya está reclamado por este mismo dueño, no pasa
+  // nada (se repite sin problema). Si estuviera reclamado por otra sesión,
+  // Firestore simplemente rechaza el pedido y no rompe nada más.
+  React.useEffect(()=>{
+    if(!window.db || !window.auth || !window.auth.currentUser || !negocioId) return;
+    window.db.collection("negocios").doc(negocioId)
+      .update({ownerAuthUid: window.auth.currentUser.uid})
+      .catch(()=>{});
+  }, [negocioId]);
+
   const [operandoReparto, setOperandoReparto] = React.useState(null);
   const [tabConfig, setTabConfig] = React.useState("stock");
   const [modalResumenDia, setModalResumenDia] = React.useState(null);
