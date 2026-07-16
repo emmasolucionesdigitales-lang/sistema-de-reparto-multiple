@@ -270,6 +270,11 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
                   onClick={async()=>{
                     if(!window.confirm(`¿Resetear PIN de "${rep.repartidorNombre}"?\n\nPodrá ingresar de nuevo con su PIN: ${rep.codigo}`)) return;
                     try {
+                      // OJO: "deviceId" y "authUid" son DOS cosas separadas.
+                      // Antes este botón sólo limpiaba "deviceId" — la app
+                      // seguía viendo el código como "ya reclamado" por el
+                      // repartidor anterior (authUid) y le negaba la entrada
+                      // al nuevo. Hay que limpiar los dos.
                       await window.db.collection("repartidores").doc(rep.codigo).set({
                         codigo: rep.codigo,
                         negocioId: negocioId,
@@ -277,6 +282,7 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
                         sectores: rep.sectores||[],
                         activo: true,
                         deviceId: "",
+                        authUid: firebase.firestore.FieldValue.delete(),
                         activado: false,
                         resetadoEn: new Date().toISOString(),
                       }, {merge: true});
