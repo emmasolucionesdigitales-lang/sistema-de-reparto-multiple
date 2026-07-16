@@ -30,6 +30,11 @@ async function sincronizarInvitaciones(repartos, negocioId, licCodigo) {
         sectores: r.sectores||[],
         numero:   r.numero||1,
         codigo:   r.codigo,
+        // Las reglas de seguridad necesitan saber A QUÉ reparto puntual
+        // corresponde este código, para dejar entrar al repartidor SÓLO
+        // a sus propios datos (nunca a los de otro reparto del mismo
+        // negocio). String(...) porque las rutas de Firestore son texto.
+        repartoId: String(r.id),
         activo:   true,
         deviceId: null,
         activado: false,
@@ -55,7 +60,7 @@ async function canjearInvitacion(deviceId, email, codigo) {
     if(d.deviceId && d.deviceId !== "" && d.deviceId !== deviceId) return {ok:false, msg:"Este código ya está en uso en otro dispositivo. El dueño puede resetearlo."};
     await snap.ref.update({deviceId, authUid:miUid, activado:true, usadoEn:new Date().toISOString()});
     await window.db.collection("repartidorUid").doc(miUid).set({negocioId:d.negocioId, codigo}, {merge:true});
-    return {ok:true, negocioId:d.negocioId, nombre:d.nombre||"Repartidor", sectores:d.sectores||[]};
+    return {ok:true, negocioId:d.negocioId, nombre:d.nombre||"Repartidor", sectores:d.sectores||[], repartoId:d.repartoId||null};
   } catch(e) { return {ok:false, msg:"Error de conexión: "+e.message}; }
 }
 
