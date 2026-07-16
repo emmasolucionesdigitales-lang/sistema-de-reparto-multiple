@@ -46,48 +46,79 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
     return (recordatorios||[]).filter(r=>!r.confirmado && ids.has(r.clienteId));
   };
 
-  // ── Resumen general (pestaña entre "Repartos" y "Herramientas") ─────────
-  // Junta la plata de TODOS los repartos en una sola tabla + el detalle de
-  // cada uno, para no tener que entrar reparto por reparto a sumarlo a mano.
-  const [periodoResGen, setPeriodoResGen] = React.useState("hoy"); // hoy | mes | todo
-  const resumenPorReparto = React.useMemo(()=>{
-    const hoyKey = new Date().toLocaleDateString("en-CA");
-    const mesKey = hoyKey.slice(0,7);
-    return [...repartos].sort((a,b)=>a.numero-b.numero).map(rep=>{
-      const cliIds = new Set(clientesPorReparto(rep.id).map(c=>c.id));
-      const todasDelReparto = (ventas||[]).filter(v=>cliIds.has(v.clienteId) && !v._esCobro && !v._esAjuste && !v._esCambio);
-      const vs = todasDelReparto.filter(v=>{
-        const fk = v.fechaKey||v.fecha||"";
-        if(periodoResGen==="hoy")  return fk===hoyKey;
-        if(periodoResGen==="mes")  return fk.slice(0,7)===mesKey;
-        return true; // todo
+  // ── Resumen general: ventas de TODOS los repartos, con el detalle de cada uno ──
+  const [periodoResGen, setPeriodoResGen] = React.useState("hoy"); // "hoy" | "mes" | "todo"
+
+  const ventasEnPeriodoResGen = React.useMemo(() => {
+    if(periodoResGen==="todo") return ventas||[];
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    return (ventas||[]).filter(v=>{
+      if(!v.fecha) return false;
+      const f = new Date(v.fecha);
+      if(periodoResGen==="hoy") return f.getFullYear()===hoy.getFullYear() && f.getMonth()===hoy.getMonth() && f.getDate()===hoy.getDate();
+      if(periodoResGen==="mes") return f.getFullYear()===hoy.getFullYear() && f.getMonth()===hoy.getMonth();
+      return true;
+    });
+  }, [ventas, periodoResGen]);
+
+  const resumenPorReparto = React.useMemo(() => {
+    const clientesPorId = {};
+    (clientes||[]).forEach(c => { clientesPorId[c.id] = c; });
+
+    return (repartos||[]).map(rep => {
+      const misClientes = (clientes||[]).filter(c=>c.repartoId===rep.id);
+      const idsClientes = new Set(misClientes.map(c=>c.id));
+      const misVentas = ventasEnPeriodoResGen.filter(v => idsClientes.has(v.clienteId));
+
+      let vendido=0, efectivo=0, transferencia=0, fiado=0, ganancia=0;
+      const envases = {}; // prod -> {prestados, devueltos}
+
+      misVentas.forEach(v => {
+        const neto = v.neto || 0;
+        vendido += neto;
+        ganancia += v.ganancia || 0;
+        if(v.pago==="contado") efectivo += neto;
+        else if(v.pago==="transferencia") transferencia += neto;
+        else if(v.pago==="fiado") fiado += neto;
+        else if(v.pago==="mixto_ef") { efectivo += neto - (Number(v.montoTrans)||0); transferencia += Number(v.montoTrans)||0; }
+        else if(v.pago==="mixto_tr") { transferencia += neto - (Number(v.montoTrans)||0); efectivo += Number(v.montoTrans)||0; }
+
+        (v.envPrest||[]).forEach(e => {
+          if(!e.prod) return;
+          if(!envases[e.prod]) envases[e.prod] = {prestados:0, devueltos:0};
+          envases[e.prod].prestados += Number(e.cant)||0;
+        });
+        (v.envDev||[]).forEach(e => {
+          if(!e.prod) return;
+          if(!envases[e.prod]) envases[e.prod] = {prestados:0, devueltos:0};
+          envases[e.prod].devueltos += Number(e.cant)||0;
+        });
       });
-      const vendido       = vs.reduce((a,v)=>a+(v.neto||0),0);
-      const efectivo      = vs.filter(v=>v.pago==="contado"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoEfec)||0):(v.neto||0)),0);
-      const transferencia = vs.filter(v=>v.pago==="transferencia"||v.pago==="mixto").reduce((a,v)=>a+(v.pago==="mixto"?(Number(v.montoTrans)||0):(v.neto||0)),0);
-      const fiado          = vs.filter(v=>v.pago==="fiado").reduce((a,v)=>a+(v.neto||0),0);
-      const ganancia       = vs.reduce((a,v)=>a+(v.ganancia||0),0);
-      // Envases prestados pendientes: es un saldo corriente (no depende del
-      // período elegido) — se calcula sobre TODAS las ventas del reparto.
-      const envNeto = {};
-      todasDelReparto.forEach(v=>{
-        (v.envPrest||[]).forEach(e=>{ if(e.prod&&e.cant) envNeto[e.prod]=(envNeto[e.prod]||0)+(Number(e.cant)||0); });
-        (v.envDev||[]).forEach(e=>{ if(e.prod&&e.cant) envNeto[e.prod]=(envNeto[e.prod]||0)-(Number(e.cant)||0); });
-      });
-      const envasesPend = Object.entries(envNeto).filter(([,n])=>n>0);
-      const envasesPendTotal = envasesPend.reduce((a,[,n])=>a+n,0);
+
+      const envasesPendientes = Object.entries(envases)
+        .map(([prod, v]) => ({prod, pendiente: v.prestados - v.devueltos}))
+        .filter(e => e.pendiente > 0);
+
+      const deudaTotal = misClientes.filter(c=>c.saldo<0).reduce((a,c)=>a+Math.abs(c.saldo),0);
+
       return {
-        id:rep.id, nombre:rep.repartidorNombre, entregas:vs.length,
-        vendido, efectivo, transferencia, fiado, ganancia,
-        envasesPend, envasesPendTotal,
+        reparto: rep, vendido, efectivo, transferencia, fiado: fiado + deudaTotal, ganancia,
+        envasesPendientes, cantVentas: misVentas.length
       };
     });
-  },[repartos, clientes, ventas, periodoResGen]);
-  const totalesGlobalesResGen = React.useMemo(()=>resumenPorReparto.reduce((a,r)=>({
-    entregas:a.entregas+r.entregas, vendido:a.vendido+r.vendido, efectivo:a.efectivo+r.efectivo,
-    transferencia:a.transferencia+r.transferencia, fiado:a.fiado+r.fiado, ganancia:a.ganancia+r.ganancia,
-    envasesPendTotal:a.envasesPendTotal+r.envasesPendTotal,
-  }),{entregas:0,vendido:0,efectivo:0,transferencia:0,fiado:0,ganancia:0,envasesPendTotal:0}),[resumenPorReparto]);
+  }, [repartos, clientes, ventasEnPeriodoResGen]);
+
+  const totalesGlobalesResGen = React.useMemo(() => {
+    return resumenPorReparto.reduce((a,r) => ({
+      vendido: a.vendido + r.vendido,
+      efectivo: a.efectivo + r.efectivo,
+      transferencia: a.transferencia + r.transferencia,
+      fiado: a.fiado + r.fiado,
+      ganancia: a.ganancia + r.ganancia
+    }), {vendido:0, efectivo:0, transferencia:0, fiado:0, ganancia:0});
+  }, [resumenPorReparto]);
+
+  const fmtResGen = (n) => "$" + Math.round(n||0).toLocaleString("es-AR");
 
   return (
     <div style={s.screen}>
@@ -268,85 +299,77 @@ function MenuRepartos({negocioId,repartos,clientes,ventas,recordatorios,onSelecc
 
       </>}
 
-      {/* ══════════ TAB: RESUMEN GENERAL (todos los repartos) ══════════ */}
+      {/* ══════════ TAB: RESUMEN GENERAL ══════════ */}
       {tab==="resumenGeneral" && (
         <div style={{padding:"10px 14px 32px"}}>
-          {/* Selector de período */}
-          <div style={{display:"flex",gap:6,marginBottom:12}}>
-            {[["hoy","Hoy"],["mes","Este mes"],["todo","Histórico"]].map(([v,l])=>(
-              <button key={v} style={{...s.btn,flex:1,fontSize:12,padding:"7px 4px",
-                background:periodoResGen===v?"#185FA5":"var(--color-background-tertiary)",
-                color:periodoResGen===v?"#e2eaf4":"var(--color-text-secondary)",
-                border:periodoResGen===v?"none":"0.5px solid var(--color-border-secondary)"}}
-                onClick={()=>setPeriodoResGen(v)}>{l}</button>
+          <div style={{display:"flex",gap:6,marginBottom:14}}>
+            {[["hoy","Hoy"],["mes","Este mes"],["todo","Histórico"]].map(([id,lbl])=>(
+              <button key={id} onClick={()=>setPeriodoResGen(id)}
+                style={{flex:1,padding:"8px 4px",fontSize:12,fontWeight:600,borderRadius:8,cursor:"pointer",
+                  border:periodoResGen===id?"2px solid #5daaff":"2px solid var(--color-border-secondary)",
+                  background:periodoResGen===id?"rgba(93,170,255,0.12)":"transparent",
+                  color:periodoResGen===id?"#5daaff":"var(--color-text-secondary)"}}>
+                {lbl}
+              </button>
             ))}
           </div>
 
           {repartos.length===0 ? (
-            <div style={{textAlign:"center",padding:"50px 20px",color:"var(--color-text-tertiary)"}}>
-              <div style={{fontSize:48,marginBottom:12}}>📊</div>
-              <div style={{fontSize:14}}>Creá un reparto para ver el resumen acá.</div>
+            <div style={{textAlign:"center",padding:"30px 10px",color:"var(--color-text-tertiary)",fontSize:13}}>
+              Todavía no hay repartos creados.
             </div>
-          ) : (<>
+          ) : <>
+            {/* Tabla resumen por reparto */}
+            <div style={{background:"var(--color-background-secondary)",borderRadius:12,overflow:"hidden",marginBottom:16,boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>
+              <div style={{display:"grid",gridTemplateColumns:"1.3fr 0.9fr 0.9fr 0.8fr",padding:"9px 10px",fontSize:10,fontWeight:700,color:"var(--color-text-tertiary)",borderBottom:"1px solid var(--color-border-secondary)"}}>
+                <div>Reparto</div><div style={{textAlign:"right"}}>Vendido</div><div style={{textAlign:"right"}}>Fiado</div><div style={{textAlign:"right"}}>Envases</div>
+              </div>
+              {resumenPorReparto.map(r=>(
+                <div key={r.reparto.id} style={{display:"grid",gridTemplateColumns:"1.3fr 0.9fr 0.9fr 0.8fr",padding:"10px 10px",fontSize:12,borderBottom:"1px solid var(--color-border-secondary)",alignItems:"center"}}>
+                  <div style={{fontWeight:600}}>{r.reparto.nombre||`Reparto ${r.reparto.numero}`}<div style={{fontSize:10,fontWeight:400,color:"var(--color-text-tertiary)"}}>{r.reparto.repartidorNombre}</div></div>
+                  <div style={{textAlign:"right",color:"#5daaff"}}>{fmtResGen(r.vendido)}</div>
+                  <div style={{textAlign:"right",color:r.fiado>0?"#f07070":"var(--color-text-tertiary)"}}>{fmtResGen(r.fiado)}</div>
+                  <div style={{textAlign:"right",color:r.envasesPendientes.length>0?"#f5b942":"var(--color-text-tertiary)"}}>{r.envasesPendientes.reduce((a,e)=>a+e.pendiente,0)||"—"}</div>
+                </div>
+              ))}
+              <div style={{display:"grid",gridTemplateColumns:"1.3fr 0.9fr 0.9fr 0.8fr",padding:"11px 10px",fontSize:12,fontWeight:700,background:"rgba(93,170,255,0.08)"}}>
+                <div>Total global</div>
+                <div style={{textAlign:"right",color:"#5daaff"}}>{fmtResGen(totalesGlobalesResGen.vendido)}</div>
+                <div style={{textAlign:"right",color:"#f07070"}}>{fmtResGen(totalesGlobalesResGen.fiado)}</div>
+                <div style={{textAlign:"right"}}>—</div>
+              </div>
+            </div>
 
-          {/* Tabla general */}
-          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>Todos los repartos</span>
-          <div style={{...s.card,padding:0,overflow:"hidden",marginBottom:16}}>
-            <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",padding:"7px 10px",background:"var(--color-background-tertiary)",borderBottom:"0.5px solid var(--color-border-tertiary)"}}>
-              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500}}>Repartidor</div>
-              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500,textAlign:"right"}}>Vendido</div>
-              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500,textAlign:"right"}}>Fiado</div>
-              <div style={{fontSize:10,color:"var(--color-text-secondary)",fontWeight:500,textAlign:"right"}}>Envases</div>
-            </div>
+            {/* Detalle por repartidor */}
+            <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:8,fontWeight:600}}>DETALLE POR REPARTIDOR</div>
             {resumenPorReparto.map(r=>(
-              <div key={r.id} style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",padding:"8px 10px",borderBottom:"0.5px solid var(--color-border-tertiary)",alignItems:"center"}}>
-                <div style={{fontSize:12,color:"var(--color-text-primary)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nombre}</div>
-                <div style={{textAlign:"right",fontSize:12,color:"#5daaff"}}>{fmt(r.vendido)}</div>
-                <div style={{textAlign:"right",fontSize:12,color:"#f5b942"}}>{fmt(r.fiado)}</div>
-                <div style={{textAlign:"right",fontSize:12,color:r.envasesPendTotal>0?"#f07070":"var(--color-text-tertiary)"}}>{r.envasesPendTotal||"—"}</div>
+              <div key={r.reparto.id} style={{background:"var(--color-background-secondary)",borderRadius:12,padding:"12px 14px",marginBottom:10,boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>
+                <div style={{fontSize:13,fontWeight:700,marginBottom:8}}>{r.reparto.nombre||`Reparto ${r.reparto.numero}`} · <span style={{fontWeight:400,color:"var(--color-text-tertiary)"}}>{r.reparto.repartidorNombre}</span></div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:r.envasesPendientes.length>0?10:0}}>
+                  <div>
+                    <div style={{fontSize:10,color:"var(--color-text-tertiary)"}}>Efectivo</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#4dd9a0"}}>{fmtResGen(r.efectivo)}</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,color:"var(--color-text-tertiary)"}}>Transfer.</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#5daaff"}}>{fmtResGen(r.transferencia)}</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,color:"var(--color-text-tertiary)"}}>Ganancia</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#f5b942"}}>{fmtResGen(r.ganancia)}</div>
+                  </div>
+                </div>
+                {r.envasesPendientes.length>0 && (
+                  <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid var(--color-border-secondary)"}}>
+                    <div style={{fontSize:10,color:"var(--color-text-tertiary)",marginBottom:4}}>Envases prestados sin devolver</div>
+                    {r.envasesPendientes.map(e=>(
+                      <div key={e.prod} style={{fontSize:12,color:"#f07070"}}>{e.prod}: {e.pendiente}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
-            <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr 1fr 1fr",padding:"9px 10px",background:"var(--color-background-tertiary)"}}>
-              <div style={{fontSize:11,color:"var(--color-text-primary)",fontWeight:700}}>Total global</div>
-              <div style={{textAlign:"right",fontSize:13,color:"#5daaff",fontWeight:700}}>{fmt(totalesGlobalesResGen.vendido)}</div>
-              <div style={{textAlign:"right",fontSize:13,color:"#f5b942",fontWeight:700}}>{fmt(totalesGlobalesResGen.fiado)}</div>
-              <div style={{textAlign:"right",fontSize:13,color:totalesGlobalesResGen.envasesPendTotal>0?"#f07070":"var(--color-text-tertiary)",fontWeight:700}}>{totalesGlobalesResGen.envasesPendTotal||"—"}</div>
-            </div>
-          </div>
-
-          {/* Detalle por repartidor */}
-          <span style={{...s.sectionTitle,padding:"0 0 8px"}}>Detalle por repartidor</span>
-          {resumenPorReparto.map(r=>(
-            <div key={r.id} style={{...s.card,marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <span style={{fontSize:13,fontWeight:700,color:"var(--color-text-primary)"}}>{r.nombre}</span>
-                <span style={{fontSize:12,color:"var(--color-text-success)"}}>{r.entregas} entrega{r.entregas!==1?"s":""}</span>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:r.envasesPend.length?8:0}}>
-                <div style={{background:"var(--color-background-tertiary)",borderRadius:8,padding:8,textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Efectivo</div>
-                  <div style={{fontSize:13,color:"var(--color-text-primary)"}}>{fmt(r.efectivo)}</div>
-                </div>
-                <div style={{background:"var(--color-background-tertiary)",borderRadius:8,padding:8,textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Transfer.</div>
-                  <div style={{fontSize:13,color:"#5daaff"}}>{fmt(r.transferencia)}</div>
-                </div>
-                <div style={{background:"var(--color-background-tertiary)",borderRadius:8,padding:8,textAlign:"center"}}>
-                  <div style={{fontSize:10,color:"var(--color-text-secondary)"}}>Ganancia</div>
-                  <div style={{fontSize:13,color:"var(--color-text-success)"}}>{fmt(r.ganancia)}</div>
-                </div>
-              </div>
-              {r.envasesPend.length>0 && (
-                <div style={{fontSize:11,color:"var(--color-text-secondary)"}}>
-                  Envases prestados sin devolver: <span style={{color:"#f07070"}}>
-                    {r.envasesPend.map(([prod,n])=>`${n} ${prod}`).join(", ")}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
-
-          </>)}
+          </>}
         </div>
       )}
 
@@ -1618,3 +1641,4 @@ function InicioReparto({dia,fecha,planilla,productos,cargasDia,stock,onGuardar,o
     </div>
   );
 }
+

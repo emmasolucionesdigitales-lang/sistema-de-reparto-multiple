@@ -310,19 +310,19 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
     return true;
   }).sort((a,b)=>(a.orden||9999)-(b.orden||9999));
 
-  // Todos los clientes asignados a este repartidor, sin importar el día
-  // (para "Mis clientes", detalle de cliente y carga de ventas atrasadas).
-  // Un repartidor NUNCA debe ver ni operar sobre clientes de otro reparto.
+  // Prospectos asignados a este repartidor
+  const prospectos = (datos.prospectos||[]).filter(p=>
+    !p.repartoId || !miReparto || p.repartoId === miReparto.id
+  );
+
+  // Todos los clientes de ESTE repartidor (todos los días, no sólo hoy) —
+  // antes de esto, varias pantallas usaban "todosClientes" (de TODO el
+  // negocio) y el repartidor terminaba viendo clientes de otros repartos.
   const misClientesTodos = todosClientes.filter(c => {
     if(miReparto && c.repartoId && c.repartoId !== miReparto.id) return false;
     if(sectores.length > 0 && !sectores.some(s => (c.barrio||"").toLowerCase().includes(s.toLowerCase()))) return false;
     return true;
   });
-
-  // Prospectos asignados a este repartidor
-  const prospectos = (datos.prospectos||[]).filter(p=>
-    !p.repartoId || !miReparto || p.repartoId === miReparto.id
-  );
 
   const cliente = misClientesTodos.find(c=>c.id===clienteId)||null;
 
@@ -781,7 +781,7 @@ function AppRepartidor({uid, perfil, onSalir: onSalirProp}) {
           negocioId={perfil.negocioId}
           repartidorNombre={perfil.nombre}
           onConfirmar={async (id)=>{
-            const l=(datos.recordatorios||[]).map(r=>r.id===id&&r.paraRepartidor===perfil.nombre?{...r,confirmado:true}:r);
+            const l=(datos.recordatorios||[]).map(r=>(r.id===id&&r.paraRepartidor===perfil.nombre)?{...r,confirmado:true}:r);
             sync({recordatorios:l});
           }}
           onEliminar={async (id)=>{
@@ -1022,9 +1022,10 @@ function PantallaActivacionRM({onActivado}) {
           return;
         }
       }
+      const licUid = window.dbLicenciasReady ? await window.dbLicenciasReady : null;
       await window.dbLicencias.collection("licencias").doc(cod).update({
         estado:"usado", deviceId, dispositivos, celular:celular.trim(), email:email.trim(),
-        negocio:nombre.trim(), activadoEn:new Date().toISOString()
+        negocio:nombre.trim(), activadoEn:new Date().toISOString(), activadoPorUid: licUid
       });
       const profile = {
         rol:"dueño", negocioId, pin:licData.pin,

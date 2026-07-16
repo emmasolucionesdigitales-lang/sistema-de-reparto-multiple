@@ -116,6 +116,14 @@ self.addEventListener('notificationclick',e=>{
         }, "licencias");
       }
       window.dbLicencias = licenciasApp.firestore();
+      // Sesión anónima PROPIA del proyecto de licencias (es un proyecto
+      // Firebase aparte — la sesión del proyecto principal no cuenta acá).
+      // Sin esto, las reglas nuevas de app-control-de-apps no dejarían
+      // activar ni leer ninguna licencia.
+      window.dbLicenciasReady = new Promise(function(resolve){
+        licenciasApp.auth().onAuthStateChanged(function(u){ if(u) resolve(u.uid); });
+        licenciasApp.auth().signInAnonymously().catch(function(){ resolve(null); });
+      });
       window.auth = firebase.auth();
       // Autenticación anónima para que las reglas de Firestore funcionen
       window.auth.signInAnonymously().catch(function(){});
@@ -221,13 +229,12 @@ self.addEventListener('notificationclick',e=>{
       if(!window.db) return Promise.resolve();
       return window.db.collection("users").doc(uid).delete();
     }
-    // ── Almacenamiento por reparto ───────────────────────────────────
-    // Cada reparto (cada repartidor) tiene su PROPIO documento en Firestore,
-    // separado del resto. Lo que es del negocio entero (catálogo de
-    // productos, lista de repartos, depósito compartido, etc.) vive en un
-    // único documento "compartido". Así, guardar algo de un reparto nunca
-    // puede tocar el documento de otro reparto — antes todo vivía junto en
-    // un solo paquete grande y un guardado podía pisar datos ajenos.
+    // Cada negocio tiene su lugar de guardado: "compartido" para lo que es
+    // de TODO el negocio (productos, zonas, lista de repartos...), y un
+    // documento aparte por cada reparto (repartos/{id}/datos/info) para que
+    // los datos de un repartidor nunca se mezclen con los de otro. Antes
+    // todo vivía junto en un solo paquete grande y un guardado podía pisar
+    // datos ajenos.
     function negocioCol(negocioId) {
       // Colección vieja: se sigue usando SOLO para las notificaciones push
       // y el archivo histórico de ventas viejas (no tiene que ver con el
