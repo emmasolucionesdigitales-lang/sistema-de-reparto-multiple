@@ -356,6 +356,11 @@ self.addEventListener('notificationclick',e=>{
           idsAConsultar = repartosLista.map(function(r){ return r.id; });
           idsAConsultar.push("_sinreparto", "_dueno");
         }
+        // Blindaje anti-duplicados: si "repartos" tiene ids repetidos (por
+        // ejemplo un reparto viejo mal migrado), no pedir el mismo documento
+        // dos veces — si no, sus ventas aparecerían 2 (o más) veces al sumar
+        // todos los baldes más abajo.
+        idsAConsultar = idsAConsultar.filter(function(rid,i){ return idsAConsultar.indexOf(rid)===i; });
 
         return Promise.all(idsAConsultar.map(function(rid){ return pathReparto(negocioId, rid).get(); }))
           .then(function(snaps){
@@ -374,6 +379,22 @@ self.addEventListener('notificationclick',e=>{
               if(d.cargasDia) cargasDia[rid] = d.cargasDia;
               if(d.stockCamion) stockCamiones[rid] = d.stockCamion;
             });
+            // Blindaje anti-duplicados #2: si por algún guardado viejo la
+            // MISMA venta (mismo id) quedó grabada en dos baldes distintos
+            // (ej: bucket correcto + "_sinreparto"), no mostrarla 2 veces —
+            // se prioriza la copia con "_upd" más nuevo.
+            function dedupePorId(lista){
+              var porId = {};
+              (lista||[]).forEach(function(x){
+                var actual = porId[x.id];
+                if(!actual || (Number(x._upd)||0) >= (Number(actual._upd)||0)) porId[x.id] = x;
+              });
+              return Object.values(porId);
+            }
+            ventas = dedupePorId(ventas);
+            clientes = dedupePorId(clientes);
+            recordatorios = dedupePorId(recordatorios);
+            prospectos = dedupePorId(prospectos);
             var stockGen = comp.stockGeneral || {};
             return {
               clientes: clientes, ventas: ventas, noVisitas: noVisitas,
