@@ -105,6 +105,7 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       .catch(()=>{});
   }, [negocioId]);
 
+
   const [operandoReparto, setOperandoReparto] = React.useState(null);
   const [tabConfig, setTabConfig] = React.useState("stock");
   const [modalResumenDia, setModalResumenDia] = React.useState(null);
@@ -132,6 +133,19 @@ function AppPrincipal({uid, email: emailProp, perfil}) {
       sincronizarInvitaciones(v, negocioId, perfil?.codigo).catch(()=>{});
     }
   };
+
+  // Auto-sincronizar las invitaciones de repartidores cada vez que se abre
+  // la app (no sólo cuando el dueño edita un reparto a mano). Sin esto,
+  // un negocio ya existente antes de este cambio se queda sin el dato
+  // nuevo que necesitan las reglas (repartoId) hasta que alguien toque
+  // "Editar → Guardar" — con esto se autocompleta solo, sin que el dueño
+  // tenga que hacer nada.
+  React.useEffect(()=>{
+    if(!negocioId || !repartos || !repartos.length) return;
+    if(typeof sincronizarInvitaciones === "function"){
+      sincronizarInvitaciones(repartos, negocioId, perfil?.codigo).catch(()=>{});
+    }
+  }, [negocioId, repartos]);
   // Reset diaActual when it's invalid
   React.useEffect(()=>{
     if(diaActual && !DIAS.includes(diaActual)) setDiaActual("");
