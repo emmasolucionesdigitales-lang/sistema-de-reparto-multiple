@@ -61,97 +61,6 @@ window.addEventListener("visibilitychange",()=>{
   }
 });
 
-// ════════════════════════════════════════════════════════════════════
-// ◆  Helpers de merge para sync()/syncData() — evitar que un guardado
-//    (del dueño o de un repartidor) pise cambios concurrentes que hizo
-//    OTRO usuario en campos que ese guardado puntual no tocó. La idea
-//    en las cuatro funciones es la misma: partir siempre de lo último
-//    que hay en la nube ("fresco") y aplicar sólo el cambio real que
-//    hizo este guardado, no la copia local entera (que puede estar
-//    desactualizada en todo lo demás).
-// ════════════════════════════════════════════════════════════════════
-
-// Arrays de objetos con identidad propia (ventas, recordatorios,
-// noVisitas, prospectos, pérdidas...). "claveFn" define qué identifica
-// a cada elemento (normalmente el id, a veces una clave compuesta).
-// Reglas: si un elemento estaba antes (prevArr) y ya no está en
-// nuevoArr, se lo saca también de "fresco" (borrado real, no revive).
-// Si un elemento está en nuevoArr, gana la versión local (es la que
-// se acaba de tocar en este guardado).
-function mergeArrayPorClave(prevArr, nuevoArr, frescoArr, claveFn) {
-  const post = nuevoArr || [];
-  const pre  = prevArr || [];
-  const idsPost = new Set(post.map(claveFn));
-  const idsBorrados = new Set(pre.filter(x => !idsPost.has(claveFn(x))).map(claveFn));
-  const porClave = {};
-  (frescoArr || []).forEach(x => { const k = claveFn(x); if (!idsBorrados.has(k)) porClave[k] = x; });
-  post.forEach(x => { porClave[claveFn(x)] = x; });
-  return Object.values(porClave);
-}
-
-// Clientes: mismo espíritu, pero en vez de "gana siempre lo local" se
-// compara el sello _upd — así una edición del dueño (ej. dirección) y
-// una del repartidor (ej. saldo tras una venta) casi al mismo tiempo no
-// se pisan entre sí; gana la más nueva.
-function mergeClientesPorUpd(prevArr, nuevoArr, frescoArr) {
-  const nuevo = nuevoArr !== undefined ? nuevoArr : (prevArr || []);
-  const porId = {};
-  (frescoArr || []).forEach(c => { porId[c.id] = c; });
-  nuevo.forEach(c => {
-    const enNube = porId[c.id];
-    if (!enNube) { porId[c.id] = c; return; }
-    const uL = Number(c._upd) || 0, uN = Number(enNube._upd) || 0;
-    if (uL >= uN) porId[c.id] = c;
-  });
-  return Object.values(porId);
-}
-
-// Objetos numéricos anidados (stock, cargasDia): en vez de reemplazar
-// el objeto entero, calcula cuánto cambió cada número puntual entre
-// "antes" (prev) y "ahora" (nuevo) en la copia local, y aplica ESE
-// delta sobre el valor que haya en la nube ("fresco"). Si este
-// guardado no tocó un número (ej. el camión de otro repartidor), el
-// delta da 0 y el valor de la nube queda intacto — así dos
-// repartidores pueden tocar el mismo objeto de stock sin borrarse
-// cambios entre sí.
-function mergeNumericoConDeltas(prev, nuevo, fresco) {
-  const esObjetoPlano = v => v && typeof v === "object" && !Array.isArray(v);
-  const p = prev || {}, n = nuevo || {}, f = fresco || {};
-  const claves = new Set([...Object.keys(p), ...Object.keys(n), ...Object.keys(f)]);
-  const out = {};
-  claves.forEach(k => {
-    const pv = p[k], nv = n[k], fv = f[k];
-    if (esObjetoPlano(pv) || esObjetoPlano(nv) || esObjetoPlano(fv)) {
-      out[k] = mergeNumericoConDeltas(pv, nv, fv);
-    } else {
-      const pNum = Number(pv), nNum = Number(nv);
-      const pEsNum = pv !== undefined && !isNaN(pNum);
-      const nEsNum = nv !== undefined && !isNaN(nNum);
-      if (pEsNum || nEsNum) {
-        const delta = (nEsNum ? nNum : 0) - (pEsNum ? pNum : 0);
-        out[k] = (Number(fv) || 0) + delta;
-      } else {
-        out[k] = nv !== undefined ? nv : fv;
-      }
-    }
-  });
-  return out;
-}
-
-// Objetos tipo diccionario donde cada clave es un registro completo que
-// se reemplaza entero al guardarse (planillas: clave = día+fecha+reparto).
-// Sólo pisa en la nube las claves que efectivamente cambiaron en este
-// guardado (comparando contra "prev"); el resto de las claves —planillas
-// de otros repartidores, de otros días— quedan como estén en la nube.
-function mergePorClavesCambiadas(prev, nuevo, fresco) {
-  const p = prev || {}, n = nuevo || {};
-  const out = { ...(fresco || {}) };
-  Object.keys(n).forEach(k => {
-    if (JSON.stringify(n[k]) !== JSON.stringify(p[k])) out[k] = n[k];
-  });
-  return out;
-}
-
 function useLS(key, fallback) {
   const [val, setVal] = useState(() => {
     try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : fallback; }
@@ -198,6 +107,85 @@ const s = {
   tabBar:{ display:"flex", borderBottom:"0.5px solid var(--color-border-tertiary)", padding:"0 14px", gap:4, background:"var(--color-background-secondary)" },
   tab:(a)=>({ padding:"9px 12px", fontSize:13, cursor:"pointer", border:"none", background:"none", color:a?"var(--color-text-primary)":"var(--color-text-tertiary)", fontWeight:a?500:400, borderBottom:a?"2px solid #5daaff":"2px solid transparent" }),
 };
+
+// ════════════════════════════════════════════════════════════════════
+// ◆  Helpers de MERGE de 3 vías (prev local · local nuevo · nube actual)
+//    Se usan en syncData()/sync() para guardar sin perder cambios que
+//    otro dispositivo haya hecho mientras este guardado se preparaba.
+//    Regla general: si un ítem sólo está en la nube y NO estaba antes acá
+//    (no en "prev") => lo agregó otro dispositivo => se conserva.
+//    Si un ítem estaba en "prev" y ya no está en "local" => se borró acá
+//    a propósito => no se vuelve a agregar aunque siga en la nube.
+// ════════════════════════════════════════════════════════════════════
+function mergeArrayPorClave(prev, local, fresh, keyFn) {
+  const prevMap = {}; (prev||[]).forEach(x=>{ try{ prevMap[keyFn(x)] = x; }catch{} });
+  const localMap = {}; (local||[]).forEach(x=>{ try{ localMap[keyFn(x)] = x; }catch{} });
+  const freshMap = {}; (fresh||[]).forEach(x=>{ try{ freshMap[keyFn(x)] = x; }catch{} });
+  const keys = new Set([...Object.keys(prevMap), ...Object.keys(localMap), ...Object.keys(freshMap)]);
+  const out = [];
+  keys.forEach(k=>{
+    const inLocal = Object.prototype.hasOwnProperty.call(localMap,k);
+    const inFresh = Object.prototype.hasOwnProperty.call(freshMap,k);
+    const inPrev  = Object.prototype.hasOwnProperty.call(prevMap,k);
+    if(inLocal && inFresh){
+      const uL = Number(localMap[k]._upd)||0, uF = Number(freshMap[k]._upd)||0;
+      out.push(uF > uL ? freshMap[k] : localMap[k]);
+    } else if(inLocal && !inFresh){
+      out.push(localMap[k]);
+    } else if(!inLocal && inFresh){
+      if(!inPrev) out.push(freshMap[k]); // lo agregó otro dispositivo -> conservar
+      // si estaba en prev y ya no en local -> se borró acá a propósito, no se restaura
+    }
+  });
+  return out;
+}
+
+function mergeClientesPorUpd(prev, local, fresh) {
+  return mergeArrayPorClave(prev, local, fresh, c=>c.id);
+}
+
+function mergePorClavesCambiadas(prev, local, fresh) {
+  prev = prev||{}; local = local||{}; fresh = fresh||{};
+  const keys = new Set([...Object.keys(prev), ...Object.keys(local), ...Object.keys(fresh)]);
+  const out = {};
+  keys.forEach(k=>{
+    const inLocal = Object.prototype.hasOwnProperty.call(local,k);
+    const inFresh = Object.prototype.hasOwnProperty.call(fresh,k);
+    const inPrev  = Object.prototype.hasOwnProperty.call(prev,k);
+    if(inLocal && inFresh){
+      const uL = Number(local[k]?._upd)||0, uF = Number(fresh[k]?._upd)||0;
+      out[k] = uF > uL ? fresh[k] : local[k];
+    } else if(inLocal && !inFresh){
+      out[k] = local[k];
+    } else if(!inLocal && inFresh){
+      if(!inPrev) out[k] = fresh[k];
+    }
+  });
+  return out;
+}
+
+// Para valores numéricos (stock, cargas del día): en vez de pisar con la
+// copia local entera, aplica sobre la nube el DELTA que hizo este guardado
+// puntual (local - prev). Así si otro dispositivo también movió stock, los
+// dos cambios se suman en vez de que uno borre al otro. Recorre objetos
+// anidados (ej: stock.camiones.{repartoId}.sifon).
+function mergeNumericoConDeltas(prev, local, fresh) {
+  const out = {};
+  const keys = new Set([...Object.keys(prev||{}), ...Object.keys(local||{}), ...Object.keys(fresh||{})]);
+  keys.forEach(k=>{
+    const p = prev ? prev[k] : undefined;
+    const l = local ? local[k] : undefined;
+    const f = fresh ? fresh[k] : undefined;
+    if(l && typeof l === "object" && !Array.isArray(l)){
+      out[k] = mergeNumericoConDeltas(p||{}, l||{}, f||{});
+    } else {
+      const pn = Number(p)||0, ln = Number(l)||0, fn = Number(f)||0;
+      const delta = ln - pn;
+      out[k] = delta !== 0 ? fn + delta : (f!==undefined ? fn : ln);
+    }
+  });
+  return out;
+}
 
 function calcVenta(detalle, pago, montoPagado, saldoAplicado, productos) {
   const bruto = detalle.reduce((a,d)=>a+d.total,0);
