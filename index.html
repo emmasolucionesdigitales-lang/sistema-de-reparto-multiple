@@ -93,7 +93,7 @@ self.addEventListener('notificationclick',e=>{
       window.db = firebase.firestore(); window.firebaseDB = window.db;
       // Long-polling automático: evita el error de conexión QUIC en redes
       // que lo bloquean/limitan (net::ERR_QUIC_PROTOCOL_ERROR).
-      window.db.settings({ experimentalAutoDetectLongPolling: true });
+      window.db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
       // El SDK compat no tiene la API nueva de cache (persistentLocalCache);
       // esa solo existe en el SDK modular v9. enablePersistence() sigue
       // siendo la forma correcta acá — el aviso de deprecación en consola
