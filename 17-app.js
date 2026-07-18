@@ -1,0 +1,2888 @@
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+// ════════════════════════════════════════════════════════════════════
+// ◆  16-app.js — App (auth) · AppPrincipal (estado global)
+// ════════════════════════════════════════════════════════════════════
+
+function App() {
+  // ── Todos los hooks primero (regla de React: nunca hooks después de un return) ──
+  const [perfilRecuperado, setPerfilRecuperado] = React.useState(null);
+  const [buscandoSesion, setBuscandoSesion] = React.useState(() => {
+    // Si ya hay sesión local de cualquier tipo, no necesitamos buscar en Firebase
+    const hayLocal = !!localStorage.getItem("rm_licencia") || !!localStorage.getItem("rm_licencia_dueno");
+    return !hayLocal; // true = hay que buscar, false = ya tenemos sesión
+  });
+  const _srLic = (() => {
+    try {
+      const d = JSON.parse(localStorage.getItem("rm_licencia_dueno") || "null");
+      if (d) return d;
+      const r = JSON.parse(localStorage.getItem("rm_licencia") || "null");
+      if (r && r.rol === "dueño") return r; // dueño guardado en rm_licencia (compatibilidad)
+      return null;
+    } catch {
+      return null;
+    }
+  })();
+  const [fase, setFase] = React.useState(() => !_srLic || !_srLic.activado ? "activacion" : "pin");
+  const [temaElegido, setTemaElegido] = React.useState(() => !!localStorage.getItem("rm_tema"));
+
+  // ── Recuperar sesión de repartidor desde Firebase si se borró el caché ──
+  React.useEffect(() => {
+    if (!buscandoSesion) return; // ya tenía sesión local, no buscar
+    const deviceId = localStorage.getItem("sr_device_id");
+    if (!deviceId || !window.db) {
+      setBuscandoSesion(false);
+      return;
+    }
+    // ▶ Buscar en subcolección: negocios/{negocioId}/repartidores/
+    window.db.collectionGroup("repartidores").where("deviceId", "==", deviceId).where("activado", "==", true).limit(1).get().then(snap => {
+      if (!snap.empty) {
+        const d = snap.docs[0].data();
+        const perfil = {
+          rol: "repartidor",
+          negocioId: d.negocioId,
+          nombre: d.nombre || "Repartidor",
+          sectores: d.sectores || [],
+          deviceId,
+          codigo: snap.docs[0].id,
+          activado: true
+        };
+        localStorage.setItem("rm_licencia", JSON.stringify(perfil));
+        setPerfilRecuperado(perfil);
+      }
+      setBuscandoSesion(false);
+    }).catch(() => setBuscandoSesion(false));
+  }, []);
+  const handleActivado = lic => {
+    if (lic.rol === "repartidor") {
+      localStorage.setItem("rm_licencia", JSON.stringify({
+        ...lic,
+        activado: true
+      }));
+      window.location.reload();
+    } else {
+      setFase("pin");
+    }
+  };
+
+  // ── PASO 1: Repartidor desde localStorage ─────────────────────────
+  const _rmLic = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("rm_licencia") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  if (_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
+    return /*#__PURE__*/_jsx(AppRepartidorWrapper, {
+      uid: _rmLic.deviceId,
+      perfil: _rmLic,
+      onSalir: () => {
+        localStorage.removeItem("rm_licencia");
+        window.location.reload();
+      }
+    });
+  }
+
+  // ── PASO 1b: Buscando sesión en Firebase ──────────────────────────
+  if (buscandoSesion) return /*#__PURE__*/_jsxs("div", {
+    style: {
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 12,
+      background: "var(--color-background-primary)"
+    },
+    children: [/*#__PURE__*/_jsx("div", {
+      style: {
+        fontSize: 36
+      },
+      children: "💧"
+    }), /*#__PURE__*/_jsx("div", {
+      style: {
+        fontSize: 14,
+        color: "var(--color-text-secondary)"
+      },
+      children: "Verificando sesión..."
+    })]
+  });
+
+  // ── PASO 1c: Sesión recuperada de Firebase ────────────────────────
+  if (perfilRecuperado && perfilRecuperado.rol === "repartidor") {
+    return /*#__PURE__*/_jsx(AppRepartidorWrapper, {
+      uid: perfilRecuperado.deviceId,
+      perfil: perfilRecuperado,
+      onSalir: () => {
+        localStorage.removeItem("rm_licencia");
+        window.location.reload();
+      }
+    });
+  }
+
+  // ── PASO 2: Dueño — flujo normal ─────────────────────────────────
+  if (fase === "activacion") return /*#__PURE__*/_jsx(PantallaActivacionRM, {
+    onActivado: handleActivado
+  });
+  if (fase === "pin") return /*#__PURE__*/_jsx(PantallaPin, {
+    pin: _srLic?.pin,
+    onOk: () => setFase("app")
+  });
+  if (!temaElegido) return /*#__PURE__*/_jsx(PantallaElegirTema, {
+    onElegido: id => {
+      localStorage.setItem("rm_tema", JSON.stringify(id));
+      aplicarTema(id);
+      setTemaElegido(true);
+    }
+  });
+  if (!_srLic) return /*#__PURE__*/_jsx(PantallaActivacionRM, {
+    onActivado: handleActivado
+  });
+  return /*#__PURE__*/_jsx(AppPrincipal, {
+    uid: _srLic.deviceId || _srLic.negocioId,
+    email: _srLic.email,
+    perfil: _srLic
+  });
+}
+function AppPrincipal({
+  uid,
+  email: emailProp,
+  perfil
+}) {
+  const negocioId = perfil?.negocioId || uid;
+
+  // Vínculo de seguridad: el negocio queda atado a la sesión real de este
+  // dueño (no al "uid" viejo de arriba, que es sólo un identificador de
+  // dispositivo). Si este negocio es de antes de este cambio y todavía
+  // nadie lo reclamó, queda reclamado acá mismo, la primera vez que el
+  // dueño abre la app. Si ya está reclamado por este mismo dueño, no pasa
+  // nada (se repite sin problema). Si estuviera reclamado por otra sesión,
+  // Firestore simplemente rechaza el pedido y no rompe nada más.
+  React.useEffect(() => {
+    if (!window.db || !window.auth || !window.auth.currentUser || !negocioId) return;
+    window.db.collection("negocios").doc(negocioId).update({
+      ownerAuthUid: window.auth.currentUser.uid
+    }).catch(() => {});
+  }, [negocioId]);
+  const [operandoReparto, setOperandoReparto] = React.useState(null);
+  const [tabConfig, setTabConfig] = React.useState("stock");
+  const [modalResumenDia, setModalResumenDia] = React.useState(null);
+  const [tabMenu, setTabMenu] = React.useState("repartos");
+  const [pantalla, setPantalla] = useState(() => {
+    const h = window.location.hash.slice(1) || "portada";
+    const needsDia = ["diaPrincipal", "selectorFechaClientes", "selectorFechaPlanilla", "inicioReparto", "clientes", "detalleCliente", "venta", "planilla"]; // historial does NOT need dia
+    const savedDia = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("rm_dia_actual") || '""');
+      } catch {
+        return "";
+      }
+    })();
+    if (needsDia.includes(h) && !savedDia) return "portada";
+    return h;
+  });
+  const [diaActual, setDiaActual] = useLS("rm_dia_actual", "");
+  const [repartos, setRepartos] = useLS("rm_repartos_v1", []);
+  const [repartoActual, setRepartoActual] = useLS("rm_reparto_actual_v1", null);
+  // repartos: [{id, numero, nombre, repartidorNombre, codigo}]
+  const repartidoresUnicos = React.useMemo(() => [...new Set((repartos || []).map(r => r.repartidorNombre).filter(Boolean))].map(nombre => ({
+    nombre
+  })), [repartos]);
+  const saveRepartos = v => {
+    setRepartos(v);
+    syncData({
+      repartos: v
+    });
+    // Sincronizar en licencias del dueño para que los repartidores puedan activar
+    if (typeof sincronizarInvitaciones === "function") {
+      sincronizarInvitaciones(v, negocioId, perfil?.codigo).catch(() => {});
+    }
+  };
+
+  // Auto-sincronizar las invitaciones de repartidores cada vez que se abre
+  // la app (no sólo cuando el dueño edita un reparto a mano). Sin esto,
+  // un negocio ya existente antes de este cambio se queda sin el dato
+  // nuevo que necesitan las reglas (repartoId) hasta que alguien toque
+  // "Editar → Guardar" — con esto se autocompleta solo, sin que el dueño
+  // tenga que hacer nada.
+  React.useEffect(() => {
+    if (!negocioId || !repartos || !repartos.length) return;
+    if (typeof sincronizarInvitaciones === "function") {
+      sincronizarInvitaciones(repartos, negocioId, perfil?.codigo).catch(() => {});
+    }
+  }, [negocioId, repartos]);
+  // Reset diaActual when it's invalid
+  React.useEffect(() => {
+    if (diaActual && !DIAS.includes(diaActual)) setDiaActual("");
+  }, []);
+  const [fechaActual, setFechaActual] = useLS("rm_fecha_actual", ""); // ISO date key YYYY-MM-DD
+  const [fechaObj, setFechaObj] = useState(null);
+  const [clienteId, setClienteId] = useState(null);
+  const [initCierre, setInitCierre] = useState(false);
+  const [noVisitas, setNoVisitas] = useLS("rm_novisitas_v1", []);
+  // Registro de envases perdidos — rotos durante el reparto, o no
+  // recuperados al eliminar un cliente (se mudó y no avisó, etc).
+  const [perdidas, setPerdidas] = useLS("rm_perdidas_v1", []);
+  const registrarPerdida = (items, motivo, clienteNombre) => {
+    setPerdidas(prev => {
+      const next = [...prev, {
+        id: Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        fecha: new Date().toISOString(),
+        motivo,
+        clienteNombre: clienteNombre || null,
+        sifon: items.sifon || 0,
+        bidon10: items.bidon10 || 0,
+        bidon20: items.bidon20 || 0
+      }];
+      syncData({
+        perdidas: next
+      });
+      return next;
+    });
+  };
+  const [prospectos, setProspectos] = useLS("rm_prospectos_v1", []);
+  const [recordatorios, setRecordatorios] = useLS("rm_recordatorios_v1", []);
+  // recordatorio: {id, clienteId, clienteNombre, fecha, hora, motivo, dia, confirmado}
+  const saveRecordatorios = r => {
+    setRecordatorios(prev => {
+      const next = typeof r === "function" ? r(prev) : r;
+      syncData({
+        recordatorios: next
+      });
+      return next;
+    });
+  };
+  const recordatoriosActivos = (recordatorios || []).filter(r => !r.confirmado); // [{clienteId,dia,fecha,motivo}]
+  const [clientes, setClientes] = useLS("rm_clientes_v3", CLIENTES_INICIALES);
+  const [ventasRaw, setVentasRaw] = useLS("rm_ventas_v3", []);
+  const normalizarFechaKey = v => {
+    if (v.fechaKey) return v;
+    const fk = v.fecha ? (() => {
+      const parts = v.fecha.split('/');
+      if (parts.length >= 3) {
+        const d = parts[0].trim(),
+          m = parts[1].trim(),
+          y = parts[2].split(',')[0].trim();
+        if (y.length === 4) return y + '-' + m.padStart(2, '0') + '-' + d.padStart(2, '0');
+      }
+      return '';
+    })() : '';
+    return {
+      ...v,
+      fechaKey: fk
+    };
+  };
+  const ventas = React.useMemo(() => (ventasRaw || []).map(normalizarFechaKey), [ventasRaw]);
+  const setVentas = arg => setVentasRaw(typeof arg === 'function' ? prev => arg(prev) : arg);
+  const [productos, setProductos] = useLS("rm_productos_v3", PRODUCTOS_INICIALES);
+  const normStock = s => {
+    const e = () => ({
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0,
+      dispenser: 0
+    });
+    const pick = o => {
+      const r = {
+        sifon: 0,
+        bidon10: 0,
+        bidon20: 0,
+        dispenser: 0
+      };
+      if (o && typeof o === "object") {
+        for (const k in o) {
+          r[k] = Math.max(0, Math.round(Number(o[k]) || 0));
+        }
+      }
+      return r;
+    };
+    const pickCamiones = o => {
+      const r = {};
+      if (o && typeof o === "object") {
+        for (const rid in o) {
+          r[rid] = pick(o[rid]);
+        }
+      }
+      return r;
+    };
+    const base = {
+      soderia: e(),
+      soderia_vacios: e(),
+      casa: e(),
+      camiones: {}
+    };
+    if (!s || typeof s !== "object") return base;
+    if (s.soderia && typeof s.soderia === "object") {
+      let camiones = s.camiones && typeof s.camiones === "object" ? pickCamiones(s.camiones) : {};
+      // Migración única: el "camion" viejo (una sola ruta) se asigna al primer
+      // reparto configurado, así no se pierde el stock que ya estaba cargado.
+      // Si en realidad estaba repartido entre 2 camiones, se corrige a mano
+      // desde la pantalla de Stock una sola vez.
+      if (Object.keys(camiones).length === 0 && s.camion && typeof s.camion === "object") {
+        const legacy = pick(s.camion);
+        if (Object.values(legacy).some(v => v > 0) && repartos && repartos[0]) camiones[repartos[0].id] = legacy;
+      }
+      return {
+        soderia: pick(s.soderia),
+        soderia_vacios: pick(s.soderia_vacios),
+        casa: pick(s.casa),
+        camiones
+      };
+    }
+    return {
+      soderia: pick(s),
+      soderia_vacios: e(),
+      casa: e(),
+      camiones: {}
+    };
+  };
+  const [stockRaw, setStockRaw] = useLS("rm_stock_v4", {
+    soderia: {
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0,
+      dispenser: 0
+    },
+    soderia_vacios: {
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0,
+      dispenser: 0
+    },
+    casa: {
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0,
+      dispenser: 0
+    },
+    camiones: {}
+  });
+  const stockNorm = React.useMemo(() => normStock(stockRaw), [JSON.stringify(stockRaw), JSON.stringify(repartos)]);
+  const getCamion = repartoId => stockNorm.camiones && stockNorm.camiones[repartoId] || stockCamionVacio();
+  const setStock = sOrFn => {
+    if (typeof sOrFn === "function") {
+      setStockRaw(prev => normStock(sOrFn(normStock(prev))));
+    } else {
+      setStockRaw(normStock(sOrFn));
+    }
+  };
+  // Auto-migrate old stock format on first load
+  React.useEffect(() => {
+    // Force normalize stock on every mount
+    const normalized = normStock(stockRaw);
+    if (JSON.stringify(normalized) !== JSON.stringify(stockRaw)) setStockRaw(normalized);
+  }, []);
+  // Helper: transferir del camión de UN reparto a sodería al cerrar el día
+  const cerrarCamion = (repartoId, sobrLlenos, vacios) => {
+    setStock(prev => {
+      const s = JSON.parse(JSON.stringify(normStock(prev)));
+      if (!s.camiones[repartoId]) s.camiones[repartoId] = stockCamionVacio();
+      ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
+        s.soderia[k] = (s.soderia[k] || 0) + (sobrLlenos[k] || 0);
+        s.soderia_vacios[k] = (s.soderia_vacios[k] || 0) + (vacios[k] || 0);
+        s.camiones[repartoId][k] = Math.max(0, (s.camiones[repartoId][k] || 0) - (sobrLlenos[k] || 0) - (vacios[k] || 0));
+      });
+      syncData({
+        stock: s
+      });
+      return s;
+    });
+  };
+  const [planillas, setPlanillas] = useLS("rm_planillas_v1", {});
+  // Firebase — credentials embedded in SDK config above
+  const apiKey = "firebase";
+  const binId = "firebase";
+  const [syncStatus, setSyncStatus] = useState("idle");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingOfflineSync, setPendingOfflineSync] = useState(() => !!localStorage.getItem("sr_offline_pending"));
+  const [cloudSetup, setCloudSetup] = useState(false);
+  const [zonasReparto, setZonasReparto] = useLS("rm_zonas_v1", {});
+  const [scaleIdx, setScaleIdx] = useLS("rm_scale_v1", 1); // 0=S 1=M 2=L 3=XL
+  const SCALES = [0.82, 1.0, 1.18, 1.36];
+  const SCALE_LABELS = ["S", "M", "L", "XL"];
+
+  // Al iniciar, si hay credenciales guardadas, cargar datos de la nube
+  const {
+    useEffect
+  } = React;
+  useEffect(() => {
+    if (!apiKey || !binId) return;
+    setSyncStatus("saving");
+    setSyncStatus("loading");
+    cloudLoad(uid, negocioId).then(function (data) {
+      if (!data) {
+        setSyncStatus("idle");
+        return;
+      }
+      // ═══════════════════════════════════════════════════════════════════
+      // LEER ESTO ANTES DE TOCAR CUALQUIER MERGE DE ACÁ ABAJO
+      // ═══════════════════════════════════════════════════════════════════
+      // Patrón que se repite para clientes/ventas/noVisitas: al cargar de la
+      // nube, se compara registro por registro usando `_upd`, y gana el más
+      // nuevo — NUNCA pisar el array local entero con el de la nube.
+      // REGLA DE ORO: comparar con > estricto, nunca con >=. Un empate
+      // significa "ya sincronizado sin cambios" — tratarlo como cambio hace
+      // que se re-suba de nuevo en cada carga. Esto ya pasó de verdad en La
+      // Catalina: un >= en el merge de noVisitas gastó toda la cuota gratis
+      // de Firestore en un día (julio 2026). Si la cuota se agota sin
+      // explicación, ACÁ es el primer lugar para revisar.
+      // ═══════════════════════════════════════════════════════════════════
+      if (data.clientes?.length) {
+        // ── Clientes: MERGEAR por id en vez de sobreescribir ──────────────
+        const clientesLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_clientes_v3") || "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const porIdCli = {};
+        (data.clientes || []).forEach(c => {
+          porIdCli[c.id] = c;
+        });
+        let cambiosLocalesCli = 0;
+        clientesLocales.forEach(c => {
+          const enNube = porIdCli[c.id];
+          if (!enNube) {
+            porIdCli[c.id] = c;
+            cambiosLocalesCli++;
+            return;
+          }
+          const uL = Number(c._upd) || 0,
+            uN = Number(enNube._upd) || 0;
+          if (uL > uN) {
+            porIdCli[c.id] = c;
+            cambiosLocalesCli++;
+          }
+        });
+        const mergedCli = Object.values(porIdCli);
+        setClientes(mergedCli);
+        if (cambiosLocalesCli > 0) {
+          console.log("Merge: " + cambiosLocalesCli + " clientes locales más nuevos, sincronizando");
+          setTimeout(() => syncData({
+            clientes: mergedCli
+          }), 2000);
+        }
+      }
+      if (data.ventas?.length) {
+        // Merge: no pisar ventas locales más nuevas que Firebase
+        // ── MERGE INTELIGENTE: por cada venta, quedarse con la versión MÁS NUEVA ──
+        // Compara el sello _upd. En empate (o datos viejos sin sello) prioriza la transferencia confirmada.
+        const ventasLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_ventas_v3") || "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const porId = {};
+        (data.ventas || []).forEach(v => {
+          porId[v.id] = v;
+        });
+        let cambiosLocales = 0;
+        ventasLocales.forEach(v => {
+          const enNube = porId[v.id];
+          if (!enNube) {
+            porId[v.id] = v;
+            cambiosLocales++;
+            return;
+          }
+          const uL = Number(v._upd) || 0,
+            uN = Number(enNube._upd) || 0;
+          const ganaLocal = uL !== uN ? uL > uN : !!v.transConfirmada && !enNube.transConfirmada;
+          if (ganaLocal) {
+            porId[v.id] = v;
+            cambiosLocales++;
+          }
+        });
+        const merged = Object.values(porId);
+        setVentasRaw(merged);
+        if (cambiosLocales > 0) {
+          console.log("Merge: " + cambiosLocales + " ventas locales más nuevas, sincronizando");
+          setTimeout(() => syncData({
+            ventas: merged
+          }), 2000);
+        }
+      }
+      if (data.planillas) {
+        // ── Planillas: MERGEAR por día en vez de sobreescribir ────────────
+        const planillasLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_planillas_v1") || "{}");
+          } catch {
+            return {};
+          }
+        })();
+        const mergedPla = {
+          ...data.planillas
+        };
+        let cambiosLocalesPla = 0;
+        Object.keys(planillasLocales).forEach(dia => {
+          const loc = planillasLocales[dia];
+          const nub = mergedPla[dia];
+          if (!nub) {
+            mergedPla[dia] = loc;
+            cambiosLocalesPla++;
+            return;
+          }
+          const uL = Number(loc?._upd) || 0,
+            uN = Number(nub?._upd) || 0;
+          if (uL > uN) {
+            mergedPla[dia] = loc;
+            cambiosLocalesPla++;
+          }
+        });
+        setPlanillas(mergedPla);
+        if (cambiosLocalesPla > 0) {
+          console.log("Merge: " + cambiosLocalesPla + " planillas locales más nuevas, sincronizando");
+          setTimeout(() => syncData({
+            planillas: mergedPla
+          }), 2000);
+        }
+      }
+      if (data.stock) {
+        const ds = data.stock;
+        const normStock = ds.soderia ? ds : {
+          soderia: {
+            sifon: ds.sifon || 0,
+            bidon10: ds.bidon10 || 0,
+            bidon20: ds.bidon20 || 0
+          },
+          casa: {
+            sifon: 0,
+            bidon10: 0,
+            bidon20: 0
+          },
+          camion: {
+            sifon: 0,
+            bidon10: 0,
+            bidon20: 0
+          }
+        };
+        setStock(normStock);
+      }
+      if (data.productos?.length) setProductos(data.productos);
+      if (data.noVisitas?.length) {
+        // ── noVisitas: MERGEAR por clave (cliente+día+fecha) ──────────────
+        const noVisitasLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_novisitas_v1") || "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const clave = v => `${v.clienteId}|${v.dia}|${v.fecha}`;
+        const porClaveNV = {};
+        (data.noVisitas || []).forEach(v => {
+          porClaveNV[clave(v)] = v;
+        });
+        let cambiosLocalesNV = 0;
+        noVisitasLocales.forEach(v => {
+          const k = clave(v);
+          const enNube = porClaveNV[k];
+          if (!enNube) {
+            porClaveNV[k] = v;
+            cambiosLocalesNV++;
+            return;
+          }
+          const uL = Number(v._upd) || 0,
+            uN = Number(enNube._upd) || 0;
+          if (uL > uN) {
+            porClaveNV[k] = v;
+            cambiosLocalesNV++;
+          }
+        });
+        const mergedNV = Object.values(porClaveNV);
+        setNoVisitas(mergedNV);
+        if (cambiosLocalesNV > 0) {
+          console.log("Merge: " + cambiosLocalesNV + " marcas de visita locales más nuevas, sincronizando");
+          setTimeout(() => syncData({
+            noVisitas: mergedNV
+          }), 2000);
+        }
+      }
+      if (data.prospectos?.length) setProspectos(data.prospectos);
+      if (data.recordatorios?.length) setRecordatorios(data.recordatorios);
+      if (data.mantVeh?.length) localStorage.setItem("rm_mant_vehiculo_v1", JSON.stringify(data.mantVeh));
+      if (data.histPrecios?.length) localStorage.setItem("rm_lc_hist_precios", JSON.stringify(data.histPrecios));
+      if (data.horaAvisoCierre) localStorage.setItem("rm_hora_notif_cierre", data.horaAvisoCierre);
+      if (data.horasAvisoTrans) localStorage.setItem("rm_horas_notif_trans", JSON.stringify(data.horasAvisoTrans));
+      if (data.diasAvisoMant) localStorage.setItem("rm_dias_notif_mant", data.diasAvisoMant.join(','));
+      if (data.zonasReparto && Object.keys(data.zonasReparto).length) setZonasReparto(data.zonasReparto);
+      if (data.repartos?.length) {
+        setRepartos(data.repartos);
+        try {
+          localStorage.setItem("rm_repartos_v1", JSON.stringify(data.repartos));
+        } catch {}
+      }
+      // Refrescar logo desde licencia
+      const lic = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("rm_licencia_dueno") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      if (lic?.codigo && window.dbLicencias) {
+        window.dbLicencias.collection("licencias").doc(lic.codigo).get().then(doc => {
+          if (doc.exists) {
+            const d = doc.data();
+            if (d.logo !== undefined && d.logo !== lic.logo) {
+              lic.logo = d.logo;
+              localStorage.setItem("rm_licencia_dueno", JSON.stringify(lic));
+            }
+          }
+        }).catch(() => {});
+      }
+      setSyncStatus("saved");
+      setTimeout(() => setSyncStatus("idle"), 2000);
+    });
+
+    // Refrescar ventas/clientes/planillas del repartidor cada 60 segundos automáticamente.
+    // OJO: acá NO hay que pisar nunca sin comparar — el dueño puede tener un
+    // cambio recién hecho (ej. cobrar un saldo) que todavía no terminó de
+    // sincronizarse cuando cae este refresh; si lo pisamos, se pierde.
+    const _refreshInterval = setInterval(() => {
+      cloudLoad(uid, negocioId).then(function (data) {
+        if (!data) return;
+        if (data.ventas?.length) setVentasRaw(prev => {
+          // Merge por id + _upd: agrega ventas nuevas del repartidor Y
+          // actualiza las que cambiaron en la nube, sin perder ediciones
+          // locales más nuevas que todavía no se subieron.
+          const porId = {};
+          prev.forEach(v => {
+            porId[v.id] = v;
+          });
+          let huboCambios = false;
+          data.ventas.forEach(v => {
+            const local = porId[v.id];
+            if (!local) {
+              porId[v.id] = v;
+              huboCambios = true;
+              return;
+            }
+            const uL = Number(local._upd) || 0,
+              uN = Number(v._upd) || 0;
+            if (uN > uL) {
+              porId[v.id] = v;
+              huboCambios = true;
+            }
+          });
+          return huboCambios ? Object.values(porId) : prev;
+        });
+        if (data.clientes?.length) setClientes(prev => {
+          const porId = {};
+          prev.forEach(c => {
+            porId[c.id] = c;
+          });
+          let huboCambios = false;
+          data.clientes.forEach(c => {
+            const local = porId[c.id];
+            if (!local) {
+              porId[c.id] = c;
+              huboCambios = true;
+              return;
+            }
+            const uL = Number(local._upd) || 0,
+              uN = Number(c._upd) || 0;
+            if (uN > uL) {
+              porId[c.id] = c;
+              huboCambios = true;
+            }
+          });
+          return huboCambios ? Object.values(porId) : prev;
+        });
+        if (data.planillas) setPlanillas(prev => {
+          const merged = {
+            ...prev
+          };
+          let huboCambios = false;
+          Object.keys(data.planillas).forEach(dia => {
+            const nub = data.planillas[dia];
+            const loc = prev[dia];
+            if (!loc) {
+              merged[dia] = nub;
+              huboCambios = true;
+              return;
+            }
+            const uL = Number(loc?._upd) || 0,
+              uN = Number(nub?._upd) || 0;
+            if (uN > uL) {
+              merged[dia] = nub;
+              huboCambios = true;
+            }
+          });
+          return huboCambios ? merged : prev;
+        });
+      }).catch(() => {});
+    }, 60000);
+    return () => clearInterval(_refreshInterval);
+  }, []);
+
+  // Ref siempre actualizado — evita datos viejos en el debounce
+  const estadoRef = React.useRef({
+    clientes,
+    ventas,
+    planillas,
+    stock: stockNorm,
+    productos,
+    noVisitas,
+    recordatorios,
+    prospectos
+  });
+  // Guards anti doble-tap: evitan sumar/restar el saldo dos veces si el
+  // cartel de confirmación tarda en desaparecer y se vuelve a tocar el botón.
+  const ultimoRegistroRef = React.useRef({
+    firma: null,
+    ts: 0
+  });
+  const ultimoBorradoRef = React.useRef({
+    id: null,
+    ts: 0
+  });
+  const [deshacerVenta, setDeshacerVenta] = React.useState(null);
+  const deshacerTimerRef = React.useRef(null);
+  const ultimoEditadoRef = React.useRef({
+    firma: null,
+    ts: 0
+  });
+  const ultimoClienteBorradoRef = React.useRef({
+    id: null,
+    ts: 0
+  });
+  React.useEffect(() => {
+    estadoRef.current = {
+      clientes,
+      ventas,
+      planillas,
+      stock: stockNorm,
+      productos,
+      noVisitas,
+      recordatorios,
+      prospectos,
+      zonasReparto,
+      repartos,
+      cargasDia: cargasDiaRaw,
+      perdidas
+    };
+  });
+
+  // Descarga un archivo JSON al PC — usado por la limpieza automática de
+  // abajo, para que quede un registro a mano además del que se guarda en
+  // Firebase (por si algún día hace falta mirarlo sin entrar a la nube).
+  const _descargarArchivoLC = (nombre, contenido) => {
+    try {
+      const blob = new Blob([JSON.stringify(contenido, null, 2)], {
+        type: "application/json"
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombre;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      console.warn("No se pudo descargar el archivo de respaldo:", e);
+    }
+  };
+
+  // ── LIMPIEZA AUTOMÁTICA de ventas y marcas "no está/no quiere" antiguas ──
+  // Esta app todavía no tenía ninguna de las dos — sin este límite, con el
+  // tiempo se acumulan miles de registros que hacen cada vez más lenta la
+  // carga (esto ya pasó en La Catalina, con 1027 marcas acumuladas sin
+  // límite). Archiva a Firebase y borra localmente lo de más de 3 meses.
+  React.useEffect(() => {
+    if (!window.db || !negocioId) return;
+    const hoy = new Date();
+    const limite = new Date(hoy.getFullYear(), hoy.getMonth() - 3, hoy.getDate());
+    const limiteKey = limite.toLocaleDateString("en-CA");
+    const col = window.db.collection("negocios").doc(negocioId).collection("datos");
+    if (ventas && ventas.length) {
+      const yaHasta = localStorage.getItem("rm_archivado_ventas_hasta") || "";
+      if (yaHasta < limiteKey) {
+        const viejas = ventas.filter(v => v.fechaKey && v.fechaKey < limiteKey);
+        if (!viejas.length) {
+          localStorage.setItem("rm_archivado_ventas_hasta", limiteKey);
+        }
+        if (viejas.length) {
+          col.doc("archivo_ventas_" + limiteKey).set({
+            d: viejas,
+            archivadasEl: hoy.toISOString()
+          }).then(() => {
+            const recientes = ventas.filter(v => !v.fechaKey || v.fechaKey >= limiteKey);
+            if (recientes.length < ventas.length) {
+              console.log("Limpieza automática: archivadas " + viejas.length + " ventas antiguas en Firebase");
+              setVentasRaw(recientes);
+              syncData({
+                ventas: recientes
+              });
+              _descargarArchivoLC(`ventas-archivadas_${limiteKey}.json`, viejas);
+              // Avisar por email: de los clientes con ventas en este archivado,
+              // ¿cuáles tienen deuda (saldo negativo) ahora mismo? El saldo total
+              // sigue siendo correcto — lo que se va del panel principal es el
+              // DETALLE de esas ventas puntuales (queda en el archivo descargado).
+              const idsAfectados = new Set(viejas.map(v => v.clienteId));
+              const deudores = clientes.filter(c => idsAfectados.has(c.id) && (Number(c.saldo) || 0) < 0);
+              if (deudores.length && window.enviarEmailBrevoRM && emailProp) {
+                const filas = deudores.map(c => `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${c.nombre}</td><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;color:#c93030">$${Math.abs(Number(c.saldo) || 0).toLocaleString("es-AR")}</td></tr>`).join("");
+                window.enviarEmailBrevoRM({
+                  to: emailProp,
+                  toName: perfil?.negocio || "",
+                  subject: `⚠️ ${deudores.length} cliente(s) con deuda — historial archivado`,
+                  htmlContent: `<div style="font-family:sans-serif;padding:20px;max-width:500px">
+                    <h2 style="color:#c93030">⚠️ Ojo con estos clientes</h2>
+                    <p>Se acaba de archivar el historial de ventas de más de 3 meses. Los siguientes clientes tienen ventas en ese archivado y <b>siguen debiendo</b> a día de hoy:</p>
+                    <table style="width:100%;border-collapse:collapse;margin:12px 0">${filas}</table>
+                    <p style="font-size:13px;color:#666">El saldo de cada uno sigue siendo el correcto — lo que ya no vas a ver en la app es el DETALLE de esas ventas puntuales. Quedaron guardadas en el archivo <b>ventas-archivadas_${limiteKey}.json</b> que se descargó en la PC, y también en Firebase por las dudas.</p>
+                  </div>`
+                }).catch(() => {});
+              }
+            }
+            localStorage.setItem("rm_archivado_ventas_hasta", limiteKey);
+          }).catch(e => console.warn("No se pudieron archivar ventas antiguas:", e));
+        }
+      }
+    }
+    if (noVisitas && noVisitas.length) {
+      const yaHastaNV = localStorage.getItem("rm_archivado_novisitas_hasta") || "";
+      if (yaHastaNV < limiteKey) {
+        const viejasNV = noVisitas.filter(v => v.fecha && v.fecha < limiteKey);
+        if (!viejasNV.length) {
+          localStorage.setItem("rm_archivado_novisitas_hasta", limiteKey);
+        }
+        if (viejasNV.length) {
+          col.doc("archivo_novisitas_" + limiteKey).set({
+            d: viejasNV,
+            archivadasEl: hoy.toISOString()
+          }).then(() => {
+            const recientesNV = noVisitas.filter(v => !v.fecha || v.fecha >= limiteKey);
+            if (recientesNV.length < noVisitas.length) {
+              console.log("Limpieza automática: archivadas " + viejasNV.length + " marcas de visita antiguas en Firebase");
+              setNoVisitas(recientesNV);
+              syncData({
+                noVisitas: recientesNV
+              });
+              _descargarArchivoLC(`visitas-archivadas_${limiteKey}.json`, viejasNV);
+            }
+            localStorage.setItem("rm_archivado_novisitas_hasta", limiteKey);
+          }).catch(e => console.warn("No se pudieron archivar marcas de visita antiguas:", e));
+        }
+      }
+    }
+  }, []); // solo al arrancar
+
+  // Respaldo COMPLETO descargable + restaurar (solo dueño)
+  React.useEffect(() => {
+    window._descargarRespaldo = () => {
+      const mantVeh = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1") || "[]");
+        } catch {
+          return [];
+        }
+      })();
+      const data = {
+        ...estadoRef.current,
+        mantVeh,
+        _respaldo: true,
+        _app: "reparto-multi",
+        _fecha: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json"
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const fkk = new Date().toLocaleDateString("es-AR").replace(/\//g, "-");
+      a.href = url;
+      a.download = `respaldo-completo_reparto_${fkk}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    window._restaurarRespaldo = data => {
+      if (!data || typeof data !== "object") {
+        alert("El archivo no es un respaldo válido.");
+        return false;
+      }
+      try {
+        if (data.clientes !== undefined) setClientes(data.clientes || []);
+        if (data.ventas !== undefined) setVentasRaw(data.ventas || []);
+        if (data.planillas !== undefined) setPlanillas(data.planillas || {});
+        if (data.stock) setStock(normStock(data.stock));
+        if (data.productos !== undefined) setProductos(data.productos || []);
+        if (data.noVisitas !== undefined) setNoVisitas(data.noVisitas || []);
+        if (data.perdidas !== undefined) setPerdidas(data.perdidas || []);
+        if (data.prospectos !== undefined) setProspectos(data.prospectos || []);
+        if (data.recordatorios !== undefined) setRecordatorios(data.recordatorios || []);
+        if (data.mantVeh !== undefined) {
+          try {
+            localStorage.setItem("rm_mant_vehiculo_v1", JSON.stringify(data.mantVeh || []));
+          } catch {}
+        }
+        try {
+          syncData({
+            clientes: data.clientes,
+            ventas: data.ventas,
+            planillas: data.planillas,
+            productos: data.productos,
+            noVisitas: data.noVisitas,
+            prospectos: data.prospectos,
+            recordatorios: data.recordatorios
+          });
+        } catch {}
+        return true;
+      } catch (e) {
+        alert("Error al restaurar: " + e.message);
+        return false;
+      }
+    };
+    return () => {
+      delete window._descargarRespaldo;
+      delete window._restaurarRespaldo;
+    };
+  }, []);
+
+  // Auto backup DIARIO a localStorage
+  React.useEffect(() => {
+    const ultimoBackup = localStorage.getItem("rm_lc_ultimo_backup");
+    const hoy = new Date().toLocaleDateString("en-CA");
+    if (ultimoBackup === hoy) return; // ya se hizo hoy
+    try {
+      localStorage.setItem("rm_lc_backup_" + hoy, JSON.stringify({
+        clientes,
+        ventas,
+        planillas
+      }));
+      localStorage.setItem("rm_lc_ultimo_backup", hoy);
+      // Mantener solo los últimos 7 backups
+      const keys = Object.keys(localStorage).filter(k => k.startsWith("rm_lc_backup_")).sort().reverse();
+      keys.slice(7).forEach(k => localStorage.removeItem(k));
+      console.log("Auto-backup diario guardado:", hoy);
+    } catch (e) {
+      console.warn("Auto-backup falló:", e);
+    }
+  }, []);
+  const syncData = (overrides = {}) => {
+    if (!window.db) return;
+    setSyncStatus("saving");
+    // Foto de cómo estaban las cosas ACÁ (en esta pantalla) antes de este
+    // cambio puntual — hace falta para poder mergear bien con la nube más
+    // abajo (para saber, por ejemplo, qué venta se borró de verdad acá y
+    // cuál simplemente no se tocó en este guardado).
+    const prevData = estadoRef.current;
+    const mantVehActual = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("rm_mant_vehiculo_v1") || "[]");
+      } catch {
+        return [];
+      }
+    })();
+    const histPreciosActual = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("rm_lc_hist_precios") || "[]");
+      } catch {
+        return [];
+      }
+    })();
+    const data = {
+      ...prevData,
+      ...overrides,
+      noVisitas: overrides.noVisitas !== undefined ? overrides.noVisitas : prevData.noVisitas || [],
+      prospectos: overrides.prospectos !== undefined ? overrides.prospectos : prevData.prospectos || [],
+      recordatorios: overrides.recordatorios !== undefined ? overrides.recordatorios : prevData.recordatorios || [],
+      mantVeh: overrides.mantVeh || mantVehActual,
+      histPrecios: overrides.histPrecios || histPreciosActual,
+      zonasReparto: overrides.zonasReparto || prevData.zonasReparto || {},
+      repartos: overrides.repartos || prevData.repartos || [],
+      horaAvisoCierre: overrides.horaAvisoCierre || localStorage.getItem('rm_hora_notif_cierre') || '18:00',
+      horasAvisoTrans: overrides.horasAvisoTrans || (() => {
+        try {
+          return JSON.parse(localStorage.getItem('rm_horas_notif_trans') || '["13:00","19:00"]');
+        } catch {
+          return ['13:00', '19:00'];
+        }
+      })(),
+      diasAvisoMant: overrides.diasAvisoMant || (localStorage.getItem('rm_dias_notif_mant') || '3,2,1,0').split(',').map(n => parseInt(n.trim(), 10)).filter(n => !isNaN(n))
+    };
+    estadoRef.current = data;
+    debounceSave(() => {
+      const guardarFinal = toSave => {
+        cloudSave(toSave, uid, negocioId).then(function (ok) {
+          if (ok) {
+            localStorage.removeItem("sr_offline_pending");
+            setPendingOfflineSync(false);
+            setSyncStatus("saved");
+          } else {
+            // Puede que Firestore esté cacheando (persistence activa) → guardar cola igual
+            try {
+              localStorage.setItem("sr_offline_pending", JSON.stringify(toSave));
+            } catch {}
+            setPendingOfflineSync(true);
+            setSyncStatus(navigator.onLine ? "error" : "offline_pending");
+          }
+        }).catch(function () {
+          try {
+            localStorage.setItem("sr_offline_pending", JSON.stringify(toSave));
+          } catch {}
+          setPendingOfflineSync(true);
+          setSyncStatus(navigator.onLine ? "error" : "offline_pending");
+        });
+      };
+      if (!navigator.onLine) {
+        // Sin red → guardar en cola local
+        try {
+          localStorage.setItem("sr_offline_pending", JSON.stringify(data));
+        } catch {}
+        setPendingOfflineSync(true);
+        setSyncStatus("offline_pending");
+        return;
+      }
+      // Guardado seguro: traer lo último de la nube y pisar SOLO lo que este
+      // guardado puntual cambió (según "overrides"), no toda la copia local.
+      // Antes acá vivía el bug raíz de la app: el dueño (o un repartidor
+      // guardando algo suyo segundos antes) podía perder su cambio de stock,
+      // cierre de caja o agenda porque este guardado pisaba todo con una
+      // copia local vieja.
+      cloudLoad(uid, negocioId).then(function (fresh) {
+        if (!fresh) {
+          guardarFinal(data);
+          return;
+        }
+        const merged = {
+          ...fresh,
+          ...data
+        };
+        if (overrides.ventas !== undefined) {
+          merged.ventas = mergeArrayPorClave(prevData.ventas, data.ventas, fresh.ventas, v => v.id);
+        }
+        // "clientes" se mergea SIEMPRE, no sólo cuando este guardado los
+        // tocó: cloudSave usa el cliente de cada venta para saber a qué
+        // reparto pertenece. Si la copia local del dueño estuviera un
+        // poco vieja (por ejemplo, un repartidor agregó un cliente nuevo
+        // mientras esta pantalla estaba abierta), una venta se podía
+        // guardar en el reparto equivocado y aparecer duplicada.
+        merged.clientes = mergeClientesPorUpd(prevData.clientes, overrides.clientes !== undefined ? data.clientes : prevData.clientes, fresh.clientes);
+        if (overrides.planillas !== undefined) {
+          merged.planillas = mergePorClavesCambiadas(prevData.planillas, data.planillas, fresh.planillas);
+        }
+        if (overrides.stock !== undefined) {
+          merged.stock = mergeNumericoConDeltas(prevData.stock, data.stock, fresh.stock);
+        }
+        if (overrides.cargasDia !== undefined) {
+          merged.cargasDia = mergeNumericoConDeltas(prevData.cargasDia, data.cargasDia, fresh.cargasDia);
+        }
+        if (overrides.recordatorios !== undefined) {
+          merged.recordatorios = mergeArrayPorClave(prevData.recordatorios, data.recordatorios, fresh.recordatorios, r => r.id);
+        }
+        if (overrides.noVisitas !== undefined) {
+          merged.noVisitas = mergeArrayPorClave(prevData.noVisitas, data.noVisitas, fresh.noVisitas, v => `${v.clienteId}|${v.dia}|${v.fecha}`);
+        }
+        if (overrides.prospectos !== undefined) {
+          merged.prospectos = mergeArrayPorClave(prevData.prospectos, data.prospectos, fresh.prospectos, p => p.id);
+        }
+        guardarFinal(merged);
+      }).catch(function () {
+        guardarFinal(data);
+      });
+    });
+  };
+
+  // Todas aceptan un valor directo O una función (prev => nuevoValor). Usar
+  // la forma función en cualquier lugar que calcule el nuevo valor a partir
+  // del estado actual — así no se pierden cambios si dos acciones se
+  // disparan casi juntas (incluye el refresh cada 60s de más arriba).
+  const saveClientes = v => {
+    setClientes(prev => {
+      const base = typeof v === "function" ? v(prev) : v;
+      const _t = Date.now();
+      const vv = base.map(c => ({
+        ...c,
+        _upd: _t
+      }));
+      syncData({
+        clientes: vv
+      });
+      return vv;
+    });
+  };
+  const saveVentas = v => {
+    setVentasRaw(prev => {
+      const nv = typeof v === "function" ? v(prev) : v;
+      syncData({
+        ventas: nv
+      });
+      return nv;
+    });
+  };
+  const savePlanillasCloud = v => {
+    setPlanillas(prev => {
+      const next = typeof v === "function" ? v(prev) : v;
+      syncData({
+        planillas: next
+      });
+      return next;
+    });
+  };
+
+  // Limpieza automática: partes-transferencia de pago mixto cuya venta principal ya no existe
+  React.useEffect(() => {
+    const huerfanas = ventasRaw.filter(v => v._esMixtoTrans && v._mixtoDe !== undefined && !ventasRaw.some(x => x.id === v._mixtoDe));
+    if (huerfanas.length > 0) {
+      const ids = new Set(huerfanas.map(v => v.id));
+      setVentasRaw(ventasRaw.filter(v => !ids.has(v.id)));
+    }
+  }, [ventasRaw]);
+
+  // ── MODO OFFLINE ──────────────────────────────────────────────────
+  React.useEffect(() => {
+    const goOnline = () => {
+      setIsOnline(true);
+      // Al reconectar, si hay datos pendientes → intentar sync
+      const pending = localStorage.getItem("sr_offline_pending");
+      if (pending) {
+        setSyncStatus("saving");
+        try {
+          const data = JSON.parse(pending);
+          cloudSave(data, uid, negocioId).then(ok => {
+            if (ok) {
+              localStorage.removeItem("sr_offline_pending");
+              setPendingOfflineSync(false);
+              setSyncStatus("saved");
+              setTimeout(() => setSyncStatus("idle"), 2500);
+            } else {
+              setSyncStatus("error");
+              setTimeout(() => setSyncStatus("offline_pending"), 3000);
+            }
+          }).catch(() => {
+            setSyncStatus("error");
+            setTimeout(() => setSyncStatus("offline_pending"), 3000);
+          });
+        } catch {
+          localStorage.removeItem("sr_offline_pending");
+          setPendingOfflineSync(false);
+        }
+      }
+    };
+    const goOffline = () => {
+      setIsOnline(false);
+      setSyncStatus("offline");
+    };
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    // Reintento periódico: cubre el caso de un guardado que falló ESTANDO
+    // online (permisos, cuota momentánea) — sin esto, solo se reintentaba
+    // al pasar de sin señal a con señal.
+    const reintentoPeriodico = setInterval(() => {
+      if (navigator.onLine && localStorage.getItem("sr_offline_pending")) goOnline();
+    }, 45000);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+      clearInterval(reintentoPeriodico);
+    };
+  }, []);
+
+  // ── NOTIFICACIONES ─────────────────────────────────────────────────
+  // Los avisos (cierre, mantenimiento, transferencias, agenda) los manda el
+  // servidor (GitHub Actions) por push real — funciona con la app cerrada.
+  // Acá solo pedimos permiso; la suscripción vive en index.html.
+  React.useEffect(() => {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") Notification.requestPermission();
+  }, []);
+
+  // ── INFORMES PDF ─────────────────────────────────────────────────
+  const {
+    enviarDiario,
+    enviarSemanal,
+    enviarMensual
+  } = usarInformes({
+    ventas,
+    clientes,
+    planillas,
+    noVisitas: noVisitas || [],
+    productos,
+    repartoId: repartoActual?.id
+  });
+  const cerrarDia = async (fecha, dia, imgData) => {
+    const key = `sr_informe_${fecha}_${dia}`;
+    const envios = Number(localStorage.getItem(key) || 0);
+    if (envios >= 3) return false; // máximo 3 envíos por día
+    setSyncStatus("saving");
+    const ok = await enviarDiario(fecha, dia, imgData);
+    if (ok) {
+      localStorage.setItem(key, String(envios + 1));
+      // Sábado → también enviar semanal (solo la primera vez)
+      const d = new Date(fecha + "T12:00:00");
+      if (d.getDay() === 6 && !localStorage.getItem(`sr_informe_sem_${fecha}`)) {
+        const okSem = await enviarSemanal(fecha);
+        if (okSem) localStorage.setItem(`sr_informe_sem_${fecha}`, "1");
+      }
+      // Último día hábil del mes → también mensual (solo la primera vez)
+      const manana = new Date(d);
+      manana.setDate(d.getDate() + 1);
+      const esUltimoDiaHabil = manana.getMonth() !== d.getMonth() || manana.getDay() === 6 && manana.getDate() > 25;
+      if (esUltimoDiaHabil && !localStorage.getItem(`sr_informe_mes_${d.getFullYear()}_${d.getMonth() + 1}`)) {
+        const okMes = await enviarMensual(d.getMonth() + 1, d.getFullYear());
+        if (okMes) localStorage.setItem(`sr_informe_mes_${d.getFullYear()}_${d.getMonth() + 1}`, "1");
+      }
+    }
+    setSyncStatus(ok ? "saved" : "error");
+    setTimeout(() => setSyncStatus("idle"), 3000);
+    return ok;
+  };
+  const saveStock = v => {
+    setStock(prev => {
+      const next = typeof v === "function" ? v(prev) : v;
+      syncData({
+        stock: next
+      });
+      return next;
+    });
+  };
+  const saveProductos = v => {
+    setProductos(prev => {
+      const next = typeof v === "function" ? v(prev) : v;
+      // Registrar cambio de precio en historial
+      const hoy = (() => {
+        const d = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      })();
+      const histPrecios = JSON.parse(localStorage.getItem("rm_lc_hist_precios") || "[]");
+      histPrecios.push({
+        fecha: hoy,
+        productos: next.map(p => ({
+          nombre: p.nombre,
+          precio: p.precio,
+          costo: p.costo
+        }))
+      });
+      localStorage.setItem("rm_lc_hist_precios", JSON.stringify(histPrecios.slice(-50)));
+      syncData({
+        productos: next
+      });
+      return next;
+    });
+  };
+  // cargasDia ahora vive por reparto: {[repartoId]: {Lunes:{...}, Martes:{...}, ...}}.
+  // Migración: si lo guardado es el formato viejo (plano, sin reparto — las
+  // claves de primer nivel son directamente los días), se asigna al primer
+  // reparto configurado la primera vez que se detecta.
+  const [cargasDiaRaw, setCargasDiaRaw] = useLS("rm_cargas_dia_v1", {});
+  const cargasDiaPorReparto = React.useMemo(() => {
+    const c = cargasDiaRaw || {};
+    const esFormatoViejo = DIAS.some(d => c[d]);
+    if (esFormatoViejo && repartos && repartos[0]) return {
+      [repartos[0].id]: c
+    };
+    return c;
+  }, [JSON.stringify(cargasDiaRaw), JSON.stringify(repartos)]);
+  const saveCargasDia = v => {
+    setCargasDiaRaw(prev => typeof v === "function" ? v(prev) : v);
+  };
+  // Carga diaria de UN reparto puntual — lo que usan InicioReparto/StockGeneral
+  const cargasDiaDe = repartoId => repartoId && cargasDiaPorReparto[repartoId] || CARGA_DIA_DEFAULT;
+  const saveCargasDiaDe = (repartoId, v) => {
+    if (!repartoId) return;
+    saveCargasDia(prev => {
+      const base = prev && prev[repartoId] || CARGA_DIA_DEFAULT;
+      const nuevo = typeof v === "function" ? v(base) : v;
+      return {
+        ...prev,
+        [repartoId]: nuevo
+      };
+    });
+  };
+  const saveNoVisitas = v => {
+    setNoVisitas(prev => {
+      const next = typeof v === "function" ? v(prev) : v;
+      syncData({
+        noVisitas: next
+      });
+      return next;
+    });
+  };
+  const saveProspectos = v => {
+    setProspectos(prev => {
+      const next = typeof v === "function" ? v(prev) : v;
+      syncData({
+        prospectos: next
+      });
+      return next;
+    });
+  };
+  const cliente = clientes.find(c => c.id === clienteId) || null;
+  const irA = p => {
+    const needsDia = ["diaPrincipal", "selectorFechaClientes", "selectorFechaPlanilla", "inicioReparto", "clientes", "detalleCliente", "venta", "planilla"]; // historial does NOT need dia
+    if (needsDia.includes(p) && !diaActual) {
+      setPantalla("menu");
+      window.history.pushState({
+        pantalla: "menu"
+      }, '', '#menu');
+      window.scrollTo(0, 0);
+      return;
+    }
+    setPantalla(p);
+    window.scrollTo(0, 0);
+    window.history.pushState({
+      pantalla: p
+    }, '', `#${p}`);
+  };
+
+  // Handle back button
+  React.useEffect(() => {
+    const handler = e => {
+      const p = e.state?.pantalla || "portada";
+      const needsDia = ["diaPrincipal", "selectorFechaClientes", "selectorFechaPlanilla", "inicioReparto", "clientes", "detalleCliente", "venta", "planilla"]; // historial does NOT need dia
+      if (needsDia.includes(p) && !diaActual) {
+        setPantalla("menu");
+        return;
+      }
+      setPantalla(p);
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, []);
+  const updateCliente = (id, cambios) => {
+    saveClientes(prev => prev.map(c => c.id === id ? {
+      ...c,
+      ...cambios
+    } : c));
+  };
+  const savePlanilla = (dia, datos) => {
+    savePlanillasCloud(prev => ({
+      ...prev,
+      [dia]: {
+        ...datos,
+        _upd: Date.now()
+      }
+    }));
+  };
+  const getPlanilla = dia => planillas[dia] || planillaDiaVacia();
+
+  // Auto-guardado de planilla cuando todos los clientes del día tienen estado
+  React.useEffect(() => {
+    if (!diaActual || !fechaActual) return;
+    const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id));
+    if (clientesDia.length === 0) return;
+    const clientesDiaIds = new Set(clientesDia.map(c => c.id));
+    const ventasDia = ventas.filter(v => v.dia === diaActual && v.fechaKey === fechaActual && clientesDiaIds.has(v.clienteId));
+    const noVisitasDia = (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && clientesDiaIds.has(v.clienteId));
+    const atendidos = new Set(ventasDia.filter(v => !v._esCobro && !v._esAjuste).map(v => v.clienteId));
+    const conEstado = new Set([...atendidos, ...noVisitasDia.map(v => v.clienteId)]);
+    const todosVisitados = clientesDia.every(c => conEstado.has(c.id));
+    if (!todosVisitados) return;
+    // Calcular valores automáticos para la planilla
+    const CAJON_SODA = 6;
+    const getProdCosto = nombre => {
+      const p = (productos || []).find(x => x.nombre === nombre);
+      return p ? p.costo || 0 : 0;
+    };
+    const costSifon = getProdCosto("Sifón 1.5L") || 133.33;
+    const costB10 = getProdCosto("Bidón 10L") || 800;
+    const costB20 = getProdCosto("Bidón 20L") || 1100;
+    const tots = {
+      b10: {
+        vacios: 0
+      },
+      b20: {
+        vacios: 0
+      },
+      soda: {
+        vacios: 0
+      }
+    };
+    const prodKey = {
+      "Bidón 10L": "b10",
+      "Bidón 20L": "b20",
+      "Sifón 1.5L": "soda"
+    };
+    ventasDia.forEach(v => v.detalle.forEach(d => {
+      const k = prodKey[d.nombre];
+      if (k) tots[k].vacios += d.cantidad;
+    }));
+    const sodaCajones = Math.floor(tots.soda.vacios / CAJON_SODA) || 0;
+    // Pago mixto: venta principal pago="contado" con montoEfec+montoTrans
+    const cobEfectivo = ventasDia.filter(v => v.pago === "contado" && !v._esMixtoTrans).reduce((a, v) => {
+      const esMixto = (Number(v.montoTrans) || 0) > 0;
+      return a + (esMixto ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0);
+    }, 0);
+    const cobFiado = ventasDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
+    const cobTransBruto = ventasDia.filter(v => !v._esMixtoTrans).reduce((a, v) => {
+      if (v.pago === "transferencia") return a + (v.pagadoNum || v.neto || 0);
+      if (v.pago === "contado" && (Number(v.montoTrans) || 0) > 0) return a + (Number(v.montoTrans) || 0);
+      return a;
+    }, 0);
+    const cobTransDesc = Math.round(cobTransBruto * 0.025);
+    const planillaKey = claveDiaReparto(diaActual, fechaActual, repartoActual?.id);
+    const planillaActual = planillas[planillaKey] || planillaDiaVacia();
+    // Solo auto-completar campos vacíos, nunca pisar lo que el usuario editó
+    const nueva = {
+      ...planillaActual,
+      fecha: planillaActual.fecha || fechaActual,
+      efectivo: planillaActual.efectivo || (cobEfectivo > 0 ? String(Math.round(cobEfectivo)) : ""),
+      fiado: planillaActual.fiado || (cobFiado > 0 ? String(Math.round(cobFiado)) : ""),
+      retenciones: planillaActual.retenciones || (cobTransDesc > 0 ? String(cobTransDesc) : ""),
+      _autoGuardado: true
+    };
+    // Solo guardar si cambió algo
+    if (JSON.stringify(nueva) !== JSON.stringify(planillaActual)) {
+      savePlanilla(planillaKey, nueva);
+    }
+  }, [ventas, noVisitas, clientes, diaActual, fechaActual, repartoActual]);
+  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto, transConfirmadaInicial) => {
+    const c = cliente;
+    // Guard anti doble-tap: ignora una llamada idéntica al mismo cliente
+    // dentro de 1.5s (botón sin lock + toque duplicado en el celular)
+    const firmaReg = JSON.stringify({
+      cid: c.id,
+      detalle,
+      pago,
+      montoPagado,
+      opcionSaldo
+    });
+    const ahoraReg = Date.now();
+    if (ultimoRegistroRef.current.firma === firmaReg && ahoraReg - ultimoRegistroRef.current.ts < 1500) {
+      console.warn("⚠️ Venta duplicada bloqueada (doble tap):", c.nombre);
+      return;
+    }
+    ultimoRegistroRef.current = {
+      firma: firmaReg,
+      ts: ahoraReg
+    };
+    // Auto-detectar envases prestados (solo si no es cobro de deuda)
+    const envAutoDetect = [];
+    if (opcionSaldo !== "cobro_deuda" && opcionSaldo !== "cambio_envase") {
+      const mapa = {
+        sifon: "Sifón 1.5L",
+        bidon10: "Bidón 10L",
+        bidon20: "Bidón 20L"
+      };
+      detalle.forEach(d => {
+        const asignado = d.nombre === "Sifón 1.5L" ? c.sifon || 0 : d.nombre === "Bidón 10L" ? c.bidon10 || 0 : d.nombre === "Bidón 20L" ? c.bidon20 || 0 : 0;
+        const extra = d.cantidad - asignado;
+        if (extra > 0) envAutoDetect.push({
+          prod: d.nombre,
+          cant: String(extra)
+        });
+      });
+    }
+    const envPrestFinal = [...(envPrest || []).filter(e => e.prod && e.cant), ...envAutoDetect.filter(e => !(envPrest || []).some(ep => ep.prod === e.prod))];
+
+    // Pago mixto: UNA sola venta con ambos montos
+    const esMixto = opcionSaldo === "mixto_ef" || opcionSaldo === "mixto_tr";
+    const pagoReal = esMixto ? "mixto" : pago;
+    const ef = esMixto ? opcionSaldo === "mixto_ef" ? Number(montoPagado) : Number(montoTrans2 || 0) : 0;
+    const tr = esMixto ? opcionSaldo === "mixto_ef" ? Number(montoTrans2 || 0) : Number(montoPagado) : 0;
+    const totalMixto = esMixto ? ef + tr : 0;
+    const montoFinalCalc = esMixto ? String(totalMixto) : montoPagado;
+    const deudaCobrada = opcionSaldo === "todo" && c.saldo < 0 ? Math.abs(c.saldo) : 0;
+    const obsDeuda = deudaCobrada > 0 ? ` [Incluye deuda cobrada: $${deudaCobrada.toLocaleString("es-AR")}]` : "";
+    const obsExtra = (esMixto && totalMixto > 0 ? ` [Mixto: ef $${ef} + tr $${tr}]` : "") + obsDeuda;
+    const calc = calcVenta(detalle, pagoReal, montoFinalCalc, saldoAplicado, productos);
+    const nuevaVenta = {
+      id: Date.now(),
+      clienteId: c.id,
+      cliente: c.nombre,
+      dia: diaActual,
+      fechaKey: fechaActual,
+      fecha: new Date().toLocaleString("es-AR"),
+      detalle,
+      pago: pagoReal,
+      obs: (obs || "") + obsExtra,
+      saldoAplicado: saldoAplicado || 0,
+      envPrest: envPrestFinal,
+      envDev: (envDev || []).filter(e => e.prod && e.cant),
+      ...calc,
+      montoTrans: esMixto ? tr : montoTrans2 || 0,
+      montoEfec: esMixto ? ef : 0,
+      transConfirmada: !!transConfirmadaInicial,
+      _upd: Date.now(),
+      ...(opcionSaldo === "cambio_envase" ? {
+        _esCambio: true,
+        neto: 0,
+        bruto: 0,
+        costo: 0,
+        ganancia: 0
+      } : {})
+    };
+
+    // UNA sola venta — sin duplicar
+    saveVentas(prev => [...prev, nuevaVenta]);
+    saveClientes(prev => prev.map(c2 => c2.id === c.id ? {
+      ...c2,
+      saldo: (Number(c2.saldo) || 0) + calc.saldoDelta
+    } : c2));
+  };
+  const renumerarTrasEliminar = (lista, clienteEliminado) => {
+    const {
+      dia,
+      orden
+    } = clienteEliminado;
+    if (!orden) return lista;
+    return lista.map(c => c.dia === dia && (c.orden || 0) > orden ? {
+      ...c,
+      orden: c.orden - 1
+    } : c);
+  };
+  const eliminarCliente = clienteId => {
+    // Guard anti doble-toque: ignora un segundo borrado del MISMO cliente
+    // dentro de 3s (dos confirmaciones seguidas pueden hacer que el dedo
+    // vuelva a tocar por las dudas).
+    const ahoraDel = Date.now();
+    if (ultimoClienteBorradoRef.current.id === clienteId && ahoraDel - ultimoClienteBorradoRef.current.ts < 3000) {
+      console.warn("⚠️ Borrado de cliente duplicado bloqueado (doble toque):", clienteId);
+      return;
+    }
+    ultimoClienteBorradoRef.current = {
+      id: clienteId,
+      ts: ahoraDel
+    };
+    const eliminado = clientes.find(c => c.id === clienteId);
+    if (eliminado) {
+      const env = {
+        sifon: Number(eliminado.sifon) || 0,
+        bidon10: Number(eliminado.bidon10) || 0,
+        bidon20: Number(eliminado.bidon20) || 0
+      };
+      const totalEnv = env.sifon + env.bidon10 + env.bidon20;
+      if (totalEnv > 0) {
+        const det = [env.sifon && `${env.sifon} Sifón 1.5L`, env.bidon10 && `${env.bidon10} Bidón 10L`, env.bidon20 && `${env.bidon20} Bidón 20L`].filter(Boolean).join(" · ");
+        const devolvio = window.confirm(`Borrando a "${eliminado.nombre}"...\n\nTenía estos envases:\n${det}\n\n¿Los devolvió?\n\n• Aceptar = SÍ, sumarlos al stock (Depósito)\n• Cancelar = NO, se dan por perdidos\n\n(Cualquiera de las dos opciones borra al cliente igual)`);
+        if (devolvio) {
+          setStock(prev => {
+            const s = JSON.parse(JSON.stringify(prev));
+            if (!s.casa) s.casa = {
+              sifon: 0,
+              bidon10: 0,
+              bidon20: 0,
+              dispenser: 0
+            };
+            s.casa.sifon = (s.casa.sifon || 0) + env.sifon;
+            s.casa.bidon10 = (s.casa.bidon10 || 0) + env.bidon10;
+            s.casa.bidon20 = (s.casa.bidon20 || 0) + env.bidon20;
+            syncData({
+              stock: s
+            });
+            return s;
+          });
+        } else {
+          registrarPerdida(env, "Cliente eliminado sin recuperar envases", eliminado.nombre);
+        }
+      }
+    }
+    saveClientes(prev => {
+      let nc = prev.filter(c => c.id !== clienteId);
+      if (eliminado) nc = renumerarTrasEliminar(nc, eliminado);
+      return nc;
+    });
+    saveVentas(prev => prev.filter(v => v.clienteId !== clienteId));
+    irA("clientes");
+  };
+  const eliminarVenta = ventaId => {
+    // Guard anti doble-tap: ignora un segundo borrado del MISMO id dentro
+    // de 2s (el cartel de confirmación puede tardar en cerrarse).
+    const ahoraDel = Date.now();
+    if (ultimoBorradoRef.current.id === ventaId && ahoraDel - ultimoBorradoRef.current.ts < 2000) {
+      console.warn("⚠️ Borrado duplicado bloqueado (doble tap):", ventaId);
+      return;
+    }
+    ultimoBorradoRef.current = {
+      id: ventaId,
+      ts: ahoraDel
+    };
+    const v = ventas.find(x => x.id === ventaId);
+    if (!v) return;
+    const eraMixta = (Number(v.montoTrans) || 0) > 0;
+    // Calculamos qué se borra y el ajuste de saldo AHORA MISMO, de forma
+    // sincrónica — no depende de cuándo React decida correr el actualizador
+    // de saveVentas.
+    let ajusteSaldoExtra = 0;
+    const idsABorrar = new Set([ventaId]);
+    ventas.forEach(x => {
+      const ligada = x._esMixtoTrans && (x._mixtoDe === ventaId || x._mixtoDe === undefined && eraMixta && x.clienteId === v.clienteId && x.fechaKey === v.fechaKey);
+      if (ligada) {
+        idsABorrar.add(x.id);
+        if ((Number(x.saldoDelta) || 0) !== 0) ajusteSaldoExtra += Number(x.saldoDelta);
+      }
+    });
+    // Guardar lo borrado para poder "Deshacer" — antes de tocar nada
+    const ventasBorradas = ventas.filter(x => idsABorrar.has(x.id));
+    const ajusteTotal = v.saldoDelta + ajusteSaldoExtra;
+    if (deshacerTimerRef.current) clearTimeout(deshacerTimerRef.current);
+    setDeshacerVenta({
+      ventasBorradas,
+      clienteId: v.clienteId,
+      ajusteTotal,
+      ts: Date.now()
+    });
+    deshacerTimerRef.current = setTimeout(() => setDeshacerVenta(null), 8000);
+    saveVentas(prev => {
+      let nv = prev.filter(x => !idsABorrar.has(x.id));
+      nv = nv.filter(x => !(x._esMixtoTrans && x._mixtoDe !== undefined && !nv.some(y => y.id === x._mixtoDe)));
+      return nv;
+    });
+    saveClientes(prev => prev.map(x => x.id === v.clienteId ? {
+      ...x,
+      saldo: (Number(x.saldo) || 0) - v.saldoDelta - ajusteSaldoExtra
+    } : x));
+  };
+  const deshacerUltimaVenta = () => {
+    if (!deshacerVenta) return;
+    if (deshacerTimerRef.current) clearTimeout(deshacerTimerRef.current);
+    const {
+      ventasBorradas,
+      clienteId,
+      ajusteTotal
+    } = deshacerVenta;
+    saveVentas(prev => [...prev, ...ventasBorradas]);
+    saveClientes(prev => prev.map(x => x.id === clienteId ? {
+      ...x,
+      saldo: (Number(x.saldo) || 0) + ajusteTotal
+    } : x));
+    setDeshacerVenta(null);
+  };
+  const editarVenta = (ventaId, detalle, pago, montoPagado, saldoAplicado, obs, montoTrans2) => {
+    // Guard anti doble-tap: ignora una segunda edición IDÉNTICA de la
+    // MISMA venta dentro de 2s.
+    const firmaEdit = JSON.stringify({
+      ventaId,
+      detalle,
+      pago,
+      montoPagado,
+      saldoAplicado,
+      montoTrans2
+    });
+    const ahoraEdit = Date.now();
+    if (ultimoEditadoRef.current.firma === firmaEdit && ahoraEdit - ultimoEditadoRef.current.ts < 2000) {
+      console.warn("⚠️ Edición duplicada bloqueada (doble tap):", ventaId);
+      return;
+    }
+    ultimoEditadoRef.current = {
+      firma: firmaEdit,
+      ts: ahoraEdit
+    };
+    const vV = ventas.find(v => v.id === ventaId);
+    if (!vV) return;
+    const esMixto = pago === "mixto";
+    const ef = esMixto ? Number(montoPagado) || 0 : 0;
+    const tr = esMixto ? Number(montoTrans2) || 0 : 0;
+    // MIXTO (diseño Multi): UNA venta con pago "mixto" + montoEfec/montoTrans; cálculo con el total
+    const calc = calcVenta(detalle, esMixto ? "contado" : pago, esMixto ? String(ef + tr) : montoPagado, saldoAplicado, productos);
+    const obsLimpia = (obs || "").replace(/\s*\[Mixto:[^\]]*\]/g, "");
+    const obsFinal = esMixto ? obsLimpia + ` [Mixto: ef $${ef} + tr $${tr}]` : obsLimpia;
+    // netDeltaCambio: cuánto CAMBIA el saldo por esta edición — es un delta
+    // puro, no depende del saldo actual del cliente (seguro de aplicar
+    // después sobre el saldo más reciente, en vez del que había al abrir).
+    const netDeltaCambio = calc.saldoDelta - vV.saldoDelta;
+    saveVentas(prev => {
+      let nev = prev.filter(v => !(v._esMixtoTrans && v._mixtoDe === ventaId)); // limpiar restos de versiones viejas
+      nev = nev.map(v => v.id === ventaId ? {
+        ...vV,
+        detalle,
+        pago: esMixto ? "mixto" : pago,
+        obs: obsFinal,
+        saldoAplicado: saldoAplicado || 0,
+        ...calc,
+        montoEfec: esMixto ? ef : 0,
+        montoTrans: esMixto ? tr : 0,
+        transConfirmada: esMixto ? vV.transConfirmada || false : vV.transConfirmada,
+        _upd: Date.now()
+      } : v);
+      return nev;
+    });
+    saveClientes(prev => prev.map(x => x.id === vV.clienteId ? {
+      ...x,
+      saldo: (Number(x.saldo) || 0) + netDeltaCambio
+    } : x));
+  };
+  return /*#__PURE__*/_jsxs("div", {
+    style: {
+      position: "relative"
+    },
+    children: [operandoReparto ? /*#__PURE__*/_jsx(AppRepartidor, {
+      uid: uid,
+      perfil: {
+        nombre: operandoReparto.repartidorNombre,
+        codigo: operandoReparto.codigo,
+        sectores: [],
+        rol: "repartidor",
+        negocioId
+      },
+      onSalir: () => setOperandoReparto(null)
+    }) : /*#__PURE__*/_jsxs(_Fragment, {
+      children: [/*#__PURE__*/_jsx("div", {
+        style: {
+          position: "fixed",
+          top: 10,
+          right: 14,
+          zIndex: 9999,
+          display: "flex",
+          gap: 6
+        },
+        children: /*#__PURE__*/_jsx("button", {
+          onClick: () => setScaleIdx(i => (i + 1) % 4),
+          style: {
+            padding: "6px 10px",
+            borderRadius: 8,
+            border: "none",
+            background: "var(--color-background-tertiary)",
+            color: "var(--color-text-secondary)",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          },
+          title: "Tamaño de texto",
+          children: SCALE_LABELS[scaleIdx]
+        })
+      }), /*#__PURE__*/_jsxs("div", {
+        style: {
+          ...s.app,
+          zoom: SCALES[scaleIdx]
+        },
+        children: [/*#__PURE__*/_jsx(SyncBar, {
+          status: syncStatus,
+          isOnline: isOnline
+        }), pantalla === "portada" && /*#__PURE__*/_jsx(Portada, {
+          onIngresar: () => irA("menu")
+        }), pantalla === "menu" && /*#__PURE__*/_jsx(MenuRepartos, {
+          negocioId: negocioId,
+          repartos: repartos,
+          clientes: clientes,
+          ventas: ventas,
+          recordatorios: recordatorios,
+          onSeleccionar: rep => {
+            setRepartoActual(rep);
+            irA("diasReparto");
+          },
+          onConfig: tab => {
+            setTabConfig(tab || "stock");
+            irA("config");
+          },
+          onResumen: () => irA("resumen"),
+          onStock: () => irA("stock"),
+          onAgenda: () => irA("agenda"),
+          onVolver: () => irA("portada"),
+          saveRepartos: saveRepartos,
+          onOperarReparto: rep => setOperandoReparto(rep),
+          onTodosClientes: () => irA("gestionClientes"),
+          onImportarClientes: () => irA("importarClientes"),
+          onMapaClientes: () => irA("mapaClientes"),
+          tabInicial: tabMenu,
+          onTabChange: setTabMenu,
+          scaleIdx: scaleIdx,
+          onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
+          scaleLabel: SCALE_LABELS[scaleIdx]
+        }), pantalla === "diasReparto" && !repartoActual && (() => {
+          setTimeout(() => irA("menu"), 0);
+          return null;
+        })(), pantalla === "diasReparto" && repartoActual && /*#__PURE__*/_jsx(MenuDias, {
+          dias: DIAS,
+          reparto: repartoActual,
+          onDia: d => {
+            setDiaActual(d);
+            irA("diaPrincipal");
+          },
+          onResumen: () => irA("resumen"),
+          onConfig: () => irA("config"),
+          onGestionClientes: () => irA("gestionClientes"),
+          onPromocion: () => irA("promocion"),
+          onStock: () => irA("stock"),
+          onAgenda: () => irA("agenda"),
+          onVolver: () => irA("menu"),
+          scaleIdx: scaleIdx,
+          onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
+          scaleLabel: SCALE_LABELS[scaleIdx],
+          clientes: clientes.filter(c => c.repartoId === repartoActual.id),
+          ventas: ventas.filter(v => {
+            const cl = clientes.find(c => c.id === v.clienteId);
+            return cl?.repartoId === repartoActual.id;
+          }),
+          stock: stockNorm,
+          recordatoriosActivos: recordatoriosActivos,
+          onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+            ...r,
+            confirmado: true
+          } : r)),
+          onVerConfirmaciones: dia => {
+            setDiaActual(dia);
+            irA("confirmacionesDia");
+          },
+          transferenciasPendientes: DIAS.map(dia => {
+            const clientesRep = clientes.filter(c => c.repartoId === repartoActual.id);
+            const vts = ventas.filter(v => v.dia === dia && (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada && clientesRep.some(c => c.id === v.clienteId));
+            if (!vts.length) return null;
+            const fechas = [...new Set(vts.map(v => v.fechaKey))].sort().reverse();
+            return {
+              dia,
+              fecha: fechas[0] || "",
+              count: vts.length,
+              monto: vts.reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0),
+              ventas: vts
+            };
+          }).filter(Boolean),
+          zonasReparto: zonasReparto,
+          onSetZona: (dia, zona) => {
+            const nz = {
+              ...zonasReparto,
+              [dia]: zona
+            };
+            setZonasReparto(nz);
+            syncData({
+              zonasReparto: nz
+            });
+          },
+          onDiaHoy: (dia, fechaKey) => {
+            setDiaActual(dia);
+            setFechaActual(fechaKey);
+            setFechaObj(new Date(fechaKey + "T12:00:00"));
+            const yaIniciado = planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?.iniciado;
+            irA(yaIniciado ? "clientes" : "inicioReparto");
+          },
+          onDiaResumen: (dia, fechaKey) => {
+            setDiaActual(dia);
+            setFechaActual(fechaKey);
+            setFechaObj(new Date(fechaKey + "T12:00:00"));
+            setInitCierre(!planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?._diaCerrado);
+            irA("planilla");
+          },
+          noVisitas: (noVisitas || []).filter(v => {
+            const cl = clientes.find(c => c.id === v.clienteId);
+            return cl?.repartoId === repartoActual.id;
+          }),
+          prospectos: prospectos || [],
+          onFiados: () => irA("fiadosPendientes")
+        }), pantalla === "confirmacionesDia" && /*#__PURE__*/_jsx(ConfirmacionesDia, {
+          dia: diaActual,
+          ventas: ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada),
+          clientes: clientes,
+          onConfirmar: ventaId => {
+            saveVentas(prev => prev.map(v => v.id === ventaId ? {
+              ...v,
+              transConfirmada: !v.transConfirmada,
+              _upd: Date.now()
+            } : v));
+          },
+          onVolver: () => irA("menu")
+        }), pantalla === "diaPrincipal" && /*#__PURE__*/_jsx(DiaPrincipal, {
+          dia: diaActual,
+          onIrClientes: () => irA("selectorFechaClientes"),
+          onIrPlanilla: () => irA("selectorFechaPlanilla"),
+          onVolver: () => irA("menu"),
+          onVerConfirmaciones: () => irA("confirmacionesDia"),
+          ventasPendientesTransfer: ventas.filter(v => v.dia === diaActual && (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada).length
+        }), pantalla === "selectorFechaPlanilla" && /*#__PURE__*/_jsx(SelectorFecha, {
+          dia: diaActual,
+          repartoId: repartoActual?.id,
+          planillas: planillas,
+          ventas: ventas.filter(v => {
+            const cl = clientes.find(c => c.id === v.clienteId);
+            return !repartoActual || cl?.repartoId === repartoActual.id;
+          }),
+          noVisitas: (noVisitas || []).filter(v => {
+            const cl = clientes.find(c => c.id === v.clienteId);
+            return !repartoActual || cl?.repartoId === repartoActual.id;
+          }),
+          onSeleccionar: (fk, fo) => {
+            setFechaActual(fk);
+            setFechaObj(fo);
+            irA("planilla");
+          },
+          onVolver: () => irA("diaPrincipal")
+        }), pantalla === "planilla" && /*#__PURE__*/_jsx(PlanillaDelDia, {
+          dia: diaActual,
+          fecha: fechaActual,
+          repartoId: repartoActual?.id,
+          ventas: ventas.filter(v => v.dia === diaActual && v.fechaKey === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+          clientes: clientes.filter(c => !repartoActual || c.repartoId === repartoActual.id),
+          planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
+          productos: productos,
+          stock: stockNorm,
+          setStock: setStock,
+          syncData: syncData,
+          onGuardar: d => {
+            savePlanilla(claveDiaReparto(diaActual, fechaActual, repartoActual?.id), d);
+            irA("planilla");
+          },
+          onVolver: () => irA("selectorFechaPlanilla"),
+          onCerrarDia: img => cerrarDia(fechaActual, diaActual, img),
+          initCierre: initCierre,
+          prospectos: prospectos || [],
+          noVisitas: (noVisitas || []).filter(v => {
+            const cl = clientes.find(c => c.id === v.clienteId);
+            return !repartoActual || cl?.repartoId === repartoActual.id;
+          }),
+          cargasDia: cargasDiaDe(repartoActual?.id)
+        }), pantalla === "selectorFechaClientes" && /*#__PURE__*/_jsx(SelectorFecha, {
+          dia: diaActual,
+          repartoId: repartoActual?.id,
+          planillas: planillas,
+          ventas: ventas.filter(v => {
+            const cl = clientes.find(c => c.id === v.clienteId);
+            return !repartoActual || cl?.repartoId === repartoActual.id;
+          }),
+          noVisitas: (noVisitas || []).filter(v => {
+            const cl = clientes.find(c => c.id === v.clienteId);
+            return !repartoActual || cl?.repartoId === repartoActual.id;
+          }),
+          onSeleccionar: (fk, fo) => {
+            setFechaActual(fk);
+            setFechaObj(fo);
+            irA("inicioReparto");
+          },
+          onVolver: () => irA("diaPrincipal")
+        }), pantalla === "inicioReparto" && /*#__PURE__*/_jsx(InicioReparto, {
+          dia: diaActual,
+          fecha: fechaActual,
+          planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
+          productos: productos,
+          cargasDia: cargasDiaDe(repartoActual?.id),
+          stock: stockNorm,
+          onGuardar: (p, descontar) => {
+            savePlanilla(claveDiaReparto(diaActual, fechaActual, repartoActual?.id), p);
+            if (descontar && repartoActual) {
+              const soda = Number(p.productos?.soda?.llenos || 0);
+              const b10 = Number(p.productos?.b10?.llenos || 0);
+              const b20 = Number(p.productos?.b20?.llenos || 0);
+              const s = JSON.parse(JSON.stringify(normStock(stockNorm)));
+              if (!s.camiones[repartoActual.id]) s.camiones[repartoActual.id] = stockCamionVacio();
+              s.soderia.sifon = Math.max(0, (s.soderia.sifon || 0) - soda);
+              s.soderia.bidon10 = Math.max(0, (s.soderia.bidon10 || 0) - b10);
+              s.soderia.bidon20 = Math.max(0, (s.soderia.bidon20 || 0) - b20);
+              s.camiones[repartoActual.id].sifon = (s.camiones[repartoActual.id].sifon || 0) + soda;
+              s.camiones[repartoActual.id].bidon10 = (s.camiones[repartoActual.id].bidon10 || 0) + b10;
+              s.camiones[repartoActual.id].bidon20 = (s.camiones[repartoActual.id].bidon20 || 0) + b20;
+              setStock(normStock(s));
+              syncData({
+                stock: normStock(s)
+              });
+              // La carga real de hoy queda como sugerencia para la próxima vez que
+              // este reparto salga este mismo día — no depende de un número fijo.
+              saveCargasDiaDe(repartoActual.id, prev => ({
+                ...prev,
+                [diaActual]: {
+                  soda,
+                  b10,
+                  b20
+                }
+              }));
+            }
+            irA("clientes");
+          },
+          onVolver: () => irA("selectorFechaClientes")
+        }), pantalla === "clientes" && /*#__PURE__*/_jsx(ListaClientes, {
+          clientes: clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)),
+          dia: diaActual,
+          fecha: fechaActual,
+          ventas: ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+          todasVentas: ventas,
+          noVisitas: (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+          onEditarCliente: (id, cambios) => updateCliente(id, cambios),
+          onSeleccionar: c => {
+            setClienteId(c.id);
+            irA("detalleCliente");
+          },
+          onEntregar: c => {
+            setClienteId(c.id);
+            irA("venta");
+          },
+          onNuevoCliente: () => irA("nuevoCliente"),
+          onVolver: () => irA("selectorFechaClientes"),
+          onReordenar: lista => {
+            saveClientes(prev => [...prev.filter(c => c.dia !== diaActual), ...lista]);
+          },
+          onRegistrarNoVisita: (clienteId, motivo) => {
+            saveNoVisitas(prev => [...(prev || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+              clienteId,
+              dia: diaActual,
+              fecha: fechaActual,
+              motivo,
+              _upd: Date.now()
+            }]);
+          },
+          onQuitarNoVisita: clienteId => {
+            saveNoVisitas(prev => (prev || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)));
+          },
+          onConfirmarTransfer: (clienteId, ventaId) => {
+            saveVentas(prev => prev.map(v => v.id === ventaId ? {
+              ...v,
+              transConfirmada: !v.transConfirmada,
+              _upd: Date.now()
+            } : v));
+          },
+          prospectos: (prospectos || []).filter(p => p.dia === diaActual && p.estado === "activo"),
+          recordatorios: recordatorios,
+          onVentaProspecto: p => {
+            saveClientes(prev => prev.find(c => c.id === p.id) ? prev : [...prev, {
+              ...p,
+              saldo: 0,
+              _esProspecto: true
+            }]);
+            setClienteId(p.id);
+            irA("venta");
+          },
+          onNoEstaProspecto: id => {
+            saveNoVisitas(prev => [...(prev || []).filter(v => !(v.clienteId === id && v.dia === diaActual && v.fecha === fechaActual)), {
+              clienteId: id,
+              dia: diaActual,
+              fecha: fechaActual,
+              motivo: "noesta",
+              _upd: Date.now()
+            }]);
+          },
+          onVerProspecto: p => {
+            saveClientes(prev => prev.find(c => c.id === p.id) ? prev : [...prev, {
+              ...p,
+              saldo: p.saldo || 0,
+              _esProspecto: true
+            }]);
+            setClienteId(p.id);
+            irA("detalleCliente");
+          },
+          onIrPlanilla: () => {
+            setInitCierre(!planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)]?._diaCerrado);
+            irA("planilla");
+          },
+          onIrMenu: () => irA("menu"),
+          onAbrirMapa: () => irA("mapaClientes")
+        }), pantalla === "detalleCliente" && cliente && /*#__PURE__*/_jsx(DetalleCliente, {
+          cliente: cliente,
+          ventas: ventas.filter(v => v.clienteId === cliente.id),
+          dia: diaActual,
+          fecha: fechaActual,
+          productos: productos,
+          onVenta: () => irA("venta"),
+          onVolver: () => irA("clientes"),
+          onEditar: cambios => updateCliente(cliente.id, cambios),
+          onEliminarVenta: eliminarVenta,
+          onEditarVenta: editarVenta,
+          onEliminarCliente: () => eliminarCliente(cliente.id),
+          onNoEstaCliente: () => {
+            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
+              clienteId: cliente.id,
+              dia: diaActual,
+              fecha: fechaActual,
+              motivo: "noesta",
+              _upd: Date.now()
+            }];
+            saveNoVisitas(nv);
+            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+            const ventasIds = new Set(ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId));
+            const noVMap = {};
+            nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
+              noVMap[v.clienteId] = v.motivo;
+            });
+            const terminados = new Set(clientesDia.filter(c => ventasIds.has(c.id) || noVMap[c.id] === "noquiso" || noVMap[c.id] === "noesta2").map(c => c.id));
+            const normalPend = clientesDia.filter(c => !terminados.has(c.id) && noVMap[c.id] !== "noesta" && c.id !== cliente.id);
+            const noestaPend = clientesDia.filter(c => noVMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== cliente.id);
+            const sig = normalPend[0] || noestaPend[0];
+            if (sig) {
+              setClienteId(sig.id);
+              irA("detalleCliente");
+            } else irA("clientes");
+          },
+          onNoQuiereCliente: () => {
+            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
+              clienteId: cliente.id,
+              dia: diaActual,
+              fecha: fechaActual,
+              motivo: "noquiso",
+              _upd: Date.now()
+            }];
+            saveNoVisitas(nv);
+            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+            const ventasIds = new Set(ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId));
+            const noVMap = {};
+            nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
+              noVMap[v.clienteId] = v.motivo;
+            });
+            const terminados = new Set(clientesDia.filter(c => ventasIds.has(c.id) || noVMap[c.id] === "noquiso" || noVMap[c.id] === "noesta2").map(c => c.id));
+            const normalPend = clientesDia.filter(c => !terminados.has(c.id) && noVMap[c.id] !== "noesta" && c.id !== cliente.id);
+            const noestaPend = clientesDia.filter(c => noVMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== cliente.id);
+            const sig = normalPend[0] || noestaPend[0];
+            if (sig) {
+              setClienteId(sig.id);
+              irA("detalleCliente");
+            } else irA("clientes");
+          },
+          recordatorios: recordatorios,
+          onGuardarRecordatorio: r => saveRecordatorios(prev => [...(prev || []), r]),
+          onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+            ...r,
+            confirmado: true
+          } : r)),
+          onCobrarSaldo: (monto, pago) => {
+            const c = cliente;
+            const det = [{
+              nombre: "Cobro de deuda",
+              cantidad: 1,
+              precio: 0,
+              total: 0
+            }];
+            const vt = {
+              id: Date.now(),
+              clienteId: c.id,
+              cliente: c.nombre,
+              dia: diaActual,
+              fechaKey: fechaActual,
+              fecha: new Date().toLocaleString("es-AR"),
+              detalle: det,
+              pago,
+              obs: `Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,
+              saldoAplicado: 0,
+              neto: 0,
+              bruto: 0,
+              desc: 0,
+              costo: 0,
+              ganancia: 0,
+              pagadoNum: monto,
+              saldoDelta: monto,
+              envPrest: [],
+              envDev: [],
+              _esCobro: true,
+              _upd: Date.now()
+            };
+            saveVentas(prev => [...prev, vt]);
+            saveClientes(prev => prev.map(x => x.id === c.id ? {
+              ...x,
+              saldo: (Number(x.saldo) || 0) + monto
+            } : x));
+          },
+          onGuardarCambio: vt => {
+            saveVentas(prev => [...prev, vt]);
+          }
+        }), pantalla === "venta" && cliente && /*#__PURE__*/_jsx(NuevaVenta, {
+          cliente: cliente,
+          productos: productos,
+          fecha: fechaActual,
+          ventasCliente: ventas.filter(v => v.clienteId === cliente.id),
+          progressData: (() => {
+            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id));
+            const ventasHoy = ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste);
+            const noVHoy = (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual);
+            const visitadosIds = new Set([...ventasHoy.map(v => v.clienteId), ...noVHoy.map(v => v.clienteId)]);
+            const montoHoy = ventasHoy.reduce((a, v) => a + (v.neto || 0), 0);
+            const sifs = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Sifón 1.5L").reduce((b, d) => b + d.cantidad, 0), 0);
+            const b10 = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Bidón 10L").reduce((b, d) => b + d.cantidad, 0), 0);
+            const b20 = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Bidón 20L").reduce((b, d) => b + d.cantidad, 0), 0);
+            const planillaHoy = planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || {};
+            return {
+              visitados: visitadosIds.size,
+              total: clientesDia.length,
+              montoHoy,
+              stock: {
+                "Sif": Math.max(0, (Number(planillaHoy.productos?.soda?.llenos) || 0) - sifs),
+                "10L": Math.max(0, (Number(planillaHoy.productos?.b10?.llenos) || 0) - b10),
+                "20L": Math.max(0, (Number(planillaHoy.productos?.b20?.llenos) || 0) - b20)
+              }
+            };
+          })(),
+          onNoEsta: () => {
+            const base = noVisitas || [];
+            const anterior = base.find(v => v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual);
+            const motivo = anterior?.motivo === "noesta" ? "noesta2" : "noesta";
+            const nv = [...base.filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+              clienteId,
+              dia: diaActual,
+              fecha: fechaActual,
+              motivo,
+              _upd: Date.now()
+            }];
+            saveNoVisitas(nv);
+            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+            const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta")).map(v => v.clienteId)]);
+            visitadosIds.add(clienteId);
+            const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
+            if (siguiente) {
+              setClienteId(siguiente.id);
+              irA("venta");
+            } else irA("clientes");
+          },
+          onNoQuiere: () => {
+            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+              clienteId,
+              dia: diaActual,
+              fecha: fechaActual,
+              motivo: "noquiso",
+              _upd: Date.now()
+            }];
+            saveNoVisitas(nv);
+            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+            const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta")).map(v => v.clienteId)]);
+            visitadosIds.add(clienteId);
+            const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
+            if (siguiente) {
+              setClienteId(siguiente.id);
+              irA("venta");
+            } else irA("clientes");
+          },
+          onGuardar: (d, p, m, sa, ep, ed, obs, op, mt2, sd, tc) => {
+            registrarVenta(d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
+            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+            const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...(noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta" || v.motivo === "salteado")).map(v => v.clienteId)]);
+            visitadosIds.add(clienteId);
+            const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
+            if (siguiente) {
+              setClienteId(siguiente.id);
+              irA("venta");
+            } else irA("clientes");
+          },
+          onSaltar: () => {
+            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+              clienteId,
+              dia: diaActual,
+              fecha: fechaActual,
+              motivo: "salteado",
+              _upd: Date.now()
+            }];
+            saveNoVisitas(nv);
+            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+            const nvMap = {};
+            nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
+              nvMap[v.clienteId] = v.motivo;
+            });
+            const terminados = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2")).map(v => v.clienteId)]);
+            const normalPend = clientesDia.filter(c => !terminados.has(c.id) && nvMap[c.id] !== "noesta" && nvMap[c.id] !== "salteado" && c.id !== clienteId);
+            const noestaPend = clientesDia.filter(c => nvMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== clienteId);
+            const saltadosPend = clientesDia.filter(c => nvMap[c.id] === "salteado" && c.id !== clienteId);
+            const sig = normalPend[0] || noestaPend[0] || saltadosPend[0];
+            if (sig) {
+              setClienteId(sig.id);
+              irA("venta");
+            } else irA("clientes");
+          },
+          onVolver: () => irA("detalleCliente")
+        }, clienteId), pantalla === "nuevoCliente" && /*#__PURE__*/_jsx(NuevoCliente, {
+          diaActual: diaActual,
+          repartoActual: repartoActual,
+          onGuardar: datos => {
+            const orden = datos.orden;
+            saveClientes(prevC => {
+              let base = prevC;
+              if (orden && prevC.some(c => c.dia === datos.dia && (c.orden || 0) === Number(orden))) {
+                base = prevC.map(c => c.dia === datos.dia && (c.orden || 0) >= Number(orden) ? {
+                  ...c,
+                  orden: (c.orden || 0) + 1
+                } : c);
+              }
+              return [...base, {
+                ...datos,
+                id: Date.now(),
+                saldo: 0,
+                dispenser: datos.dispenser || 0,
+                repartoId: repartoActual?.id || null
+              }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
+            });
+            irA("clientes");
+          },
+          onVolver: () => irA("clientes")
+        }), pantalla === "historial" && /*#__PURE__*/_jsx(CargaHistorica, {
+          clientes: clientes,
+          productos: productos,
+          onGuardar: vts => {
+            saveVentas(prev => [...prev, ...vts]);
+            irA("menu");
+          },
+          onVolver: () => irA("menu")
+        }), pantalla === "promocion" && /*#__PURE__*/_jsx(Promocion, {
+          prospectos: prospectos,
+          clientes: clientes,
+          onSave: saveProspectos,
+          onConvertir: p => {
+            const nuevo = {
+              ...p,
+              id: Date.now(),
+              saldo: 0,
+              sifon: 0,
+              bidon10: 1,
+              bidon20: 0
+            };
+            saveClientes(prev => [...prev, nuevo]);
+            saveProspectos(prev => (prev || []).map(x => x.id === p.id ? {
+              ...x,
+              estado: "convertido"
+            } : x));
+            irA("promocion");
+          },
+          onVolver: () => irA("menu")
+        }), pantalla === "gestionClientes" && /*#__PURE__*/_jsx(GestionClientes, {
+          clientes: clientes,
+          repartos: repartos,
+          repartoActual: repartoActual,
+          onIrTab: irA,
+          onReordenarTodo: lista => saveClientes(lista),
+          onEditar: (id, cambios) => {
+            saveClientes(prev => prev.map(c => c.id === id ? {
+              ...c,
+              ...cambios
+            } : c));
+          },
+          onEliminar: id => {
+            if (window.confirm("¿Eliminar cliente?")) {
+              saveClientes(prev => {
+                const eliminado = prev.find(c => c.id === id);
+                let nc = prev.filter(c => c.id !== id);
+                if (eliminado) nc = renumerarTrasEliminar(nc, eliminado);
+                return nc;
+              });
+            }
+          },
+          onNuevo: datos => {
+            const orden = datos.orden;
+            saveClientes(prevC => {
+              let nuevos;
+              if (orden && prevC.some(c => c.dia === datos.dia && c.orden === orden)) {
+                // Shift all clients with same day and order >= new order
+                nuevos = prevC.map(c => c.dia === datos.dia && (c.orden || 0) >= orden ? {
+                  ...c,
+                  orden: (c.orden || 0) + 1
+                } : c);
+              } else {
+                nuevos = [...prevC];
+              }
+              return [...nuevos, {
+                ...datos,
+                id: Date.now(),
+                saldo: 0,
+                dispenser: datos.dispenser || 0
+              }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
+            });
+          },
+          onVolver: () => irA("menu"),
+          onRegistrarVenta: c => {
+            setClienteId(c.id);
+            // Asegurar que fechaActual esté seteado a hoy
+            const hoyKey = new Date().toLocaleDateString("en-CA");
+            if (!fechaActual) setFechaActual(hoyKey);
+            // Si no hay diaActual, usar el día del cliente como fallback
+            if (!diaActual) setDiaActual(c.dia);
+            irA("venta");
+          },
+          onVerDetalle: c => {
+            setClienteId(c.id);
+            irA("detalleDesdeGestion");
+          },
+          ventas: ventas,
+          productos: productos,
+          onGuardarCambio: vt => {
+            saveVentas(prev => [...prev, vt]);
+          }
+        }), pantalla === "clientesDormidos" && /*#__PURE__*/_jsxs(React.Fragment, {
+          children: [/*#__PURE__*/_jsx(ClientesTabs, {
+            activo: "dormidos",
+            onIr: irA
+          }), /*#__PURE__*/_jsx(ClientesDormidos, {
+            clientes: clientes,
+            ventas: ventas,
+            repartos: repartos,
+            onVolver: () => irA("gestionClientes"),
+            onSeleccionar: c => {
+              setClienteId(c.id);
+              irA("detalleDesdeGestion");
+            },
+            onEditarCliente: (id, cambios) => {
+              saveClientes(prev => prev.map(c => c.id === id ? {
+                ...c,
+                ...cambios
+              } : c));
+            },
+            onEliminar: eliminarCliente,
+            onPerdida: registrarPerdida
+          })]
+        }), pantalla === "detalleDesdeGestion" && cliente && /*#__PURE__*/_jsx(DetalleCliente, {
+          cliente: cliente,
+          ventas: ventas.filter(v => v.clienteId === cliente.id),
+          dia: diaActual || cliente.dia,
+          fecha: fechaActual,
+          productos: productos,
+          onVenta: () => {
+            setDiaActual(cliente.dia);
+            const hoy = new Date().toLocaleDateString("en-CA");
+            if (!fechaActual) setFechaActual(hoy);
+            irA("venta");
+          },
+          onVolver: () => irA("gestionClientes"),
+          onEditar: cambios => updateCliente(cliente.id, cambios),
+          onEliminarVenta: eliminarVenta,
+          onEditarVenta: editarVenta,
+          onEliminarCliente: () => {
+            eliminarCliente(cliente.id);
+            irA("gestionClientes");
+          },
+          onNoEstaCliente: () => {},
+          onNoQuiereCliente: () => {},
+          recordatorios: recordatorios,
+          onGuardarRecordatorio: r => saveRecordatorios(prev => [...(prev || []), r]),
+          onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+            ...r,
+            confirmado: true
+          } : r)),
+          onCobrarSaldo: (monto, pago) => {
+            if (cliente) {
+              const det = [{
+                nombre: "Cobro de deuda",
+                cantidad: 1,
+                precio: 0,
+                total: 0
+              }];
+              const fk = fechaActual || new Date().toLocaleDateString("en-CA");
+              const vt = {
+                id: Date.now(),
+                clienteId: cliente.id,
+                cliente: cliente.nombre,
+                dia: diaActual || cliente.dia,
+                fechaKey: fk,
+                fecha: new Date().toLocaleString("es-AR"),
+                detalle: det,
+                pago,
+                obs: `Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,
+                saldoAplicado: 0,
+                neto: 0,
+                bruto: 0,
+                desc: 0,
+                costo: 0,
+                ganancia: 0,
+                pagadoNum: monto,
+                saldoDelta: monto,
+                envPrest: [],
+                envDev: [],
+                saldoAntes: cliente.saldo || 0,
+                saldoDespues: (cliente.saldo || 0) + monto,
+                _esCobro: true,
+                _upd: Date.now()
+              };
+              saveVentas(prev => [...prev, vt]);
+              saveClientes(prev => prev.map(x => x.id === cliente.id ? {
+                ...x,
+                saldo: (Number(x.saldo) || 0) + monto
+              } : x));
+            }
+          },
+          onGuardarCambio: vt => {
+            saveVentas(prev => [...prev, vt]);
+          }
+        }), pantalla === "importarClientes" && /*#__PURE__*/_jsx(ImportarClientesExcel, {
+          repartos: repartos,
+          clientes: clientes,
+          repartoPreseleccionado: repartoActual,
+          onGuardar: nuevos => {
+            saveClientes(prev => [...prev, ...nuevos]);
+            irA("menu");
+          },
+          onVolver: () => irA("menu")
+        }), pantalla === "mapaClientes" && /*#__PURE__*/_jsxs(React.Fragment, {
+          children: [/*#__PURE__*/_jsx(ClientesTabs, {
+            activo: "mapa",
+            onIr: irA
+          }), /*#__PURE__*/_jsx(MapaClientes, {
+            clientes: clientes,
+            dia: diaActual,
+            fecha: fechaActual,
+            ventas: ventas,
+            noVisitas: noVisitas,
+            onSeleccionar: c => {
+              setClienteId(c.id);
+              irA("detalleDesdeGestion");
+            },
+            onActualizar: nuevosClientes => saveClientes(nuevosClientes),
+            onVolver: () => irA("menu")
+          })]
+        }), pantalla === "agenda" && /*#__PURE__*/_jsx(AgendaScreen, {
+          recordatorios: recordatorios || [],
+          clientes: clientes,
+          repartidores: repartidoresUnicos,
+          onConfirmar: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+            ...r,
+            confirmado: true
+          } : r)),
+          onEliminar: id => saveRecordatorios(prev => (prev || []).filter(r => r.id !== id)),
+          onNuevo: datos => {
+            const c = clientes.find(x => x.id === datos.clienteId);
+            if (!c) {
+              alert("Seleccioná un cliente");
+              return;
+            }
+            saveRecordatorios(prev => [...(prev || []), {
+              ...datos,
+              id: Date.now(),
+              clienteId: c.id,
+              clienteNombre: c.nombre,
+              dia: c.dia,
+              confirmado: false,
+              paraRepartidor: datos.paraRepartidor || null
+            }]);
+          },
+          onIrCliente: cId => {
+            const c = clientes.find(x => x.id === cId);
+            if (c) {
+              setClienteId(cId);
+              setDiaActual(c.dia);
+              irA("detalleCliente");
+            }
+          },
+          onVolver: () => irA("menu")
+        }), pantalla === "stock" && /*#__PURE__*/_jsx(StockGeneral, {
+          stock: stockNorm,
+          setStock: ns => {
+            setStock(ns);
+            syncData({
+              stock: ns
+            });
+          },
+          clientes: clientes,
+          setClientes: saveClientes,
+          ventas: ventas,
+          productos: productos,
+          setProductos: saveProductos,
+          cargasDia: cargasDiaDe(repartoActual?.id),
+          setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
+          planillas: planillas,
+          repartos: repartos,
+          perdidas: perdidas,
+          registrarPerdida: registrarPerdida,
+          onVolver: () => irA("menu"),
+          onResumen: () => irA("resumen")
+        }), pantalla === "fiadosPendientes" && /*#__PURE__*/_jsxs(React.Fragment, {
+          children: [/*#__PURE__*/_jsx(ClientesTabs, {
+            activo: "fiados",
+            onIr: irA
+          }), /*#__PURE__*/_jsx(FiadosPendientes, {
+            clientes: clientes,
+            ventas: ventas,
+            onEditarCliente: (id, cambios) => updateCliente(id, cambios),
+            onCobrar: (cId, monto, pago) => {
+              const cl = clientes.find(c => c.id === cId);
+              if (!cl) return;
+              const vt = {
+                id: Date.now(),
+                clienteId: cl.id,
+                cliente: cl.nombre,
+                dia: cl.dia,
+                fechaKey: new Date().toLocaleDateString("en-CA"),
+                fecha: new Date().toLocaleString("es-AR"),
+                detalle: [{
+                  nombre: "Cobro de deuda",
+                  cantidad: 1,
+                  precio: 0,
+                  total: 0
+                }],
+                pago,
+                obs: `Cobro de deuda ${fmt(monto)} (${pago})`,
+                neto: 0,
+                bruto: 0,
+                desc: 0,
+                costo: 0,
+                ganancia: 0,
+                pagadoNum: monto,
+                saldoDelta: monto,
+                envPrest: [],
+                envDev: [],
+                saldoAntes: cl.saldo || 0,
+                saldoDespues: (cl.saldo || 0) + monto,
+                _esCobro: true,
+                _upd: Date.now()
+              };
+              saveVentas(prev => [...prev, vt]);
+              saveClientes(prev => prev.map(c => c.id === cId ? {
+                ...c,
+                saldo: (Number(c.saldo) || 0) + monto
+              } : c));
+            },
+            onVolver: () => irA("menu")
+          })]
+        }), pantalla === "resumen" && /*#__PURE__*/_jsx(Resumen, {
+          ventas: ventas,
+          clientes: clientes,
+          productos: productos,
+          planillas: planillas,
+          noVisitas: noVisitas || [],
+          repartos: repartos,
+          onVolver: () => irA("menu")
+        }), pantalla === "config" && /*#__PURE__*/_jsx(Config, {
+          productos: productos,
+          setProductos: saveProductos,
+          clientes: clientes,
+          setClientes: saveClientes,
+          ventas: ventas,
+          setVentas: saveVentas,
+          planillas: planillas,
+          setPlanillas: savePlanillasCloud,
+          stock: stockNorm,
+          setStock: s => {
+            const ns = normStock(s);
+            setStockRaw(ns);
+            syncData({
+              stock: ns
+            });
+          },
+          cargasDia: cargasDiaDe(repartoActual?.id),
+          setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
+          syncData: syncData,
+          onVolver: () => irA("menu"),
+          negocioId: negocioId,
+          tabInicial: tabConfig,
+          repartos: repartos,
+          repartoActual: repartoActual
+        })]
+      })]
+    }), modalResumenDia && (() => {
+      const {
+        dia,
+        fechaKey
+      } = modalResumenDia;
+      const vDia = ventas.filter(v => v.fechaKey === fechaKey && v.dia === dia && !v._esCobro && !v._esAjuste);
+      const ef = vDia.filter(v => v.pago === "contado").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+      const tr = vDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+      const trP = tr - vDia.filter(v => v.pago === "transferencia" && v.transConfirmada).reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+      const fi = vDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
+      return /*#__PURE__*/_jsx("div", {
+        style: {
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.75)",
+          zIndex: 2000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 20
+        },
+        children: /*#__PURE__*/_jsxs("div", {
+          style: {
+            background: "var(--color-background-primary)",
+            borderRadius: 16,
+            padding: 24,
+            width: "100%",
+            maxWidth: 360,
+            display: "flex",
+            flexDirection: "column",
+            gap: 14
+          },
+          children: [/*#__PURE__*/_jsxs("div", {
+            style: {
+              textAlign: "center"
+            },
+            children: [/*#__PURE__*/_jsx("div", {
+              style: {
+                fontSize: 36
+              },
+              children: "✅"
+            }), /*#__PURE__*/_jsx("div", {
+              style: {
+                fontSize: 17,
+                fontWeight: 600,
+                color: "var(--color-text-primary)"
+              },
+              children: "Día completado"
+            }), /*#__PURE__*/_jsxs("div", {
+              style: {
+                fontSize: 12,
+                color: "var(--color-text-tertiary)",
+                textTransform: "capitalize"
+              },
+              children: [dia, " · ", new Date(fechaKey + "T12:00:00").toLocaleDateString("es-AR", {
+                day: "numeric",
+                month: "long"
+              })]
+            })]
+          }), /*#__PURE__*/_jsxs("div", {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 8
+            },
+            children: [[["💵 Efectivo", ef, "success"], ["💳 Transferencias", tr, "info"], ...(trP > 0 ? [["  🔴 Pendientes", trP, "warning"]] : []), ["📋 Fiado nuevo", fi, "warning"]].map(([l, v, cl]) => /*#__PURE__*/_jsxs("div", {
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "var(--color-background-secondary)"
+              },
+              children: [/*#__PURE__*/_jsx("span", {
+                style: {
+                  fontSize: 13,
+                  color: "var(--color-text-secondary)"
+                },
+                children: l
+              }), /*#__PURE__*/_jsx("span", {
+                style: {
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: `var(--color-text-${cl})`
+                },
+                children: fmt(v)
+              })]
+            }, l)), /*#__PURE__*/_jsxs("div", {
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "10px 12px",
+                borderRadius: 8,
+                background: "var(--color-background-tertiary)"
+              },
+              children: [/*#__PURE__*/_jsx("span", {
+                style: {
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--color-text-primary)"
+                },
+                children: "Total del día"
+              }), /*#__PURE__*/_jsx("span", {
+                style: {
+                  fontSize: 17,
+                  fontWeight: 700,
+                  color: "var(--color-text-success)"
+                },
+                children: fmt(ef + tr + fi)
+              })]
+            })]
+          }), /*#__PURE__*/_jsx("button", {
+            style: {
+              ...s.btnPrimary
+            },
+            onClick: () => {
+              setModalResumenDia(null);
+              irA("planilla");
+            },
+            children: "Ver planilla completa →"
+          }), /*#__PURE__*/_jsx("button", {
+            style: {
+              ...s.btn,
+              textAlign: "center"
+            },
+            onClick: () => setModalResumenDia(null),
+            children: "Cerrar"
+          })]
+        })
+      });
+    })(), deshacerVenta && /*#__PURE__*/_jsxs("div", {
+      style: {
+        position: "fixed",
+        left: 14,
+        right: 14,
+        bottom: 18,
+        zIndex: 999,
+        background: "var(--color-background-tertiary)",
+        border: "1px solid var(--color-border-secondary)",
+        borderRadius: 12,
+        padding: "12px 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.35)"
+      },
+      children: [/*#__PURE__*/_jsx("span", {
+        style: {
+          fontSize: 13,
+          color: "var(--color-text-primary)",
+          flex: 1
+        },
+        children: "🗑️ Venta eliminada"
+      }), /*#__PURE__*/_jsx("button", {
+        style: {
+          background: "#185FA5",
+          color: "#e2eaf4",
+          border: "none",
+          borderRadius: 8,
+          padding: "8px 16px",
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: "pointer"
+        },
+        onClick: deshacerUltimaVenta,
+        children: "↩️ Deshacer"
+      })]
+    })]
+  });
+}
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      error: null
+    };
+  }
+  static getDerivedStateFromError(e) {
+    return {
+      error: e
+    };
+  }
+  componentDidCatch(e, info) {
+    console.error("App error:", e, info);
+  }
+  render() {
+    if (this.state.error) return /*#__PURE__*/_jsxs("div", {
+      style: {
+        padding: 40,
+        textAlign: "center",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#0f1923"
+      },
+      children: [/*#__PURE__*/_jsx("div", {
+        style: {
+          fontSize: 40,
+          marginBottom: 16
+        },
+        children: "⚠️"
+      }), /*#__PURE__*/_jsx("div", {
+        style: {
+          fontSize: 18,
+          fontWeight: 500,
+          color: "#f07070",
+          marginBottom: 8
+        },
+        children: "Algo salió mal"
+      }), /*#__PURE__*/_jsx("div", {
+        style: {
+          fontSize: 13,
+          color: "#7a9ab8",
+          marginBottom: 20,
+          maxWidth: 300
+        },
+        children: String(this.state.error.message || "Error desconocido")
+      }), /*#__PURE__*/_jsx("button", {
+        style: {
+          background: "#185FA5",
+          color: "#fff",
+          border: "none",
+          borderRadius: 8,
+          padding: "10px 24px",
+          fontSize: 14,
+          cursor: "pointer"
+        },
+        onClick: () => {
+          this.setState({
+            error: null
+          });
+          window.location.hash = "portada";
+        },
+        children: "Reiniciar app"
+      })]
+    });
+    return this.props.children;
+  }
+}
+
+// ── CONSTANTES DE SEGURIDAD ──────────────────────────────────────────────────
+
+// ── Render raíz ──────────────────────────────────────────────
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(/*#__PURE__*/_jsx(ErrorBoundary, {
+  children: /*#__PURE__*/_jsx(App, {})
+}));
