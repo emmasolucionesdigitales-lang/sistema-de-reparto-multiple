@@ -469,6 +469,7 @@ self.addEventListener('notificationclick',e=>{
   <meta name="apple-mobile-web-app-title" content="Reparto Multi">
   <link rel="apple-touch-icon" href="icon-192.png">
   <script>
+(function(){
     // Migrate old stock format in localStorage before React loads
     try {
       var rawStock = localStorage.getItem('cat_stock_v4');
@@ -487,7 +488,9 @@ self.addEventListener('notificationclick',e=>{
       localStorage.removeItem('cat_stock_v3');
       localStorage.removeItem('cat_stock');
     } catch(e) {}
-  </script>
+  
+})();
+</script>
 
 <script>
   // ── Push Notifications (dueño y repartidor) ──────────────────────────
