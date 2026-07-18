@@ -1546,7 +1546,7 @@ function AppRepartidor({
     repartoId: miReparto?.id,
     ventas: ventas.filter(v => {
       const cl = todosClientes.find(c => c.id === v.clienteId);
-      return !miReparto || cl?.repartoId === miReparto.id;
+      return v.dia === diaActual && v.fechaKey === fechaActual && (!miReparto || cl?.repartoId === miReparto.id);
     }),
     clientes: clientes,
     planilla: planillas[claveDiaReparto(diaActual, fechaActual, miReparto?.id)] || planillaDiaVacia(),
