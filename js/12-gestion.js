@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  12-gestion.js — GestionClientes · FormCliente · Resumen · exportar · importar · Calculadora
 // ════════════════════════════════════════════════════════════════════
@@ -87,975 +86,881 @@ function GestionClientes({
     if (a.dia !== b.dia) return DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia);
     return (a.orden || 9999) - (b.orden || 9999);
   });
-  return /*#__PURE__*/_jsxs(_Fragment, {
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: s.screen,
-      children: [/*#__PURE__*/_jsx(HeaderApp, {
-        titulo: "Gestión de clientes",
-        onVolver: onVolver
-      }), onIrTab && /*#__PURE__*/_jsx(ClientesTabs, {
-        activo: "todos",
-        onIr: onIrTab
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          padding: "10px 14px 6px"
-        },
-        children: [/*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Buscar por domicilio, nombre o teléfono...",
-          value: busqueda,
-          onChange: e => setBusqueda(e.target.value)
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            marginTop: 8,
-            flexWrap: "wrap",
-            alignItems: "center"
-          },
-          children: [["todos", ...DIAS].map(d => /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "3px 10px",
-              background: filtroDia === d ? "#185FA5" : "var(--color-background-tertiary)",
-              color: filtroDia === d ? "#e2eaf4" : "var(--color-text-secondary)",
-              border: filtroDia === d ? "none" : "0.5px solid var(--color-border-secondary)"
-            },
-            onClick: () => setFiltroDia(d),
-            children: d === "todos" ? "Todos" : d
-          }, d)), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "3px 10px",
-              marginLeft: "auto",
-              background: "#185FA5",
-              color: "#e2eaf4",
-              border: "none"
-            },
-            onClick: () => {
-              setModoNuevo(true);
-              setEditandoId(null);
-            },
-            children: "+ Nuevo"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "3px 10px"
-            },
-            onClick: () => {
-              const porDia = {};
-              DIAS.forEach(d => {
-                porDia[d] = [...clientes].filter(c => c.dia === d).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-              });
-              const compactados = clientes.map(c => {
-                const lista = porDia[c.dia];
-                const idx = lista.findIndex(x => x.id === c.id);
-                return idx >= 0 ? {
-                  ...c,
-                  orden: idx + 1
-                } : c;
-              });
-              if (window.confirm("¿Reordenar todos los clientes eliminando los huecos en la numeración?")) onReordenarTodo(compactados);
-            },
-            children: "↺ Reordenar"
-          })]
-        }), repartos && repartos.length > 0 && /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            marginTop: 6,
-            flexWrap: "wrap",
-            overflowX: "auto"
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "3px 10px",
-              background: filtroRepartidor === "todos" ? "#0e7c6b" : "var(--color-background-tertiary)",
-              color: filtroRepartidor === "todos" ? "#e2eaf4" : "var(--color-text-secondary)",
-              border: filtroRepartidor === "todos" ? "none" : "0.5px solid var(--color-border-secondary)"
-            },
-            onClick: () => setFiltroRepartidor("todos"),
-            children: "🚚 Todos"
-          }), [...repartos].sort((a, b) => (a.numero || 0) - (b.numero || 0)).map(r => /*#__PURE__*/_jsxs("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "3px 10px",
-              flexShrink: 0,
-              background: filtroRepartidor === r.id ? "#0e7c6b" : "var(--color-background-tertiary)",
-              color: filtroRepartidor === r.id ? "#e2eaf4" : "var(--color-text-secondary)",
-              border: filtroRepartidor === r.id ? "none" : "0.5px solid var(--color-border-secondary)"
-            },
-            onClick: () => setFiltroRepartidor(r.id),
-            children: ["Rep.", r.numero, " · ", (r.repartidorNombre || "").split(" ")[0]]
-          }, r.id))]
-        }), /*#__PURE__*/_jsx("p", {
-          style: {
-            fontSize: 11,
-            color: clienteMoviendo ? "var(--color-text-warning)" : "var(--color-text-tertiary)",
-            marginTop: 6,
-            fontWeight: clienteMoviendo ? 600 : 400
-          },
-          children: clienteMoviendo ? `📍 Tocá el # de dónde debería ir "${clientes.find(c => c.id === clienteMoviendo)?.nombre || ""}" (mismo día · tocá el mismo para cancelar)` : `${filtrados.length} clientes${filtroDia !== "todos" ? ` · ${filtroDia}` : ""} · Tocá el # de un cliente para moverlo dentro de su día`
-        })]
-      }), modoNuevo && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "6px 14px",
-          borderLeft: "3px solid #185FA5"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.row,
-            justifyContent: "space-between",
-            marginBottom: 10
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: "Nuevo cliente"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "3px 10px"
-            },
-            onClick: () => setModoNuevo(false),
-            children: "Cancelar"
-          })]
-        }), /*#__PURE__*/_jsx(FormCliente, {
-          inicial: {
-            nombre: "",
-            dia: "Martes",
-            barrio: "",
-            manzana: "",
-            lote: "",
-            sector: "",
-            calle: "",
-            nro: "",
-            aclaracion: "",
-            telefono: "",
-            maps: "",
-            notas: "",
-            sifon: 0,
-            bidon10: 0,
-            bidon20: 0,
-            orden: ""
-          },
-          onGuardar: datos => {
-            onNuevo(datos);
-            setModoNuevo(false);
-          },
-          repartos: repartos
-        })]
-      }), filtrados.map(c => /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          borderLeft: editandoId === c.id ? "3px solid #5daaff" : "0.5px solid var(--color-border-tertiary)"
-        },
-        children: editandoId === c.id ? /*#__PURE__*/_jsxs(_Fragment, {
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              ...s.row,
-              justifyContent: "space-between",
-              marginBottom: 10
-            },
-            children: [/*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--color-text-primary)"
-              },
-              children: "Editando"
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                ...s.btn,
-                fontSize: 11,
-                padding: "3px 10px"
-              },
-              onClick: () => setEditandoId(null),
-              children: "Cancelar"
-            })]
-          }), /*#__PURE__*/_jsx(FormCliente, {
-            inicial: c,
-            onGuardar: datos => {
-              onEditar(c.id, datos);
-              setEditandoId(null);
-            },
-            repartos: repartos
-          }), (() => {
-            const ex = extraEnvases[c.id] || {
-              sifon: 0,
-              bidon10: 0,
-              bidon20: 0
-            };
-            // total actual prestado = calculado desde ventas + ajuste manual
-            // el usuario edita el TOTAL directamente; envAjuste = total - ex
-            const aj = c.envAjuste || {
-              sifon: 0,
-              bidon10: 0,
-              bidon20: 0
-            };
-            const total = {
-              sifon: ex.sifon + (aj.sifon || 0),
-              bidon10: ex.bidon10 + (aj.bidon10 || 0),
-              bidon20: ex.bidon20 + (aj.bidon20 || 0)
-            };
-            const setTotal = (k, val) => {
-              const n = Number(val) || 0;
-              onEditar(c.id, {
-                envAjuste: {
-                  ...aj,
-                  [k]: n - (ex[k] || 0)
-                }
-              });
-            };
-            return /*#__PURE__*/_jsxs("div", {
-              style: {
-                ...s.card,
-                margin: "4px 0",
-                background: "var(--color-background-tertiary)",
-                padding: "10px 12px",
-                borderLeft: "3px solid var(--color-border-warning)"
-              },
-              children: [/*#__PURE__*/_jsx("div", {
-                style: {
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: "var(--color-text-warning)",
-                  marginBottom: 4
-                },
-                children: "📦 Envases extra prestados al cliente"
-              }), /*#__PURE__*/_jsx("div", {
-                style: {
-                  fontSize: 11,
-                  color: "var(--color-text-tertiary)",
-                  marginBottom: 8
-                },
-                children: "Editá directamente la cantidad que tiene en su poder. Ponelo en 0 si ya los devolvió todos."
-              }), /*#__PURE__*/_jsx("div", {
-                style: {
-                  display: "flex",
-                  gap: 8
-                },
-                children: [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-                  style: {
-                    flex: 1,
-                    textAlign: "center"
-                  },
-                  children: [/*#__PURE__*/_jsx("label", {
-                    style: {
-                      ...s.label,
-                      textAlign: "center",
-                      fontSize: 11
-                    },
-                    children: l
-                  }), /*#__PURE__*/_jsx("input", {
-                    style: {
-                      ...s.inputNum,
-                      textAlign: "center",
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: total[k] > 0 ? "var(--color-text-warning)" : total[k] < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
-                    },
-                    type: "number",
-                    value: total[k],
-                    onChange: e => setTotal(k, e.target.value)
-                  }), /*#__PURE__*/_jsx("div", {
-                    style: {
-                      fontSize: 9,
-                      color: "var(--color-text-tertiary)",
-                      marginTop: 3
-                    },
-                    children: total[k] > 0 ? "prestado" : total[k] < 0 ? "devuelto de más" : "ok"
-                  })]
-                }, k))
-              })]
-            });
-          })()]
-        }) : /*#__PURE__*/_jsxs(_Fragment, {
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-              cursor: onVerDetalle ? "pointer" : "default"
-            },
-            onClick: () => onVerDetalle && onVerDetalle(c),
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                flexShrink: 0,
-                background: clienteMoviendo === c.id ? "#185FA5" : clienteMoviendo && clientes.find(x => x.id === clienteMoviendo)?.dia === c.dia ? "var(--color-background-warning)" : "var(--color-background-tertiary)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 600,
-                color: clienteMoviendo === c.id ? "#fff" : clienteMoviendo && clientes.find(x => x.id === clienteMoviendo)?.dia === c.dia ? "var(--color-text-warning)" : "var(--color-text-tertiary)",
-                border: clienteMoviendo === c.id ? "1.5px solid #5daaff" : "none"
-              },
-              onClick: e => {
-                e.stopPropagation();
-                if (clienteMoviendo === null) setClienteMoviendo(c.id);else if (clienteMoviendo === c.id) setClienteMoviendo(null);else {
-                  moverCliente(clienteMoviendo, c.id);
-                  setClienteMoviendo(null);
-                }
-              },
-              children: clienteMoviendo === c.id ? "✓" : c.orden || "#"
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                flex: 1,
-                minWidth: 0
-              },
-              children: [/*#__PURE__*/_jsxs("div", {
-                style: {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  flexWrap: "wrap"
-                },
-                children: [/*#__PURE__*/_jsx("span", {
-                  style: {
-                    fontWeight: 700,
-                    fontSize: 18,
-                    color: "var(--color-text-primary)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  },
-                  children: c.nombre
-                }), /*#__PURE__*/_jsx("span", {
-                  style: {
-                    fontSize: 10,
-                    fontWeight: 600,
-                    padding: "2px 8px",
-                    borderRadius: 20,
-                    background: "var(--color-background-success)",
-                    color: "var(--color-text-success)",
-                    flexShrink: 0
-                  },
-                  children: c.dia
-                })]
-              }), /*#__PURE__*/_jsx("div", {
-                style: {
-                  fontSize: 13,
-                  color: "var(--color-text-secondary)",
-                  marginTop: 3
-                },
-                children: direccionCliente(c)
-              }), c.notas && /*#__PURE__*/_jsxs("div", {
-                style: {
-                  fontSize: 11,
-                  color: "var(--color-text-warning)",
-                  marginTop: 2
-                },
-                children: ["📝 ", c.notas]
-              }), repartos && repartos.length > 0 && (() => {
-                const rep = repartos.find(r => r.id === c.repartoId || String(r.id) === String(c.repartoId));
-                return /*#__PURE__*/_jsxs("div", {
-                  style: {
-                    fontSize: 11,
-                    color: rep ? "var(--color-text-info)" : "var(--color-text-tertiary)",
-                    marginTop: 2,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 3,
-                    textDecoration: "underline",
-                    textDecorationStyle: "dotted"
-                  },
-                  onClick: e => {
-                    e.stopPropagation();
-                    setReasignandoId(c.id);
-                  },
-                  children: ["🚚 ", rep ? rep.repartidorNombre : "Sin asignar"]
-                });
-              })(), /*#__PURE__*/_jsxs("div", {
-                style: {
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 5,
-                  marginTop: 7
-                },
-                children: [c.saldo < 0 && /*#__PURE__*/_jsxs("span", {
-                  style: s.badge("danger"),
-                  children: ["Debe ", fmt(Math.abs(c.saldo))]
-                }), c.saldo > 0 && /*#__PURE__*/_jsxs("span", {
-                  style: s.badge("success"),
-                  children: ["A favor ", fmt(c.saldo)]
-                }), (() => {
-                  const ex = extraEnvases[c.id] || {};
-                  const aj = c.envAjuste || {};
-                  const real = {
-                    sifon: Math.max(0, (Number(c.sifon) || 0) + (ex.sifon || 0) + (aj.sifon || 0)),
-                    bidon10: Math.max(0, (Number(c.bidon10) || 0) + (ex.bidon10 || 0) + (aj.bidon10 || 0)),
-                    bidon20: Math.max(0, (Number(c.bidon20) || 0) + (ex.bidon20 || 0) + (aj.bidon20 || 0))
-                  };
-                  const pill = txt => /*#__PURE__*/_jsx("span", {
-                    style: {
-                      fontSize: 11,
-                      fontWeight: 600,
-                      padding: "3px 9px",
-                      borderRadius: 20,
-                      background: "var(--color-background-info)",
-                      color: "var(--color-text-info)"
-                    },
-                    children: txt
-                  });
-                  return /*#__PURE__*/_jsxs(_Fragment, {
-                    children: [real.sifon > 0 && pill(`Sif ×${real.sifon}`), real.bidon10 > 0 && pill(`10L ×${real.bidon10}`), real.bidon20 > 0 && pill(`20L ×${real.bidon20}`), c.dispenser > 0 && pill(`Disp ×${c.dispenser}`)]
-                  });
-                })()]
-              })]
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                flexShrink: 0,
-                alignItems: "center"
-              },
-              children: [(c.maps || c.lat && c.lng) && /*#__PURE__*/_jsx("a", {
-                href: c.maps || `https://www.google.com/maps?q=${c.lat},${c.lng}`,
-                target: "_blank",
-                rel: "noreferrer",
-                style: {
-                  fontSize: 18,
-                  textDecoration: "none"
-                },
-                onClick: e => e.stopPropagation(),
-                children: "📍"
-              }), c.telefono && /*#__PURE__*/_jsx("a", {
-                href: `https://wa.me/54${c.telefono}`,
-                target: "_blank",
-                rel: "noreferrer",
-                style: {
-                  fontSize: 18,
-                  textDecoration: "none"
-                },
-                onClick: e => e.stopPropagation(),
-                children: "💬"
-              }), /*#__PURE__*/_jsx("span", {
-                style: {
-                  fontSize: 18,
-                  cursor: "pointer",
-                  lineHeight: 1
-                },
-                onClick: e => {
-                  e.stopPropagation();
-                  setFotoClienteId(fotoClienteId === c.id ? null : c.id);
-                },
-                children: "📷"
-              })]
-            })]
-          }), /*#__PURE__*/_jsxs(PieEnvases, {
-            c: c,
-            ventas: ventas,
-            onEditar: onEditar,
-            izquierda: /*#__PURE__*/_jsx("button", {
-              style: {
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                cursor: "pointer",
-                background: "var(--color-background-danger)",
-                color: "var(--color-text-danger)",
-                border: "1px solid var(--color-border-danger)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 13
-              },
-              onClick: e => {
-                e.stopPropagation();
-                onEliminar(c.id);
-              },
-              title: "Eliminar cliente",
-              children: "🗑️"
-            }),
-            children: [onRegistrarVenta && /*#__PURE__*/_jsx("button", {
-              style: {
-                fontSize: 11,
-                fontWeight: 600,
-                padding: "5px 12px",
-                borderRadius: 20,
-                cursor: "pointer",
-                background: "#185FA5",
-                color: "#e2eaf4",
-                border: "none"
-              },
-              onClick: e => {
-                e.stopPropagation();
-                onRegistrarVenta(c);
-              },
-              children: "💰 Venta"
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                fontSize: 11,
-                fontWeight: 600,
-                padding: "5px 12px",
-                borderRadius: 20,
-                cursor: "pointer",
-                background: "var(--color-background-tertiary)",
-                color: "var(--color-text-secondary)",
-                border: "0.5px solid var(--color-border-secondary)"
-              },
-              onClick: e => {
-                e.stopPropagation();
-                setCambioId(cambioId === c.id ? null : c.id);
-              },
-              children: "🔄 Cambio"
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                fontSize: 11,
-                fontWeight: 600,
-                padding: "5px 12px",
-                borderRadius: 20,
-                cursor: "pointer",
-                background: "var(--color-background-tertiary)",
-                color: "var(--color-text-secondary)",
-                border: "0.5px solid var(--color-border-secondary)"
-              },
-              onClick: e => {
-                e.stopPropagation();
-                setEditandoId(c.id);
-              },
-              children: "✏️ Editar"
-            })]
-          }), cambioId === c.id && /*#__PURE__*/_jsxs("div", {
-            style: {
-              ...s.card,
-              margin: "8px 0 0",
-              border: "1px solid #818cf8"
-            },
-            onClick: e => e.stopPropagation(),
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 12,
-                color: "var(--color-text-secondary)",
-                marginBottom: 8,
-                fontWeight: 500
-              },
-              children: "🔄 Cambio de envase (no se cobra)"
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                gap: 8,
-                marginBottom: 8
-              },
-              children: [/*#__PURE__*/_jsxs("div", {
-                style: {
-                  flex: 1
-                },
-                children: [/*#__PURE__*/_jsx("label", {
-                  style: {
-                    ...s.label,
-                    marginBottom: 4
-                  },
-                  children: "Se retira"
-                }), /*#__PURE__*/_jsx("select", {
-                  style: s.select,
-                  value: productoViejoCambio,
-                  onChange: e => setProductoViejoCambio(e.target.value),
-                  children: (productos || []).map(p => /*#__PURE__*/_jsx("option", {
-                    value: p.nombre,
-                    children: p.nombre
-                  }, p.id))
-                })]
-              }), /*#__PURE__*/_jsxs("div", {
-                style: {
-                  flex: 1
-                },
-                children: [/*#__PURE__*/_jsx("label", {
-                  style: {
-                    ...s.label,
-                    marginBottom: 4
-                  },
-                  children: "Se entrega"
-                }), /*#__PURE__*/_jsx("select", {
-                  style: s.select,
-                  value: productoNuevoCambio,
-                  onChange: e => setProductoNuevoCambio(e.target.value),
-                  children: (productos || []).map(p => /*#__PURE__*/_jsx("option", {
-                    value: p.nombre,
-                    children: p.nombre
-                  }, p.id))
-                })]
-              })]
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                marginBottom: 8
-              },
-              children: [/*#__PURE__*/_jsx("label", {
-                style: {
-                  ...s.label,
-                  marginBottom: 4
-                },
-                children: "Motivo"
-              }), /*#__PURE__*/_jsx("input", {
-                style: s.input,
-                placeholder: "Ej: Agua en mal estado",
-                value: motivoCambio,
-                onChange: e => setMotivoCambio(e.target.value)
-              })]
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                gap: 6
-              },
-              children: [/*#__PURE__*/_jsx("button", {
-                style: {
-                  ...s.btn,
-                  flex: 1,
-                  fontSize: 12
-                },
-                onClick: () => setCambioId(null),
-                children: "Cancelar"
-              }), /*#__PURE__*/_jsx("button", {
-                style: {
-                  ...s.btnPrimary,
-                  flex: 2,
-                  fontSize: 12,
-                  padding: "8px"
-                },
-                onClick: () => {
-                  const vt = {
-                    id: Date.now(),
-                    clienteId: c.id,
-                    cliente: c.nombre,
-                    dia: c.dia,
-                    fechaKey: new Date().toLocaleDateString("en-CA"),
-                    fecha: new Date().toLocaleString("es-AR"),
-                    detalle: [{
-                      nombre: "Cambio de envase",
-                      cantidad: 1,
-                      precio: 0,
-                      total: 0
-                    }],
-                    pago: "cambio",
-                    obs: `Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim() ? ` · ${motivoCambio.trim()}` : ""}`,
-                    neto: 0,
-                    bruto: 0,
-                    desc: 0,
-                    costo: 0,
-                    ganancia: 0,
-                    pagadoNum: 0,
-                    saldoDelta: 0,
-                    envDev: [{
-                      prod: productoViejoCambio,
-                      cant: 1
-                    }],
-                    envPrest: [{
-                      prod: productoNuevoCambio,
-                      cant: 1
-                    }],
-                    _esCambio: true,
-                    _upd: Date.now()
-                  };
-                  onGuardarCambio && onGuardarCambio(vt);
-                  setCambioId(null);
-                  setMotivoCambio("Agua en mal estado");
-                },
-                children: "✓ Registrar cambio"
-              })]
-            })]
-          })]
-        })
-      }, c.id)), filtrados.length === 0 && !modoNuevo && /*#__PURE__*/_jsxs("div", {
-        style: {
-          textAlign: "center",
-          padding: "40px 20px",
-          color: "var(--color-text-tertiary)",
-          fontSize: 14
-        },
-        children: ["No hay clientes", filtroDia !== "todos" ? ` en ${filtroDia}` : "", "."]
-      })]
-    }), reasignandoId && repartos && (() => {
-      const cli = filtrados.find(x => x.id === reasignandoId) || clientes.find(x => x.id === reasignandoId);
-      if (!cli) return null;
-      const repActual = repartos.find(r => r.id === cli.repartoId || String(r.id) === String(cli.repartoId));
-      return /*#__PURE__*/_jsx("div", {
-        style: {
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0,0,0,0.8)",
-          zIndex: 2000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 20
-        },
-        onClick: () => setReasignandoId(null),
-        children: /*#__PURE__*/_jsxs("div", {
-          style: {
-            background: "var(--color-background-primary)",
-            borderRadius: 16,
-            padding: 20,
-            width: "100%",
-            maxWidth: 360,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12
-          },
-          onClick: e => e.stopPropagation(),
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 15,
-              fontWeight: 600,
-              color: "var(--color-text-primary)"
-            },
-            children: "↔ Reasignar reparto"
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-secondary)"
-            },
-            children: [/*#__PURE__*/_jsx("b", {
-              children: cli.nombre
-            }), /*#__PURE__*/_jsx("br", {}), repActual ? `Actualmente: ${repActual.repartidorNombre}` : "Sin reparto asignado"]
-          }), /*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("label", {
-              style: {
-                ...s.label,
-                fontWeight: 500
-              },
-              children: "Día de visita"
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6
-              },
-              children: DIAS.map(d => /*#__PURE__*/_jsx("button", {
-                style: {
-                  padding: "6px 12px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  border: "1px solid var(--color-border-secondary)",
-                  cursor: "pointer",
-                  background: cli.dia === d ? "#185FA5" : "var(--color-background-tertiary)",
-                  color: cli.dia === d ? "#e2eaf4" : "var(--color-text-secondary)",
-                  fontWeight: cli.dia === d ? 600 : 400
-                },
-                onClick: () => {
-                  onEditar(cli.id, {
-                    dia: d
-                  });
-                  setReasignandoId(null);
-                },
-                children: d
-              }, d))
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("label", {
-              style: {
-                ...s.label,
-                fontWeight: 500
-              },
-              children: "Repartidor"
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                flexDirection: "column",
-                gap: 6
-              },
-              children: [/*#__PURE__*/_jsx("button", {
-                style: {
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  fontSize: 13,
-                  border: "1px solid var(--color-border-secondary)",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  background: !cli.repartoId ? "rgba(93,170,255,0.15)" : "var(--color-background-tertiary)",
-                  color: !cli.repartoId ? "var(--color-text-info)" : "var(--color-text-secondary)"
-                },
-                onClick: () => {
-                  onEditar(cli.id, {
-                    repartoId: null
-                  });
-                  setReasignandoId(null);
-                },
-                children: "— Sin asignar"
-              }), repartos.map(r => /*#__PURE__*/_jsxs("button", {
-                style: {
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  fontSize: 13,
-                  border: "1px solid var(--color-border-secondary)",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  background: cli.repartoId === r.id || String(cli.repartoId) === String(r.id) ? "rgba(93,170,255,0.2)" : "var(--color-background-tertiary)",
-                  color: cli.repartoId === r.id || String(cli.repartoId) === String(r.id) ? "var(--color-text-info)" : "var(--color-text-primary)"
-                },
-                onClick: () => {
-                  onEditar(cli.id, {
-                    repartoId: r.id
-                  });
-                  setReasignandoId(null);
-                },
-                children: [/*#__PURE__*/_jsxs("span", {
-                  children: [/*#__PURE__*/_jsxs("b", {
-                    children: [r.numero, "."]
-                  }), " ", r.repartidorNombre]
-                }), (cli.repartoId === r.id || String(cli.repartoId) === String(r.id)) && /*#__PURE__*/_jsx("span", {
-                  style: {
-                    fontSize: 16
-                  },
-                  children: "✓"
-                })]
-              }, r.id))]
-            })]
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              textAlign: "center"
-            },
-            onClick: () => setReasignandoId(null),
-            children: "Cancelar"
-          })]
-        })
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Gestión de clientes",
+    onVolver: onVolver
+  }), onIrTab && /*#__PURE__*/React.createElement(ClientesTabs, {
+    activo: "todos",
+    onIr: onIrTab
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px 6px"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Buscar por domicilio, nombre o teléfono...",
+    value: busqueda,
+    onChange: e => setBusqueda(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginTop: 8,
+      flexWrap: "wrap",
+      alignItems: "center"
+    }
+  }, ["todos", ...DIAS].map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px",
+      background: filtroDia === d ? "#185FA5" : "var(--color-background-tertiary)",
+      color: filtroDia === d ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtroDia === d ? "none" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: () => setFiltroDia(d)
+  }, d === "todos" ? "Todos" : d)), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px",
+      marginLeft: "auto",
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none"
+    },
+    onClick: () => {
+      setModoNuevo(true);
+      setEditandoId(null);
+    }
+  }, "+ Nuevo"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px"
+    },
+    onClick: () => {
+      const porDia = {};
+      DIAS.forEach(d => {
+        porDia[d] = [...clientes].filter(c => c.dia === d).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
       });
-    })(), fotoClienteId && /*#__PURE__*/_jsxs("div", {
+      const compactados = clientes.map(c => {
+        const lista = porDia[c.dia];
+        const idx = lista.findIndex(x => x.id === c.id);
+        return idx >= 0 ? {
+          ...c,
+          orden: idx + 1
+        } : c;
+      });
+      if (window.confirm("¿Reordenar todos los clientes eliminando los huecos en la numeración?")) onReordenarTodo(compactados);
+    }
+  }, "↺ Reordenar")), repartos && repartos.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginTop: 6,
+      flexWrap: "wrap",
+      overflowX: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px",
+      background: filtroRepartidor === "todos" ? "#0e7c6b" : "var(--color-background-tertiary)",
+      color: filtroRepartidor === "todos" ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtroRepartidor === "todos" ? "none" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: () => setFiltroRepartidor("todos")
+  }, "🚚 Todos"), [...repartos].sort((a, b) => (a.numero || 0) - (b.numero || 0)).map(r => /*#__PURE__*/React.createElement("button", {
+    key: r.id,
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px",
+      flexShrink: 0,
+      background: filtroRepartidor === r.id ? "#0e7c6b" : "var(--color-background-tertiary)",
+      color: filtroRepartidor === r.id ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtroRepartidor === r.id ? "none" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: () => setFiltroRepartidor(r.id)
+  }, "Rep.", r.numero, " · ", (r.repartidorNombre || "").split(" ")[0]))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: clienteMoviendo ? "var(--color-text-warning)" : "var(--color-text-tertiary)",
+      marginTop: 6,
+      fontWeight: clienteMoviendo ? 600 : 400
+    }
+  }, clienteMoviendo ? `📍 Tocá el # de dónde debería ir "${clientes.find(c => c.id === clienteMoviendo)?.nombre || ""}" (mismo día · tocá el mismo para cancelar)` : `${filtrados.length} clientes${filtroDia !== "todos" ? ` · ${filtroDia}` : ""} · Tocá el # de un cliente para moverlo dentro de su día`)), modoNuevo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "6px 14px",
+      borderLeft: "3px solid #185FA5"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.row,
+      justifyContent: "space-between",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Nuevo cliente"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px"
+    },
+    onClick: () => setModoNuevo(false)
+  }, "Cancelar")), /*#__PURE__*/React.createElement(FormCliente, {
+    inicial: {
+      nombre: "",
+      dia: "Martes",
+      barrio: "",
+      manzana: "",
+      lote: "",
+      sector: "",
+      calle: "",
+      nro: "",
+      aclaracion: "",
+      telefono: "",
+      maps: "",
+      notas: "",
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0,
+      orden: ""
+    },
+    onGuardar: datos => {
+      onNuevo(datos);
+      setModoNuevo(false);
+    },
+    repartos: repartos
+  })), filtrados.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      ...s.card,
+      borderLeft: editandoId === c.id ? "3px solid #5daaff" : "0.5px solid var(--color-border-tertiary)"
+    }
+  }, editandoId === c.id ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.row,
+      justifyContent: "space-between",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Editando"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px"
+    },
+    onClick: () => setEditandoId(null)
+  }, "Cancelar")), /*#__PURE__*/React.createElement(FormCliente, {
+    inicial: c,
+    onGuardar: datos => {
+      onEditar(c.id, datos);
+      setEditandoId(null);
+    },
+    repartos: repartos
+  }), (() => {
+    const ex = extraEnvases[c.id] || {
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0
+    };
+    // total actual prestado = calculado desde ventas + ajuste manual
+    // el usuario edita el TOTAL directamente; envAjuste = total - ex
+    const aj = c.envAjuste || {
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0
+    };
+    const total = {
+      sifon: ex.sifon + (aj.sifon || 0),
+      bidon10: ex.bidon10 + (aj.bidon10 || 0),
+      bidon20: ex.bidon20 + (aj.bidon20 || 0)
+    };
+    const setTotal = (k, val) => {
+      const n = Number(val) || 0;
+      onEditar(c.id, {
+        envAjuste: {
+          ...aj,
+          [k]: n - (ex[k] || 0)
+        }
+      });
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: "4px 0",
+        background: "var(--color-background-tertiary)",
+        padding: "10px 12px",
+        borderLeft: "3px solid var(--color-border-warning)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 500,
+        color: "var(--color-text-warning)",
+        marginBottom: 4
+      }
+    }, "📦 Envases extra prestados al cliente"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)",
+        marginBottom: 8
+      }
+    }, "Editá directamente la cantidad que tiene en su poder. Ponelo en 0 si ya los devolvió todos."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8
+      }
+    }, [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+      key: k,
+      style: {
+        flex: 1,
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      style: {
+        ...s.label,
+        textAlign: "center",
+        fontSize: 11
+      }
+    }, l), /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.inputNum,
+        textAlign: "center",
+        fontSize: 18,
+        fontWeight: 700,
+        color: total[k] > 0 ? "var(--color-text-warning)" : total[k] < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
+      },
+      type: "number",
+      value: total[k],
+      onChange: e => setTotal(k, e.target.value)
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        color: "var(--color-text-tertiary)",
+        marginTop: 3
+      }
+    }, total[k] > 0 ? "prestado" : total[k] < 0 ? "devuelto de más" : "ok")))));
+  })()) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 10,
+      cursor: onVerDetalle ? "pointer" : "default"
+    },
+    onClick: () => onVerDetalle && onVerDetalle(c)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      flexShrink: 0,
+      background: clienteMoviendo === c.id ? "#185FA5" : clienteMoviendo && clientes.find(x => x.id === clienteMoviendo)?.dia === c.dia ? "var(--color-background-warning)" : "var(--color-background-tertiary)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 12,
+      fontWeight: 600,
+      color: clienteMoviendo === c.id ? "#fff" : clienteMoviendo && clientes.find(x => x.id === clienteMoviendo)?.dia === c.dia ? "var(--color-text-warning)" : "var(--color-text-tertiary)",
+      border: clienteMoviendo === c.id ? "1.5px solid #5daaff" : "none"
+    },
+    onClick: e => {
+      e.stopPropagation();
+      if (clienteMoviendo === null) setClienteMoviendo(c.id);else if (clienteMoviendo === c.id) setClienteMoviendo(null);else {
+        moverCliente(clienteMoviendo, c.id);
+        setClienteMoviendo(null);
+      }
+    }
+  }, clienteMoviendo === c.id ? "✓" : c.orden || "#"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      fontSize: 18,
+      color: "var(--color-text-primary)",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontWeight: 600,
+      padding: "2px 8px",
+      borderRadius: 20,
+      background: "var(--color-background-success)",
+      color: "var(--color-text-success)",
+      flexShrink: 0
+    }
+  }, c.dia)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginTop: 3
+    }
+  }, direccionCliente(c)), c.notas && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-warning)",
+      marginTop: 2
+    }
+  }, "📝 ", c.notas), repartos && repartos.length > 0 && (() => {
+    const rep = repartos.find(r => r.id === c.repartoId || String(r.id) === String(c.repartoId));
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: rep ? "var(--color-text-info)" : "var(--color-text-tertiary)",
+        marginTop: 2,
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 3,
+        textDecoration: "underline",
+        textDecorationStyle: "dotted"
+      },
+      onClick: e => {
+        e.stopPropagation();
+        setReasignandoId(c.id);
+      }
+    }, "🚚 ", rep ? rep.repartidorNombre : "Sin asignar");
+  })(), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 5,
+      marginTop: 7
+    }
+  }, c.saldo < 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.badge("danger")
+  }, "Debe ", fmt(Math.abs(c.saldo))), c.saldo > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.badge("success")
+  }, "A favor ", fmt(c.saldo)), (() => {
+    const ex = extraEnvases[c.id] || {};
+    const aj = c.envAjuste || {};
+    const real = {
+      sifon: Math.max(0, (Number(c.sifon) || 0) + (ex.sifon || 0) + (aj.sifon || 0)),
+      bidon10: Math.max(0, (Number(c.bidon10) || 0) + (ex.bidon10 || 0) + (aj.bidon10 || 0)),
+      bidon20: Math.max(0, (Number(c.bidon20) || 0) + (ex.bidon20 || 0) + (aj.bidon20 || 0))
+    };
+    const pill = txt => /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 600,
+        padding: "3px 9px",
+        borderRadius: 20,
+        background: "var(--color-background-info)",
+        color: "var(--color-text-info)"
+      }
+    }, txt);
+    return /*#__PURE__*/React.createElement(React.Fragment, null, real.sifon > 0 && pill(`Sif ×${real.sifon}`), real.bidon10 > 0 && pill(`10L ×${real.bidon10}`), real.bidon20 > 0 && pill(`20L ×${real.bidon20}`), c.dispenser > 0 && pill(`Disp ×${c.dispenser}`));
+  })())), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 6,
+      flexShrink: 0,
+      alignItems: "center"
+    }
+  }, (c.maps || c.lat && c.lng) && /*#__PURE__*/React.createElement("a", {
+    href: c.maps || `https://www.google.com/maps?q=${c.lat},${c.lng}`,
+    target: "_blank",
+    rel: "noreferrer",
+    style: {
+      fontSize: 18,
+      textDecoration: "none"
+    },
+    onClick: e => e.stopPropagation()
+  }, "📍"), c.telefono && /*#__PURE__*/React.createElement("a", {
+    href: `https://wa.me/54${c.telefono}`,
+    target: "_blank",
+    rel: "noreferrer",
+    style: {
+      fontSize: 18,
+      textDecoration: "none"
+    },
+    onClick: e => e.stopPropagation()
+  }, "💬"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      cursor: "pointer",
+      lineHeight: 1
+    },
+    onClick: e => {
+      e.stopPropagation();
+      setFotoClienteId(fotoClienteId === c.id ? null : c.id);
+    }
+  }, "📷"))), /*#__PURE__*/React.createElement(PieEnvases, {
+    c: c,
+    ventas: ventas,
+    onEditar: onEditar,
+    izquierda: /*#__PURE__*/React.createElement("button", {
+      style: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        cursor: "pointer",
+        background: "var(--color-background-danger)",
+        color: "var(--color-text-danger)",
+        border: "1px solid var(--color-border-danger)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 13
+      },
+      onClick: e => {
+        e.stopPropagation();
+        onEliminar(c.id);
+      },
+      title: "Eliminar cliente"
+    }, "🗑️")
+  }, onRegistrarVenta && /*#__PURE__*/React.createElement("button", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      padding: "5px 12px",
+      borderRadius: 20,
+      cursor: "pointer",
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none"
+    },
+    onClick: e => {
+      e.stopPropagation();
+      onRegistrarVenta(c);
+    }
+  }, "💰 Venta"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      padding: "5px 12px",
+      borderRadius: 20,
+      cursor: "pointer",
+      background: "var(--color-background-tertiary)",
+      color: "var(--color-text-secondary)",
+      border: "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: e => {
+      e.stopPropagation();
+      setCambioId(cambioId === c.id ? null : c.id);
+    }
+  }, "🔄 Cambio"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      padding: "5px 12px",
+      borderRadius: 20,
+      cursor: "pointer",
+      background: "var(--color-background-tertiary)",
+      color: "var(--color-text-secondary)",
+      border: "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: e => {
+      e.stopPropagation();
+      setEditandoId(c.id);
+    }
+  }, "✏️ Editar")), cambioId === c.id && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "8px 0 0",
+      border: "1px solid #818cf8"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8,
+      fontWeight: 500
+    }
+  }, "🔄 Cambio de envase (no se cobra)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 4
+    }
+  }, "Se retira"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: productoViejoCambio,
+    onChange: e => setProductoViejoCambio(e.target.value)
+  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.nombre
+  }, p.nombre)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 4
+    }
+  }, "Se entrega"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: productoNuevoCambio,
+    onChange: e => setProductoNuevoCambio(e.target.value)
+  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.nombre
+  }, p.nombre))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 4
+    }
+  }, "Motivo"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Ej: Agua en mal estado",
+    value: motivoCambio,
+    onChange: e => setMotivoCambio(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12
+    },
+    onClick: () => setCambioId(null)
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2,
+      fontSize: 12,
+      padding: "8px"
+    },
+    onClick: () => {
+      const vt = {
+        id: Date.now(),
+        clienteId: c.id,
+        cliente: c.nombre,
+        dia: c.dia,
+        fechaKey: new Date().toLocaleDateString("en-CA"),
+        fecha: new Date().toLocaleString("es-AR"),
+        detalle: [{
+          nombre: "Cambio de envase",
+          cantidad: 1,
+          precio: 0,
+          total: 0
+        }],
+        pago: "cambio",
+        obs: `Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim() ? ` · ${motivoCambio.trim()}` : ""}`,
+        neto: 0,
+        bruto: 0,
+        desc: 0,
+        costo: 0,
+        ganancia: 0,
+        pagadoNum: 0,
+        saldoDelta: 0,
+        envDev: [{
+          prod: productoViejoCambio,
+          cant: 1
+        }],
+        envPrest: [{
+          prod: productoNuevoCambio,
+          cant: 1
+        }],
+        _esCambio: true,
+        _upd: Date.now()
+      };
+      onGuardarCambio && onGuardarCambio(vt);
+      setCambioId(null);
+      setMotivoCambio("Agua en mal estado");
+    }
+  }, "✓ Registrar cambio")))))), filtrados.length === 0 && !modoNuevo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 20px",
+      color: "var(--color-text-tertiary)",
+      fontSize: 14
+    }
+  }, "No hay clientes", filtroDia !== "todos" ? ` en ${filtroDia}` : "", ".")), reasignandoId && repartos && (() => {
+    const cli = filtrados.find(x => x.id === reasignandoId) || clientes.find(x => x.id === reasignandoId);
+    if (!cli) return null;
+    const repActual = repartos.find(r => r.id === cli.repartoId || String(r.id) === String(cli.repartoId));
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        background: "rgba(0,0,0,0.92)",
+        background: "rgba(0,0,0,0.8)",
         zIndex: 2000,
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         padding: 20
       },
-      onClick: () => setFotoClienteId(null),
-      children: [fotoCliente && fotoCliente.foto ? /*#__PURE__*/_jsx("img", {
-        src: fotoCliente.foto,
-        alt: "Domicilio",
-        style: {
-          maxWidth: "100%",
-          maxHeight: "60vh",
-          borderRadius: 10,
-          objectFit: "contain",
-          marginBottom: 16
-        }
-      }) : /*#__PURE__*/_jsxs("div", {
-        style: {
-          color: "#aaa",
-          fontSize: 14,
-          marginBottom: 20
-        },
-        children: ["Sin foto aún · ", fotoCliente && fotoCliente.nombre]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 12
-        },
-        onClick: e => e.stopPropagation(),
-        children: [/*#__PURE__*/_jsxs("label", {
-          style: {
-            background: "#185FA5",
-            color: "#e2eaf4",
-            padding: "12px 20px",
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-            textAlign: "center"
-          },
-          children: ["📷 Cámara", /*#__PURE__*/_jsx("input", {
-            type: "file",
-            accept: "image/*",
-            capture: "environment",
-            style: {
-              display: "none"
-            },
-            onChange: async e => {
-              const f = e.target.files[0];
-              if (!f) return;
-              const b64 = await comprimirFoto(f);
-              onEditar(fotoClienteId, {
-                foto: b64
-              });
-              setFotoClienteId(null);
-            }
-          })]
-        }), /*#__PURE__*/_jsxs("label", {
-          style: {
-            background: "#2a3a4a",
-            color: "#e2eaf4",
-            padding: "12px 20px",
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-            textAlign: "center"
-          },
-          children: ["🖼 Galería", /*#__PURE__*/_jsx("input", {
-            type: "file",
-            accept: "image/*",
-            style: {
-              display: "none"
-            },
-            onChange: async e => {
-              const f = e.target.files[0];
-              if (!f) return;
-              const b64 = await comprimirFoto(f);
-              onEditar(fotoClienteId, {
-                foto: b64
-              });
-              setFotoClienteId(null);
-            }
-          })]
-        }), fotoCliente && fotoCliente.foto && /*#__PURE__*/_jsx("button", {
-          style: {
-            background: "#3a2020",
-            color: "#e05c5c",
-            padding: "12px 14px",
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: "pointer",
-            border: "none"
-          },
-          onClick: () => {
-            onEditar(fotoClienteId, {
-              foto: ""
-            });
-            setFotoClienteId(null);
-          },
-          children: "🗑"
-        })]
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          color: "#aaa",
-          fontSize: 11,
-          marginTop: 14
-        },
-        children: "Tocá fuera para cerrar"
-      })]
-    })]
-  });
+      onClick: () => setReasignandoId(null)
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "var(--color-background-primary)",
+        borderRadius: 16,
+        padding: 20,
+        width: "100%",
+        maxWidth: 360,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12
+      },
+      onClick: e => e.stopPropagation()
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 600,
+        color: "var(--color-text-primary)"
+      }
+    }, "↔ Reasignar reparto"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-secondary)"
+      }
+    }, /*#__PURE__*/React.createElement("b", null, cli.nombre), /*#__PURE__*/React.createElement("br", null), repActual ? `Actualmente: ${repActual.repartidorNombre}` : "Sin reparto asignado"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+      style: {
+        ...s.label,
+        fontWeight: 500
+      }
+    }, "Día de visita"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 6
+      }
+    }, DIAS.map(d => /*#__PURE__*/React.createElement("button", {
+      key: d,
+      style: {
+        padding: "6px 12px",
+        borderRadius: 8,
+        fontSize: 12,
+        border: "1px solid var(--color-border-secondary)",
+        cursor: "pointer",
+        background: cli.dia === d ? "#185FA5" : "var(--color-background-tertiary)",
+        color: cli.dia === d ? "#e2eaf4" : "var(--color-text-secondary)",
+        fontWeight: cli.dia === d ? 600 : 400
+      },
+      onClick: () => {
+        onEditar(cli.id, {
+          dia: d
+        });
+        setReasignandoId(null);
+      }
+    }, d)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+      style: {
+        ...s.label,
+        fontWeight: 500
+      }
+    }, "Repartidor"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        padding: "10px 14px",
+        borderRadius: 10,
+        fontSize: 13,
+        border: "1px solid var(--color-border-secondary)",
+        cursor: "pointer",
+        textAlign: "left",
+        background: !cli.repartoId ? "rgba(93,170,255,0.15)" : "var(--color-background-tertiary)",
+        color: !cli.repartoId ? "var(--color-text-info)" : "var(--color-text-secondary)"
+      },
+      onClick: () => {
+        onEditar(cli.id, {
+          repartoId: null
+        });
+        setReasignandoId(null);
+      }
+    }, "— Sin asignar"), repartos.map(r => /*#__PURE__*/React.createElement("button", {
+      key: r.id,
+      style: {
+        padding: "10px 14px",
+        borderRadius: 10,
+        fontSize: 13,
+        border: "1px solid var(--color-border-secondary)",
+        cursor: "pointer",
+        textAlign: "left",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: cli.repartoId === r.id || String(cli.repartoId) === String(r.id) ? "rgba(93,170,255,0.2)" : "var(--color-background-tertiary)",
+        color: cli.repartoId === r.id || String(cli.repartoId) === String(r.id) ? "var(--color-text-info)" : "var(--color-text-primary)"
+      },
+      onClick: () => {
+        onEditar(cli.id, {
+          repartoId: r.id
+        });
+        setReasignandoId(null);
+      }
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, r.numero, "."), " ", r.repartidorNombre), (cli.repartoId === r.id || String(cli.repartoId) === String(r.id)) && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16
+      }
+    }, "✓"))))), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        textAlign: "center"
+      },
+      onClick: () => setReasignandoId(null)
+    }, "Cancelar")));
+  })(), fotoClienteId && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.92)",
+      zIndex: 2000,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 20
+    },
+    onClick: () => setFotoClienteId(null)
+  }, fotoCliente && fotoCliente.foto ? /*#__PURE__*/React.createElement("img", {
+    src: fotoCliente.foto,
+    alt: "Domicilio",
+    style: {
+      maxWidth: "100%",
+      maxHeight: "60vh",
+      borderRadius: 10,
+      objectFit: "contain",
+      marginBottom: 16
+    }
+  }) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#aaa",
+      fontSize: 14,
+      marginBottom: 20
+    }
+  }, "Sin foto aún · ", fotoCliente && fotoCliente.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 12
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      background: "#185FA5",
+      color: "#e2eaf4",
+      padding: "12px 20px",
+      borderRadius: 10,
+      fontSize: 14,
+      fontWeight: 600,
+      cursor: "pointer",
+      textAlign: "center"
+    }
+  }, "📷 Cámara", /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    capture: "environment",
+    style: {
+      display: "none"
+    },
+    onChange: async e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const b64 = await comprimirFoto(f);
+      onEditar(fotoClienteId, {
+        foto: b64
+      });
+      setFotoClienteId(null);
+    }
+  })), /*#__PURE__*/React.createElement("label", {
+    style: {
+      background: "#2a3a4a",
+      color: "#e2eaf4",
+      padding: "12px 20px",
+      borderRadius: 10,
+      fontSize: 14,
+      fontWeight: 600,
+      cursor: "pointer",
+      textAlign: "center"
+    }
+  }, "🖼 Galería", /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    style: {
+      display: "none"
+    },
+    onChange: async e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const b64 = await comprimirFoto(f);
+      onEditar(fotoClienteId, {
+        foto: b64
+      });
+      setFotoClienteId(null);
+    }
+  })), fotoCliente && fotoCliente.foto && /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#3a2020",
+      color: "#e05c5c",
+      padding: "12px 14px",
+      borderRadius: 10,
+      fontSize: 14,
+      fontWeight: 600,
+      cursor: "pointer",
+      border: "none"
+    },
+    onClick: () => {
+      onEditar(fotoClienteId, {
+        foto: ""
+      });
+      setFotoClienteId(null);
+    }
+  }, "🗑")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#aaa",
+      fontSize: 11,
+      marginTop: 14
+    }
+  }, "Tocá fuera para cerrar")));
 }
 function FormCliente({
   inicial,
@@ -1069,343 +974,272 @@ function FormCliente({
     ...d,
     [k]: v
   }));
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8
+    }
+  }, repartos && repartos.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      fontWeight: 600,
+      color: "var(--color-text-info)"
+    }
+  }, "🚚 Repartidor asignado"), /*#__PURE__*/React.createElement("select", {
+    style: {
+      ...s.select,
+      border: "1.5px solid var(--color-text-info)"
     },
-    children: [repartos && repartos.length > 0 && /*#__PURE__*/_jsxs("div", {
-      children: [/*#__PURE__*/_jsx("label", {
-        style: {
-          ...s.label,
-          fontWeight: 600,
-          color: "var(--color-text-info)"
-        },
-        children: "🚚 Repartidor asignado"
-      }), /*#__PURE__*/_jsxs("select", {
-        style: {
-          ...s.select,
-          border: "1.5px solid var(--color-text-info)"
-        },
-        value: datos.repartoId || "",
-        onChange: e => set("repartoId", e.target.value ? Number(e.target.value) || e.target.value : null),
-        children: [/*#__PURE__*/_jsx("option", {
-          value: "",
-          children: "— Sin asignar —"
-        }), repartos.map(r => /*#__PURE__*/_jsxs("option", {
-          value: r.id,
-          children: [r.numero, ". ", r.repartidorNombre]
-        }, r.id))]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: s.grid2,
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Día de reparto"
-        }), /*#__PURE__*/_jsx("select", {
-          style: s.select,
-          value: datos.dia || "Martes",
-          onChange: e => set("dia", e.target.value),
-          children: DIAS.map(d => /*#__PURE__*/_jsx("option", {
-            value: d,
-            children: d
-          }, d))
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Número de orden"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          type: "number",
-          min: 1,
-          placeholder: "ej: 5",
-          value: datos.orden || "",
-          onChange: e => set("orden", Number(e.target.value) || "")
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Nombre y apellido *"
-      }), /*#__PURE__*/_jsx("input", {
-        style: s.input,
-        placeholder: "Nombre completo",
-        value: datos.nombre || "",
-        onChange: e => set("nombre", e.target.value)
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: s.grid2,
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Barrio"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Barrio",
-          value: datos.barrio || "",
-          onChange: e => set("barrio", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Sector"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Sector",
-          value: datos.sector || "",
-          onChange: e => set("sector", e.target.value)
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: s.grid3,
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Manzana"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Mz",
-          value: datos.manzana || "",
-          onChange: e => set("manzana", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Lote"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Lote",
-          value: datos.lote || "",
-          onChange: e => set("lote", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Casa"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Casa",
-          value: datos.aclaracion || "",
-          onChange: e => set("aclaracion", e.target.value)
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: s.grid2,
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Calle"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Calle",
-          value: datos.calle || "",
-          onChange: e => set("calle", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Número"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Nro",
-          value: datos.nro || "",
-          onChange: e => set("nro", e.target.value)
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Teléfono (sin 0 ni 15)"
-      }), /*#__PURE__*/_jsx("input", {
-        style: s.input,
-        placeholder: "3816559000",
-        value: datos.telefono || "",
-        onChange: e => set("telefono", e.target.value)
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Link Google Maps"
-      }), /*#__PURE__*/_jsx("input", {
-        style: s.input,
-        placeholder: "https://maps.app.goo.gl/...",
-        value: datos.maps || "",
-        onChange: e => set("maps", e.target.value)
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Notas rápidas"
-      }), /*#__PURE__*/_jsx("input", {
-        style: s.input,
-        placeholder: "timbre roto, perro, cobrar deuda...",
-        value: datos.notas || "",
-        onChange: e => set("notas", e.target.value)
-      })]
-    }), /*#__PURE__*/_jsx("label", {
-      style: {
-        ...s.label,
-        marginTop: 4
-      },
-      children: "Envases habituales asignados"
-    }), /*#__PURE__*/_jsx("div", {
-      style: s.grid3,
-      children: [["sifon", "Sifón"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: {
-            ...s.label,
-            textAlign: "center"
-          },
-          children: l
-        }), /*#__PURE__*/_jsx("input", {
-          style: {
-            ...s.input,
-            textAlign: "center"
-          },
-          type: "number",
-          min: 0,
-          value: datos[k] || 0,
-          onChange: e => set(k, Number(e.target.value))
-        })]
-      }, k))
-    }), /*#__PURE__*/_jsxs("div", {
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Dispenser en comodato"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 12
-        },
-        children: [/*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            padding: "5px 14px",
-            fontSize: 18,
-            lineHeight: 1
-          },
-          onClick: () => set("dispenser", Math.max(0, (datos.dispenser || 0) - 1)),
-          children: "−"
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 18,
-            fontWeight: 500,
-            minWidth: 28,
-            textAlign: "center",
-            color: "var(--color-text-primary)"
-          },
-          children: datos.dispenser || 0
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            padding: "5px 14px",
-            fontSize: 18,
-            lineHeight: 1
-          },
-          onClick: () => set("dispenser", (datos.dispenser || 0) + 1),
-          children: "+"
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: "unidades"
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.card,
-        margin: "4px 0",
-        background: "var(--color-background-tertiary)",
-        padding: "10px 12px"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 12,
-          fontWeight: 500,
-          color: "var(--color-text-secondary)",
-          marginBottom: 8
-        },
-        children: "Saldo del cliente"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          display: "flex",
-          gap: 8,
-          marginBottom: 6
-        },
-        children: [["favor", "A favor (tiene crédito)"], ["deuda", "Debe (saldo pendiente)"], ["cero", "Sin saldo"]].map(([v, l]) => /*#__PURE__*/_jsx("button", {
-          style: {
-            flex: 1,
-            fontSize: 11,
-            padding: "6px 4px",
-            borderRadius: 8,
-            border: "0.5px solid var(--color-border-secondary)",
-            cursor: "pointer",
-            background: datos._tipoSaldo === v ? "#185FA5" : "var(--color-background-secondary)",
-            color: datos._tipoSaldo === v ? "#e2eaf4" : "var(--color-text-secondary)"
-          },
-          onClick: () => set("_tipoSaldo", v),
-          children: l.split(" ")[0]
-        }, v))
-      }), datos._tipoSaldo && datos._tipoSaldo !== "cero" && /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: datos._tipoSaldo === "favor" ? "Monto a favor ($)" : "Monto que debe ($)"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          type: "number",
-          min: 0,
-          placeholder: "0",
-          value: datos._montoSaldo || "",
-          onChange: e => set("_montoSaldo", e.target.value)
-        })]
-      }), datos.saldo !== 0 && /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 11,
-          color: datos.saldo < 0 ? "var(--color-text-danger)" : "var(--color-text-success)",
-          marginTop: 4
-        },
-        children: ["Saldo actual: ", fmt(datos.saldo), " · ", datos.saldo < 0 ? "Debe" : "A favor"]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          marginTop: 6
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "O ingresá el saldo directamente (−negativo = debe · +positivo = a favor)"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          type: "number",
-          placeholder: "ej: -2500 o 1800",
-          value: datos._saldoDirecto ?? "",
-          onChange: e => set("_saldoDirecto", e.target.value)
-        })]
-      })]
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        ...s.btnPrimary,
-        marginTop: 4,
-        opacity: !datos.nombre ? 0.45 : 1
-      },
-      disabled: !datos.nombre,
-      onClick: () => {
-        let saldo = datos.saldo || 0;
-        if (datos._tipoSaldo === "favor") saldo = Math.abs(Number(datos._montoSaldo) || 0);
-        if (datos._tipoSaldo === "deuda") saldo = -Math.abs(Number(datos._montoSaldo) || 0);
-        if (datos._tipoSaldo === "cero") saldo = 0;
-        if (datos._saldoDirecto !== undefined && datos._saldoDirecto !== "") saldo = Number(datos._saldoDirecto);
-        onGuardar({
-          ...datos,
-          saldo
-        });
-      },
-      children: "Guardar cliente"
-    })]
-  });
+    value: datos.repartoId || "",
+    onChange: e => set("repartoId", e.target.value ? Number(e.target.value) || e.target.value : null)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "— Sin asignar —"), repartos.map(r => /*#__PURE__*/React.createElement("option", {
+    key: r.id,
+    value: r.id
+  }, r.numero, ". ", r.repartidorNombre)))), /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Día de reparto"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: datos.dia || "Martes",
+    onChange: e => set("dia", e.target.value)
+  }, DIAS.map(d => /*#__PURE__*/React.createElement("option", {
+    key: d,
+    value: d
+  }, d)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Número de orden"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    min: 1,
+    placeholder: "ej: 5",
+    value: datos.orden || "",
+    onChange: e => set("orden", Number(e.target.value) || "")
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Nombre y apellido *"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Nombre completo",
+    value: datos.nombre || "",
+    onChange: e => set("nombre", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Barrio"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Barrio",
+    value: datos.barrio || "",
+    onChange: e => set("barrio", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Sector"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Sector",
+    value: datos.sector || "",
+    onChange: e => set("sector", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Manzana"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Mz",
+    value: datos.manzana || "",
+    onChange: e => set("manzana", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Lote"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Lote",
+    value: datos.lote || "",
+    onChange: e => set("lote", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Casa"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Casa",
+    value: datos.aclaracion || "",
+    onChange: e => set("aclaracion", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Calle"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Calle",
+    value: datos.calle || "",
+    onChange: e => set("calle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Número"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Nro",
+    value: datos.nro || "",
+    onChange: e => set("nro", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Teléfono (sin 0 ni 15)"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "3816559000",
+    value: datos.telefono || "",
+    onChange: e => set("telefono", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Link Google Maps"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "https://maps.app.goo.gl/...",
+    value: datos.maps || "",
+    onChange: e => set("maps", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Notas rápidas"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "timbre roto, perro, cobrar deuda...",
+    value: datos.notas || "",
+    onChange: e => set("notas", e.target.value)
+  })), /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginTop: 4
+    }
+  }, "Envases habituales asignados"), /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, [["sifon", "Sifón"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+    key: k
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      textAlign: "center"
+    }
+  }, l), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      textAlign: "center"
+    },
+    type: "number",
+    min: 0,
+    value: datos[k] || 0,
+    onChange: e => set(k, Number(e.target.value))
+  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Dispenser en comodato"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => set("dispenser", Math.max(0, (datos.dispenser || 0) - 1))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      minWidth: 28,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, datos.dispenser || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => set("dispenser", (datos.dispenser || 0) + 1)
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "unidades"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "4px 0",
+      background: "var(--color-background-tertiary)",
+      padding: "10px 12px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 500,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8
+    }
+  }, "Saldo del cliente"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 6
+    }
+  }, [["favor", "A favor (tiene crédito)"], ["deuda", "Debe (saldo pendiente)"], ["cero", "Sin saldo"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    style: {
+      flex: 1,
+      fontSize: 11,
+      padding: "6px 4px",
+      borderRadius: 8,
+      border: "0.5px solid var(--color-border-secondary)",
+      cursor: "pointer",
+      background: datos._tipoSaldo === v ? "#185FA5" : "var(--color-background-secondary)",
+      color: datos._tipoSaldo === v ? "#e2eaf4" : "var(--color-text-secondary)"
+    },
+    onClick: () => set("_tipoSaldo", v)
+  }, l.split(" ")[0]))), datos._tipoSaldo && datos._tipoSaldo !== "cero" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, datos._tipoSaldo === "favor" ? "Monto a favor ($)" : "Monto que debe ($)"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    min: 0,
+    placeholder: "0",
+    value: datos._montoSaldo || "",
+    onChange: e => set("_montoSaldo", e.target.value)
+  })), datos.saldo !== 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: datos.saldo < 0 ? "var(--color-text-danger)" : "var(--color-text-success)",
+      marginTop: 4
+    }
+  }, "Saldo actual: ", fmt(datos.saldo), " · ", datos.saldo < 0 ? "Debe" : "A favor"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "O ingresá el saldo directamente (−negativo = debe · +positivo = a favor)"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    placeholder: "ej: -2500 o 1800",
+    value: datos._saldoDirecto ?? "",
+    onChange: e => set("_saldoDirecto", e.target.value)
+  }))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      marginTop: 4,
+      opacity: !datos.nombre ? 0.45 : 1
+    },
+    disabled: !datos.nombre,
+    onClick: () => {
+      let saldo = datos.saldo || 0;
+      if (datos._tipoSaldo === "favor") saldo = Math.abs(Number(datos._montoSaldo) || 0);
+      if (datos._tipoSaldo === "deuda") saldo = -Math.abs(Number(datos._montoSaldo) || 0);
+      if (datos._tipoSaldo === "cero") saldo = 0;
+      if (datos._saldoDirecto !== undefined && datos._saldoDirecto !== "") saldo = Number(datos._saldoDirecto);
+      onGuardar({
+        ...datos,
+        saldo
+      });
+    }
+  }, "Guardar cliente"));
 }
 function Resumen({
   ventas,
@@ -1684,411 +1518,341 @@ function Resumen({
 
   // ── Render ────────────────────────────────────────────────────────────────
   const tituloFiltro = filtro === "mes" ? `${mesSel.slice(5)}/${mesSel.slice(0, 4)}` : filtro === "anio" ? mesSel.slice(0, 4) : "Histórico completo";
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Resumen",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "10px 14px 6px"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 6,
-          marginBottom: 8,
-          flexWrap: "wrap"
-        },
-        children: [[["mes", "Este mes"], ["anio", "Este año"], ["todo", "Histórico"], ["dia", "Por día"]].map(([v, l]) => /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 12,
-            padding: "5px 12px",
-            background: filtro === v ? "#185FA5" : "var(--color-background-tertiary)",
-            color: filtro === v ? "#e2eaf4" : "var(--color-text-secondary)",
-            border: filtro === v ? "none" : "0.5px solid var(--color-border-secondary)"
-          },
-          onClick: () => setFiltro(v),
-          children: l
-        }, v)), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 12,
-            padding: "5px 12px"
-          },
-          onClick: () => {
-            const total = filtradas.reduce((a, v) => a + (v.neto || 0), 0);
-            const texto = `*Resumen Sistema de Reparto 2026 · Multi · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
-          },
-          children: "💬 WA"
-        })]
-      }), (filtro === "mes" || filtro === "anio") && /*#__PURE__*/_jsx("input", {
-        type: "month",
-        style: {
-          ...s.input,
-          marginBottom: 6
-        },
-        value: mesSel,
-        onChange: e => setMesSel(e.target.value)
-      }), filtro === "dia" && /*#__PURE__*/_jsxs("select", {
-        style: {
-          ...s.select,
-          marginBottom: 6
-        },
-        value: diaSel,
-        onChange: e => setDiaSel(e.target.value),
-        children: [/*#__PURE__*/_jsx("option", {
-          value: "todos",
-          children: "Todos los días"
-        }), DIAS.map(d => /*#__PURE__*/_jsx("option", {
-          value: d,
-          children: d
-        }, d))]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.grid2,
-        padding: "0 14px",
-        gap: 8,
-        marginBottom: 8
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Total vendido"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.metricVal,
-            color: "#5daaff"
-          },
-          children: fmt(totalNeto)
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)"
-          },
-          children: [filtradas.length, " entregas"]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Ganancia neta"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.metricVal,
-            color: "#4dd9a0"
-          },
-          children: fmt(totalGan)
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)"
-          },
-          children: ["−", fmt(totalCosto), " llenado"]
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.grid3,
-        padding: "0 14px",
-        gap: 6,
-        marginBottom: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Efectivo"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 15,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: fmt(cobEfectivo)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Transfer."
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 15,
-            fontWeight: 500,
-            color: "#5daaff"
-          },
-          children: fmt(cobTrans)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Fiado"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 15,
-            fontWeight: 500,
-            color: "#f5b942"
-          },
-          children: fmt(cobFiado)
-        })]
-      })]
-    }), (filtro === "todo" || filtro === "anio") && ultimosMeses.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Ventas por mes (efectivo / transfer. / fiado)"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          padding: "12px 10px"
-        },
-        children: /*#__PURE__*/_jsx("div", {
-          style: {
-            height: 180
-          },
-          children: /*#__PURE__*/_jsx("canvas", {
-            ref: chartRefs.bar
-          })
-        })
-      })]
-    }), totalNeto > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Distribución por forma de pago"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          padding: "12px 10px"
-        },
-        children: /*#__PURE__*/_jsx("div", {
-          style: {
-            height: 180
-          },
-          children: /*#__PURE__*/_jsx("canvas", {
-            ref: chartRefs.donut
-          })
-        })
-      })]
-    }), ultimosMeses.length > 1 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Evolución de ganancia por mes"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          padding: "12px 10px"
-        },
-        children: /*#__PURE__*/_jsx("div", {
-          style: {
-            height: 150
-          },
-          children: /*#__PURE__*/_jsx("canvas", {
-            ref: chartRefs.line
-          })
-        })
-      })]
-    }), (filtro === "todo" || filtro === "anio") && mesesOrdenados.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Detalle por mes"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          overflow: "hidden",
-          padding: 0
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            padding: "6px 10px",
-            background: "var(--color-background-tertiary)",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: ["Mes", "Total", "Efectivo+Trans", "Ganancia"].map(h => /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-secondary)",
-              fontWeight: 500,
-              textAlign: h === "Mes" ? "left" : "right"
-            },
-            children: h
-          }, h))
-        }), [...mesesOrdenados].reverse().map(m => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            padding: "7px 10px",
-            borderBottom: "0.5px solid var(--color-border-tertiary)",
-            alignItems: "center"
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-primary)",
-              fontWeight: 500
-            },
-            children: [m.mes.slice(5), "/", m.mes.slice(0, 4)]
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              color: "var(--color-text-primary)"
-            },
-            children: fmt(m.total)
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              color: "#5daaff"
-            },
-            children: fmt(m.efectivo + m.trans)
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              color: "#4dd9a0"
-            },
-            children: fmt(m.ganancia)
-          })]
-        }, m.mes)), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            padding: "8px 10px",
-            background: "var(--color-background-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)",
-              fontWeight: 500
-            },
-            children: "Total"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: fmt(mesesOrdenados.reduce((a, m) => a + m.total, 0))
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "#5daaff"
-            },
-            children: fmt(mesesOrdenados.reduce((a, m) => a + m.efectivo + m.trans, 0))
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "#4dd9a0"
-            },
-            children: fmt(mesesOrdenados.reduce((a, m) => a + m.ganancia, 0))
-          })]
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("span", {
-      style: s.sectionTitle,
-      children: ["Unidades entregadas · ", tituloFiltro]
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        display: "flex",
-        gap: 6,
-        padding: "0 14px",
-        marginBottom: 10,
-        flexWrap: "wrap"
-      },
-      children: productos.map(p => /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.metricCard,
-          flex: 1,
-          minWidth: 70,
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: p.nombre.replace(" 1.5L", "").replace("Bidón ", "")
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 20,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: cantidades[p.nombre] || 0
-        })]
-      }, p.id))
-    }), conDeuda.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsxs("span", {
-        style: s.sectionTitle,
-        children: ["Clientes con deuda · ", fmt(conDeuda.reduce((a, c) => a + Math.abs(c.saldo), 0))]
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px"
-        },
-        children: conDeuda.map(c => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "6px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-primary)"
-            },
-            children: c.nombre
-          }), /*#__PURE__*/_jsxs("span", {
-            style: s.badge("danger"),
-            children: ["Debe ", fmt(Math.abs(c.saldo))]
-          })]
-        }, c.id))
-      })]
-    }), conFavor.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Saldos a favor"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px"
-        },
-        children: conFavor.map(c => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "6px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-primary)"
-            },
-            children: c.nombre
-          }), /*#__PURE__*/_jsxs("span", {
-            style: s.badge("success"),
-            children: [fmt(c.saldo), " a favor"]
-          })]
-        }, c.id))
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Resumen",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px 6px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 8,
+      flexWrap: "wrap"
+    }
+  }, [["mes", "Este mes"], ["anio", "Este año"], ["todo", "Histórico"], ["dia", "Por día"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "5px 12px",
+      background: filtro === v ? "#185FA5" : "var(--color-background-tertiary)",
+      color: filtro === v ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtro === v ? "none" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: () => setFiltro(v)
+  }, l)), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "5px 12px"
+    },
+    onClick: () => {
+      const total = filtradas.reduce((a, v) => a + (v.neto || 0), 0);
+      const texto = `*Resumen Sistema de Reparto 2026 · Multi · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    }
+  }, "💬 WA")), (filtro === "mes" || filtro === "anio") && /*#__PURE__*/React.createElement("input", {
+    type: "month",
+    style: {
+      ...s.input,
+      marginBottom: 6
+    },
+    value: mesSel,
+    onChange: e => setMesSel(e.target.value)
+  }), filtro === "dia" && /*#__PURE__*/React.createElement("select", {
+    style: {
+      ...s.select,
+      marginBottom: 6
+    },
+    value: diaSel,
+    onChange: e => setDiaSel(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "todos"
+  }, "Todos los días"), DIAS.map(d => /*#__PURE__*/React.createElement("option", {
+    key: d,
+    value: d
+  }, d)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.grid2,
+      padding: "0 14px",
+      gap: 8,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Total vendido"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricVal,
+      color: "#5daaff"
+    }
+  }, fmt(totalNeto)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)"
+    }
+  }, filtradas.length, " entregas")), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Ganancia neta"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricVal,
+      color: "#4dd9a0"
+    }
+  }, fmt(totalGan)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)"
+    }
+  }, "−", fmt(totalCosto), " llenado"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.grid3,
+      padding: "0 14px",
+      gap: 6,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Efectivo"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(cobEfectivo))), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Transfer."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: "#5daaff"
+    }
+  }, fmt(cobTrans))), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Fiado"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: "#f5b942"
+    }
+  }, fmt(cobFiado)))), (filtro === "todo" || filtro === "anio") && ultimosMeses.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Ventas por mes (efectivo / transfer. / fiado)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      padding: "12px 10px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 180
+    }
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRefs.bar
+  })))), totalNeto > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Distribución por forma de pago"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      padding: "12px 10px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 180
+    }
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRefs.donut
+  })))), ultimosMeses.length > 1 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Evolución de ganancia por mes"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      padding: "12px 10px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 150
+    }
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRefs.line
+  })))), (filtro === "todo" || filtro === "anio") && mesesOrdenados.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Detalle por mes"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      overflow: "hidden",
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+      padding: "6px 10px",
+      background: "var(--color-background-tertiary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, ["Mes", "Total", "Efectivo+Trans", "Ganancia"].map(h => /*#__PURE__*/React.createElement("div", {
+    key: h,
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)",
+      fontWeight: 500,
+      textAlign: h === "Mes" ? "left" : "right"
+    }
+  }, h))), [...mesesOrdenados].reverse().map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.mes,
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+      padding: "7px 10px",
+      borderBottom: "0.5px solid var(--color-border-tertiary)",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-primary)",
+      fontWeight: 500
+    }
+  }, m.mes.slice(5), "/", m.mes.slice(0, 4)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(m.total)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      color: "#5daaff"
+    }
+  }, fmt(m.efectivo + m.trans)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      color: "#4dd9a0"
+    }
+  }, fmt(m.ganancia)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+      padding: "8px 10px",
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      fontWeight: 500
+    }
+  }, "Total"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(mesesOrdenados.reduce((a, m) => a + m.total, 0))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      fontWeight: 500,
+      color: "#5daaff"
+    }
+  }, fmt(mesesOrdenados.reduce((a, m) => a + m.efectivo + m.trans, 0))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      fontWeight: 500,
+      color: "#4dd9a0"
+    }
+  }, fmt(mesesOrdenados.reduce((a, m) => a + m.ganancia, 0)))))), /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Unidades entregadas · ", tituloFiltro), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      padding: "0 14px",
+      marginBottom: 10,
+      flexWrap: "wrap"
+    }
+  }, productos.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    style: {
+      ...s.metricCard,
+      flex: 1,
+      minWidth: 70,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, p.nombre.replace(" 1.5L", "").replace("Bidón ", "")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, cantidades[p.nombre] || 0)))), conDeuda.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Clientes con deuda · ", fmt(conDeuda.reduce((a, c) => a + Math.abs(c.saldo), 0))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px"
+    }
+  }, conDeuda.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary)"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("span", {
+    style: s.badge("danger")
+  }, "Debe ", fmt(Math.abs(c.saldo))))))), conFavor.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Saldos a favor"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px"
+    }
+  }, conFavor.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary)"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("span", {
+    style: s.badge("success")
+  }, fmt(c.saldo), " a favor"))))));
 }
 function exportarExcel(clientes, ventas, productos, planillas) {
   const wb = XLSX.utils.book_new();
@@ -2405,132 +2169,113 @@ function CalculadoraCostoReal({
   const gastoNum = Number(gastoTraslado) || 0;
   const envsNum = Number(envsXDia) || 0;
   const costoXEnvase = envsNum > 0 && gastoNum > 0 ? Math.round(gastoNum / envsNum) : 0;
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "0 0 10px",
       background: "var(--color-background-tertiary)",
       borderLeft: "3px solid #5daaff"
-    },
-    children: [/*#__PURE__*/_jsx("div", {
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-info)",
+      marginBottom: 8
+    }
+  }, "🧮 Calculadora de costo real puesto en cliente"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      marginBottom: 10,
+      lineHeight: 1.5
+    }
+  }, "Calculá la ganancia real por artículo sumando el gasto de traslado."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 8,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Gasto de traslado por día $"), /*#__PURE__*/React.createElement("input", {
+    style: s.inputNum,
+    type: "number",
+    placeholder: "Ej: 5000",
+    value: gastoTraslado,
+    onChange: e => setGastoTraslado(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)",
+      marginTop: 2
+    }
+  }, "GNC, nafta, propina, etc.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Envases entregados ese día"), /*#__PURE__*/React.createElement("input", {
+    style: s.inputNum,
+    type: "number",
+    placeholder: "Ej: 80",
+    value: envsXDia,
+    onChange: e => setEnvsXDia(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)",
+      marginTop: 2
+    }
+  }, "Promedio de entregas por día"))), costoXEnvase > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: 8,
+      padding: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8
+    }
+  }, "Traslado por unidad: ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: "var(--color-text-info)"
+    }
+  }, fmt(costoXEnvase))), productos.map(p => {
+    const costoReal = (p.costo || 0) + costoXEnvase;
+    const gananciaReal = (p.precio || 0) - costoReal;
+    const margenReal = p.precio > 0 ? Math.round(gananciaReal / p.precio * 100) : 0;
+    return /*#__PURE__*/React.createElement("div", {
+      key: p.id,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "6px 0",
+        borderBottom: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-primary)"
+      }
+    }, p.nombre), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-secondary)"
+      }
+    }, "Costo real: ", fmt(costoReal)), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         fontWeight: 600,
-        color: "var(--color-text-info)",
-        marginBottom: 8
-      },
-      children: "🧮 Calculadora de costo real puesto en cliente"
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--color-text-secondary)",
-        marginBottom: 10,
-        lineHeight: 1.5
-      },
-      children: "Calculá la ganancia real por artículo sumando el gasto de traslado."
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8,
-        marginBottom: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Gasto de traslado por día $"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.inputNum,
-          type: "number",
-          placeholder: "Ej: 5000",
-          value: gastoTraslado,
-          onChange: e => setGastoTraslado(e.target.value)
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)",
-            marginTop: 2
-          },
-          children: "GNC, nafta, propina, etc."
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Envases entregados ese día"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.inputNum,
-          type: "number",
-          placeholder: "Ej: 80",
-          value: envsXDia,
-          onChange: e => setEnvsXDia(e.target.value)
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)",
-            marginTop: 2
-          },
-          children: "Promedio de entregas por día"
-        })]
-      })]
-    }), costoXEnvase > 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        background: "var(--color-background-secondary)",
-        borderRadius: 8,
-        padding: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-secondary)",
-          marginBottom: 8
-        },
-        children: ["Traslado por unidad: ", /*#__PURE__*/_jsx("b", {
-          style: {
-            color: "var(--color-text-info)"
-          },
-          children: fmt(costoXEnvase)
-        })]
-      }), productos.map(p => {
-        const costoReal = (p.costo || 0) + costoXEnvase;
-        const gananciaReal = (p.precio || 0) - costoReal;
-        const margenReal = p.precio > 0 ? Math.round(gananciaReal / p.precio * 100) : 0;
-        return /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "6px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-primary)"
-            },
-            children: p.nombre
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              textAlign: "right"
-            },
-            children: [/*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-secondary)"
-              },
-              children: ["Costo real: ", fmt(costoReal)]
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 13,
-                fontWeight: 600,
-                color: gananciaReal > 0 ? "var(--color-text-success)" : "var(--color-text-danger)"
-              },
-              children: [fmt(gananciaReal), " (", margenReal, "%)"]
-            })]
-          })]
-        }, p.id);
-      })]
-    })]
-  });
+        color: gananciaReal > 0 ? "var(--color-text-success)" : "var(--color-text-danger)"
+      }
+    }, fmt(gananciaReal), " (", margenReal, "%)")));
+  })));
 }
 
 // ── OnboardingRoles ──────────────────────────────────────────────
@@ -2615,7 +2360,7 @@ function CargaGPSMasiva({
     setLngVal("");
     if (idx + 1 >= sinGPS.length) setListo(true);else setIdx(i => i + 1);
   };
-  if (sinGPS.length === 0 || listo || !cliente) return /*#__PURE__*/_jsxs("div", {
+  if (sinGPS.length === 0 || listo || !cliente) return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.screen,
       display: "flex",
@@ -2624,230 +2369,195 @@ function CargaGPSMasiva({
       justifyContent: "center",
       gap: 16,
       padding: 32
-    },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 48
-      },
-      children: "✅"
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 17,
-        fontWeight: 600,
-        color: "var(--color-text-primary)",
-        textAlign: "center"
-      },
-      children: "¡GPS cargado!"
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        fontSize: 13,
-        color: "var(--color-text-secondary)",
-        textAlign: "center"
-      },
-      children: [guardados, " cliente", guardados !== 1 ? "s" : "", " con GPS guardado."]
-    }), /*#__PURE__*/_jsx("button", {
-      style: s.btnPrimary,
-      onClick: onVolver,
-      children: "Ver mapa →"
-    })]
-  });
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 48
+    }
+  }, "✅"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 17,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      textAlign: "center"
+    }
+  }, "¡GPS cargado!"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      textAlign: "center"
+    }
+  }, guardados, " cliente", guardados !== 1 ? "s" : "", " con GPS guardado."), /*#__PURE__*/React.createElement("button", {
+    style: s.btnPrimary,
+    onClick: onVolver
+  }, "Ver mapa →"));
   const progreso = Math.round(idx / sinGPS.length * 100);
   const dir = direccionCliente(cliente);
   const latOk = latVal && lngVal && !isNaN(parseFloat(latVal)) && !isNaN(parseFloat(lngVal));
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.screen,
       display: "flex",
       flexDirection: "column"
+    }
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: `Cargar GPS · ${idx + 1}/${sinGPS.length}`,
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 4,
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      background: "#185FA5",
+      width: `${progreso}%`,
+      transition: "width 0.3s"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 16,
+      display: "flex",
+      flexDirection: "column",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 2
+    }
+  }, cliente.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, cliente.dia, " · ", dir), cliente.maps && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)",
+      marginTop: 2,
+      wordBreak: "break-all"
+    }
+  }, cliente.maps)), coordsDelLink && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-success)",
+      borderRadius: 10,
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-success)",
+      fontWeight: 600
+    }
+  }, "✓ Coordenadas extraídas del link"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-success)"
+    }
+  }, coordsDelLink.lat.toFixed(5), ", ", coordsDelLink.lng.toFixed(5))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-info)",
+      borderRadius: 10,
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-info)",
+      fontWeight: 600,
+      marginBottom: 4
+    }
+  }, "📋 Cómo obtener las coordenadas:"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      lineHeight: 1.8
+    }
+  }, "1. Tocá ", /*#__PURE__*/React.createElement("b", null, "\"Abrir en Maps\""), " abajo", /*#__PURE__*/React.createElement("br", null), "2. ", /*#__PURE__*/React.createElement("b", null, "Mantené presionado"), " el punto del cliente", /*#__PURE__*/React.createElement("br", null), "3. Aparecen los números: ", /*#__PURE__*/React.createElement("b", null, "-26.865, -65.217"), /*#__PURE__*/React.createElement("br", null), "4. Tocá esos números → ", /*#__PURE__*/React.createElement("b", null, "Copiar"), /*#__PURE__*/React.createElement("br", null), "5. Volvé acá y pegá abajo")), cliente.maps && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      background: "#1a7a3a",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8
     },
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: `Cargar GPS · ${idx + 1}/${sinGPS.length}`,
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        height: 4,
-        background: "var(--color-background-tertiary)"
-      },
-      children: /*#__PURE__*/_jsx("div", {
-        style: {
-          height: "100%",
-          background: "#185FA5",
-          width: `${progreso}%`,
-          transition: "width 0.3s"
-        }
-      })
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: 16,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 600,
-            color: "var(--color-text-primary)",
-            marginBottom: 2
-          },
-          children: cliente.nombre
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: [cliente.dia, " · ", dir]
-        }), cliente.maps && /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)",
-            marginTop: 2,
-            wordBreak: "break-all"
-          },
-          children: cliente.maps
-        })]
-      }), coordsDelLink && /*#__PURE__*/_jsxs("div", {
-        style: {
-          background: "var(--color-background-success)",
-          borderRadius: 10,
-          padding: "10px 14px"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            color: "var(--color-text-success)",
-            fontWeight: 600
-          },
-          children: "✓ Coordenadas extraídas del link"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-success)"
-          },
-          children: [coordsDelLink.lat.toFixed(5), ", ", coordsDelLink.lng.toFixed(5)]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          background: "var(--color-background-info)",
-          borderRadius: 10,
-          padding: "10px 14px"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-info)",
-            fontWeight: 600,
-            marginBottom: 4
-          },
-          children: "📋 Cómo obtener las coordenadas:"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-secondary)",
-            lineHeight: 1.8
-          },
-          children: ["1. Tocá ", /*#__PURE__*/_jsx("b", {
-            children: "\"Abrir en Maps\""
-          }), " abajo", /*#__PURE__*/_jsx("br", {}), "2. ", /*#__PURE__*/_jsx("b", {
-            children: "Mantené presionado"
-          }), " el punto del cliente", /*#__PURE__*/_jsx("br", {}), "3. Aparecen los números: ", /*#__PURE__*/_jsx("b", {
-            children: "-26.865, -65.217"
-          }), /*#__PURE__*/_jsx("br", {}), "4. Tocá esos números → ", /*#__PURE__*/_jsx("b", {
-            children: "Copiar"
-          }), /*#__PURE__*/_jsx("br", {}), "5. Volvé acá y pegá abajo"]
-        })]
-      }), cliente.maps && /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          background: "#1a7a3a",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8
-        },
-        onClick: () => window.open(cliente.maps, "_blank"),
-        children: "🗺 Abrir en Google Maps"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: {
-            ...s.label,
-            fontSize: 12,
-            fontWeight: 600
-          },
-          children: "Pegá las coordenadas (ej: -26.86590, -65.21780)"
-        }), /*#__PURE__*/_jsx("input", {
-          style: {
-            ...s.input,
-            marginTop: 4
-          },
-          placeholder: "-26.86590, -65.21780",
-          value: latVal && lngVal ? `${latVal}, ${lngVal}` : latVal,
-          onChange: e => {
-            const raw = e.target.value;
-            const m = raw.match(/(-?\d+(?:\.\d+)?)[,;\s]+(-?\d+(?:\.\d+)?)/);
-            if (m) {
-              setLatVal(m[1]);
-              setLngVal(m[2]);
-            } else setLatVal(raw);
-          }
-        }), latOk ? /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 11,
-            color: "#4dd9a0",
-            marginTop: 4
-          },
-          children: ["✓ ", latVal, ", ", lngVal]
-        }) : /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-tertiary)",
-            marginTop: 4
-          },
-          children: "Pegá los dos números separados por coma"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 8
-        },
-        children: [/*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            flex: 1,
-            padding: "12px",
-            fontSize: 13
-          },
-          onClick: () => guardarYSiguiente(true),
-          children: "Omitir →"
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btnPrimary,
-            flex: 2,
-            opacity: latOk || coordsDelLink ? 1 : 0.4
-          },
-          disabled: !latOk && !coordsDelLink,
-          onClick: () => guardarYSiguiente(false),
-          children: "Guardar y siguiente →"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary)",
-          textAlign: "center"
-        },
-        children: [guardados, " guardados · ", sinGPS.length - idx - 1, " restantes · Se sincroniza cada 5"]
-      })]
-    })]
-  });
+    onClick: () => window.open(cliente.maps, "_blank")
+  }, "🗺 Abrir en Google Maps"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: 0
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      fontSize: 12,
+      fontWeight: 600
+    }
+  }, "Pegá las coordenadas (ej: -26.86590, -65.21780)"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      marginTop: 4
+    },
+    placeholder: "-26.86590, -65.21780",
+    value: latVal && lngVal ? `${latVal}, ${lngVal}` : latVal,
+    onChange: e => {
+      const raw = e.target.value;
+      const m = raw.match(/(-?\d+(?:\.\d+)?)[,;\s]+(-?\d+(?:\.\d+)?)/);
+      if (m) {
+        setLatVal(m[1]);
+        setLngVal(m[2]);
+      } else setLatVal(raw);
+    }
+  }), latOk ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#4dd9a0",
+      marginTop: 4
+    }
+  }, "✓ ", latVal, ", ", lngVal) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      marginTop: 4
+    }
+  }, "Pegá los dos números separados por coma")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      padding: "12px",
+      fontSize: 13
+    },
+    onClick: () => guardarYSiguiente(true)
+  }, "Omitir →"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2,
+      opacity: latOk || coordsDelLink ? 1 : 0.4
+    },
+    disabled: !latOk && !coordsDelLink,
+    onClick: () => guardarYSiguiente(false)
+  }, "Guardar y siguiente →")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      textAlign: "center"
+    }
+  }, guardados, " guardados · ", sinGPS.length - idx - 1, " restantes · Se sincroniza cada 5")));
 }
 function calcularRutaOptima(clientes) {
   if (clientes.length <= 1) return clientes;
@@ -2876,132 +2586,118 @@ function PreviaRuta({
   onAplicar,
   onVolver
 }) {
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.screen,
       display: "flex",
       flexDirection: "column"
-    },
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Ruta óptima sugerida",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsx("div", {
+    }
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Ruta óptima sugerida",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px",
+      background: "var(--color-background-info)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-info)",
+      lineHeight: 1.6
+    }
+  }, "Orden que minimiza la distancia total. Podés aplicarlo o volver sin cambios.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      paddingBottom: 80
+    }
+  }, rutaOptima.map((c, i) => {
+    const entregado = ventasHoy.some(v => v.clienteId === c.id);
+    const noVis = noVisHoy.some(v => v.clienteId === c.id);
+    const dir = direccionCliente(c);
+    return /*#__PURE__*/React.createElement("div", {
+      key: c.id,
       style: {
-        padding: "10px 14px",
-        background: "var(--color-background-info)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)"
-      },
-      children: /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-info)",
-          lineHeight: 1.6
-        },
-        children: "Orden que minimiza la distancia total. Podés aplicarlo o volver sin cambios."
-      })
-    }), /*#__PURE__*/_jsx("div", {
+        ...s.card,
+        margin: "6px 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        background: "#185FA5",
+        color: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 13,
+        fontWeight: 700,
+        flexShrink: 0
+      }
+    }, i + 1), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
-        overflowY: "auto",
-        paddingBottom: 80
-      },
-      children: rutaOptima.map((c, i) => {
-        const entregado = ventasHoy.some(v => v.clienteId === c.id);
-        const noVis = noVisHoy.some(v => v.clienteId === c.id);
-        const dir = direccionCliente(c);
-        return /*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.card,
-            margin: "6px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 12
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "#185FA5",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 13,
-              fontWeight: 700,
-              flexShrink: 0
-            },
-            children: i + 1
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1,
-              minWidth: 0
-            },
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--color-text-primary)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap"
-              },
-              children: c.nombre
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-secondary)"
-              },
-              children: [c.dia, " · ", dir]
-            })]
-          }), entregado && /*#__PURE__*/_jsx("span", {
-            style: s.badge("success"),
-            children: "✓"
-          }), noVis && /*#__PURE__*/_jsx("span", {
-            style: s.badge("danger"),
-            children: "✗"
-          }), c.orden && c.orden !== i + 1 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-tertiary)"
-            },
-            children: ["antes:", c.orden]
-          })]
-        }, c.id);
-      })
-    }), /*#__PURE__*/_jsxs("div", {
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
-        position: "fixed",
-        bottom: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "100%",
-        maxWidth: 480,
-        padding: "12px 16px",
-        background: "var(--color-background-secondary)",
-        borderTop: "0.5px solid var(--color-border-tertiary)",
-        display: "flex",
-        gap: 8,
-        zIndex: 20
-      },
-      children: [/*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          flex: 1,
-          padding: "12px"
-        },
-        onClick: onVolver,
-        children: "Cancelar"
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          flex: 2
-        },
-        onClick: onAplicar,
-        children: "✓ Aplicar este orden"
-      })]
-    })]
-  });
+        fontSize: 14,
+        fontWeight: 500,
+        color: "var(--color-text-primary)",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      }
+    }, c.nombre), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-secondary)"
+      }
+    }, c.dia, " · ", dir)), entregado && /*#__PURE__*/React.createElement("span", {
+      style: s.badge("success")
+    }, "✓"), noVis && /*#__PURE__*/React.createElement("span", {
+      style: s.badge("danger")
+    }, "✗"), c.orden && c.orden !== i + 1 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "antes:", c.orden));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      bottom: 0,
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: "100%",
+      maxWidth: 480,
+      padding: "12px 16px",
+      background: "var(--color-background-secondary)",
+      borderTop: "0.5px solid var(--color-border-tertiary)",
+      display: "flex",
+      gap: 8,
+      zIndex: 20
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      padding: "12px"
+    },
+    onClick: onVolver
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2
+    },
+    onClick: onAplicar
+  }, "✓ Aplicar este orden")));
 }
 function MapaClientes({
   clientes,
@@ -3107,12 +2803,12 @@ function MapaClientes({
       }
     };
   }, [leafletOk, modoCarga, modoRuta, filtroDia, clientesFiltrados.length, mostrarRuta]);
-  if (modoCarga) return /*#__PURE__*/_jsx(CargaGPSMasiva, {
+  if (modoCarga) return /*#__PURE__*/React.createElement(CargaGPSMasiva, {
     clientes: clientes,
     onActualizar: onActualizar || (v => {}),
     onVolver: () => setModoCarga(false)
   });
-  if (modoRuta) return /*#__PURE__*/_jsx(PreviaRuta, {
+  if (modoRuta) return /*#__PURE__*/React.createElement(PreviaRuta, {
     rutaOptima: rutaOptima,
     ventasHoy: ventasHoy,
     noVisHoy: noVisHoy,
@@ -3131,213 +2827,196 @@ function MapaClientes({
     },
     onVolver: () => setModoRuta(false)
   });
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.screen,
       display: "flex",
       flexDirection: "column"
+    }
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Mapa de clientes",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      padding: "8px 14px",
+      overflowX: "auto",
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)",
+      alignItems: "center"
+    }
+  }, ["todos", ...DIAS].map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    style: {
+      ...s.btn,
+      padding: "5px 12px",
+      fontSize: 12,
+      flexShrink: 0,
+      background: filtroDia === d ? "#185FA5" : "var(--color-background-tertiary)",
+      color: filtroDia === d ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtroDia === d ? "none" : "0.5px solid var(--color-border-secondary)"
     },
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Mapa de clientes",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        gap: 6,
-        padding: "8px 14px",
-        overflowX: "auto",
-        background: "var(--color-background-secondary)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)",
-        alignItems: "center"
-      },
-      children: [["todos", ...DIAS].map(d => /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          padding: "5px 12px",
-          fontSize: 12,
-          flexShrink: 0,
-          background: filtroDia === d ? "#185FA5" : "var(--color-background-tertiary)",
-          color: filtroDia === d ? "#e2eaf4" : "var(--color-text-secondary)",
-          border: filtroDia === d ? "none" : "0.5px solid var(--color-border-secondary)"
-        },
-        onClick: () => setFiltroDia(d),
-        children: d === "todos" ? "Todos" : d
-      }, d)), clientesFiltrados.length > 1 && /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          fontSize: 11,
-          padding: "5px 10px",
-          flexShrink: 0,
-          background: "var(--color-background-info)",
-          color: "var(--color-text-info)",
-          border: "none"
-        },
-        onClick: () => setModoRuta(true),
-        children: "🗺 Ruta óptima"
-      })]
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        display: "flex",
-        background: "var(--color-background-secondary)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)"
-      },
-      children: [{
-        val: clientesFiltrados.length,
-        lbl: "Con GPS",
-        color: "#5daaff"
-      }, {
-        val: entregadosCount,
-        lbl: "Entregados",
-        color: "#4dd9a0"
-      }, {
-        val: pendientesCount,
-        lbl: "Pendientes",
-        color: "#f5b942"
-      }, {
-        val: sinCoordenadas,
-        lbl: "Sin GPS",
-        color: "var(--color-text-tertiary)"
-      }].map((item, i) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1,
-          textAlign: "center",
-          padding: "8px 4px",
-          borderRight: i < 3 ? "0.5px solid var(--color-border-tertiary)" : "none"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 600,
-            color: item.color
-          },
-          children: item.val
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 9,
-            color: "var(--color-text-secondary)"
-          },
-          children: item.lbl
-        })]
-      }, i))
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        padding: "6px 14px",
-        background: "var(--color-background-secondary)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)"
-      },
-      children: [[["#4dd9a0", "Entregado"], ["#5daaff", "Pendiente"], ["#f07070", "No visitado"]].map(([color, lbl]) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 4
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: color
-          }
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)"
-          },
-          children: lbl
-        })]
-      }, lbl)), clientesFiltrados.length > 1 && /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          fontSize: 10,
-          padding: "3px 8px",
-          marginLeft: "auto",
-          background: mostrarRuta ? "#185FA5" : "var(--color-background-tertiary)",
-          color: mostrarRuta ? "#e2eaf4" : "var(--color-text-secondary)",
-          border: "none"
-        },
-        onClick: () => setMostrarRuta(r => !r),
-        children: mostrarRuta ? "Ocultar ruta" : "Ver ruta"
-      })]
-    }), leafletOk && clientesFiltrados.length === 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: 14,
-        padding: 32
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 40
-        },
-        children: "📍"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 15,
-          fontWeight: 500,
-          color: "var(--color-text-primary)",
-          textAlign: "center"
-        },
-        children: "Sin clientes con GPS"
-      }), /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.btnPrimary,
-          maxWidth: 260
-        },
-        onClick: () => setModoCarga(true),
-        children: ["📍 Iniciar carga de GPS (", sinCoordenadas, " clientes)"]
-      })]
-    }), !leafletOk && /*#__PURE__*/_jsx("div", {
-      style: {
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      },
-      children: /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-secondary)"
-        },
-        children: "Cargando mapa..."
-      })
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        flex: 1,
-        position: "relative",
-        display: leafletOk && clientesFiltrados.length > 0 ? "block" : "none"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        ref: mapRef,
-        style: {
-          width: "100%",
-          height: "100%",
-          minHeight: 400
-        }
-      }), sinCoordenadas > 0 && /*#__PURE__*/_jsxs("button", {
-        onClick: () => setModoCarga(true),
-        style: {
-          position: "absolute",
-          bottom: 16,
-          right: 16,
-          zIndex: 1000,
-          background: "#185FA5",
-          color: "#e2eaf4",
-          border: "none",
-          borderRadius: 24,
-          padding: "10px 16px",
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-          boxShadow: "0 3px 12px rgba(0,0,0,0.4)"
-        },
-        children: ["📍 ", sinCoordenadas, " sin GPS"]
-      })]
-    })]
-  });
+    onClick: () => setFiltroDia(d)
+  }, d === "todos" ? "Todos" : d)), clientesFiltrados.length > 1 && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "5px 10px",
+      flexShrink: 0,
+      background: "var(--color-background-info)",
+      color: "var(--color-text-info)",
+      border: "none"
+    },
+    onClick: () => setModoRuta(true)
+  }, "🗺 Ruta óptima")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, [{
+    val: clientesFiltrados.length,
+    lbl: "Con GPS",
+    color: "#5daaff"
+  }, {
+    val: entregadosCount,
+    lbl: "Entregados",
+    color: "#4dd9a0"
+  }, {
+    val: pendientesCount,
+    lbl: "Pendientes",
+    color: "#f5b942"
+  }, {
+    val: sinCoordenadas,
+    lbl: "Sin GPS",
+    color: "var(--color-text-tertiary)"
+  }].map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      flex: 1,
+      textAlign: "center",
+      padding: "8px 4px",
+      borderRight: i < 3 ? "0.5px solid var(--color-border-tertiary)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: item.color
+    }
+  }, item.val), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "var(--color-text-secondary)"
+    }
+  }, item.lbl)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      padding: "6px 14px",
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, [["#4dd9a0", "Entregado"], ["#5daaff", "Pendiente"], ["#f07070", "No visitado"]].map(([color, lbl]) => /*#__PURE__*/React.createElement("div", {
+    key: lbl,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 10,
+      height: 10,
+      borderRadius: "50%",
+      background: color
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, lbl))), clientesFiltrados.length > 1 && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 10,
+      padding: "3px 8px",
+      marginLeft: "auto",
+      background: mostrarRuta ? "#185FA5" : "var(--color-background-tertiary)",
+      color: mostrarRuta ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: "none"
+    },
+    onClick: () => setMostrarRuta(r => !r)
+  }, mostrarRuta ? "Ocultar ruta" : "Ver ruta")), leafletOk && clientesFiltrados.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "column",
+      gap: 14,
+      padding: 32
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40
+    }
+  }, "📍"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      textAlign: "center"
+    }
+  }, "Sin clientes con GPS"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      maxWidth: 260
+    },
+    onClick: () => setModoCarga(true)
+  }, "📍 Iniciar carga de GPS (", sinCoordenadas, " clientes)")), !leafletOk && /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Cargando mapa...")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      position: "relative",
+      display: leafletOk && clientesFiltrados.length > 0 ? "block" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    ref: mapRef,
+    style: {
+      width: "100%",
+      height: "100%",
+      minHeight: 400
+    }
+  }), sinCoordenadas > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModoCarga(true),
+    style: {
+      position: "absolute",
+      bottom: 16,
+      right: 16,
+      zIndex: 1000,
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 24,
+      padding: "10px 16px",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer",
+      boxShadow: "0 3px 12px rgba(0,0,0,0.4)"
+    }
+  }, "📍 ", sinCoordenadas, " sin GPS")));
 }

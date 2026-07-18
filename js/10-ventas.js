@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  10-ventas.js — NuevaVenta · NuevoCliente
 // ════════════════════════════════════════════════════════════════════
@@ -162,1142 +161,1019 @@ function NuevaVenta({
     list,
     setList,
     i
-  }) => /*#__PURE__*/_jsxs("div", {
+  }) => /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.row,
       marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("select", {
+    style: {
+      ...s.select,
+      flex: 2
     },
-    children: [/*#__PURE__*/_jsxs("select", {
+    value: list[i].prod,
+    onChange: e => {
+      const n = [...list];
+      n[i].prod = e.target.value;
+      setList(n);
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "— Producto —"), productos.map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.nombre
+  }, p.nombre))), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      flex: 1
+    },
+    type: "number",
+    placeholder: "Cant",
+    value: list[i].cant,
+    onChange: e => {
+      const n = [...list];
+      n[i].cant = e.target.value;
+      setList(n);
+    }
+  }));
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "sticky",
+      top: 0,
+      zIndex: 15,
+      background: "var(--color-background-primary)"
+    }
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: `Clientes · ${cliente.dia || ""}`,
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)",
+      boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 600,
+      color: "var(--color-text-primary)"
+    }
+  }, cliente.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      marginTop: 1
+    }
+  }, direccionCliente(cliente), cliente.orden ? ` · #${cliente.orden}` : "")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      fontSize: 17,
+      flexShrink: 0
+    }
+  }, (cliente.maps || cliente.lat && cliente.lng) && /*#__PURE__*/React.createElement("a", {
+    href: cliente.maps || `https://www.google.com/maps?q=${cliente.lat},${cliente.lng}`,
+    target: "_blank",
+    rel: "noreferrer",
+    style: {
+      textDecoration: "none"
+    },
+    onClick: e => e.stopPropagation()
+  }, "📍"), cliente.telefono && /*#__PURE__*/React.createElement("a", {
+    href: `https://wa.me/54${cliente.telefono}`,
+    target: "_blank",
+    rel: "noreferrer",
+    style: {
+      textDecoration: "none"
+    },
+    onClick: e => e.stopPropagation()
+  }, "💬"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap",
+      alignItems: "center",
+      marginTop: 8
+    }
+  }, cliente.saldo < 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 500,
+      padding: "2px 8px",
+      borderRadius: 5,
+      background: "var(--color-background-danger)",
+      color: "var(--color-text-danger)"
+    }
+  }, "Debe ", fmt(Math.abs(cliente.saldo))), cliente.saldo > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 500,
+      padding: "2px 8px",
+      borderRadius: 5,
+      background: "var(--color-background-success)",
+      color: "var(--color-text-success)"
+    }
+  }, "A favor ", fmt(cliente.saldo)), cliente.sifon > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "2px 8px",
+      borderRadius: 5,
+      background: "var(--color-background-info)",
+      color: "var(--color-text-info)"
+    }
+  }, "Sifón×", cliente.sifon), cliente.bidon10 > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "2px 8px",
+      borderRadius: 5,
+      background: "var(--color-background-info)",
+      color: "var(--color-text-info)"
+    }
+  }, "10L×", cliente.bidon10), cliente.bidon20 > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "2px 8px",
+      borderRadius: 5,
+      background: "var(--color-background-info)",
+      color: "var(--color-text-info)"
+    }
+  }, "20L×", cliente.bidon20), cliente.dispenser > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "2px 8px",
+      borderRadius: 5,
+      background: "var(--color-background-tertiary)",
+      color: "var(--color-text-secondary)"
+    }
+  }, "Disp×", cliente.dispenser), (() => {
+    const aj = cliente.envAjuste || {};
+    const items = [];
+    if ((aj.sifon || 0) > 0) items.push(`+${aj.sifon} sif.`);
+    if ((aj.bidon10 || 0) > 0) items.push(`+${aj.bidon10} 10L`);
+    if ((aj.bidon20 || 0) > 0) items.push(`+${aj.bidon20} 20L`);
+    return items.length > 0 ? /*#__PURE__*/React.createElement("span", {
       style: {
-        ...s.select,
-        flex: 2
-      },
-      value: list[i].prod,
-      onChange: e => {
-        const n = [...list];
-        n[i].prod = e.target.value;
-        setList(n);
-      },
-      children: [/*#__PURE__*/_jsx("option", {
-        value: "",
-        children: "— Producto —"
-      }), productos.map(p => /*#__PURE__*/_jsx("option", {
-        value: p.nombre,
-        children: p.nombre
-      }, p.id))]
-    }), /*#__PURE__*/_jsx("input", {
-      style: {
-        ...s.input,
-        flex: 1
-      },
-      type: "number",
-      placeholder: "Cant",
-      value: list[i].cant,
-      onChange: e => {
-        const n = [...list];
-        n[i].cant = e.target.value;
-        setList(n);
+        fontSize: 11,
+        padding: "2px 8px",
+        borderRadius: 5,
+        background: "var(--color-background-warning)",
+        color: "var(--color-text-warning)"
       }
-    })]
-  });
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsxs("div", {
+    }, items.join(" "), " prest.") : null;
+  })(), cliente.notas && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-warning)"
+    }
+  }, "📝 ", cliente.notas)))), progressData && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-tertiary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)",
+      padding: "6px 14px",
+      display: "flex",
+      gap: 10,
+      alignItems: "center",
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      flex: 1,
+      minWidth: 120
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      height: 5,
+      borderRadius: 3,
+      background: "var(--color-background-secondary)",
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      borderRadius: 3,
+      background: "#185FA5",
+      width: `${Math.round(progressData.visitados / Math.max(progressData.total, 1) * 100)}%`
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      whiteSpace: "nowrap"
+    }
+  }, progressData.visitados, "/", progressData.total)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-success)",
+      fontWeight: 500
+    }
+  }, fmt(progressData.montoHoy)), progressData.stock && Object.entries(progressData.stock).map(([k, v]) => v > 0 ? /*#__PURE__*/React.createElement("span", {
+    key: k,
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)"
+    }
+  }, k, ":", v) : null)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.sectionTitle,
+      padding: "0 0 10px"
+    }
+  }, "Cantidades entregadas"), repetido && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      background: "var(--color-background-info)",
+      border: "0.5px solid var(--color-border-tertiary)",
+      borderRadius: 8,
+      padding: "8px 12px",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-info)",
+      fontWeight: 500
+    }
+  }, "🔁 Repetido de la última venta"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "4px 12px",
+      fontSize: 12
+    },
+    onClick: () => {
+      setCantidades(q => {
+        const m = {};
+        Object.keys(q).forEach(k => m[k] = 0);
+        return m;
+      });
+      setRepetido(false);
+    }
+  }, "Vaciar")), prodEntrega.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    style: {
+      ...s.card,
+      margin: "0 0 8px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, p.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, fmt(p.precio), " c/u")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 16px",
+      fontSize: 20,
+      lineHeight: 1
+    },
+    onClick: () => setCantidades(q => ({
+      ...q,
+      [p.nombre]: Math.max(0, (q[p.nombre] || 0) - 1)
+    }))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 22,
+      fontWeight: 500,
+      minWidth: 32,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, cantidades[p.nombre] || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 16px",
+      fontSize: 20,
+      lineHeight: 1
+    },
+    onClick: () => setCantidades(q => ({
+      ...q,
+      [p.nombre]: (q[p.nombre] || 0) + 1
+    }))
+  }, "+")))), /*#__PURE__*/React.createElement("div", {
+    style: s.divider
+  }), /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      fontSize: 13,
+      marginBottom: 8
+    }
+  }, "Forma de pago"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 12
+    }
+  }, [["contado", "Contado"], ["transferencia", "Transfer."], ["fiado", "Fiado"], ["mixto", "Mixto"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    style: {
+      ...s.btn,
+      flex: 1,
+      background: pago === v ? "#185FA5" : undefined,
+      color: pago === v ? "#fff" : undefined,
+      border: pago === v ? "none" : undefined,
+      padding: "9px 4px",
+      fontSize: 13
+    },
+    onClick: () => setPago(v)
+  }, l))), pago === "transferencia" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px",
+      background: transConfirmada ? "#0a2e1f" : "#1e3a5f",
+      border: transConfirmada ? "0.5px solid #4dd9a0" : "0.5px solid #5daaff"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: transConfirmada ? "#4dd9a0" : "#5daaff"
+    }
+  }, transConfirmada ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: transConfirmada ? "#4dd9a0" : "#185FA5",
+      color: transConfirmada ? "#0a2e1f" : "#fff",
+      border: "none",
+      borderRadius: 6,
+      padding: "5px 10px",
+      fontSize: 11,
+      cursor: "pointer"
+    },
+    onClick: () => {
+      setTransConfirmada(!transConfirmada);
+      if (!transConfirmada) sonarTransferencia();
+    }
+  }, transConfirmada ? "✓ OK" : "Confirmar"))), pago === "mixto" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px",
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 8
+    }
+  }, "Desglose del pago mixto"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Efectivo $"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    placeholder: "0",
+    value: montoEfec,
+    onChange: e => {
+      const ef = e.target.value;
+      setMontoEfec(ef);
+      // Total real = compra + deuda si elige pagar todo
+      const totalReal = opcionSaldo === "todo" ? Math.round(Math.abs(cliente.saldo || 0) + aPagar) : aPagar;
+      const resto = totalReal - Number(ef || 0);
+      setMontoTrans(resto > 0 ? String(Math.round(resto)) : "0");
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Transferencia $"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    placeholder: "0",
+    value: montoTrans,
+    onChange: e => setMontoTrans(e.target.value)
+  }))), Number(montoEfec || 0) + Number(montoTrans || 0) > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, (() => {
+    const totalReal = opcionSaldo === "todo" ? Math.round(Math.abs(cliente.saldo || 0) + aPagar) : aPagar;
+    const totalPag = Number(montoEfec || 0) + Number(montoTrans || 0);
+    return /*#__PURE__*/React.createElement(React.Fragment, null, "Total pagado: ", fmt(totalPag), " de ", fmt(totalReal), totalPag < totalReal && /*#__PURE__*/React.createElement("span", {
       style: {
-        position: "sticky",
-        top: 0,
-        zIndex: 15,
-        background: "var(--color-background-primary)"
-      },
-      children: [/*#__PURE__*/_jsx(HeaderApp, {
-        titulo: `Clientes · ${cliente.dia || ""}`,
-        onVolver: onVolver
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          background: "var(--color-background-secondary)",
-          borderBottom: "0.5px solid var(--color-border-tertiary)",
-          boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
-          padding: "10px 14px"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 8
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1,
-              minWidth: 0
-            },
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 15,
-                fontWeight: 600,
-                color: "var(--color-text-primary)"
-              },
-              children: cliente.nombre
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-secondary)",
-                marginTop: 1
-              },
-              children: [direccionCliente(cliente), cliente.orden ? ` · #${cliente.orden}` : ""]
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              gap: 10,
-              fontSize: 17,
-              flexShrink: 0
-            },
-            children: [(cliente.maps || cliente.lat && cliente.lng) && /*#__PURE__*/_jsx("a", {
-              href: cliente.maps || `https://www.google.com/maps?q=${cliente.lat},${cliente.lng}`,
-              target: "_blank",
-              rel: "noreferrer",
-              style: {
-                textDecoration: "none"
-              },
-              onClick: e => e.stopPropagation(),
-              children: "📍"
-            }), cliente.telefono && /*#__PURE__*/_jsx("a", {
-              href: `https://wa.me/54${cliente.telefono}`,
-              target: "_blank",
-              rel: "noreferrer",
-              style: {
-                textDecoration: "none"
-              },
-              onClick: e => e.stopPropagation(),
-              children: "💬"
-            })]
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            flexWrap: "wrap",
-            alignItems: "center",
-            marginTop: 8
-          },
-          children: [cliente.saldo < 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              fontWeight: 500,
-              padding: "2px 8px",
-              borderRadius: 5,
-              background: "var(--color-background-danger)",
-              color: "var(--color-text-danger)"
-            },
-            children: ["Debe ", fmt(Math.abs(cliente.saldo))]
-          }), cliente.saldo > 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              fontWeight: 500,
-              padding: "2px 8px",
-              borderRadius: 5,
-              background: "var(--color-background-success)",
-              color: "var(--color-text-success)"
-            },
-            children: ["A favor ", fmt(cliente.saldo)]
-          }), cliente.sifon > 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              padding: "2px 8px",
-              borderRadius: 5,
-              background: "var(--color-background-info)",
-              color: "var(--color-text-info)"
-            },
-            children: ["Sifón×", cliente.sifon]
-          }), cliente.bidon10 > 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              padding: "2px 8px",
-              borderRadius: 5,
-              background: "var(--color-background-info)",
-              color: "var(--color-text-info)"
-            },
-            children: ["10L×", cliente.bidon10]
-          }), cliente.bidon20 > 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              padding: "2px 8px",
-              borderRadius: 5,
-              background: "var(--color-background-info)",
-              color: "var(--color-text-info)"
-            },
-            children: ["20L×", cliente.bidon20]
-          }), cliente.dispenser > 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              padding: "2px 8px",
-              borderRadius: 5,
-              background: "var(--color-background-tertiary)",
-              color: "var(--color-text-secondary)"
-            },
-            children: ["Disp×", cliente.dispenser]
-          }), (() => {
-            const aj = cliente.envAjuste || {};
-            const items = [];
-            if ((aj.sifon || 0) > 0) items.push(`+${aj.sifon} sif.`);
-            if ((aj.bidon10 || 0) > 0) items.push(`+${aj.bidon10} 10L`);
-            if ((aj.bidon20 || 0) > 0) items.push(`+${aj.bidon20} 20L`);
-            return items.length > 0 ? /*#__PURE__*/_jsxs("span", {
-              style: {
-                fontSize: 11,
-                padding: "2px 8px",
-                borderRadius: 5,
-                background: "var(--color-background-warning)",
-                color: "var(--color-text-warning)"
-              },
-              children: [items.join(" "), " prest."]
-            }) : null;
-          })(), cliente.notas && /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-warning)"
-            },
-            children: ["📝 ", cliente.notas]
-          })]
-        })]
-      })]
-    }), progressData && /*#__PURE__*/_jsxs("div", {
-      style: {
-        background: "var(--color-background-tertiary)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)",
-        padding: "6px 14px",
-        display: "flex",
-        gap: 10,
-        alignItems: "center",
-        flexWrap: "wrap"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          flex: 1,
-          minWidth: 120
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            flex: 1,
-            height: 5,
-            borderRadius: 3,
-            background: "var(--color-background-secondary)",
-            overflow: "hidden"
-          },
-          children: /*#__PURE__*/_jsx("div", {
-            style: {
-              height: "100%",
-              borderRadius: 3,
-              background: "#185FA5",
-              width: `${Math.round(progressData.visitados / Math.max(progressData.total, 1) * 100)}%`
-            }
-          })
-        }), /*#__PURE__*/_jsxs("span", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-secondary)",
-            whiteSpace: "nowrap"
-          },
-          children: [progressData.visitados, "/", progressData.total]
-        })]
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-success)",
-          fontWeight: 500
-        },
-        children: fmt(progressData.montoHoy)
-      }), progressData.stock && Object.entries(progressData.stock).map(([k, v]) => v > 0 ? /*#__PURE__*/_jsxs("span", {
-        style: {
-          fontSize: 10,
-          color: "var(--color-text-tertiary)"
-        },
-        children: [k, ":", v]
-      }, k) : null)]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: 16
-      },
-      children: [/*#__PURE__*/_jsx("span", {
-        style: {
-          ...s.sectionTitle,
-          padding: "0 0 10px"
-        },
-        children: "Cantidades entregadas"
-      }), repetido && /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-          background: "var(--color-background-info)",
-          border: "0.5px solid var(--color-border-tertiary)",
-          borderRadius: 8,
-          padding: "8px 12px",
-          marginBottom: 10
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-info)",
-            fontWeight: 500
-          },
-          children: "🔁 Repetido de la última venta"
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            padding: "4px 12px",
-            fontSize: 12
-          },
-          onClick: () => {
-            setCantidades(q => {
-              const m = {};
-              Object.keys(q).forEach(k => m[k] = 0);
-              return m;
-            });
-            setRepetido(false);
-          },
-          children: "Vaciar"
-        })]
-      }), prodEntrega.map(p => /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 8px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: p.nombre
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-secondary)"
-            },
-            children: [fmt(p.precio), " c/u"]
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            alignItems: "center"
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 16px",
-              fontSize: 20,
-              lineHeight: 1
-            },
-            onClick: () => setCantidades(q => ({
-              ...q,
-              [p.nombre]: Math.max(0, (q[p.nombre] || 0) - 1)
-            })),
-            children: "−"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 22,
-              fontWeight: 500,
-              minWidth: 32,
-              textAlign: "center",
-              color: "var(--color-text-primary)"
-            },
-            children: cantidades[p.nombre] || 0
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 16px",
-              fontSize: 20,
-              lineHeight: 1
-            },
-            onClick: () => setCantidades(q => ({
-              ...q,
-              [p.nombre]: (q[p.nombre] || 0) + 1
-            })),
-            children: "+"
-          })]
-        })]
-      }, p.id)), /*#__PURE__*/_jsx("div", {
-        style: s.divider
-      }), /*#__PURE__*/_jsx("label", {
-        style: {
-          ...s.label,
-          fontSize: 13,
-          marginBottom: 8
-        },
-        children: "Forma de pago"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          display: "flex",
-          gap: 8,
-          marginBottom: 12
-        },
-        children: [["contado", "Contado"], ["transferencia", "Transfer."], ["fiado", "Fiado"], ["mixto", "Mixto"]].map(([v, l]) => /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            flex: 1,
-            background: pago === v ? "#185FA5" : undefined,
-            color: pago === v ? "#fff" : undefined,
-            border: pago === v ? "none" : undefined,
-            padding: "9px 4px",
-            fontSize: 13
-          },
-          onClick: () => setPago(v),
-          children: l
-        }, v))
-      }), pago === "transferencia" && /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 10px",
-          background: transConfirmada ? "#0a2e1f" : "#1e3a5f",
-          border: transConfirmada ? "0.5px solid #4dd9a0" : "0.5px solid #5daaff"
-        },
-        children: /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 12,
-              color: transConfirmada ? "#4dd9a0" : "#5daaff"
-            },
-            children: transConfirmada ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              background: transConfirmada ? "#4dd9a0" : "#185FA5",
-              color: transConfirmada ? "#0a2e1f" : "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding: "5px 10px",
-              fontSize: 11,
-              cursor: "pointer"
-            },
-            onClick: () => {
-              setTransConfirmada(!transConfirmada);
-              if (!transConfirmada) sonarTransferencia();
-            },
-            children: transConfirmada ? "✓ OK" : "Confirmar"
-          })]
-        })
-      }), pago === "mixto" && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 10px",
-          background: "var(--color-background-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-primary)",
-            marginBottom: 8
-          },
-          children: "Desglose del pago mixto"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 8,
-            marginBottom: 6
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1
-            },
-            children: [/*#__PURE__*/_jsx("label", {
-              style: s.label,
-              children: "Efectivo $"
-            }), /*#__PURE__*/_jsx("input", {
-              style: s.input,
-              type: "number",
-              placeholder: "0",
-              value: montoEfec,
-              onChange: e => {
-                const ef = e.target.value;
-                setMontoEfec(ef);
-                // Total real = compra + deuda si elige pagar todo
-                const totalReal = opcionSaldo === "todo" ? Math.round(Math.abs(cliente.saldo || 0) + aPagar) : aPagar;
-                const resto = totalReal - Number(ef || 0);
-                setMontoTrans(resto > 0 ? String(Math.round(resto)) : "0");
-              }
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1
-            },
-            children: [/*#__PURE__*/_jsx("label", {
-              style: s.label,
-              children: "Transferencia $"
-            }), /*#__PURE__*/_jsx("input", {
-              style: s.input,
-              type: "number",
-              placeholder: "0",
-              value: montoTrans,
-              onChange: e => setMontoTrans(e.target.value)
-            })]
-          })]
-        }), Number(montoEfec || 0) + Number(montoTrans || 0) > 0 && /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: (() => {
-            const totalReal = opcionSaldo === "todo" ? Math.round(Math.abs(cliente.saldo || 0) + aPagar) : aPagar;
-            const totalPag = Number(montoEfec || 0) + Number(montoTrans || 0);
-            return /*#__PURE__*/_jsxs(_Fragment, {
-              children: ["Total pagado: ", fmt(totalPag), " de ", fmt(totalReal), totalPag < totalReal && /*#__PURE__*/_jsxs("span", {
-                style: {
-                  color: "var(--color-text-warning)"
-                },
-                children: [" · Queda ", fmt(totalReal - totalPag)]
-              })]
-            });
-          })()
-        }), Number(montoTrans || 0) > 0 && /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.card,
-            margin: "8px 0 0",
-            background: transConfMixto ? "#0a2e1f" : "#1e3a5f",
-            border: transConfMixto ? "0.5px solid #4dd9a0" : "0.5px solid #5daaff"
-          },
-          children: /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            },
-            children: [/*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 12,
-                color: transConfMixto ? "#4dd9a0" : "#5daaff"
-              },
-              children: transConfMixto ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                background: transConfMixto ? "#4dd9a0" : "#185FA5",
-                color: transConfMixto ? "#0a2e1f" : "#fff",
-                border: "none",
-                borderRadius: 6,
-                padding: "5px 10px",
-                fontSize: 11,
-                cursor: "pointer"
-              },
-              onClick: () => {
-                setTransConfMixto(!transConfMixto);
-                if (!transConfMixto) sonarTransferencia();
-              },
-              children: transConfMixto ? "✓ OK" : "Confirmar"
-            })]
-          })
-        })]
-      }), saldoDisp > 0 && pago !== "fiado" && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 10px",
-          background: "var(--color-background-success)",
-          border: "0.5px solid var(--color-border-success)",
-          cursor: "pointer"
-        },
-        onClick: () => setUsarSaldo(!usarSaldo),
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 10,
-            alignItems: "center"
-          },
-          children: [/*#__PURE__*/_jsx("input", {
-            type: "checkbox",
-            checked: usarSaldo,
-            onChange: e => setUsarSaldo(e.target.checked),
-            style: {
-              width: 18,
-              height: 18,
-              cursor: "pointer",
-              accentColor: "#0F6E56"
-            }
-          }), /*#__PURE__*/_jsxs("label", {
-            style: {
-              fontSize: 14,
-              color: "var(--color-text-success)",
-              cursor: "pointer",
-              fontWeight: 500
-            },
-            children: ["Usar saldo a favor — ", fmt(saldoDisp)]
-          })]
-        }), usarSaldo && saldoApl > 0 && /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-success)",
-            marginTop: 4,
-            paddingLeft: 28
-          },
-          children: ["Se descuentan ", fmt(saldoApl), " del total"]
-        })]
-      }), cliente.saldo < 0 && pago !== "fiado" && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 10px",
-          background: "var(--color-background-danger)",
-          border: "0.5px solid var(--color-border-danger)"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-danger)",
-            marginBottom: 8
-          },
-          children: ["Deuda pendiente: ", fmt(Math.abs(cliente.saldo))]
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            display: "flex",
-            flexDirection: "column",
-            gap: 6
-          },
-          children: [["todo", "Paga deuda + compra de hoy", Math.abs(cliente.saldo) + aPagar], ["compra", "Solo la compra de hoy", null], ["parcial", "Pago parcial (ingresá el monto)", null]].map(([op, label, total]) => /*#__PURE__*/_jsxs("button", {
-            style: {
-              textAlign: "left",
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "0.5px solid var(--color-border-danger)",
-              background: opcionSaldo === op ? "#7f1d1d" : "transparent",
-              color: "var(--color-text-danger)",
-              fontSize: 12,
-              cursor: "pointer",
-              fontWeight: opcionSaldo === op ? 500 : 400
-            },
-            onClick: () => setOpcionSaldo(op),
-            children: [opcionSaldo === op ? "✓ " : "", label, total ? ` — ${fmt(total)}` : ""]
-          }, op))
-        })]
-      }), pago !== "fiado" && pago !== "mixto" && /*#__PURE__*/_jsxs("div", {
-        style: {
-          marginBottom: 12
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: opcionSaldo === "parcial" ? "Monto que paga (parcial)" : opcionSaldo === "todo" ? "Total a cobrar (deuda + compra):" : `Monto cobrado (vacío = ${fmt(aPagar)} exacto)`
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          type: "number",
-          placeholder: opcionSaldo === "todo" ? String(Math.round(Math.abs(cliente.saldo) + aPagar)) : String(Math.round(aPagar)),
-          value: monto,
-          onChange: e => setMonto(e.target.value)
-        })]
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.divider
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 12px",
-          background: "var(--color-background-secondary)"
-        },
-        children: [bruto > 0 && /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 4
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Subtotal"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-primary)"
-            },
-            children: fmt(bruto)
-          })]
-        }), desc > 0 && /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 4
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Descuento 2.5%"
-          }), /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-danger)"
-            },
-            children: ["−", fmt(desc)]
-          })]
-        }), saldoApl > 0 && /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 4
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Saldo a favor"
-          }), /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-success)"
-            },
-            children: ["−", fmt(saldoApl)]
-          })]
-        }), pagaTodo && /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: 4
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-danger)"
-            },
-            children: "Deuda anterior"
-          }), /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-danger)"
-            },
-            children: ["+", fmt(deudaPendiente)]
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            borderTop: "0.5px solid var(--color-border-tertiary)",
-            paddingTop: 10,
-            marginTop: 6,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 16,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: "A cobrar"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 26,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: fmt(totalACobrar)
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          marginBottom: 10,
-          opacity: detalle.length === 0 ? 0.45 : 1
-        },
-        disabled: detalle.length === 0,
-        onClick: () => {
-          const envIncompleto = [...envPrest, ...envDev].some(e => {
-            const tieneProd = !!e.prod;
-            const tieneCant = String(e.cant || "").trim() !== "" && Number(e.cant) > 0;
-            return tieneProd && !tieneCant || !tieneProd && tieneCant;
-          });
-          if (envIncompleto) {
-            alert("⚠️ Hay un envase cargado a medias: falta elegir el producto o poner la cantidad. Completalo o borrá esa fila antes de registrar, así no se pierde la devolución o el préstamo.");
-            return;
-          }
-          if (pago === "mixto") {
-            const ef = Number(montoEfec || 0),
-              tr = Number(montoTrans || 0);
-            if (ef === 0 && tr === 0) {
-              alert("Ingresá al menos un monto para el pago mixto");
-              return;
-            }
-            const totalPagado = ef + tr;
-            if (totalACobrar > 0 && totalPagado > totalACobrar * 3 && totalPagado > totalACobrar + 10000) {
-              if (!window.confirm(`Estás cobrando ${fmt(totalPagado)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
-            }
-            const saldoDelta = totalPagado - totalACobrar;
-            if (ef > 0) onGuardar(detalle, "contado", String(ef), saldoApl, envPrest, envDev, obs, "mixto_ef", tr, saldoDelta, transConfMixto);else onGuardar(detalle, "transferencia", String(tr), saldoApl, envPrest, envDev, obs, "mixto_tr", ef, saldoDelta, transConfMixto);
-          } else {
-            const montoFinal = opcionSaldo === "todo" && !monto ? String(Math.round(Math.abs(cliente.saldo) + aPagar)) : monto;
-            const pagadoNum = Number(montoFinal) || 0;
-            if (pago !== "fiado" && totalACobrar > 0 && pagadoNum > totalACobrar * 3 && pagadoNum > totalACobrar + 10000) {
-              if (!window.confirm(`Estás cobrando ${fmt(pagadoNum)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
-            }
-            onGuardar(detalle, pago, montoFinal, saldoApl, envPrest, envDev, obs, opcionSaldo, undefined, undefined, pago === "transferencia" ? transConfirmada : false);
-          }
-        },
-        children: "✓ Registrar entrega"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 8,
-          marginBottom: 10
-        },
-        children: [/*#__PURE__*/_jsx("button", {
-          style: {
-            flex: 1,
-            background: "var(--color-background-warning)",
-            color: "var(--color-text-warning)",
-            border: "0.5px solid var(--color-border-warning)",
-            borderRadius: 8,
-            padding: "11px 8px",
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: "pointer"
-          },
-          onClick: onNoEsta,
-          children: "🔄 No está"
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            flex: 1,
-            background: "var(--color-background-danger)",
-            color: "var(--color-text-danger)",
-            border: "0.5px solid var(--color-border-danger)",
-            borderRadius: 8,
-            padding: "11px 8px",
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: "pointer"
-          },
-          onClick: onNoQuiere,
-          children: "🚫 No quiere"
-        }), onSaltar && /*#__PURE__*/_jsx("button", {
-          style: {
-            flex: 1,
-            background: "var(--color-background-tertiary)",
-            color: "var(--color-text-secondary)",
-            border: "0.5px solid var(--color-border-secondary)",
-            borderRadius: 8,
-            padding: "11px 8px",
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: "pointer"
-          },
-          onClick: onSaltar,
-          children: "⏭ Saltar"
-        })]
-      }), cliente.saldo < 0 && /*#__PURE__*/_jsx(CobroDeudaPanel, {
-        saldo: cliente.saldo,
-        onCobrar: (mCobro, pCobro) => {
-          onGuardar([{
-            nombre: "Cobro de deuda",
-            cantidad: 1,
-            precio: 0,
-            total: 0
-          }], pCobro, String(mCobro), 0, [], [], `Cobro de deuda $${mCobro.toLocaleString("es-AR")} (${pCobro})`, "cobro_deuda");
+        color: "var(--color-text-warning)"
+      }
+    }, " · Queda ", fmt(totalReal - totalPag)));
+  })()), Number(montoTrans || 0) > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "8px 0 0",
+      background: transConfMixto ? "#0a2e1f" : "#1e3a5f",
+      border: transConfMixto ? "0.5px solid #4dd9a0" : "0.5px solid #5daaff"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: transConfMixto ? "#4dd9a0" : "#5daaff"
+    }
+  }, transConfMixto ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: transConfMixto ? "#4dd9a0" : "#185FA5",
+      color: transConfMixto ? "#0a2e1f" : "#fff",
+      border: "none",
+      borderRadius: 6,
+      padding: "5px 10px",
+      fontSize: 11,
+      cursor: "pointer"
+    },
+    onClick: () => {
+      setTransConfMixto(!transConfMixto);
+      if (!transConfMixto) sonarTransferencia();
+    }
+  }, transConfMixto ? "✓ OK" : "Confirmar")))), saldoDisp > 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px",
+      background: "var(--color-background-success)",
+      border: "0.5px solid var(--color-border-success)",
+      cursor: "pointer"
+    },
+    onClick: () => setUsarSaldo(!usarSaldo)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: usarSaldo,
+    onChange: e => setUsarSaldo(e.target.checked),
+    style: {
+      width: 18,
+      height: 18,
+      cursor: "pointer",
+      accentColor: "#0F6E56"
+    }
+  }), /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-success)",
+      cursor: "pointer",
+      fontWeight: 500
+    }
+  }, "Usar saldo a favor — ", fmt(saldoDisp))), usarSaldo && saldoApl > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-success)",
+      marginTop: 4,
+      paddingLeft: 28
+    }
+  }, "Se descuentan ", fmt(saldoApl), " del total")), cliente.saldo < 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px",
+      background: "var(--color-background-danger)",
+      border: "0.5px solid var(--color-border-danger)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-danger)",
+      marginBottom: 8
+    }
+  }, "Deuda pendiente: ", fmt(Math.abs(cliente.saldo))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 6
+    }
+  }, [["todo", "Paga deuda + compra de hoy", Math.abs(cliente.saldo) + aPagar], ["compra", "Solo la compra de hoy", null], ["parcial", "Pago parcial (ingresá el monto)", null]].map(([op, label, total]) => /*#__PURE__*/React.createElement("button", {
+    key: op,
+    style: {
+      textAlign: "left",
+      padding: "8px 12px",
+      borderRadius: 8,
+      border: "0.5px solid var(--color-border-danger)",
+      background: opcionSaldo === op ? "#7f1d1d" : "transparent",
+      color: "var(--color-text-danger)",
+      fontSize: 12,
+      cursor: "pointer",
+      fontWeight: opcionSaldo === op ? 500 : 400
+    },
+    onClick: () => setOpcionSaldo(op)
+  }, opcionSaldo === op ? "✓ " : "", label, total ? ` — ${fmt(total)}` : "")))), pago !== "fiado" && pago !== "mixto" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, opcionSaldo === "parcial" ? "Monto que paga (parcial)" : opcionSaldo === "todo" ? "Total a cobrar (deuda + compra):" : `Monto cobrado (vacío = ${fmt(aPagar)} exacto)`), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    placeholder: opcionSaldo === "todo" ? String(Math.round(Math.abs(cliente.saldo) + aPagar)) : String(Math.round(aPagar)),
+    value: monto,
+    onChange: e => setMonto(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: s.divider
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 12px",
+      background: "var(--color-background-secondary)"
+    }
+  }, bruto > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Subtotal"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(bruto))), desc > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Descuento 2.5%"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)"
+    }
+  }, "−", fmt(desc))), saldoApl > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Saldo a favor"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-success)"
+    }
+  }, "−", fmt(saldoApl))), pagaTodo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)"
+    }
+  }, "Deuda anterior"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)"
+    }
+  }, "+", fmt(deudaPendiente))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "0.5px solid var(--color-border-tertiary)",
+      paddingTop: 10,
+      marginTop: 6,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "baseline"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "A cobrar"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 26,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(totalACobrar)))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      marginBottom: 10,
+      opacity: detalle.length === 0 ? 0.45 : 1
+    },
+    disabled: detalle.length === 0,
+    onClick: () => {
+      const envIncompleto = [...envPrest, ...envDev].some(e => {
+        const tieneProd = !!e.prod;
+        const tieneCant = String(e.cant || "").trim() !== "" && Number(e.cant) > 0;
+        return tieneProd && !tieneCant || !tieneProd && tieneCant;
+      });
+      if (envIncompleto) {
+        alert("⚠️ Hay un envase cargado a medias: falta elegir el producto o poner la cantidad. Completalo o borrá esa fila antes de registrar, así no se pierde la devolución o el préstamo.");
+        return;
+      }
+      if (pago === "mixto") {
+        const ef = Number(montoEfec || 0),
+          tr = Number(montoTrans || 0);
+        if (ef === 0 && tr === 0) {
+          alert("Ingresá al menos un monto para el pago mixto");
+          return;
         }
-      }), !mostrarCambio ? /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          width: "100%",
-          marginBottom: 10,
-          fontSize: 12,
-          padding: "8px"
-        },
-        onClick: () => setMostrarCambio(true),
-        children: "🔄 Cambio de envase (sin cobrar)"
-      }) : /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 10px",
-          border: "1px solid #818cf8"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)",
-            marginBottom: 8,
-            fontWeight: 500
-          },
-          children: "🔄 Cambio de envase (no se cobra)"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 8,
-            marginBottom: 8
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1
-            },
-            children: [/*#__PURE__*/_jsx("label", {
-              style: {
-                ...s.label,
-                marginBottom: 4
-              },
-              children: "Se retira"
-            }), /*#__PURE__*/_jsx("select", {
-              style: s.select,
-              value: productoViejoCambio,
-              onChange: e => setProductoViejoCambio(e.target.value),
-              children: (productos || []).map(p => /*#__PURE__*/_jsx("option", {
-                value: p.nombre,
-                children: p.nombre
-              }, p.id))
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1
-            },
-            children: [/*#__PURE__*/_jsx("label", {
-              style: {
-                ...s.label,
-                marginBottom: 4
-              },
-              children: "Se entrega"
-            }), /*#__PURE__*/_jsx("select", {
-              style: s.select,
-              value: productoNuevoCambio,
-              onChange: e => setProductoNuevoCambio(e.target.value),
-              children: (productos || []).map(p => /*#__PURE__*/_jsx("option", {
-                value: p.nombre,
-                children: p.nombre
-              }, p.id))
-            })]
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            marginBottom: 8
-          },
-          children: [/*#__PURE__*/_jsx("label", {
-            style: {
-              ...s.label,
-              marginBottom: 4
-            },
-            children: "Motivo"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Ej: Agua en mal estado",
-            value: motivoCambio,
-            onChange: e => setMotivoCambio(e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              flex: 1,
-              fontSize: 12
-            },
-            onClick: () => setMostrarCambio(false),
-            children: "Cancelar"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btnPrimary,
-              flex: 2,
-              fontSize: 12,
-              padding: "8px"
-            },
-            onClick: () => {
-              const obsTxt = `Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim() ? ` · ${motivoCambio.trim()}` : ""}`;
-              onGuardar([{
-                nombre: "Cambio de envase",
-                cantidad: 1,
-                precio: 0,
-                total: 0
-              }], "cambio", "0", 0, [{
-                prod: productoNuevoCambio,
-                cant: 1
-              }], [{
-                prod: productoViejoCambio,
-                cant: 1
-              }], obsTxt, "cambio_envase");
-              setMostrarCambio(false);
-              setMotivoCambio("Agua en mal estado");
-            },
-            children: "✓ Registrar cambio"
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.divider
-      }), dispenser && (cliente.dispenser || 0) > 0 && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 10px",
-          padding: "10px 14px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: "🧊 Dispenser"
-        }), /*#__PURE__*/_jsxs("span", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: ["En el cliente: ", /*#__PURE__*/_jsx("b", {
-            style: {
-              color: "var(--color-text-primary)"
-            },
-            children: cliente.dispenser
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 10px",
-          padding: 0,
-          overflow: "hidden"
-        },
-        children: [/*#__PURE__*/_jsxs("button", {
-          style: {
-            width: "100%",
-            padding: "10px 14px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            background: "none",
-            border: "none",
-            cursor: "pointer"
-          },
-          onClick: () => setEnvOpen(o => !o),
-          children: [/*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: ["📦 Envases", getEnvCnt(envPrest, "Sifón 1.5L") + getEnvCnt(envPrest, "Bidón 10L") + getEnvCnt(envPrest, "Bidón 20L") + getEnvCnt(envDev, "Sifón 1.5L") + getEnvCnt(envDev, "Bidón 10L") + getEnvCnt(envDev, "Bidón 20L") > 0 ? " · hay movimientos" : ""]
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              color: "var(--color-text-tertiary)",
-              fontSize: 16,
-              transform: envOpen ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.2s"
-            },
-            children: "⌃"
-          })]
-        }), envOpen && prodEntrega.map(p => /*#__PURE__*/_jsxs("div", {
-          style: {
-            padding: "10px 14px",
-            borderTop: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 8
-            },
-            children: [/*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 13,
-                fontWeight: 500,
-                color: "var(--color-text-primary)"
-              },
-              children: p.nombre
-            }), /*#__PURE__*/_jsxs("span", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-tertiary)"
-              },
-              children: [getEnvCnt(envPrest, p.nombre) > 0 && `Presté ${getEnvCnt(envPrest, p.nombre)}`, getEnvCnt(envPrest, p.nombre) > 0 && getEnvCnt(envDev, p.nombre) > 0 && " · ", getEnvCnt(envDev, p.nombre) > 0 && `Devolvió ${getEnvCnt(envDev, p.nombre)}`]
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              gap: 8
-            },
-            children: [/*#__PURE__*/_jsx("button", {
-              style: {
-                flex: 1,
-                background: "var(--color-background-info)",
-                color: "var(--color-text-info)",
-                border: "0.5px solid var(--color-border-secondary)",
-                borderRadius: 8,
-                padding: "8px",
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: "pointer"
-              },
-              onClick: () => addEnv(setEnvPrest, p.nombre),
-              children: "+ Presté uno"
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                flex: 1,
-                background: "var(--color-background-success)",
-                color: "var(--color-text-success)",
-                border: "0.5px solid var(--color-border-secondary)",
-                borderRadius: 8,
-                padding: "8px",
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: "pointer"
-              },
-              onClick: () => addEnv(setEnvDev, p.nombre),
-              children: "− Devolvió uno"
-            })]
-          }), getEnvCnt(envPrest, p.nombre) > 0 && /*#__PURE__*/_jsx("button", {
-            style: {
-              marginTop: 6,
-              background: "none",
-              border: "none",
-              fontSize: 11,
-              color: "var(--color-text-tertiary)",
-              cursor: "pointer",
-              padding: 0
-            },
-            onClick: () => subEnv(setEnvPrest, p.nombre),
-            children: "↩ deshacer último prestado"
-          }), getEnvCnt(envDev, p.nombre) > 0 && /*#__PURE__*/_jsx("button", {
-            style: {
-              marginTop: getEnvCnt(envPrest, p.nombre) > 0 ? 2 : 6,
-              background: "none",
-              border: "none",
-              fontSize: 11,
-              color: "var(--color-text-tertiary)",
-              cursor: "pointer",
-              padding: 0,
-              display: "block"
-            },
-            onClick: () => subEnv(setEnvDev, p.nombre),
-            children: "↩ deshacer última devolución"
-          })]
-        }, p.nombre))]
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.divider
-      }), /*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Observaciones"
-      }), /*#__PURE__*/_jsx("textarea", {
-        style: {
-          ...s.input,
-          minHeight: 60,
-          resize: "vertical",
-          marginBottom: 14
-        },
-        value: obs,
-        onChange: e => setObs(e.target.value),
-        placeholder: "Notas opcionales..."
-      })]
-    })]
-  });
+        const totalPagado = ef + tr;
+        if (totalACobrar > 0 && totalPagado > totalACobrar * 3 && totalPagado > totalACobrar + 10000) {
+          if (!window.confirm(`Estás cobrando ${fmt(totalPagado)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
+        }
+        const saldoDelta = totalPagado - totalACobrar;
+        if (ef > 0) onGuardar(detalle, "contado", String(ef), saldoApl, envPrest, envDev, obs, "mixto_ef", tr, saldoDelta, transConfMixto);else onGuardar(detalle, "transferencia", String(tr), saldoApl, envPrest, envDev, obs, "mixto_tr", ef, saldoDelta, transConfMixto);
+      } else {
+        const montoFinal = opcionSaldo === "todo" && !monto ? String(Math.round(Math.abs(cliente.saldo) + aPagar)) : monto;
+        const pagadoNum = Number(montoFinal) || 0;
+        if (pago !== "fiado" && totalACobrar > 0 && pagadoNum > totalACobrar * 3 && pagadoNum > totalACobrar + 10000) {
+          if (!window.confirm(`Estás cobrando ${fmt(pagadoNum)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
+        }
+        onGuardar(detalle, pago, montoFinal, saldoApl, envPrest, envDev, obs, opcionSaldo, undefined, undefined, pago === "transferencia" ? transConfirmada : false);
+      }
+    }
+  }, "✓ Registrar entrega"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      background: "var(--color-background-warning)",
+      color: "var(--color-text-warning)",
+      border: "0.5px solid var(--color-border-warning)",
+      borderRadius: 8,
+      padding: "11px 8px",
+      fontSize: 13,
+      fontWeight: 500,
+      cursor: "pointer"
+    },
+    onClick: onNoEsta
+  }, "🔄 No está"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      background: "var(--color-background-danger)",
+      color: "var(--color-text-danger)",
+      border: "0.5px solid var(--color-border-danger)",
+      borderRadius: 8,
+      padding: "11px 8px",
+      fontSize: 13,
+      fontWeight: 500,
+      cursor: "pointer"
+    },
+    onClick: onNoQuiere
+  }, "🚫 No quiere"), onSaltar && /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      background: "var(--color-background-tertiary)",
+      color: "var(--color-text-secondary)",
+      border: "0.5px solid var(--color-border-secondary)",
+      borderRadius: 8,
+      padding: "11px 8px",
+      fontSize: 13,
+      fontWeight: 500,
+      cursor: "pointer"
+    },
+    onClick: onSaltar
+  }, "⏭ Saltar")), cliente.saldo < 0 && /*#__PURE__*/React.createElement(CobroDeudaPanel, {
+    saldo: cliente.saldo,
+    onCobrar: (mCobro, pCobro) => {
+      onGuardar([{
+        nombre: "Cobro de deuda",
+        cantidad: 1,
+        precio: 0,
+        total: 0
+      }], pCobro, String(mCobro), 0, [], [], `Cobro de deuda $${mCobro.toLocaleString("es-AR")} (${pCobro})`, "cobro_deuda");
+    }
+  }), !mostrarCambio ? /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      width: "100%",
+      marginBottom: 10,
+      fontSize: 12,
+      padding: "8px"
+    },
+    onClick: () => setMostrarCambio(true)
+  }, "🔄 Cambio de envase (sin cobrar)") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px",
+      border: "1px solid #818cf8"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8,
+      fontWeight: 500
+    }
+  }, "🔄 Cambio de envase (no se cobra)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 4
+    }
+  }, "Se retira"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: productoViejoCambio,
+    onChange: e => setProductoViejoCambio(e.target.value)
+  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.nombre
+  }, p.nombre)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 4
+    }
+  }, "Se entrega"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: productoNuevoCambio,
+    onChange: e => setProductoNuevoCambio(e.target.value)
+  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.nombre
+  }, p.nombre))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 4
+    }
+  }, "Motivo"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Ej: Agua en mal estado",
+    value: motivoCambio,
+    onChange: e => setMotivoCambio(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12
+    },
+    onClick: () => setMostrarCambio(false)
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2,
+      fontSize: 12,
+      padding: "8px"
+    },
+    onClick: () => {
+      const obsTxt = `Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim() ? ` · ${motivoCambio.trim()}` : ""}`;
+      onGuardar([{
+        nombre: "Cambio de envase",
+        cantidad: 1,
+        precio: 0,
+        total: 0
+      }], "cambio", "0", 0, [{
+        prod: productoNuevoCambio,
+        cant: 1
+      }], [{
+        prod: productoViejoCambio,
+        cant: 1
+      }], obsTxt, "cambio_envase");
+      setMostrarCambio(false);
+      setMotivoCambio("Agua en mal estado");
+    }
+  }, "✓ Registrar cambio"))), /*#__PURE__*/React.createElement("div", {
+    style: s.divider
+  }), dispenser && (cliente.dispenser || 0) > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px",
+      padding: "10px 14px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "🧊 Dispenser"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "En el cliente: ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: "var(--color-text-primary)"
+    }
+  }, cliente.dispenser))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px",
+      padding: 0,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      width: "100%",
+      padding: "10px 14px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      background: "none",
+      border: "none",
+      cursor: "pointer"
+    },
+    onClick: () => setEnvOpen(o => !o)
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "📦 Envases", getEnvCnt(envPrest, "Sifón 1.5L") + getEnvCnt(envPrest, "Bidón 10L") + getEnvCnt(envPrest, "Bidón 20L") + getEnvCnt(envDev, "Sifón 1.5L") + getEnvCnt(envDev, "Bidón 10L") + getEnvCnt(envDev, "Bidón 20L") > 0 ? " · hay movimientos" : ""), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)",
+      fontSize: 16,
+      transform: envOpen ? "rotate(180deg)" : "rotate(0deg)",
+      transition: "transform 0.2s"
+    }
+  }, "⌃")), envOpen && prodEntrega.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.nombre,
+    style: {
+      padding: "10px 14px",
+      borderTop: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, p.nombre), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, getEnvCnt(envPrest, p.nombre) > 0 && `Presté ${getEnvCnt(envPrest, p.nombre)}`, getEnvCnt(envPrest, p.nombre) > 0 && getEnvCnt(envDev, p.nombre) > 0 && " · ", getEnvCnt(envDev, p.nombre) > 0 && `Devolvió ${getEnvCnt(envDev, p.nombre)}`)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      background: "var(--color-background-info)",
+      color: "var(--color-text-info)",
+      border: "0.5px solid var(--color-border-secondary)",
+      borderRadius: 8,
+      padding: "8px",
+      fontSize: 12,
+      fontWeight: 500,
+      cursor: "pointer"
+    },
+    onClick: () => addEnv(setEnvPrest, p.nombre)
+  }, "+ Presté uno"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      background: "var(--color-background-success)",
+      color: "var(--color-text-success)",
+      border: "0.5px solid var(--color-border-secondary)",
+      borderRadius: 8,
+      padding: "8px",
+      fontSize: 12,
+      fontWeight: 500,
+      cursor: "pointer"
+    },
+    onClick: () => addEnv(setEnvDev, p.nombre)
+  }, "− Devolvió uno")), getEnvCnt(envPrest, p.nombre) > 0 && /*#__PURE__*/React.createElement("button", {
+    style: {
+      marginTop: 6,
+      background: "none",
+      border: "none",
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      cursor: "pointer",
+      padding: 0
+    },
+    onClick: () => subEnv(setEnvPrest, p.nombre)
+  }, "↩ deshacer último prestado"), getEnvCnt(envDev, p.nombre) > 0 && /*#__PURE__*/React.createElement("button", {
+    style: {
+      marginTop: getEnvCnt(envPrest, p.nombre) > 0 ? 2 : 6,
+      background: "none",
+      border: "none",
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      cursor: "pointer",
+      padding: 0,
+      display: "block"
+    },
+    onClick: () => subEnv(setEnvDev, p.nombre)
+  }, "↩ deshacer última devolución")))), /*#__PURE__*/React.createElement("div", {
+    style: s.divider
+  }), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Observaciones"), /*#__PURE__*/React.createElement("textarea", {
+    style: {
+      ...s.input,
+      minHeight: 60,
+      resize: "vertical",
+      marginBottom: 14
+    },
+    value: obs,
+    onChange: e => setObs(e.target.value),
+    placeholder: "Notas opcionales..."
+  })));
 }
 function NuevoCliente({
   diaActual,
@@ -1330,146 +1206,124 @@ function NuevoCliente({
     ...d,
     [k]: v
   }));
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Nuevo cliente",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: 16,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Día de reparto"
-        }), /*#__PURE__*/_jsx("select", {
-          style: s.select,
-          value: datos.dia,
-          onChange: e => set("dia", e.target.value),
-          children: DIAS.map(d => /*#__PURE__*/_jsx("option", {
-            value: d,
-            children: d
-          }, d))
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Número de orden en la ruta"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          type: "number",
-          min: 1,
-          placeholder: "ej: 5",
-          value: datos.orden || "",
-          onChange: e => set("orden", Number(e.target.value) || "")
-        })]
-      }), [["nombre", "Nombre y apellido *"], ["barrio", "Barrio"], ["manzana", "Manzana"], ["lote", "Lote"], ["sector", "Sector"], ["calle", "Calle"], ["nro", "Número"], ["aclaracion", "Aclaración (piso, dpto, etc)"], ["telefono", "Teléfono (sin 0 ni 15)"], ["maps", "Link Google Maps"], ["foto", "Link foto del domicilio"], ["notas", "Notas rápidas (timbre, perro, deuda...)"]].map(([k, pl]) => /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: pl.replace(" *", "")
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: pl.replace(" *", ""),
-          value: datos[k] || "",
-          onChange: e => set(k, e.target.value)
-        })]
-      }, k)), /*#__PURE__*/_jsx("span", {
-        style: {
-          ...s.label,
-          fontSize: 13,
-          marginTop: 4
-        },
-        children: "Envases habituales"
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.grid3,
-        children: [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: {
-              ...s.label,
-              textAlign: "center"
-            },
-            children: l
-          }), /*#__PURE__*/_jsx("input", {
-            style: {
-              ...s.input,
-              textAlign: "center"
-            },
-            type: "number",
-            min: 0,
-            value: datos[k],
-            onChange: e => set(k, Number(e.target.value))
-          })]
-        }, k))
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Dispenser en comodato"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 12
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 16px",
-              fontSize: 20,
-              lineHeight: 1
-            },
-            onClick: () => set("dispenser", Math.max(0, (datos.dispenser || 0) - 1)),
-            children: "−"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 20,
-              fontWeight: 500,
-              minWidth: 32,
-              textAlign: "center",
-              color: "var(--color-text-primary)"
-            },
-            children: datos.dispenser || 0
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 16px",
-              fontSize: 20,
-              lineHeight: 1
-            },
-            onClick: () => set("dispenser", (datos.dispenser || 0) + 1),
-            children: "+"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-secondary)"
-            },
-            children: "unidades prestadas"
-          })]
-        })]
-      }), datos.foto && /*#__PURE__*/_jsx("img", {
-        src: datos.foto,
-        alt: "Domicilio",
-        style: {
-          width: "100%",
-          borderRadius: 8,
-          maxHeight: 160,
-          objectFit: "cover"
-        }
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          marginTop: 8,
-          opacity: !datos.nombre ? 0.45 : 1
-        },
-        disabled: !datos.nombre,
-        onClick: () => onGuardar(datos),
-        children: "Agregar cliente"
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Nuevo cliente",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 16,
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Día de reparto"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: datos.dia,
+    onChange: e => set("dia", e.target.value)
+  }, DIAS.map(d => /*#__PURE__*/React.createElement("option", {
+    key: d,
+    value: d
+  }, d)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Número de orden en la ruta"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    min: 1,
+    placeholder: "ej: 5",
+    value: datos.orden || "",
+    onChange: e => set("orden", Number(e.target.value) || "")
+  })), [["nombre", "Nombre y apellido *"], ["barrio", "Barrio"], ["manzana", "Manzana"], ["lote", "Lote"], ["sector", "Sector"], ["calle", "Calle"], ["nro", "Número"], ["aclaracion", "Aclaración (piso, dpto, etc)"], ["telefono", "Teléfono (sin 0 ni 15)"], ["maps", "Link Google Maps"], ["foto", "Link foto del domicilio"], ["notas", "Notas rápidas (timbre, perro, deuda...)"]].map(([k, pl]) => /*#__PURE__*/React.createElement("div", {
+    key: k
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, pl.replace(" *", "")), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: pl.replace(" *", ""),
+    value: datos[k] || "",
+    onChange: e => set(k, e.target.value)
+  }))), /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.label,
+      fontSize: 13,
+      marginTop: 4
+    }
+  }, "Envases habituales"), /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+    key: k
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      textAlign: "center"
+    }
+  }, l), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      textAlign: "center"
+    },
+    type: "number",
+    min: 0,
+    value: datos[k],
+    onChange: e => set(k, Number(e.target.value))
+  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Dispenser en comodato"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 16px",
+      fontSize: 20,
+      lineHeight: 1
+    },
+    onClick: () => set("dispenser", Math.max(0, (datos.dispenser || 0) - 1))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 20,
+      fontWeight: 500,
+      minWidth: 32,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, datos.dispenser || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 16px",
+      fontSize: 20,
+      lineHeight: 1
+    },
+    onClick: () => set("dispenser", (datos.dispenser || 0) + 1)
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "unidades prestadas"))), datos.foto && /*#__PURE__*/React.createElement("img", {
+    src: datos.foto,
+    alt: "Domicilio",
+    style: {
+      width: "100%",
+      borderRadius: 8,
+      maxHeight: 160,
+      objectFit: "cover"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      marginTop: 8,
+      opacity: !datos.nombre ? 0.45 : 1
+    },
+    disabled: !datos.nombre,
+    onClick: () => onGuardar(datos)
+  }, "Agregar cliente")));
 }
 
 // ─── MÓDULO PROMOCIÓN ────────────────────────────────────────────────────────

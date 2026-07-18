@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  12-resumen.js — Resumen · exportar · importar · CalculadoraCostoReal
 // ════════════════════════════════════════════════════════════════════
@@ -305,481 +304,400 @@ function Resumen({
 
   // ── Render ────────────────────────────────────────────────────────────────
   const tituloFiltro = filtro === "mes" ? `${mesSel.slice(5)}/${mesSel.slice(0, 4)}` : filtro === "anio" ? mesSel.slice(0, 4) : "Histórico completo";
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Resumen",
-      onVolver: onVolver
-    }), hayRepartos && /*#__PURE__*/_jsx("div", {
-      style: {
-        padding: "10px 14px 0"
-      },
-      children: /*#__PURE__*/_jsxs("select", {
-        style: s.select,
-        value: repartoFiltro,
-        onChange: e => setRepartoFiltro(e.target.value),
-        children: [/*#__PURE__*/_jsx("option", {
-          value: "todos",
-          children: "Todos los repartidores"
-        }), repartos.map(r => /*#__PURE__*/_jsx("option", {
-          value: r.id,
-          children: r.repartidorNombre || r.nombre || r.id
-        }, r.id))]
-      })
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "10px 14px 6px"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 6,
-          marginBottom: 8,
-          flexWrap: "wrap"
-        },
-        children: [[["mes", "Este mes"], ["anio", "Este año"], ["todo", "Histórico"], ["dia", "Por día"]].map(([v, l]) => /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 12,
-            padding: "5px 12px",
-            background: filtro === v ? "#185FA5" : "var(--color-background-tertiary)",
-            color: filtro === v ? "#e2eaf4" : "var(--color-text-secondary)",
-            border: filtro === v ? "none" : "0.5px solid var(--color-border-secondary)"
-          },
-          onClick: () => setFiltro(v),
-          children: l
-        }, v)), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 12,
-            padding: "5px 12px"
-          },
-          onClick: () => {
-            const total = filtradas.reduce((a, v) => a + (v.neto || 0), 0);
-            const texto = `*Resumen Reparto App · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
-          },
-          children: "💬 WA"
-        })]
-      }), (filtro === "mes" || filtro === "anio") && /*#__PURE__*/_jsx("input", {
-        type: "month",
-        style: {
-          ...s.input,
-          marginBottom: 6
-        },
-        value: mesSel,
-        onChange: e => setMesSel(e.target.value)
-      }), filtro === "dia" && /*#__PURE__*/_jsxs("select", {
-        style: {
-          ...s.select,
-          marginBottom: 6
-        },
-        value: diaSel,
-        onChange: e => setDiaSel(e.target.value),
-        children: [/*#__PURE__*/_jsx("option", {
-          value: "todos",
-          children: "Todos los días"
-        }), DIAS.map(d => /*#__PURE__*/_jsx("option", {
-          value: d,
-          children: d
-        }, d))]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.grid2,
-        padding: "0 14px",
-        gap: 8,
-        marginBottom: 8
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Total vendido"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.metricVal,
-            color: "#5daaff"
-          },
-          children: fmt(totalNeto)
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)"
-          },
-          children: [filtradas.length, " entregas"]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Ganancia neta"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.metricVal,
-            color: "#4dd9a0"
-          },
-          children: fmt(totalGan)
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)"
-          },
-          children: ["−", fmt(totalCosto), " llenado"]
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.grid3,
-        padding: "0 14px",
-        gap: 6,
-        marginBottom: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Efectivo"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 15,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: fmt(cobEfectivo)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Transfer."
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 15,
-            fontWeight: 500,
-            color: "#5daaff"
-          },
-          children: fmt(cobTrans)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Fiado"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 15,
-            fontWeight: 500,
-            color: "#f5b942"
-          },
-          children: fmt(cobFiado)
-        })]
-      })]
-    }), (filtro === "todo" || filtro === "anio") && ultimosMeses.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Ventas por mes (efectivo / transfer. / fiado)"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          padding: "12px 10px"
-        },
-        children: /*#__PURE__*/_jsx("div", {
-          style: {
-            height: 180
-          },
-          children: /*#__PURE__*/_jsx("canvas", {
-            ref: chartRefs.bar
-          })
-        })
-      })]
-    }), totalNeto > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Distribución por forma de pago"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          padding: "12px 10px"
-        },
-        children: /*#__PURE__*/_jsx("div", {
-          style: {
-            height: 180
-          },
-          children: /*#__PURE__*/_jsx("canvas", {
-            ref: chartRefs.donut
-          })
-        })
-      })]
-    }), ultimosMeses.length > 1 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Evolución de ganancia por mes"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          padding: "12px 10px"
-        },
-        children: /*#__PURE__*/_jsx("div", {
-          style: {
-            height: 150
-          },
-          children: /*#__PURE__*/_jsx("canvas", {
-            ref: chartRefs.line
-          })
-        })
-      })]
-    }), (filtro === "todo" || filtro === "anio") && mesesOrdenados.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Detalle por mes"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          overflow: "hidden",
-          padding: 0
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            padding: "6px 10px",
-            background: "var(--color-background-tertiary)",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: ["Mes", "Total", "Efectivo+Trans", "Ganancia"].map(h => /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-secondary)",
-              fontWeight: 500,
-              textAlign: h === "Mes" ? "left" : "right"
-            },
-            children: h
-          }, h))
-        }), [...mesesOrdenados].reverse().map(m => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            padding: "7px 10px",
-            borderBottom: "0.5px solid var(--color-border-tertiary)",
-            alignItems: "center"
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-primary)",
-              fontWeight: 500
-            },
-            children: [m.mes.slice(5), "/", m.mes.slice(0, 4)]
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              color: "var(--color-text-primary)"
-            },
-            children: fmt(m.total)
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              color: "#5daaff"
-            },
-            children: fmt(m.efectivo + m.trans)
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              color: "#4dd9a0"
-            },
-            children: fmt(m.ganancia)
-          })]
-        }, m.mes)), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            padding: "8px 10px",
-            background: "var(--color-background-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)",
-              fontWeight: 500
-            },
-            children: "Total"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: fmt(mesesOrdenados.reduce((a, m) => a + m.total, 0))
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "#5daaff"
-            },
-            children: fmt(mesesOrdenados.reduce((a, m) => a + m.efectivo + m.trans, 0))
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              textAlign: "right",
-              fontSize: 12,
-              fontWeight: 500,
-              color: "#4dd9a0"
-            },
-            children: fmt(mesesOrdenados.reduce((a, m) => a + m.ganancia, 0))
-          })]
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("span", {
-      style: s.sectionTitle,
-      children: ["Unidades entregadas · ", tituloFiltro]
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        display: "flex",
-        gap: 6,
-        padding: "0 14px",
-        marginBottom: 10,
-        flexWrap: "wrap"
-      },
-      children: productos.map(p => /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.metricCard,
-          flex: 1,
-          minWidth: 70,
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: p.nombre.replace(" 1.5L", "").replace("Bidón ", "")
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 20,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: cantidades[p.nombre] || 0
-        })]
-      }, p.id))
-    }), rankingClientes.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "🏆 Top clientes del período"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px",
-          padding: 0,
-          overflow: "hidden"
-        },
-        children: rankingClientes.map((c, idx) => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            padding: "8px 14px",
-            borderBottom: idx < rankingClientes.length - 1 ? "0.5px solid var(--color-border-tertiary)" : "none",
-            gap: 10
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 11,
-              fontWeight: 700,
-              color: "var(--color-text-tertiary)",
-              minWidth: 18,
-              textAlign: "center"
-            },
-            children: idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              flex: 1,
-              fontSize: 13,
-              color: "var(--color-text-primary)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap"
-            },
-            children: c.nombre
-          }), /*#__PURE__*/_jsxs("span", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-tertiary)"
-            },
-            children: [c.compras, " compras"]
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--color-text-success)"
-            },
-            children: fmt(c.total)
-          })]
-        }, c.id))
-      })]
-    }), conDeuda.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsxs("span", {
-        style: s.sectionTitle,
-        children: ["Clientes con deuda · ", fmt(conDeuda.reduce((a, c) => a + Math.abs(c.saldo), 0))]
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px"
-        },
-        children: conDeuda.map(c => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "6px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-primary)"
-            },
-            children: c.nombre
-          }), /*#__PURE__*/_jsxs("span", {
-            style: s.badge("danger"),
-            children: ["Debe ", fmt(Math.abs(c.saldo))]
-          })]
-        }, c.id))
-      })]
-    }), conFavor.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: s.sectionTitle,
-        children: "Saldos a favor"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "0 14px 8px"
-        },
-        children: conFavor.map(c => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "6px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-primary)"
-            },
-            children: c.nombre
-          }), /*#__PURE__*/_jsxs("span", {
-            style: s.badge("success"),
-            children: [fmt(c.saldo), " a favor"]
-          })]
-        }, c.id))
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Resumen",
+    onVolver: onVolver
+  }), hayRepartos && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px 0"
+    }
+  }, /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: repartoFiltro,
+    onChange: e => setRepartoFiltro(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "todos"
+  }, "Todos los repartidores"), repartos.map(r => /*#__PURE__*/React.createElement("option", {
+    key: r.id,
+    value: r.id
+  }, r.repartidorNombre || r.nombre || r.id)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px 6px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 8,
+      flexWrap: "wrap"
+    }
+  }, [["mes", "Este mes"], ["anio", "Este año"], ["todo", "Histórico"], ["dia", "Por día"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "5px 12px",
+      background: filtro === v ? "#185FA5" : "var(--color-background-tertiary)",
+      color: filtro === v ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtro === v ? "none" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: () => setFiltro(v)
+  }, l)), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "5px 12px"
+    },
+    onClick: () => {
+      const total = filtradas.reduce((a, v) => a + (v.neto || 0), 0);
+      const texto = `*Resumen Reparto App · ${tituloFiltro}*\n\n💰 Efectivo: ${fmt(cobEfectivo)}\n📲 Transfer: ${fmt(cobTrans)}\n📝 Fiado: ${fmt(cobFiado)}\n📦 Total: ${fmt(total)}\n✅ Ganancia: ${fmt(totalGan)}\n\nEntregas: ${filtradas.length} clientes`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank");
+    }
+  }, "💬 WA")), (filtro === "mes" || filtro === "anio") && /*#__PURE__*/React.createElement("input", {
+    type: "month",
+    style: {
+      ...s.input,
+      marginBottom: 6
+    },
+    value: mesSel,
+    onChange: e => setMesSel(e.target.value)
+  }), filtro === "dia" && /*#__PURE__*/React.createElement("select", {
+    style: {
+      ...s.select,
+      marginBottom: 6
+    },
+    value: diaSel,
+    onChange: e => setDiaSel(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "todos"
+  }, "Todos los días"), DIAS.map(d => /*#__PURE__*/React.createElement("option", {
+    key: d,
+    value: d
+  }, d)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.grid2,
+      padding: "0 14px",
+      gap: 8,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Total vendido"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricVal,
+      color: "#5daaff"
+    }
+  }, fmt(totalNeto)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)"
+    }
+  }, filtradas.length, " entregas")), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Ganancia neta"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricVal,
+      color: "#4dd9a0"
+    }
+  }, fmt(totalGan)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)"
+    }
+  }, "−", fmt(totalCosto), " llenado"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.grid3,
+      padding: "0 14px",
+      gap: 6,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Efectivo"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(cobEfectivo))), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Transfer."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: "#5daaff"
+    }
+  }, fmt(cobTrans))), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Fiado"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: "#f5b942"
+    }
+  }, fmt(cobFiado)))), (filtro === "todo" || filtro === "anio") && ultimosMeses.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Ventas por mes (efectivo / transfer. / fiado)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      padding: "12px 10px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 180
+    }
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRefs.bar
+  })))), totalNeto > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Distribución por forma de pago"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      padding: "12px 10px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 180
+    }
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRefs.donut
+  })))), ultimosMeses.length > 1 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Evolución de ganancia por mes"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      padding: "12px 10px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 150
+    }
+  }, /*#__PURE__*/React.createElement("canvas", {
+    ref: chartRefs.line
+  })))), (filtro === "todo" || filtro === "anio") && mesesOrdenados.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Detalle por mes"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      overflow: "hidden",
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+      padding: "6px 10px",
+      background: "var(--color-background-tertiary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, ["Mes", "Total", "Efectivo+Trans", "Ganancia"].map(h => /*#__PURE__*/React.createElement("div", {
+    key: h,
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)",
+      fontWeight: 500,
+      textAlign: h === "Mes" ? "left" : "right"
+    }
+  }, h))), [...mesesOrdenados].reverse().map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.mes,
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+      padding: "7px 10px",
+      borderBottom: "0.5px solid var(--color-border-tertiary)",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-primary)",
+      fontWeight: 500
+    }
+  }, m.mes.slice(5), "/", m.mes.slice(0, 4)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(m.total)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      color: "#5daaff"
+    }
+  }, fmt(m.efectivo + m.trans)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      color: "#4dd9a0"
+    }
+  }, fmt(m.ganancia)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+      padding: "8px 10px",
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      fontWeight: 500
+    }
+  }, "Total"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, fmt(mesesOrdenados.reduce((a, m) => a + m.total, 0))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      fontWeight: 500,
+      color: "#5daaff"
+    }
+  }, fmt(mesesOrdenados.reduce((a, m) => a + m.efectivo + m.trans, 0))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "right",
+      fontSize: 12,
+      fontWeight: 500,
+      color: "#4dd9a0"
+    }
+  }, fmt(mesesOrdenados.reduce((a, m) => a + m.ganancia, 0)))))), /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Unidades entregadas · ", tituloFiltro), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      padding: "0 14px",
+      marginBottom: 10,
+      flexWrap: "wrap"
+    }
+  }, productos.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    style: {
+      ...s.metricCard,
+      flex: 1,
+      minWidth: 70,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, p.nombre.replace(" 1.5L", "").replace("Bidón ", "")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, cantidades[p.nombre] || 0)))), rankingClientes.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "🏆 Top clientes del período"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px",
+      padding: 0,
+      overflow: "hidden"
+    }
+  }, rankingClientes.map((c, idx) => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      padding: "8px 14px",
+      borderBottom: idx < rankingClientes.length - 1 ? "0.5px solid var(--color-border-tertiary)" : "none",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: "var(--color-text-tertiary)",
+      minWidth: 18,
+      textAlign: "center"
+    }
+  }, idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1,
+      fontSize: 13,
+      color: "var(--color-text-primary)",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, c.compras, " compras"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-success)"
+    }
+  }, fmt(c.total)))))), conDeuda.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Clientes con deuda · ", fmt(conDeuda.reduce((a, c) => a + Math.abs(c.saldo), 0))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px"
+    }
+  }, conDeuda.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary)"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("span", {
+    style: s.badge("danger")
+  }, "Debe ", fmt(Math.abs(c.saldo))))))), conFavor.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Saldos a favor"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 8px"
+    }
+  }, conFavor.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary)"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("span", {
+    style: s.badge("success")
+  }, fmt(c.saldo), " a favor"))))));
 }
 function exportarExcel(clientes, ventas, productos, planillas, repartos, filtroReparto) {
   const wb = XLSX.utils.book_new();
@@ -1160,130 +1078,111 @@ function CalculadoraCostoReal({
   const gastoNum = Number(gastoTraslado) || 0;
   const envsNum = Number(envsXDia) || 0;
   const costoXEnvase = envsNum > 0 && gastoNum > 0 ? Math.round(gastoNum / envsNum) : 0;
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "0 0 10px",
       background: "var(--color-background-tertiary)",
       borderLeft: "3px solid #5daaff"
-    },
-    children: [/*#__PURE__*/_jsx("div", {
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-info)",
+      marginBottom: 8
+    }
+  }, "🧮 Calculadora de costo real puesto en cliente"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      marginBottom: 10,
+      lineHeight: 1.5
+    }
+  }, "Calculá la ganancia real por artículo sumando el gasto de traslado."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 8,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Gasto de traslado por día $"), /*#__PURE__*/React.createElement("input", {
+    style: s.inputNum,
+    type: "number",
+    placeholder: "Ej: 5000",
+    value: gastoTraslado,
+    onChange: e => setGastoTraslado(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)",
+      marginTop: 2
+    }
+  }, "GNC, nafta, propina, etc.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Envases entregados ese día"), /*#__PURE__*/React.createElement("input", {
+    style: s.inputNum,
+    type: "number",
+    placeholder: "Ej: 80",
+    value: envsXDia,
+    onChange: e => setEnvsXDia(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)",
+      marginTop: 2
+    }
+  }, "Promedio de entregas por día"))), costoXEnvase > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: 8,
+      padding: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8
+    }
+  }, "Traslado por unidad: ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: "var(--color-text-info)"
+    }
+  }, fmt(costoXEnvase))), productos.map(p => {
+    const costoReal = (p.costo || 0) + costoXEnvase;
+    const gananciaReal = (p.precio || 0) - costoReal;
+    const margenReal = p.precio > 0 ? Math.round(gananciaReal / p.precio * 100) : 0;
+    return /*#__PURE__*/React.createElement("div", {
+      key: p.id,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "6px 0",
+        borderBottom: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-primary)"
+      }
+    }, p.nombre), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-secondary)"
+      }
+    }, "Costo real: ", fmt(costoReal)), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         fontWeight: 600,
-        color: "var(--color-text-info)",
-        marginBottom: 8
-      },
-      children: "🧮 Calculadora de costo real puesto en cliente"
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--color-text-secondary)",
-        marginBottom: 10,
-        lineHeight: 1.5
-      },
-      children: "Calculá la ganancia real por artículo sumando el gasto de traslado."
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8,
-        marginBottom: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Gasto de traslado por día $"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.inputNum,
-          type: "number",
-          placeholder: "Ej: 5000",
-          value: gastoTraslado,
-          onChange: e => setGastoTraslado(e.target.value)
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)",
-            marginTop: 2
-          },
-          children: "GNC, nafta, propina, etc."
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Envases entregados ese día"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.inputNum,
-          type: "number",
-          placeholder: "Ej: 80",
-          value: envsXDia,
-          onChange: e => setEnvsXDia(e.target.value)
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)",
-            marginTop: 2
-          },
-          children: "Promedio de entregas por día"
-        })]
-      })]
-    }), costoXEnvase > 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        background: "var(--color-background-secondary)",
-        borderRadius: 8,
-        padding: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-secondary)",
-          marginBottom: 8
-        },
-        children: ["Traslado por unidad: ", /*#__PURE__*/_jsx("b", {
-          style: {
-            color: "var(--color-text-info)"
-          },
-          children: fmt(costoXEnvase)
-        })]
-      }), productos.map(p => {
-        const costoReal = (p.costo || 0) + costoXEnvase;
-        const gananciaReal = (p.precio || 0) - costoReal;
-        const margenReal = p.precio > 0 ? Math.round(gananciaReal / p.precio * 100) : 0;
-        return /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "6px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-primary)"
-            },
-            children: p.nombre
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              textAlign: "right"
-            },
-            children: [/*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-secondary)"
-              },
-              children: ["Costo real: ", fmt(costoReal)]
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 13,
-                fontWeight: 600,
-                color: gananciaReal > 0 ? "var(--color-text-success)" : "var(--color-text-danger)"
-              },
-              children: [fmt(gananciaReal), " (", margenReal, "%)"]
-            })]
-          })]
-        }, p.id);
-      })]
-    })]
-  });
+        color: gananciaReal > 0 ? "var(--color-text-success)" : "var(--color-text-danger)"
+      }
+    }, fmt(gananciaReal), " (", margenReal, "%)")));
+  })));
 }

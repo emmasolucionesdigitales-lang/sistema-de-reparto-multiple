@@ -1,4 +1,3 @@
-import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  Repartidores — usa /repartidores/{codigo} (permitido por reglas Firebase)
 // ════════════════════════════════════════════════════════════════════
@@ -288,84 +287,62 @@ function VincularEmmaControl() {
       marginBottom: 8
     }
   };
-  return /*#__PURE__*/_jsxs("div", {
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: s.card,
-      children: [/*#__PURE__*/_jsx("div", {
-        style: s.title,
-        children: "🔗 Vincular con Emma Control"
-      }), !token ? /*#__PURE__*/_jsxs(_Fragment, {
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            color: 'var(--color-text-secondary)',
-            lineHeight: 1.6,
-            marginBottom: 12
-          },
-          children: "Ingresá el código de sincronización que generaste en Emma Control → Config → Vincular con App de Reparto."
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Código (ej: AB12CD34)",
-          maxLength: 8,
-          onChange: e => guardarToken(e.target.value.toUpperCase())
-        }), /*#__PURE__*/_jsx("button", {
-          style: s.btn,
-          onClick: () => {
-            if (token.length >= 6) alert('✅ Código guardado!');else alert('⚠️ Ingresá el código completo');
-          },
-          children: "Vincular"
-        })]
-      }) : /*#__PURE__*/_jsxs(_Fragment, {
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.muted,
-          children: "Vinculado con Emma Control"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.input,
-            marginBottom: 10,
-            fontSize: 22,
-            letterSpacing: '0.2em',
-            color: 'var(--color-accent-primary)'
-          },
-          children: token
-        }), /*#__PURE__*/_jsx("button", {
-          style: s.btn,
-          onClick: enviarResumenDia,
-          disabled: enviando,
-          children: enviando ? '⏳ Enviando...' : '📤 Enviar resumen del día a Emma Control'
-        }), ultimaSync && /*#__PURE__*/_jsxs("div", {
-          style: s.muted,
-          children: ["Última sincronización: ", ultimaSync]
-        }), /*#__PURE__*/_jsx("button", {
-          style: s.btnRed,
-          onClick: () => {
-            if (window.confirm('¿Desvincular Emma Control?')) resetToken();
-          },
-          children: "🗑️ Desvincular"
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.card,
-        background: 'rgba(59,130,246,0.05)'
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: s.title,
-        children: "ℹ️ Cómo funciona"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 12,
-          color: 'var(--color-text-secondary)',
-          lineHeight: 1.7
-        },
-        children: ["1. Generá un código en ", /*#__PURE__*/_jsx("strong", {
-          children: "Emma Control → Config → Vincular"
-        }), /*#__PURE__*/_jsx("br", {}), "2. Pegalo aquí y tocá Vincular", /*#__PURE__*/_jsx("br", {}), "3. Al terminar el día tocá ", /*#__PURE__*/_jsx("strong", {
-          children: "Enviar resumen"
-        }), /*#__PURE__*/_jsx("br", {}), "4. Los movimientos aparecen en Emma Control automáticamente"]
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: s.card
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.title
+  }, "🔗 Vincular con Emma Control"), !token ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: 'var(--color-text-secondary)',
+      lineHeight: 1.6,
+      marginBottom: 12
+    }
+  }, "Ingresá el código de sincronización que generaste en Emma Control → Config → Vincular con App de Reparto."), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Código (ej: AB12CD34)",
+    maxLength: 8,
+    onChange: e => guardarToken(e.target.value.toUpperCase())
+  }), /*#__PURE__*/React.createElement("button", {
+    style: s.btn,
+    onClick: () => {
+      if (token.length >= 6) alert('✅ Código guardado!');else alert('⚠️ Ingresá el código completo');
+    }
+  }, "Vincular")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: s.muted
+  }, "Vinculado con Emma Control"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.input,
+      marginBottom: 10,
+      fontSize: 22,
+      letterSpacing: '0.2em',
+      color: 'var(--color-accent-primary)'
+    }
+  }, token), /*#__PURE__*/React.createElement("button", {
+    style: s.btn,
+    onClick: enviarResumenDia,
+    disabled: enviando
+  }, enviando ? '⏳ Enviando...' : '📤 Enviar resumen del día a Emma Control'), ultimaSync && /*#__PURE__*/React.createElement("div", {
+    style: s.muted
+  }, "Última sincronización: ", ultimaSync), /*#__PURE__*/React.createElement("button", {
+    style: s.btnRed,
+    onClick: () => {
+      if (window.confirm('¿Desvincular Emma Control?')) resetToken();
+    }
+  }, "🗑️ Desvincular"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      background: 'rgba(59,130,246,0.05)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.title
+  }, "ℹ️ Cómo funciona"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: 'var(--color-text-secondary)',
+      lineHeight: 1.7
+    }
+  }, "1. Generá un código en ", /*#__PURE__*/React.createElement("strong", null, "Emma Control → Config → Vincular"), /*#__PURE__*/React.createElement("br", null), "2. Pegalo aquí y tocá Vincular", /*#__PURE__*/React.createElement("br", null), "3. Al terminar el día tocá ", /*#__PURE__*/React.createElement("strong", null, "Enviar resumen"), /*#__PURE__*/React.createElement("br", null), "4. Los movimientos aparecen en Emma Control automáticamente")));
 }
 async function comprimirLogoBase64(file, maxW = 400, maxH = 400, quality = 0.75) {
   return new Promise((res, rej) => {
@@ -487,15 +464,14 @@ function NotifConfigRepartidor() {
     setProbando(false);
   };
   if (permiso === 'no-soportado') return null;
-  if (verificando) return /*#__PURE__*/_jsx("div", {
+  if (verificando) return /*#__PURE__*/React.createElement("div", {
     style: {
       margin: "10px 14px 0",
       fontSize: 12,
       color: "var(--color-text-tertiary)"
-    },
-    children: "Verificando notificaciones…"
-  });
-  if (permiso === 'granted' && subOk === true) return /*#__PURE__*/_jsxs("div", {
+    }
+  }, "Verificando notificaciones…");
+  if (permiso === 'granted' && subOk === true) return /*#__PURE__*/React.createElement("div", {
     style: {
       margin: "10px 14px 0",
       fontSize: 12,
@@ -503,16 +479,11 @@ function NotifConfigRepartidor() {
       display: "flex",
       alignItems: "center",
       gap: 6
-    },
-    children: [/*#__PURE__*/_jsx("span", {
-      children: "✅"
-    }), /*#__PURE__*/_jsx("span", {
-      children: "Notificaciones activadas"
-    })]
-  });
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "✅"), /*#__PURE__*/React.createElement("span", null, "Notificaciones activadas"));
   // permiso concedido pero la suscripción falló — no dejar "atascado" acá:
   // mostrar el problema y una forma de reintentar.
-  if (permiso === 'granted' && subOk === false) return /*#__PURE__*/_jsxs("button", {
+  if (permiso === 'granted' && subOk === false) return /*#__PURE__*/React.createElement("button", {
     style: {
       margin: "10px 14px 0",
       width: "calc(100% - 28px)",
@@ -531,27 +502,23 @@ function NotifConfigRepartidor() {
       await activarDeVerdad();
       setProbando(false);
     },
-    disabled: probando,
-    children: [/*#__PURE__*/_jsx("span", {
-      style: {
-        fontSize: 18
-      },
-      children: "⚠️"
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        flex: 1
-      },
-      children: /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          fontWeight: 500,
-          color: "var(--color-text-danger)"
-        },
-        children: probando ? "Reintentando..." : "No se pudo activar — tocar para reintentar"
-      })
-    })]
-  });
-  return /*#__PURE__*/_jsxs("button", {
+    disabled: probando
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, "⚠️"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-danger)"
+    }
+  }, probando ? "Reintentando..." : "No se pudo activar — tocar para reintentar")));
+  return /*#__PURE__*/React.createElement("button", {
     style: {
       margin: "10px 14px 0",
       width: "calc(100% - 28px)",
@@ -566,38 +533,32 @@ function NotifConfigRepartidor() {
       textAlign: "left"
     },
     onClick: pedirYActivar,
-    disabled: probando,
-    children: [/*#__PURE__*/_jsx("span", {
-      style: {
-        fontSize: 18
-      },
-      children: "🔔"
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        flex: 1
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          fontWeight: 500,
-          color: "var(--color-text-primary)"
-        },
-        children: probando ? "Activando..." : "Activar notificaciones"
-      }), permiso === 'denied' && /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary)"
-        },
-        children: "Bloqueadas — activalas desde el navegador"
-      }), resultado && /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          color: resultado.ok ? "var(--color-text-success)" : "var(--color-text-danger)"
-        },
-        children: resultado.msg
-      })]
-    })]
-  });
+    disabled: probando
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, "🔔"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, probando ? "Activando..." : "Activar notificaciones"), permiso === 'denied' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, "Bloqueadas — activalas desde el navegador"), resultado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: resultado.ok ? "var(--color-text-success)" : "var(--color-text-danger)"
+    }
+  }, resultado.msg)));
 }
 function InicioRepartidor({
   perfil,
@@ -646,530 +607,455 @@ function InicioRepartidor({
   const totalTransfer = ventasHoy.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
   const totalNeto = totalEfectivo + totalTransfer + ventasHoy.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
   const estadoReparto = !cargaHecha ? "pendiente" : recorrido ? "terminado" : "activo";
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.screen,
       paddingBottom: 40
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.header,
+      padding: "12px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "\u{1F690} " + perfil.nombre), onCambiarDia ? /*#__PURE__*/React.createElement("button", {
+    onClick: onCambiarDia,
+    style: {
+      background: "none",
+      border: "none",
+      padding: 0,
+      cursor: "pointer",
+      fontSize: 11,
+      color: "var(--color-text-info)",
+      textDecoration: "underline",
+      display: "flex",
+      alignItems: "center",
+      gap: 3
+    }
+  }, diaActual + " · " + fechaActual, " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9
+    }
+  }, "▾")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, diaActual + " · " + fechaActual)), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "6px 10px"
     },
-    children: [/*#__PURE__*/_jsxs("div", {
+    onClick: onSalir
+  }, "Salir"), /*#__PURE__*/React.createElement(HeaderBotones, null)), recHoy.length > 0 && /*#__PURE__*/React.createElement("button", {
+    style: {
+      margin: "10px 14px 0",
+      background: "var(--color-background-warning)",
+      border: "0.5px solid var(--color-border-tertiary)",
+      borderRadius: 10,
+      padding: "10px 14px",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      width: "calc(100% - 28px)",
+      cursor: "pointer",
+      textAlign: "left"
+    },
+    onClick: onIrAgenda
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, "\u{1F514}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-warning)"
+    }
+  }, recHoy.length, " recordatorio", recHoy.length !== 1 ? "s" : "", " para hoy"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Tocar para ver la agenda")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "\u2192")), /*#__PURE__*/React.createElement(NotifConfigRepartidor, null), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 14px 0",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, estadoReparto === "pendiente" && /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 10,
+      padding: "16px 14px",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      cursor: "pointer",
+      textAlign: "left"
+    },
+    onClick: onIrCarga
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 26
+    }
+  }, "\u{1F69A}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500
+    }
+  }, "Iniciar reparto del dia"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      opacity: 0.8
+    }
+  }, "Cargar cantidades y salir a repartir")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      opacity: 0.7
+    }
+  }, "\u2192")), estadoReparto === "activo" && /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 10,
+      padding: "14px",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      cursor: "pointer",
+      textAlign: "left"
+    },
+    onClick: onIrClientes
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 22
+    }
+  }, "\u{1F4CB}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500
+    }
+  }, "Continuar reparto"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      opacity: 0.8
+    }
+  }, totalPend + " pendientes · " + fmtP(totalNeto) + " cobrado")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      opacity: 0.7
+    }
+  }, "\u2192")), estadoReparto === "terminado" && /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#1a5c2e",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 10,
+      padding: "14px",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      cursor: "pointer",
+      textAlign: "left"
+    },
+    onClick: onIrPlanilla
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 22
+    }
+  }, "\u2705"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500
+    }
+  }, "Reparto terminado"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      opacity: 0.8
+    }
+  }, totalEntregados + " entregas · " + fmtP(totalNeto) + " cobrado · Ir a planilla")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      opacity: 0.7
+    }
+  }, "\u2192")), estadoReparto !== "pendiente" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricCard,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      color: "#4dd9a0"
+    }
+  }, totalEntregados), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Entregados")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricCard,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      color: "#f5b942"
+    }
+  }, totalPend), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Pendientes")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricCard,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500
+    }
+  }, fmtP(totalNeto)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Cobrado"))), /*#__PURE__*/React.createElement("div", {
+    style: s.divider
+  }), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.card,
+      margin: 0,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "13px 14px"
+    },
+    onClick: onIrPlanilla
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 20
+    }
+  }, "\u{1F4CA}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Planilla del dia"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Gastos, transferencias y cierre")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "\u2192")), onEnviarInforme && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.card,
+      margin: 0,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "13px 14px"
+    },
+    onClick: onEnviarInforme
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 20
+    }
+  }, "\u{1F4E4}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Enviar informe al dueño"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Manda el resumen del día por email")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "\u2192")), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.card,
+      margin: 0,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "13px 14px"
+    },
+    onClick: onIrTodosClientes
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 20
+    }
+  }, "\u{1F465}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Todos los clientes"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Ventas y cobros de cualquier dia")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "\u2192")), (() => {
+    const pendTrans = ventasHoy.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada);
+    const pendTransAll = ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada);
+    const total = pendTransAll.length;
+    if (total === 0) return null;
+    return /*#__PURE__*/React.createElement("button", {
       style: {
-        ...s.header,
-        padding: "12px 14px"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: "\u{1F690} " + perfil.nombre
-        }), onCambiarDia ? /*#__PURE__*/_jsxs("button", {
-          onClick: onCambiarDia,
-          style: {
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            fontSize: 11,
-            color: "var(--color-text-info)",
-            textDecoration: "underline",
-            display: "flex",
-            alignItems: "center",
-            gap: 3
-          },
-          children: [diaActual + " · " + fechaActual, " ", /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 9
-            },
-            children: "▾"
-          })]
-        }) : /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-secondary)"
-          },
-          children: diaActual + " · " + fechaActual
-        })]
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          fontSize: 11,
-          padding: "6px 10px"
-        },
-        onClick: onSalir,
-        children: "Salir"
-      }), /*#__PURE__*/_jsx(HeaderBotones, {})]
-    }), recHoy.length > 0 && /*#__PURE__*/_jsxs("button", {
-      style: {
-        margin: "10px 14px 0",
-        background: "var(--color-background-warning)",
-        border: "0.5px solid var(--color-border-tertiary)",
-        borderRadius: 10,
-        padding: "10px 14px",
+        ...s.card,
+        margin: 0,
+        cursor: "pointer",
         display: "flex",
         alignItems: "center",
         gap: 10,
-        width: "calc(100% - 28px)",
-        cursor: "pointer",
-        textAlign: "left"
+        padding: "13px 14px",
+        background: "var(--color-background-warning)",
+        border: "0.5px solid var(--color-border-warning)"
       },
-      onClick: onIrAgenda,
-      children: [/*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 18
-        },
-        children: "\u{1F514}"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-warning)"
-          },
-          children: [recHoy.length, " recordatorio", recHoy.length !== 1 ? "s" : "", " para hoy"]
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Tocar para ver la agenda"
-        })]
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          color: "var(--color-text-tertiary)"
-        },
-        children: "\u2192"
-      })]
-    }), /*#__PURE__*/_jsx(NotifConfigRepartidor, {}), /*#__PURE__*/_jsxs("div", {
+      onClick: onIrTransfers
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
-        padding: "12px 14px 0",
-        display: "flex",
-        flexDirection: "column",
-        gap: 8
-      },
-      children: [estadoReparto === "pendiente" && /*#__PURE__*/_jsxs("button", {
-        style: {
-          background: "#185FA5",
-          color: "#e2eaf4",
-          border: "none",
-          borderRadius: 10,
-          padding: "16px 14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          cursor: "pointer",
-          textAlign: "left"
-        },
-        onClick: onIrCarga,
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 26
-          },
-          children: "\u{1F69A}"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 15,
-              fontWeight: 500
-            },
-            children: "Iniciar reparto del dia"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              opacity: 0.8
-            },
-            children: "Cargar cantidades y salir a repartir"
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            opacity: 0.7
-          },
-          children: "\u2192"
-        })]
-      }), estadoReparto === "activo" && /*#__PURE__*/_jsxs("button", {
-        style: {
-          background: "#185FA5",
-          color: "#e2eaf4",
-          border: "none",
-          borderRadius: 10,
-          padding: "14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          cursor: "pointer",
-          textAlign: "left"
-        },
-        onClick: onIrClientes,
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 22
-          },
-          children: "\u{1F4CB}"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 15,
-              fontWeight: 500
-            },
-            children: "Continuar reparto"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              opacity: 0.8
-            },
-            children: totalPend + " pendientes · " + fmtP(totalNeto) + " cobrado"
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            opacity: 0.7
-          },
-          children: "\u2192"
-        })]
-      }), estadoReparto === "terminado" && /*#__PURE__*/_jsxs("button", {
-        style: {
-          background: "#1a5c2e",
-          color: "#e2eaf4",
-          border: "none",
-          borderRadius: 10,
-          padding: "14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          cursor: "pointer",
-          textAlign: "left"
-        },
-        onClick: onIrPlanilla,
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 22
-          },
-          children: "\u2705"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 15,
-              fontWeight: 500
-            },
-            children: "Reparto terminado"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              opacity: 0.8
-            },
-            children: totalEntregados + " entregas · " + fmtP(totalNeto) + " cobrado · Ir a planilla"
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            opacity: 0.7
-          },
-          children: "\u2192"
-        })]
-      }), estadoReparto !== "pendiente" && /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: 6
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.metricCard,
-            textAlign: "center"
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 18,
-              fontWeight: 500,
-              color: "#4dd9a0"
-            },
-            children: totalEntregados
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Entregados"
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.metricCard,
-            textAlign: "center"
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 18,
-              fontWeight: 500,
-              color: "#f5b942"
-            },
-            children: totalPend
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Pendientes"
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.metricCard,
-            textAlign: "center"
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 18,
-              fontWeight: 500
-            },
-            children: fmtP(totalNeto)
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Cobrado"
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.divider
-      }), /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.card,
-          margin: 0,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "13px 14px"
-        },
-        onClick: onIrPlanilla,
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 20
-          },
-          children: "\u{1F4CA}"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: "Planilla del dia"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Gastos, transferencias y cierre"
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            color: "var(--color-text-tertiary)"
-          },
-          children: "\u2192"
-        })]
-      }), onEnviarInforme && /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.card,
-          margin: 0,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "13px 14px"
-        },
-        onClick: onEnviarInforme,
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 20
-          },
-          children: "\u{1F4E4}"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: "Enviar informe al dueño"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Manda el resumen del día por email"
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            color: "var(--color-text-tertiary)"
-          },
-          children: "\u2192"
-        })]
-      }), /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.card,
-          margin: 0,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "13px 14px"
-        },
-        onClick: onIrTodosClientes,
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 20
-          },
-          children: "\u{1F465}"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: "Todos los clientes"
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Ventas y cobros de cualquier dia"
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            color: "var(--color-text-tertiary)"
-          },
-          children: "\u2192"
-        })]
-      }), (() => {
-        const pendTrans = ventasHoy.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada);
-        const pendTransAll = ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada);
-        const total = pendTransAll.length;
-        if (total === 0) return null;
-        return /*#__PURE__*/_jsxs("button", {
-          style: {
-            ...s.card,
-            margin: 0,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "13px 14px",
-            background: "var(--color-background-warning)",
-            border: "0.5px solid var(--color-border-warning)"
-          },
-          onClick: onIrTransfers,
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 20
-            },
-            children: "\u{1F4B8}"
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1
-            },
-            children: [/*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--color-text-warning)"
-              },
-              children: ["Transferencias pendientes", /*#__PURE__*/_jsx("span", {
-                style: {
-                  ...s.badge("warning"),
-                  fontSize: 10,
-                  marginLeft: 6
-                },
-                children: total
-              })]
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-secondary)"
-              },
-              children: "Tocar para marcar como acreditadas"
-            })]
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              color: "var(--color-text-tertiary)"
-            },
-            children: "\u2192"
-          })]
-        });
-      })(), /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.card,
-          margin: 0,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "13px 14px"
-        },
-        onClick: onIrAgenda,
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 20
-          },
-          children: "\u{1F4C5}"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: ["Agenda", recActivos.length > 0 && /*#__PURE__*/_jsx("span", {
-              style: {
-                ...s.badge("info"),
-                fontSize: 10,
-                marginLeft: 6
-              },
-              children: recActivos.length
-            })]
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Recordatorios y visitas programadas"
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            color: "var(--color-text-tertiary)"
-          },
-          children: "\u2192"
-        })]
-      })]
-    })]
-  });
+        fontSize: 20
+      }
+    }, "\u{1F4B8}"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: "var(--color-text-warning)"
+      }
+    }, "Transferencias pendientes", /*#__PURE__*/React.createElement("span", {
+      style: {
+        ...s.badge("warning"),
+        fontSize: 10,
+        marginLeft: 6
+      }
+    }, total)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-secondary)"
+      }
+    }, "Tocar para marcar como acreditadas")), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--color-text-tertiary)"
+      }
+    }, "\u2192"));
+  })(), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.card,
+      margin: 0,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "13px 14px"
+    },
+    onClick: onIrAgenda
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 20
+    }
+  }, "\u{1F4C5}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Agenda", recActivos.length > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.badge("info"),
+      fontSize: 10,
+      marginLeft: 6
+    }
+  }, recActivos.length)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Recordatorios y visitas programadas")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "\u2192"))));
 }
 
 // ── GastosRepartidor ─────────────────────────────────────────────────────────
@@ -1215,146 +1101,131 @@ function GastosRepartidor({
   };
   const total = gastos.reduce((a, g) => a + (Number(g.monto) || 0), 0);
   const fmtP = n => "$" + Math.round(Number(n) || 0).toLocaleString("es-AR");
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "0 0 8px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-primary)"
+    }
+  }, "\u{1F4B8} Gastos extras"), total > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "#f07070",
+      fontWeight: 600
+    }
+  }, "−", fmtP(total))), gastos.map(g => /*#__PURE__*/React.createElement("div", {
+    key: g.id,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      padding: "5px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, g.cat), g.desc && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, " · ", g.desc)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "#f07070"
+    }
+  }, fmtP(g.monto)), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "2px 6px",
+      fontSize: 11,
+      color: "var(--color-text-danger)"
     },
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 8
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--color-text-primary)"
-        },
-        children: "\u{1F4B8} Gastos extras"
-      }), total > 0 && /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 12,
-          color: "#f07070",
-          fontWeight: 600
-        },
-        children: ["−", fmtP(total)]
-      })]
-    }), gastos.map(g => /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "5px 0",
-        borderBottom: "0.5px solid var(--color-border-tertiary)"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: g.cat
-        }), g.desc && /*#__PURE__*/_jsxs("span", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-tertiary)"
-          },
-          children: [" · ", g.desc]
-        })]
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 13,
-          fontWeight: 500,
-          color: "#f07070"
-        },
-        children: fmtP(g.monto)
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          padding: "2px 6px",
-          fontSize: 11,
-          color: "var(--color-text-danger)"
-        },
-        onClick: () => eliminar(g.id),
-        children: "✕"
-      })]
-    }, g.id)), !agregando && /*#__PURE__*/_jsx("button", {
-      style: {
-        ...s.btn,
-        marginTop: 8,
-        width: "100%",
-        fontSize: 12
-      },
-      onClick: () => setAgregando(true),
-      children: "+ Agregar gasto"
-    }), agregando && /*#__PURE__*/_jsxs("div", {
-      style: {
-        marginTop: 8,
-        display: "flex",
-        flexDirection: "column",
-        gap: 6
-      },
-      children: [/*#__PURE__*/_jsx("select", {
-        style: s.select,
-        value: nuevo.cat,
-        onChange: e => setNuevo(v => ({
-          ...v,
-          cat: e.target.value
-        })),
-        children: ["propina", "mercado", "gnc", "gaseosa", "uber", "inflado", "frutas", "otro"].map(c => /*#__PURE__*/_jsx("option", {
-          value: c,
-          children: c.charAt(0).toUpperCase() + c.slice(1)
-        }, c))
-      }), /*#__PURE__*/_jsx("input", {
-        style: s.input,
-        placeholder: "Descripción (opcional)",
-        value: nuevo.desc,
-        onChange: e => setNuevo(v => ({
-          ...v,
-          desc: e.target.value
-        }))
-      }), /*#__PURE__*/_jsx("input", {
-        style: {
-          ...s.input,
-          textAlign: "right"
-        },
-        type: "number",
-        placeholder: "Monto $",
-        value: nuevo.monto,
-        onChange: e => setNuevo(v => ({
-          ...v,
-          monto: e.target.value
-        }))
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 6
-        },
-        children: [/*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            flex: 1
-          },
-          onClick: () => setAgregando(false),
-          children: "Cancelar"
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btnPrimary,
-            flex: 2,
-            padding: "8px"
-          },
-          onClick: agregar,
-          children: "Guardar gasto"
-        })]
-      })]
-    })]
-  });
+    onClick: () => eliminar(g.id)
+  }, "✕"))), !agregando && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      marginTop: 8,
+      width: "100%",
+      fontSize: 12
+    },
+    onClick: () => setAgregando(true)
+  }, "+ Agregar gasto"), agregando && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8,
+      display: "flex",
+      flexDirection: "column",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: nuevo.cat,
+    onChange: e => setNuevo(v => ({
+      ...v,
+      cat: e.target.value
+    }))
+  }, ["propina", "mercado", "gnc", "gaseosa", "uber", "inflado", "frutas", "otro"].map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
+  }, c.charAt(0).toUpperCase() + c.slice(1)))), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Descripción (opcional)",
+    value: nuevo.desc,
+    onChange: e => setNuevo(v => ({
+      ...v,
+      desc: e.target.value
+    }))
+  }), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      textAlign: "right"
+    },
+    type: "number",
+    placeholder: "Monto $",
+    value: nuevo.monto,
+    onChange: e => setNuevo(v => ({
+      ...v,
+      monto: e.target.value
+    }))
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1
+    },
+    onClick: () => setAgregando(false)
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2,
+      padding: "8px"
+    },
+    onClick: agregar
+  }, "Guardar gasto"))));
 }
 
 // ── TodosClientesRepartidor ──────────────────────────────────
@@ -1370,220 +1241,196 @@ function TodosClientesRepartidor({
   const [diaFiltro, setDiaFiltro] = React.useState("todos");
   const filtrados = clientes.filter(c => (diaFiltro === "todos" || c.dia === diaFiltro) && (c.nombre.toLowerCase().includes(busq.toLowerCase()) || (c.barrio || "").toLowerCase().includes(busq.toLowerCase()))).sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
   const prospectosFiltrados = diaFiltro === "todos" ? (prospectos || []).filter(p => (p.estado === "activo" || !p.estado) && (busq === "" || p.nombre.toLowerCase().includes(busq.toLowerCase()))) : [];
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Mis clientes",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Mis clientes",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px 6px"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Buscar cliente o barrio...",
+    value: busq,
+    onChange: e => setBusq(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 5,
+      marginTop: 8,
+      flexWrap: "wrap",
+      alignItems: "center"
+    }
+  }, ["todos", ...DIAS].map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 9px",
+      background: diaFiltro === d ? "#185FA5" : "var(--color-background-tertiary)",
+      color: diaFiltro === d ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: diaFiltro === d ? "none" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: () => setDiaFiltro(d)
+  }, d === "todos" ? "Todos" : d.slice(0, 3))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px",
+      marginLeft: "auto",
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none"
+    },
+    onClick: onNuevoCliente
+  }, "+ Nuevo")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      marginTop: 6
+    }
+  }, filtrados.length, " clientes")), filtrados.map(c => {
+    const vUlt = ventas.filter(v => v.clienteId === c.id).sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || ""))[0];
+    return /*#__PURE__*/React.createElement("div", {
+      key: c.id,
       style: {
-        padding: "10px 14px 6px"
+        ...s.card,
+        marginBottom: 0,
+        borderRadius: 0,
+        borderBottom: "0.5px solid var(--color-border-tertiary)",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        cursor: "pointer",
+        padding: "12px 14px"
       },
-      children: [/*#__PURE__*/_jsx("input", {
-        style: s.input,
-        placeholder: "Buscar cliente o barrio...",
-        value: busq,
-        onChange: e => setBusq(e.target.value)
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 5,
-          marginTop: 8,
-          flexWrap: "wrap",
-          alignItems: "center"
-        },
-        children: [["todos", ...DIAS].map(d => /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "3px 9px",
-            background: diaFiltro === d ? "#185FA5" : "var(--color-background-tertiary)",
-            color: diaFiltro === d ? "#e2eaf4" : "var(--color-text-secondary)",
-            border: diaFiltro === d ? "none" : "0.5px solid var(--color-border-secondary)"
-          },
-          onClick: () => setDiaFiltro(d),
-          children: d === "todos" ? "Todos" : d.slice(0, 3)
-        }, d)), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "3px 10px",
-            marginLeft: "auto",
-            background: "#185FA5",
-            color: "#e2eaf4",
-            border: "none"
-          },
-          onClick: onNuevoCliente,
-          children: "+ Nuevo"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary)",
-          marginTop: 6
-        },
-        children: [filtrados.length, " clientes"]
-      })]
-    }), filtrados.map(c => {
-      const vUlt = ventas.filter(v => v.clienteId === c.id).sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || ""))[0];
-      return /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          marginBottom: 0,
-          borderRadius: 0,
-          borderBottom: "0.5px solid var(--color-border-tertiary)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          cursor: "pointer",
-          padding: "12px 14px"
-        },
-        onClick: () => onSeleccionar(c),
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 6
-            },
-            children: [/*#__PURE__*/_jsx("span", {
-              style: {
-                fontWeight: 600,
-                fontSize: 14,
-                color: "var(--color-text-primary)"
-              },
-              children: c.nombre
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 10,
-                background: "#185FA5",
-                color: "#fff",
-                padding: "1px 6px",
-                borderRadius: 10,
-                fontWeight: 600
-              },
-              children: c.dia
-            })]
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-secondary)",
-              marginTop: 2
-            },
-            children: direccionCliente(c)
-          }), c.saldo < 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              ...s.badge("danger"),
-              fontSize: 10,
-              marginTop: 3,
-              display: "inline-block"
-            },
-            children: ["Debe ", fmt(Math.abs(c.saldo))]
-          }), c.saldo > 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              ...s.badge("success"),
-              fontSize: 10,
-              marginTop: 3,
-              display: "inline-block"
-            },
-            children: ["A favor ", fmt(c.saldo)]
-          }), vUlt && /*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-tertiary)",
-              marginTop: 2
-            },
-            children: ["Última venta: ", vUlt.fechaKey]
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            color: "var(--color-text-tertiary)"
-          },
-          children: "→"
-        })]
-      }, c.id);
-    }), prospectosFiltrados.length > 0 && /*#__PURE__*/_jsxs(React.Fragment, {
-      children: [/*#__PURE__*/_jsx("span", {
-        style: {
-          ...s.sectionTitle,
-          color: "#f5b942"
-        },
-        children: "Prospectos en promocion"
-      }), prospectosFiltrados.map(p => /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          marginBottom: 0,
-          borderRadius: 0,
-          borderBottom: "0.5px solid var(--color-border-tertiary)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          cursor: "pointer",
-          padding: "12px 14px",
-          borderLeft: "3px solid #f5b942"
-        },
-        onClick: () => onSeleccionar({
-          ...p,
-          _esProspecto: true
-        }),
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            flex: 1
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 6
-            },
-            children: [/*#__PURE__*/_jsx("span", {
-              style: {
-                fontWeight: 600,
-                fontSize: 14,
-                color: "var(--color-text-primary)"
-              },
-              children: p.nombre
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 10,
-                background: "#2e1f06",
-                color: "#f5b942",
-                padding: "1px 6px",
-                borderRadius: 10,
-                fontWeight: 600
-              },
-              children: "Prospecto"
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 10,
-                background: "#185FA5",
-                color: "#fff",
-                padding: "1px 6px",
-                borderRadius: 10,
-                fontWeight: 600
-              },
-              children: p.dia
-            })]
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-secondary)",
-              marginTop: 2
-            },
-            children: direccionProspecto(p)
-          })]
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            color: "var(--color-text-tertiary)"
-          },
-          children: "→"
-        })]
-      }, p.id))]
-    })]
-  });
+      onClick: () => onSeleccionar(c)
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600,
+        fontSize: 14,
+        color: "var(--color-text-primary)"
+      }
+    }, c.nombre), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        background: "#185FA5",
+        color: "#fff",
+        padding: "1px 6px",
+        borderRadius: 10,
+        fontWeight: 600
+      }
+    }, c.dia)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        marginTop: 2
+      }
+    }, direccionCliente(c)), c.saldo < 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        ...s.badge("danger"),
+        fontSize: 10,
+        marginTop: 3,
+        display: "inline-block"
+      }
+    }, "Debe ", fmt(Math.abs(c.saldo))), c.saldo > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        ...s.badge("success"),
+        fontSize: 10,
+        marginTop: 3,
+        display: "inline-block"
+      }
+    }, "A favor ", fmt(c.saldo)), vUlt && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "var(--color-text-tertiary)",
+        marginTop: 2
+      }
+    }, "Última venta: ", vUlt.fechaKey)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--color-text-tertiary)"
+      }
+    }, "→"));
+  }), prospectosFiltrados.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.sectionTitle,
+      color: "#f5b942"
+    }
+  }, "Prospectos en promocion"), prospectosFiltrados.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    style: {
+      ...s.card,
+      marginBottom: 0,
+      borderRadius: 0,
+      borderBottom: "0.5px solid var(--color-border-tertiary)",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      cursor: "pointer",
+      padding: "12px 14px",
+      borderLeft: "3px solid #f5b942"
+    },
+    onClick: () => onSeleccionar({
+      ...p,
+      _esProspecto: true
+    })
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14,
+      color: "var(--color-text-primary)"
+    }
+  }, p.nombre), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      background: "#2e1f06",
+      color: "#f5b942",
+      padding: "1px 6px",
+      borderRadius: 10,
+      fontWeight: 600
+    }
+  }, "Prospecto"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      background: "#185FA5",
+      color: "#fff",
+      padding: "1px 6px",
+      borderRadius: 10,
+      fontWeight: 600
+    }
+  }, p.dia)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginTop: 2
+    }
+  }, direccionProspecto(p))), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "→")))));
 }
 
 // ── AgendaRepartidor ─────────────────────────────────────────
@@ -1609,199 +1456,178 @@ function AgendaRepartidor({
     visita: "🏠",
     cobro: "💰"
   };
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "📅 Agenda",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsx("div", {
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "📅 Agenda",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px 0"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      width: "100%",
+      fontSize: 13,
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none"
+    },
+    onClick: () => setMostrarNuevo(true)
+  }, "+ Nuevo")), pendientes.length === 0 && !mostrarNuevo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 20px",
+      color: "var(--color-text-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 36,
+      marginBottom: 10
+    }
+  }, "📅"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14
+    }
+  }, "Sin recordatorios pendientes")), pendientes.map(r => {
+    const c = clientes.find(x => x.id === r.clienteId);
+    const vencido = r.fecha < hoy;
+    const esHoy = r.fecha === hoy;
+    return /*#__PURE__*/React.createElement("div", {
+      key: r.id,
       style: {
-        padding: "10px 14px 0"
-      },
-      children: /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          width: "100%",
-          fontSize: 13,
-          background: "#185FA5",
-          color: "#e2eaf4",
-          border: "none"
-        },
-        onClick: () => setMostrarNuevo(true),
-        children: "+ Nuevo"
-      })
-    }), pendientes.length === 0 && !mostrarNuevo && /*#__PURE__*/_jsxs("div", {
+        ...s.card,
+        borderLeft: `3px solid ${vencido ? "var(--color-text-danger)" : esHoy ? "#f5b942" : "#5daaff"}`
+      }
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
-        textAlign: "center",
-        padding: "40px 20px",
-        color: "var(--color-text-tertiary)"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 36,
-          marginBottom: 10
-        },
-        children: "📅"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 14
-        },
-        children: "Sin recordatorios pendientes"
-      })]
-    }), pendientes.map(r => {
-      const c = clientes.find(x => x.id === r.clienteId);
-      const vencido = r.fecha < hoy;
-      const esHoy = r.fecha === hoy;
-      return /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          borderLeft: `3px solid ${vencido ? "var(--color-text-danger)" : esHoy ? "#f5b942" : "#5daaff"}`
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 8,
-            alignItems: "flex-start"
-          },
-          children: [/*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 18
-            },
-            children: tipoIco[r.tipo] || "🔔"
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1
-            },
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--color-text-primary)"
-              },
-              children: c?.nombre || r.clienteNombre
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 12,
-                color: vencido ? "var(--color-text-danger)" : esHoy ? "#f5b942" : "var(--color-text-secondary)"
-              },
-              children: [vencido ? "⚠ " : esHoy ? "📌 " : "", r.fecha, r.hora ? ` · ${r.hora}` : ""]
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 12,
-                color: "var(--color-text-primary)",
-                marginTop: 2
-              },
-              children: r.motivo
-            })]
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            marginTop: 8
-          },
-          children: [r.clienteId && /*#__PURE__*/_jsx("button", {
-            style: {
-              flex: 2,
-              padding: "7px",
-              borderRadius: 8,
-              border: "none",
-              background: "#185FA5",
-              color: "#fff",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer"
-            },
-            onClick: () => onIrCliente(r.clienteId),
-            children: r.tipo === "cobro" ? "💰 Ir a cobrar" : "🏠 Ver cliente"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              flex: 1,
-              padding: "7px",
-              borderRadius: 8,
-              border: "none",
-              background: "#0a2e1f",
-              color: "#4dd9a0",
-              fontSize: 12,
-              cursor: "pointer"
-            },
-            onClick: () => onConfirmar(r.id),
-            children: "✓ Listo"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "7px 10px",
-              fontSize: 11
-            },
-            onClick: () => onEliminar(r.id),
-            children: "🗑"
-          })]
-        })]
-      }, r.id);
-    }), confirmados.length > 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "0 14px"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary)",
-          margin: "8px 0 4px",
-          textTransform: "uppercase"
-        },
-        children: "✓ Completados recientes"
-      }), confirmados.map(r => /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--color-text-tertiary)",
-          padding: "4px 0",
-          borderBottom: "0.5px solid var(--color-border-tertiary)"
-        },
-        children: [tipoIco[r.tipo] || "🔔", " ", r.clienteNombre, " · ", r.fecha]
-      }, r.id))]
-    }), mostrarNuevo && /*#__PURE__*/_jsx("div", {
-      style: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.7)",
-        zIndex: 999,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16
+        gap: 8,
+        alignItems: "flex-start"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 18
+      }
+    }, tipoIco[r.tipo] || "🔔"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: "var(--color-text-primary)"
+      }
+    }, c?.nombre || r.clienteNombre), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: vencido ? "var(--color-text-danger)" : esHoy ? "#f5b942" : "var(--color-text-secondary)"
+      }
+    }, vencido ? "⚠ " : esHoy ? "📌 " : "", r.fecha, r.hora ? ` · ${r.hora}` : ""), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-primary)",
+        marginTop: 2
+      }
+    }, r.motivo))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginTop: 8
+      }
+    }, r.clienteId && /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 2,
+        padding: "7px",
+        borderRadius: 8,
+        border: "none",
+        background: "#185FA5",
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer"
       },
-      children: /*#__PURE__*/_jsxs("div", {
-        style: {
-          background: "var(--color-background-secondary)",
-          borderRadius: 16,
-          padding: 20,
-          width: "100%",
-          maxWidth: 400,
-          maxHeight: "90vh",
-          overflowY: "auto"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 500,
-            color: "var(--color-text-primary)",
-            marginBottom: 12
-          },
-          children: "🔔 Nuevo recordatorio"
-        }), /*#__PURE__*/_jsx(NuevoRecordatorioForm, {
-          clientes: clientes,
-          onGuardar: datos => {
-            onNuevo(datos);
-            setMostrarNuevo(false);
-          },
-          onCerrar: () => setMostrarNuevo(false)
-        })]
-      })
-    })]
-  });
+      onClick: () => onIrCliente(r.clienteId)
+    }, r.tipo === "cobro" ? "💰 Ir a cobrar" : "🏠 Ver cliente"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 1,
+        padding: "7px",
+        borderRadius: 8,
+        border: "none",
+        background: "#0a2e1f",
+        color: "#4dd9a0",
+        fontSize: 12,
+        cursor: "pointer"
+      },
+      onClick: () => onConfirmar(r.id)
+    }, "✓ Listo"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        padding: "7px 10px",
+        fontSize: 11
+      },
+      onClick: () => onEliminar(r.id)
+    }, "🗑")));
+  }), confirmados.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      margin: "8px 0 4px",
+      textTransform: "uppercase"
+    }
+  }, "✓ Completados recientes"), confirmados.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.id,
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      padding: "4px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, tipoIco[r.tipo] || "🔔", " ", r.clienteNombre, " · ", r.fecha))), mostrarNuevo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.7)",
+      zIndex: 999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: 16,
+      padding: 20,
+      width: "100%",
+      maxWidth: 400,
+      maxHeight: "90vh",
+      overflowY: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 12
+    }
+  }, "🔔 Nuevo recordatorio"), /*#__PURE__*/React.createElement(NuevoRecordatorioForm, {
+    clientes: clientes,
+    onGuardar: datos => {
+      onNuevo(datos);
+      setMostrarNuevo(false);
+    },
+    onCerrar: () => setMostrarNuevo(false)
+  }))));
 }
 function AgendaScreen({
   recordatorios,
@@ -1840,348 +1666,312 @@ function AgendaScreen({
   const clientesFiltrados = clienteBusq ? clientes.filter(c => c.nombre.toLowerCase().includes(clienteBusq.toLowerCase())).slice(0, 5) : [];
   const hoyPend = pendientes.filter(r => r.fecha === hoy).length;
   const vencidos = pendientes.filter(r => r.fecha < hoy).length;
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "📅 Agenda",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "📅 Agenda",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      padding: "10px 14px 6px"
+    }
+  }, vencidos > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      flex: 1,
+      margin: 0,
+      background: "var(--color-background-danger)",
+      border: "0.5px solid var(--color-border-danger)",
+      padding: "8px 12px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-danger)",
+      fontWeight: 600,
+      textTransform: "uppercase",
+      marginBottom: 2
+    }
+  }, "Vencidos"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 700,
+      color: "var(--color-text-danger)"
+    }
+  }, vencidos)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      flex: 1,
+      margin: 0,
+      background: "var(--color-background-info)",
+      border: "0.5px solid var(--color-border-info)",
+      padding: "8px 12px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-info)",
+      fontWeight: 600,
+      textTransform: "uppercase",
+      marginBottom: 2
+    }
+  }, "Hoy"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 700,
+      color: "var(--color-text-info)"
+    }
+  }, hoyPend)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      flex: 1,
+      margin: 0,
+      padding: "8px 12px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)",
+      fontWeight: 600,
+      textTransform: "uppercase",
+      marginBottom: 2
+    }
+  }, "Pendientes"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 700,
+      color: "var(--color-text-primary)"
+    }
+  }, pendientes.length))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      padding: "0 14px 8px"
+    }
+  }, [["pendiente", "⏳ Pendientes"], ["todos", "📋 Todos"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12,
+      padding: "6px",
+      background: filtro === v ? "#185FA5" : "var(--color-background-tertiary)",
+      color: filtro === v ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtro === v ? "none" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: () => setFiltro(v)
+  }, l)), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "6px 12px",
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none"
+    },
+    onClick: () => setMostrarNuevo(true)
+  }, "+ Nuevo")), mostrar.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 20px",
+      color: "var(--color-text-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 36,
+      marginBottom: 10
+    }
+  }, "📅"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14
+    }
+  }, filtro === "pendiente" ? "No hay recordatorios pendientes" : "Sin recordatorios"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      marginTop: 6
+    }
+  }, "Tocá \"+ Nuevo\" para agregar uno")), mostrar.map(r => {
+    const c = clientes.find(x => x.id === r.clienteId);
+    const vencido = !r.confirmado && r.fecha < hoy;
+    const esHoy = r.fecha === hoy;
+    const ico = tipoIco[r.tipo] || "🔔";
+    const colTipo = tipoCl[r.tipo] || "var(--color-text-secondary)";
+    const bgTipo = tipoBg[r.tipo] || "var(--color-background-tertiary)";
+    return /*#__PURE__*/React.createElement("div", {
+      key: r.id,
+      style: {
+        ...s.card,
+        borderLeft: `3px solid ${r.confirmado ? "#1D9E75" : vencido ? "var(--color-text-danger)" : esHoy ? "var(--color-text-warning)" : colTipo}`,
+        opacity: r.confirmado ? 0.65 : 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
-        gap: 8,
-        padding: "10px 14px 6px"
-      },
-      children: [vencidos > 0 && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          flex: 1,
-          margin: 0,
-          background: "var(--color-background-danger)",
-          border: "0.5px solid var(--color-border-danger)",
-          padding: "8px 12px",
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-danger)",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            marginBottom: 2
-          },
-          children: "Vencidos"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 22,
-            fontWeight: 700,
-            color: "var(--color-text-danger)"
-          },
-          children: vencidos
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          flex: 1,
-          margin: 0,
-          background: "var(--color-background-info)",
-          border: "0.5px solid var(--color-border-info)",
-          padding: "8px 12px",
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-info)",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            marginBottom: 2
-          },
-          children: "Hoy"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 22,
-            fontWeight: 700,
-            color: "var(--color-text-info)"
-          },
-          children: hoyPend
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          flex: 1,
-          margin: 0,
-          padding: "8px 12px",
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            marginBottom: 2
-          },
-          children: "Pendientes"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 22,
-            fontWeight: 700,
-            color: "var(--color-text-primary)"
-          },
-          children: pendientes.length
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 700,
+        padding: "2px 8px",
+        borderRadius: 20,
+        background: bgTipo,
+        color: colTipo
+      }
+    }, ico, " ", r.tipo === "cobro" ? "Cobro" : "Visita"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: vencido ? "var(--color-text-danger)" : esHoy ? "var(--color-text-warning)" : "var(--color-text-tertiary)",
+        fontWeight: vencido || esHoy ? 600 : 400
+      }
+    }, vencido ? "⚠ " : esHoy ? "📌 " : "", r.fecha, r.hora ? ` · ${r.hora}` : ""), r.confirmado && /*#__PURE__*/React.createElement("span", {
+      style: s.badge("success")
+    }, "✓ Listo")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: "var(--color-text-primary)",
+        marginBottom: 2
+      }
+    }, c?.nombre || r.clienteNombre || "Cliente"), c && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        marginBottom: 4
+      }
+    }, c.dia, " · ", c.barrio || ""), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-primary)",
+        lineHeight: 1.4
+      }
+    }, r.motivo)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        flexShrink: 0
+      }
+    }, c?.telefono && /*#__PURE__*/React.createElement("a", {
+      href: `https://wa.me/54${c.telefono}`,
+      target: "_blank",
+      rel: "noreferrer",
+      style: {
+        fontSize: 20,
+        textDecoration: "none"
+      }
+    }, "💬"), (c?.maps || c?.lat && c?.lng) && /*#__PURE__*/React.createElement("a", {
+      href: c.maps || `https://www.google.com/maps?q=${c.lat},${c.lng}`,
+      target: "_blank",
+      rel: "noreferrer",
+      style: {
+        fontSize: 20,
+        textDecoration: "none"
+      }
+    }, "📍"))), !r.confirmado && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 6,
-        padding: "0 14px 8px"
-      },
-      children: [[["pendiente", "⏳ Pendientes"], ["todos", "📋 Todos"]].map(([v, l]) => /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          flex: 1,
-          fontSize: 12,
-          padding: "6px",
-          background: filtro === v ? "#185FA5" : "var(--color-background-tertiary)",
-          color: filtro === v ? "#e2eaf4" : "var(--color-text-secondary)",
-          border: filtro === v ? "none" : "0.5px solid var(--color-border-secondary)"
-        },
-        onClick: () => setFiltro(v),
-        children: l
-      }, v)), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          fontSize: 12,
-          padding: "6px 12px",
-          background: "#185FA5",
-          color: "#e2eaf4",
-          border: "none"
-        },
-        onClick: () => setMostrarNuevo(true),
-        children: "+ Nuevo"
-      })]
-    }), mostrar.length === 0 && /*#__PURE__*/_jsxs("div", {
+        marginTop: 10,
+        paddingTop: 8,
+        borderTop: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
       style: {
-        textAlign: "center",
-        padding: "40px 20px",
-        color: "var(--color-text-tertiary)"
+        ...s.btn,
+        flex: 1,
+        fontSize: 12
       },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 36,
-          marginBottom: 10
-        },
-        children: "📅"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 14
-        },
-        children: filtro === "pendiente" ? "No hay recordatorios pendientes" : "Sin recordatorios"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 12,
-          marginTop: 6
-        },
-        children: "Tocá \"+ Nuevo\" para agregar uno"
-      })]
-    }), mostrar.map(r => {
-      const c = clientes.find(x => x.id === r.clienteId);
-      const vencido = !r.confirmado && r.fecha < hoy;
-      const esHoy = r.fecha === hoy;
-      const ico = tipoIco[r.tipo] || "🔔";
-      const colTipo = tipoCl[r.tipo] || "var(--color-text-secondary)";
-      const bgTipo = tipoBg[r.tipo] || "var(--color-background-tertiary)";
-      return /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          borderLeft: `3px solid ${r.confirmado ? "#1D9E75" : vencido ? "var(--color-text-danger)" : esHoy ? "var(--color-text-warning)" : colTipo}`,
-          opacity: r.confirmado ? 0.65 : 1
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 10
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1,
-              minWidth: 0
-            },
-            children: [/*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                marginBottom: 4
-              },
-              children: [/*#__PURE__*/_jsxs("span", {
-                style: {
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "2px 8px",
-                  borderRadius: 20,
-                  background: bgTipo,
-                  color: colTipo
-                },
-                children: [ico, " ", r.tipo === "cobro" ? "Cobro" : "Visita"]
-              }), /*#__PURE__*/_jsxs("span", {
-                style: {
-                  fontSize: 12,
-                  color: vencido ? "var(--color-text-danger)" : esHoy ? "var(--color-text-warning)" : "var(--color-text-tertiary)",
-                  fontWeight: vencido || esHoy ? 600 : 400
-                },
-                children: [vencido ? "⚠ " : esHoy ? "📌 " : "", r.fecha, r.hora ? ` · ${r.hora}` : ""]
-              }), r.confirmado && /*#__PURE__*/_jsx("span", {
-                style: s.badge("success"),
-                children: "✓ Listo"
-              })]
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 14,
-                fontWeight: 600,
-                color: "var(--color-text-primary)",
-                marginBottom: 2
-              },
-              children: c?.nombre || r.clienteNombre || "Cliente"
-            }), c && /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 12,
-                color: "var(--color-text-secondary)",
-                marginBottom: 4
-              },
-              children: [c.dia, " · ", c.barrio || ""]
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 13,
-                color: "var(--color-text-primary)",
-                lineHeight: 1.4
-              },
-              children: r.motivo
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              flexShrink: 0
-            },
-            children: [c?.telefono && /*#__PURE__*/_jsx("a", {
-              href: `https://wa.me/54${c.telefono}`,
-              target: "_blank",
-              rel: "noreferrer",
-              style: {
-                fontSize: 20,
-                textDecoration: "none"
-              },
-              children: "💬"
-            }), (c?.maps || c?.lat && c?.lng) && /*#__PURE__*/_jsx("a", {
-              href: c.maps || `https://www.google.com/maps?q=${c.lat},${c.lng}`,
-              target: "_blank",
-              rel: "noreferrer",
-              style: {
-                fontSize: 20,
-                textDecoration: "none"
-              },
-              children: "📍"
-            })]
-          })]
-        }), !r.confirmado && /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            marginTop: 10,
-            paddingTop: 8,
-            borderTop: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              flex: 1,
-              fontSize: 12
-            },
-            onClick: () => {
-              if (window.confirm("¿Eliminar este recordatorio?")) onEliminar(r.id);
-            },
-            children: "🗑 Eliminar"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              flex: 1,
-              padding: "7px",
-              borderRadius: 8,
-              border: "none",
-              background: "#0a2e1f",
-              color: "#4dd9a0",
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: "pointer"
-            },
-            onClick: () => onConfirmar(r.id),
-            children: "✓ Marcar como hecho"
-          }), onIrCliente && r.clienteId && /*#__PURE__*/_jsx("button", {
-            style: {
-              flex: 2,
-              padding: "7px",
-              borderRadius: 8,
-              border: "none",
-              background: "#185FA5",
-              color: "#e2eaf4",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer"
-            },
-            onClick: () => onIrCliente(r.clienteId),
-            children: r.tipo === "cobro" ? "💰 Ir a cobrar" : "🏠 Ver cliente →"
-          })]
-        })]
-      }, r.id);
-    }), mostrarNuevo && /*#__PURE__*/_jsx("div", {
+      onClick: () => {
+        if (window.confirm("¿Eliminar este recordatorio?")) onEliminar(r.id);
+      }
+    }, "🗑 Eliminar"), /*#__PURE__*/React.createElement("button", {
       style: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.7)",
-        zIndex: 999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16
+        flex: 1,
+        padding: "7px",
+        borderRadius: 8,
+        border: "none",
+        background: "#0a2e1f",
+        color: "#4dd9a0",
+        fontSize: 12,
+        fontWeight: 500,
+        cursor: "pointer"
       },
-      children: /*#__PURE__*/_jsxs("div", {
-        style: {
-          background: "var(--color-background-secondary)",
-          borderRadius: 16,
-          padding: 20,
-          width: "100%",
-          maxWidth: 400,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-          maxHeight: "90vh",
-          overflowY: "auto"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 500,
-            color: "var(--color-text-primary)",
-            marginBottom: 12
-          },
-          children: "🔔 Nuevo recordatorio"
-        }), /*#__PURE__*/_jsx(NuevoRecordatorioForm, {
-          clientes: clientes,
-          repartidores: repartidores,
-          onGuardar: datos => {
-            onNuevo(datos);
-            setMostrarNuevo(false);
-          },
-          onCerrar: () => setMostrarNuevo(false)
-        })]
-      })
-    })]
-  });
+      onClick: () => onConfirmar(r.id)
+    }, "✓ Marcar como hecho"), onIrCliente && r.clienteId && /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 2,
+        padding: "7px",
+        borderRadius: 8,
+        border: "none",
+        background: "#185FA5",
+        color: "#e2eaf4",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer"
+      },
+      onClick: () => onIrCliente(r.clienteId)
+    }, r.tipo === "cobro" ? "💰 Ir a cobrar" : "🏠 Ver cliente →")));
+  }), mostrarNuevo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.7)",
+      zIndex: 999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: 16,
+      padding: 20,
+      width: "100%",
+      maxWidth: 400,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+      maxHeight: "90vh",
+      overflowY: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 12
+    }
+  }, "🔔 Nuevo recordatorio"), /*#__PURE__*/React.createElement(NuevoRecordatorioForm, {
+    clientes: clientes,
+    repartidores: repartidores,
+    onGuardar: datos => {
+      onNuevo(datos);
+      setMostrarNuevo(false);
+    },
+    onCerrar: () => setMostrarNuevo(false)
+  }))));
 }
 function NuevoRecordatorioForm({
   clientes,
@@ -2216,218 +2006,188 @@ function NuevoRecordatorioForm({
   };
   const clientesFilt = busq.length > 1 ? clientes.filter(c => c.nombre.toLowerCase().includes(busq.toLowerCase())).slice(0, 6) : [];
   const clienteSel = clientes.find(c => c.id === clienteId);
-  return /*#__PURE__*/_jsxs("div", {
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        marginBottom: 12
-      },
-      children: Object.entries(tipoConfig).map(([k, tc]) => /*#__PURE__*/_jsxs("button", {
-        style: {
-          flex: 1,
-          padding: "10px 8px",
-          borderRadius: 10,
-          border: `2px solid ${tipo === k ? tc.color : "var(--color-border-secondary)"}`,
-          background: tipo === k ? tc.bg : "transparent",
-          color: tipo === k ? tc.color : "var(--color-text-secondary)",
-          fontSize: 13,
-          fontWeight: 500,
-          cursor: "pointer",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 3
-        },
-        onClick: () => setTipo(k),
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 20
-          },
-          children: tc.ico
-        }), tc.label]
-      }, k))
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        marginBottom: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 2
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Fecha"
-        }), /*#__PURE__*/_jsx("input", {
-          type: "date",
-          style: s.input,
-          value: fecha,
-          onChange: e => setFecha(e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Hora"
-        }), /*#__PURE__*/_jsx("input", {
-          type: "time",
-          style: s.input,
-          value: hora,
-          onChange: e => setHora(e.target.value)
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        marginBottom: 10
-      },
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Cliente"
-      }), clienteSel ? /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0,
-          padding: "8px 12px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "var(--color-background-info)"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: clienteSel.nombre
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)"
-            },
-            children: [clienteSel.dia, " · ", clienteSel.barrio || ""]
-          })]
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "3px 8px"
-          },
-          onClick: () => {
-            setClienteId(null);
-            setBusq("");
-          },
-          children: "✕"
-        })]
-      }) : /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Escribí el nombre del cliente...",
-          value: busq,
-          onChange: e => setBusq(e.target.value)
-        }), clientesFilt.map(c => /*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.card,
-            margin: "2px 0",
-            padding: "8px 12px",
-            cursor: "pointer",
-            background: "var(--color-background-tertiary)"
-          },
-          onClick: () => {
-            setClienteId(c.id);
-            setBusq("");
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 13,
-              fontWeight: 500,
-              color: "var(--color-text-primary)"
-            },
-            children: c.nombre
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-secondary)"
-            },
-            children: [c.dia, " · ", c.barrio || ""]
-          })]
-        }, c.id))]
-      })]
-    }), repartidores && repartidores.length > 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        marginBottom: 10
-      },
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "¿Para quién?"
-      }), /*#__PURE__*/_jsxs("select", {
-        style: s.select,
-        value: paraRepartidor,
-        onChange: e => setParaRepartidor(e.target.value),
-        children: [/*#__PURE__*/_jsx("option", {
-          value: "",
-          children: "Yo mismo"
-        }), repartidores.map(r => /*#__PURE__*/_jsx("option", {
-          value: r.nombre,
-          children: r.nombre
-        }, r.nombre))]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        marginBottom: 14
-      },
-      children: [/*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Detalle"
-      }), /*#__PURE__*/_jsx("textarea", {
-        style: {
-          ...s.input,
-          minHeight: 60,
-          resize: "vertical"
-        },
-        placeholder: tipo === "cobro" ? "ej: Cobrar deuda $5.000..." : "ej: Pasar a visitar, entregar pedido...",
-        value: motivo,
-        onChange: e => setMotivo(e.target.value)
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        gap: 8
-      },
-      children: [/*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          flex: 1
-        },
-        onClick: onCerrar,
-        children: "Cancelar"
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          flex: 2,
-          opacity: !clienteId || !motivo.trim() ? 0.5 : 1
-        },
-        disabled: !clienteId || !motivo.trim(),
-        onClick: () => onGuardar({
-          id: Date.now(),
-          tipo,
-          fecha,
-          hora,
-          motivo: motivo.trim(),
-          clienteId,
-          clienteNombre: (clientes.find(c => c.id === clienteId) || {}).nombre || "",
-          confirmado: false,
-          paraRepartidor: paraRepartidor || null
-        }),
-        children: "Guardar recordatorio"
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 12
+    }
+  }, Object.entries(tipoConfig).map(([k, tc]) => /*#__PURE__*/React.createElement("button", {
+    key: k,
+    style: {
+      flex: 1,
+      padding: "10px 8px",
+      borderRadius: 10,
+      border: `2px solid ${tipo === k ? tc.color : "var(--color-border-secondary)"}`,
+      background: tipo === k ? tc.bg : "transparent",
+      color: tipo === k ? tc.color : "var(--color-text-secondary)",
+      fontSize: 13,
+      fontWeight: 500,
+      cursor: "pointer",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 3
+    },
+    onClick: () => setTipo(k)
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 20
+    }
+  }, tc.ico), tc.label))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 2
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Fecha"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: s.input,
+    value: fecha,
+    onChange: e => setFecha(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Hora"), /*#__PURE__*/React.createElement("input", {
+    type: "time",
+    style: s.input,
+    value: hora,
+    onChange: e => setHora(e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Cliente"), clienteSel ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: 0,
+      padding: "8px 12px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      background: "var(--color-background-info)"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, clienteSel.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, clienteSel.dia, " · ", clienteSel.barrio || "")), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 8px"
+    },
+    onClick: () => {
+      setClienteId(null);
+      setBusq("");
+    }
+  }, "✕")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Escribí el nombre del cliente...",
+    value: busq,
+    onChange: e => setBusq(e.target.value)
+  }), clientesFilt.map(c => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      ...s.card,
+      margin: "2px 0",
+      padding: "8px 12px",
+      cursor: "pointer",
+      background: "var(--color-background-tertiary)"
+    },
+    onClick: () => {
+      setClienteId(c.id);
+      setBusq("");
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, c.dia, " · ", c.barrio || ""))))), repartidores && repartidores.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "¿Para quién?"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: paraRepartidor,
+    onChange: e => setParaRepartidor(e.target.value)
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Yo mismo"), repartidores.map(r => /*#__PURE__*/React.createElement("option", {
+    key: r.nombre,
+    value: r.nombre
+  }, r.nombre)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Detalle"), /*#__PURE__*/React.createElement("textarea", {
+    style: {
+      ...s.input,
+      minHeight: 60,
+      resize: "vertical"
+    },
+    placeholder: tipo === "cobro" ? "ej: Cobrar deuda $5.000..." : "ej: Pasar a visitar, entregar pedido...",
+    value: motivo,
+    onChange: e => setMotivo(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1
+    },
+    onClick: onCerrar
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2,
+      opacity: !clienteId || !motivo.trim() ? 0.5 : 1
+    },
+    disabled: !clienteId || !motivo.trim(),
+    onClick: () => onGuardar({
+      id: Date.now(),
+      tipo,
+      fecha,
+      hora,
+      motivo: motivo.trim(),
+      clienteId,
+      clienteNombre: (clientes.find(c => c.id === clienteId) || {}).nombre || "",
+      confirmado: false,
+      paraRepartidor: paraRepartidor || null
+    })
+  }, "Guardar recordatorio")));
 }
 function ConfigApariencia() {
   const [temaActual, setTemaActual] = React.useState(getTemaActual);
@@ -2453,246 +2213,225 @@ function ConfigApariencia() {
     setTimeout(() => setGuardado(false), 2000);
   };
   const temasFiltrados = Object.entries(TEMAS).filter(([, t]) => t.modo === modoVista);
-  return /*#__PURE__*/_jsxs("div", {
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.card,
-        marginBottom: 12,
-        background: "var(--color-background-secondary)"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          marginBottom: 10
-        },
-        children: "🎨 Paleta de colores"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          display: "flex",
-          gap: 8,
-          marginBottom: 12
-        },
-        children: [["oscuro", "🌙 Oscuro"], ["claro", "☀️ Claro"]].map(([m, l]) => /*#__PURE__*/_jsx("button", {
-          style: {
-            flex: 1,
-            padding: "7px 8px",
-            fontSize: 12,
-            fontWeight: 500,
-            borderRadius: 8,
-            cursor: "pointer",
-            background: modoVista === m ? "var(--color-accent)" : "var(--color-background-tertiary)",
-            color: modoVista === m ? "#fff" : "var(--color-text-secondary)",
-            border: `1px solid ${modoVista === m ? "transparent" : "var(--color-border-secondary)"}`
-          },
-          onClick: () => setModoVista(m),
-          children: l
-        }, m))
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 8
-        },
-        children: temasFiltrados.map(([id, tema]) => /*#__PURE__*/_jsxs("button", {
-          onClick: () => aplicar(id),
-          style: {
-            padding: "10px 8px",
-            borderRadius: 10,
-            cursor: "pointer",
-            textAlign: "center",
-            border: `2px solid ${temaActual === id ? "var(--color-accent)" : "var(--color-border-secondary)"}`,
-            background: temaActual === id ? "var(--color-background-secondary)" : "var(--color-background-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 20,
-              marginBottom: 3
-            },
-            children: tema.emoji
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 11,
-              fontWeight: 500,
-              color: "var(--color-text-primary)",
-              marginBottom: 4
-            },
-            children: tema.nombre
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              display: "flex",
-              gap: 3,
-              justifyContent: "center"
-            },
-            children: [tema.vars["--color-background-primary"], tema.vars["--color-accent"] || tema.vars["--color-text-info"], tema.vars["--color-text-success"], tema.vars["--color-text-warning"]].map((c, i) => /*#__PURE__*/_jsx("div", {
-              style: {
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                background: c,
-                border: "1px solid rgba(128,128,128,0.3)"
-              }
-            }, i))
-          }), temaActual === id && /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-info)",
-              marginTop: 3
-            },
-            children: "✓ Activo"
-          })]
-        }, id))
-      }), guardado && /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--color-text-success)",
-          textAlign: "center",
-          marginTop: 8
-        },
-        children: "✓ Estilo aplicado"
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.card,
-        marginBottom: 12
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          marginBottom: 10
-        },
-        children: "🏪 Nombre del negocio"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary)",
-          marginBottom: 8,
-          lineHeight: 1.5
-        },
-        children: "Aparece arriba de todo, en el menú principal."
-      }), /*#__PURE__*/_jsx("input", {
-        style: {
-          ...s.input,
-          marginBottom: 8
-        },
-        placeholder: "Ej: Distribuidora Pérez",
-        value: nombreNegocio,
-        onChange: e => setNombreNegocio(e.target.value)
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          width: "100%",
-          fontSize: 13
-        },
-        disabled: guardandoNombre,
-        onClick: async () => {
-          setGuardandoNombre(true);
-          const ok = await guardarNombreFirestore(licData?.codigo, nombreNegocio.trim());
-          setGuardandoNombre(false);
-          if (ok) {
-            setNombreGuardado(true);
-            setTimeout(() => setNombreGuardado(false), 2000);
-          } else alert("❌ No se pudo guardar. Verificá la conexión.");
-        },
-        children: guardandoNombre ? "Guardando..." : "Guardar nombre"
-      }), nombreGuardado && /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--color-text-success)",
-          textAlign: "center",
-          marginTop: 6
-        },
-        children: "✓ Guardado"
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.card,
-        marginBottom: 12
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          marginBottom: 10
-        },
-        children: "🖼 Logo del negocio"
-      }), logo && /*#__PURE__*/_jsx("div", {
-        style: {
-          textAlign: "center",
-          marginBottom: 10
-        },
-        children: /*#__PURE__*/_jsx("img", {
-          src: logo,
-          alt: "Logo",
-          style: {
-            maxHeight: 100,
-            maxWidth: "100%",
-            objectFit: "contain",
-            borderRadius: 8,
-            border: "0.5px solid var(--color-border-secondary)"
-          }
-        })
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary)",
-          marginBottom: 8,
-          lineHeight: 1.5
-        },
-        children: "El logo aparece en la portada de la app. Recomendado: fondo transparente o blanco, mínimo 200×200px."
-      }), /*#__PURE__*/_jsx("input", {
-        type: "file",
-        accept: "image/*",
-        style: {
-          ...s.input,
-          padding: "7px",
-          fontSize: 12,
-          marginBottom: 8
-        },
-        onChange: async e => {
-          const f = e.target.files[0];
-          if (!f) return;
-          setSubiendoLogo(true);
-          try {
-            const b64 = await comprimirLogoBase64(f, 400, 400, 0.8);
-            const ok = await guardarLogoFirestore(licData?.codigo, b64);
-            if (ok) {
-              setLogo(b64);
-              alert("✅ Logo guardado correctamente.");
-            } else alert("❌ No se pudo guardar el logo. Verificá la conexión.");
-          } catch (e) {
-            alert("Error al procesar la imagen: " + e.message);
-          }
-          setSubiendoLogo(false);
-          e.target.value = "";
-        }
-      }), logo && /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnDanger,
-          width: "100%",
-          fontSize: 12
-        },
-        onClick: async () => {
-          if (!window.confirm("¿Eliminar el logo?")) return;
-          await guardarLogoFirestore(licData?.codigo, "");
-          setLogo(null);
-        },
-        children: "🗑 Quitar logo"
-      }), subiendoLogo && /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--color-text-info)",
-          textAlign: "center",
-          marginTop: 6
-        },
-        children: "Procesando imagen..."
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      marginBottom: 12,
+      background: "var(--color-background-secondary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 10
+    }
+  }, "🎨 Paleta de colores"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 12
+    }
+  }, [["oscuro", "🌙 Oscuro"], ["claro", "☀️ Claro"]].map(([m, l]) => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    style: {
+      flex: 1,
+      padding: "7px 8px",
+      fontSize: 12,
+      fontWeight: 500,
+      borderRadius: 8,
+      cursor: "pointer",
+      background: modoVista === m ? "var(--color-accent)" : "var(--color-background-tertiary)",
+      color: modoVista === m ? "#fff" : "var(--color-text-secondary)",
+      border: `1px solid ${modoVista === m ? "transparent" : "var(--color-border-secondary)"}`
+    },
+    onClick: () => setModoVista(m)
+  }, l))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 8
+    }
+  }, temasFiltrados.map(([id, tema]) => /*#__PURE__*/React.createElement("button", {
+    key: id,
+    onClick: () => aplicar(id),
+    style: {
+      padding: "10px 8px",
+      borderRadius: 10,
+      cursor: "pointer",
+      textAlign: "center",
+      border: `2px solid ${temaActual === id ? "var(--color-accent)" : "var(--color-border-secondary)"}`,
+      background: temaActual === id ? "var(--color-background-secondary)" : "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      marginBottom: 3
+    }
+  }, tema.emoji), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 4
+    }
+  }, tema.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 3,
+      justifyContent: "center"
+    }
+  }, [tema.vars["--color-background-primary"], tema.vars["--color-accent"] || tema.vars["--color-text-info"], tema.vars["--color-text-success"], tema.vars["--color-text-warning"]].map((c, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      width: 12,
+      height: 12,
+      borderRadius: "50%",
+      background: c,
+      border: "1px solid rgba(128,128,128,0.3)"
+    }
+  }))), temaActual === id && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-info)",
+      marginTop: 3
+    }
+  }, "✓ Activo")))), guardado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-success)",
+      textAlign: "center",
+      marginTop: 8
+    }
+  }, "✓ Estilo aplicado")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 10
+    }
+  }, "🏪 Nombre del negocio"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      marginBottom: 8,
+      lineHeight: 1.5
+    }
+  }, "Aparece arriba de todo, en el menú principal."), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      marginBottom: 8
+    },
+    placeholder: "Ej: Distribuidora Pérez",
+    value: nombreNegocio,
+    onChange: e => setNombreNegocio(e.target.value)
+  }), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%",
+      fontSize: 13
+    },
+    disabled: guardandoNombre,
+    onClick: async () => {
+      setGuardandoNombre(true);
+      const ok = await guardarNombreFirestore(licData?.codigo, nombreNegocio.trim());
+      setGuardandoNombre(false);
+      if (ok) {
+        setNombreGuardado(true);
+        setTimeout(() => setNombreGuardado(false), 2000);
+      } else alert("❌ No se pudo guardar. Verificá la conexión.");
+    }
+  }, guardandoNombre ? "Guardando..." : "Guardar nombre"), nombreGuardado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-success)",
+      textAlign: "center",
+      marginTop: 6
+    }
+  }, "✓ Guardado")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 10
+    }
+  }, "🖼 Logo del negocio"), logo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: logo,
+    alt: "Logo",
+    style: {
+      maxHeight: 100,
+      maxWidth: "100%",
+      objectFit: "contain",
+      borderRadius: 8,
+      border: "0.5px solid var(--color-border-secondary)"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      marginBottom: 8,
+      lineHeight: 1.5
+    }
+  }, "El logo aparece en la portada de la app. Recomendado: fondo transparente o blanco, mínimo 200×200px."), /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    style: {
+      ...s.input,
+      padding: "7px",
+      fontSize: 12,
+      marginBottom: 8
+    },
+    onChange: async e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      setSubiendoLogo(true);
+      try {
+        const b64 = await comprimirLogoBase64(f, 400, 400, 0.8);
+        const ok = await guardarLogoFirestore(licData?.codigo, b64);
+        if (ok) {
+          setLogo(b64);
+          alert("✅ Logo guardado correctamente.");
+        } else alert("❌ No se pudo guardar el logo. Verificá la conexión.");
+      } catch (e) {
+        alert("Error al procesar la imagen: " + e.message);
+      }
+      setSubiendoLogo(false);
+      e.target.value = "";
+    }
+  }), logo && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnDanger,
+      width: "100%",
+      fontSize: 12
+    },
+    onClick: async () => {
+      if (!window.confirm("¿Eliminar el logo?")) return;
+      await guardarLogoFirestore(licData?.codigo, "");
+      setLogo(null);
+    }
+  }, "🗑 Quitar logo"), subiendoLogo && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-info)",
+      textAlign: "center",
+      marginTop: 6
+    }
+  }, "Procesando imagen...")));
 }
 
 // ── VistaClientesGeneral (dueño ve TODOS los clientes agrupados) ──
@@ -2767,431 +2506,383 @@ function VistaClientesGeneral({
   const totalClientes = clientesFiltrados.length;
   const totalDeudores = clientesFiltrados.filter(c => saldoCliente(c) < 0).length;
   const totalDeuda = clientesFiltrados.filter(c => saldoCliente(c) < 0).reduce((a, c) => a + Math.abs(saldoCliente(c)), 0);
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Todos los clientes",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Todos los clientes",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 8,
+      padding: "10px 14px 6px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricCard,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "var(--color-text-primary)"
+    }
+  }, totalClientes), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Clientes")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricCard,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#e05252"
+    }
+  }, totalDeudores), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Con deuda")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricCard,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 700,
+      color: "#e05252"
+    }
+  }, fmt(totalDeuda)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Total deuda"))), (onAgenda || onMapa) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      padding: "0 14px 6px"
+    }
+  }, onAgenda && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12
+    },
+    onClick: onAgenda
+  }, "📅 Agenda"), onMapa && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12
+    },
+    onClick: onMapa
+  }, "🗺 Mapa")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "🔍 Buscar por nombre, barrio o teléfono...",
+    value: busq,
+    onChange: e => setBusq(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 6px",
+      overflowX: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      whiteSpace: "nowrap",
+      paddingBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "4px 12px",
+      flexShrink: 0,
+      background: repFiltro === "todos" ? "#185FA5" : "var(--color-background-tertiary)",
+      color: repFiltro === "todos" ? "#e2eaf4" : "var(--color-text-secondary)"
+    },
+    onClick: () => setRepFiltro("todos")
+  }, "Todos"), repartos.sort((a, b) => a.numero - b.numero).map(r => /*#__PURE__*/React.createElement("button", {
+    key: r.id,
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "4px 12px",
+      flexShrink: 0,
+      background: repFiltro === r.id ? "#185FA5" : "var(--color-background-tertiary)",
+      color: repFiltro === r.id ? "#e2eaf4" : "var(--color-text-secondary)"
+    },
+    onClick: () => setRepFiltro(r.id)
+  }, "Rep.", r.numero, " · ", r.repartidorNombre.split(" ")[0])))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 10px",
+      overflowX: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      whiteSpace: "nowrap",
+      paddingBottom: 4
+    }
+  }, ["todos", ...DIAS].map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px",
+      flexShrink: 0,
+      background: diaFiltro === d ? "#0e7c6b" : "var(--color-background-tertiary)",
+      color: diaFiltro === d ? "#e2eaf4" : "var(--color-text-secondary)"
+    },
+    onClick: () => setDiaFiltro(d)
+  }, d === "todos" ? "Todos los días" : d)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 32px"
+    }
+  }, grupos.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 0",
+      color: "var(--color-text-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 36,
+      marginBottom: 8
+    }
+  }, "🔍"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14
+    }
+  }, "No se encontraron clientes")), grupos.map(({
+    rep,
+    dias
+  }) => {
+    const repKey = "rep_" + rep.id;
+    const repAbierto = abiertos[repKey] !== false; // abierto por defecto
+    const totalRep = Object.values(dias).flat().length;
+    const deudaRep = Object.values(dias).flat().filter(c => saldoCliente(c) < 0).reduce((a, c) => a + Math.abs(saldoCliente(c)), 0);
+    const deudoresRep = Object.values(dias).flat().filter(c => saldoCliente(c) < 0).length;
+    return /*#__PURE__*/React.createElement("div", {
+      key: rep.id,
       style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
-        gap: 8,
-        padding: "10px 14px 6px"
+        marginBottom: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 12px",
+        background: "#185FA5",
+        borderRadius: 10,
+        cursor: "pointer",
+        marginBottom: repAbierto ? 6 : 0
       },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.metricCard,
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 20,
-            fontWeight: 700,
-            color: "var(--color-text-primary)"
-          },
-          children: totalClientes
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Clientes"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.metricCard,
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 20,
-            fontWeight: 700,
-            color: "#e05252"
-          },
-          children: totalDeudores
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Con deuda"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.metricCard,
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 700,
-            color: "#e05252"
-          },
-          children: fmt(totalDeuda)
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Total deuda"
-        })]
-      })]
-    }), (onAgenda || onMapa) && /*#__PURE__*/_jsxs("div", {
+      onClick: () => toggle(repKey)
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        background: "rgba(255,255,255,0.2)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 18,
+        fontWeight: 800,
+        color: "#fff",
+        flexShrink: 0
+      }
+    }, rep.numero || "?"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 700,
+        color: "#fff"
+      }
+    }, rep.repartidorNombre), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 6,
-        padding: "0 14px 6px"
-      },
-      children: [onAgenda && /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          flex: 1,
-          fontSize: 12
-        },
-        onClick: onAgenda,
-        children: "📅 Agenda"
-      }), onMapa && /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          flex: 1,
-          fontSize: 12
-        },
-        onClick: onMapa,
-        children: "🗺 Mapa"
-      })]
-    }), /*#__PURE__*/_jsx("div", {
+        marginTop: 2,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
-        padding: "0 14px 8px"
-      },
-      children: /*#__PURE__*/_jsx("input", {
-        style: s.input,
-        placeholder: "🔍 Buscar por nombre, barrio o teléfono...",
-        value: busq,
-        onChange: e => setBusq(e.target.value)
-      })
-    }), /*#__PURE__*/_jsx("div", {
+        fontSize: 11,
+        color: "rgba(255,255,255,0.75)"
+      }
+    }, totalRep, " clientes"), deudoresRep > 0 && /*#__PURE__*/React.createElement("span", {
       style: {
-        padding: "0 14px 6px",
-        overflowX: "auto"
-      },
-      children: /*#__PURE__*/_jsxs("div", {
+        fontSize: 11,
+        color: "#ffcc66",
+        fontWeight: 600
+      }
+    }, "⚠️ ", deudoresRep, " deben ", fmt(deudaRep)), deudoresRep === 0 && totalRep > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "#7de8c5"
+      }
+    }, "✓ Sin deudas"))), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "rgba(255,255,255,0.7)",
+        fontSize: 16
+      }
+    }, repAbierto ? "▲" : "▼")), repAbierto && DIAS.filter(d => dias[d] && (diaFiltro === "todos" || d === diaFiltro)).map(dia => {
+      const diaKey = "dia_" + rep.id + "_" + dia;
+      const diaAbierto = abiertos[diaKey] !== false; // abierto por defecto
+      const csDia = (dias[dia] || []).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+      const deudoresDia = csDia.filter(c => saldoCliente(c) < 0).length;
+      return /*#__PURE__*/React.createElement("div", {
+        key: dia,
+        style: {
+          marginBottom: 6,
+          marginLeft: 8
+        }
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
-          gap: 6,
-          whiteSpace: "nowrap",
-          paddingBottom: 4
+          alignItems: "center",
+          gap: 8,
+          padding: "7px 12px",
+          background: "var(--color-background-tertiary)",
+          borderRadius: 8,
+          cursor: "pointer",
+          border: "0.5px solid var(--color-border-secondary)",
+          marginBottom: diaAbierto ? 4 : 0
         },
-        children: [/*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "4px 12px",
-            flexShrink: 0,
-            background: repFiltro === "todos" ? "#185FA5" : "var(--color-background-tertiary)",
-            color: repFiltro === "todos" ? "#e2eaf4" : "var(--color-text-secondary)"
-          },
-          onClick: () => setRepFiltro("todos"),
-          children: "Todos"
-        }), repartos.sort((a, b) => a.numero - b.numero).map(r => /*#__PURE__*/_jsxs("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "4px 12px",
-            flexShrink: 0,
-            background: repFiltro === r.id ? "#185FA5" : "var(--color-background-tertiary)",
-            color: repFiltro === r.id ? "#e2eaf4" : "var(--color-text-secondary)"
-          },
-          onClick: () => setRepFiltro(r.id),
-          children: ["Rep.", r.numero, " · ", r.repartidorNombre.split(" ")[0]]
-        }, r.id))]
-      })
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        padding: "0 14px 10px",
-        overflowX: "auto"
-      },
-      children: /*#__PURE__*/_jsx("div", {
+        onClick: () => toggle(diaKey)
+      }, /*#__PURE__*/React.createElement("span", {
         style: {
-          display: "flex",
-          gap: 6,
-          whiteSpace: "nowrap",
-          paddingBottom: 4
-        },
-        children: ["todos", ...DIAS].map(d => /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "3px 10px",
-            flexShrink: 0,
-            background: diaFiltro === d ? "#0e7c6b" : "var(--color-background-tertiary)",
-            color: diaFiltro === d ? "#e2eaf4" : "var(--color-text-secondary)"
-          },
-          onClick: () => setDiaFiltro(d),
-          children: d === "todos" ? "Todos los días" : d
-        }, d))
-      })
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "0 14px 32px"
-      },
-      children: [grupos.length === 0 && /*#__PURE__*/_jsxs("div", {
+          fontSize: 13,
+          fontWeight: 600,
+          color: "var(--color-text-primary)",
+          flex: 1
+        }
+      }, "📅 ", dia), /*#__PURE__*/React.createElement("span", {
         style: {
-          textAlign: "center",
-          padding: "40px 0",
-          color: "var(--color-text-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
+          fontSize: 11,
+          color: "var(--color-text-secondary)"
+        }
+      }, csDia.length, " clientes"), deudoresDia > 0 && /*#__PURE__*/React.createElement("span", {
+        style: s.badge("danger")
+      }, deudoresDia, " deben"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--color-text-tertiary)",
+          fontSize: 12,
+          marginLeft: 4
+        }
+      }, diaAbierto ? "▲" : "▼")), diaAbierto && csDia.map(c => {
+        const saldo = saldoCliente(c);
+        const ult = ultimaVenta[c.id];
+        return /*#__PURE__*/React.createElement("div", {
+          key: c.id,
           style: {
-            fontSize: 36,
-            marginBottom: 8
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 12px",
+            marginBottom: 4,
+            marginLeft: 8,
+            background: "var(--color-background-secondary)",
+            borderRadius: 8,
+            cursor: "pointer",
+            border: "0.5px solid " + (saldo < 0 ? "rgba(220,80,80,0.3)" : "var(--color-border-secondary)"),
+            transition: "opacity 0.15s"
           },
-          children: "🔍"
-        }), /*#__PURE__*/_jsx("div", {
+          onClick: () => onVerDetalle(c)
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
-            fontSize: 14
-          },
-          children: "No se encontraron clientes"
-        })]
-      }), grupos.map(({
-        rep,
-        dias
-      }) => {
-        const repKey = "rep_" + rep.id;
-        const repAbierto = abiertos[repKey] !== false; // abierto por defecto
-        const totalRep = Object.values(dias).flat().length;
-        const deudaRep = Object.values(dias).flat().filter(c => saldoCliente(c) < 0).reduce((a, c) => a + Math.abs(saldoCliente(c)), 0);
-        const deudoresRep = Object.values(dias).flat().filter(c => saldoCliente(c) < 0).length;
-        return /*#__PURE__*/_jsxs("div", {
+            width: 24,
+            height: 24,
+            borderRadius: 6,
+            background: "var(--color-background-tertiary)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 10,
+            fontWeight: 700,
+            color: "var(--color-text-tertiary)",
+            flexShrink: 0
+          }
+        }, c.orden || "—"), /*#__PURE__*/React.createElement("div", {
           style: {
-            marginBottom: 12
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 12px",
-              background: "#185FA5",
-              borderRadius: 10,
-              cursor: "pointer",
-              marginBottom: repAbierto ? 6 : 0
-            },
-            onClick: () => toggle(repKey),
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: "rgba(255,255,255,0.2)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 18,
-                fontWeight: 800,
-                color: "#fff",
-                flexShrink: 0
-              },
-              children: rep.numero || "?"
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                flex: 1,
-                minWidth: 0
-              },
-              children: [/*#__PURE__*/_jsx("div", {
-                style: {
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: "#fff"
-                },
-                children: rep.repartidorNombre
-              }), /*#__PURE__*/_jsxs("div", {
-                style: {
-                  display: "flex",
-                  gap: 6,
-                  marginTop: 2,
-                  flexWrap: "wrap"
-                },
-                children: [/*#__PURE__*/_jsxs("span", {
-                  style: {
-                    fontSize: 11,
-                    color: "rgba(255,255,255,0.75)"
-                  },
-                  children: [totalRep, " clientes"]
-                }), deudoresRep > 0 && /*#__PURE__*/_jsxs("span", {
-                  style: {
-                    fontSize: 11,
-                    color: "#ffcc66",
-                    fontWeight: 600
-                  },
-                  children: ["⚠️ ", deudoresRep, " deben ", fmt(deudaRep)]
-                }), deudoresRep === 0 && totalRep > 0 && /*#__PURE__*/_jsx("span", {
-                  style: {
-                    fontSize: 11,
-                    color: "#7de8c5"
-                  },
-                  children: "✓ Sin deudas"
-                })]
-              })]
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                color: "rgba(255,255,255,0.7)",
-                fontSize: 16
-              },
-              children: repAbierto ? "▲" : "▼"
-            })]
-          }), repAbierto && DIAS.filter(d => dias[d] && (diaFiltro === "todos" || d === diaFiltro)).map(dia => {
-            const diaKey = "dia_" + rep.id + "_" + dia;
-            const diaAbierto = abiertos[diaKey] !== false; // abierto por defecto
-            const csDia = (dias[dia] || []).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-            const deudoresDia = csDia.filter(c => saldoCliente(c) < 0).length;
-            return /*#__PURE__*/_jsxs("div", {
-              style: {
-                marginBottom: 6,
-                marginLeft: 8
-              },
-              children: [/*#__PURE__*/_jsxs("div", {
-                style: {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "7px 12px",
-                  background: "var(--color-background-tertiary)",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  border: "0.5px solid var(--color-border-secondary)",
-                  marginBottom: diaAbierto ? 4 : 0
-                },
-                onClick: () => toggle(diaKey),
-                children: [/*#__PURE__*/_jsxs("span", {
-                  style: {
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--color-text-primary)",
-                    flex: 1
-                  },
-                  children: ["📅 ", dia]
-                }), /*#__PURE__*/_jsxs("span", {
-                  style: {
-                    fontSize: 11,
-                    color: "var(--color-text-secondary)"
-                  },
-                  children: [csDia.length, " clientes"]
-                }), deudoresDia > 0 && /*#__PURE__*/_jsxs("span", {
-                  style: s.badge("danger"),
-                  children: [deudoresDia, " deben"]
-                }), /*#__PURE__*/_jsx("span", {
-                  style: {
-                    color: "var(--color-text-tertiary)",
-                    fontSize: 12,
-                    marginLeft: 4
-                  },
-                  children: diaAbierto ? "▲" : "▼"
-                })]
-              }), diaAbierto && csDia.map(c => {
-                const saldo = saldoCliente(c);
-                const ult = ultimaVenta[c.id];
-                return /*#__PURE__*/_jsxs("div", {
-                  style: {
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "10px 12px",
-                    marginBottom: 4,
-                    marginLeft: 8,
-                    background: "var(--color-background-secondary)",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    border: "0.5px solid " + (saldo < 0 ? "rgba(220,80,80,0.3)" : "var(--color-border-secondary)"),
-                    transition: "opacity 0.15s"
-                  },
-                  onClick: () => onVerDetalle(c),
-                  children: [/*#__PURE__*/_jsx("div", {
-                    style: {
-                      width: 24,
-                      height: 24,
-                      borderRadius: 6,
-                      background: "var(--color-background-tertiary)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: "var(--color-text-tertiary)",
-                      flexShrink: 0
-                    },
-                    children: c.orden || "—"
-                  }), /*#__PURE__*/_jsxs("div", {
-                    style: {
-                      flex: 1,
-                      minWidth: 0
-                    },
-                    children: [/*#__PURE__*/_jsx("div", {
-                      style: {
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "var(--color-text-primary)",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis"
-                      },
-                      children: c.nombre
-                    }), /*#__PURE__*/_jsx("div", {
-                      style: {
-                        fontSize: 11,
-                        color: "var(--color-text-secondary)",
-                        marginTop: 1
-                      },
-                      children: direccionCliente(c)
-                    }), ult && /*#__PURE__*/_jsxs("div", {
-                      style: {
-                        fontSize: 10,
-                        color: "var(--color-text-tertiary)",
-                        marginTop: 1
-                      },
-                      children: ["Última venta: ", ult]
-                    })]
-                  }), /*#__PURE__*/_jsxs("div", {
-                    style: {
-                      textAlign: "right",
-                      flexShrink: 0
-                    },
-                    children: [saldo < 0 && /*#__PURE__*/_jsxs("div", {
-                      style: {
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "#e05252"
-                      },
-                      children: ["−", fmt(Math.abs(saldo))]
-                    }), saldo > 0 && /*#__PURE__*/_jsxs("div", {
-                      style: {
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "#4dd9a0"
-                      },
-                      children: ["+", fmt(saldo)]
-                    }), saldo === 0 && /*#__PURE__*/_jsx("div", {
-                      style: {
-                        fontSize: 11,
-                        color: "var(--color-text-tertiary)"
-                      },
-                      children: "✓"
-                    }), /*#__PURE__*/_jsx("span", {
-                      style: {
-                        fontSize: 14,
-                        color: "var(--color-text-tertiary)"
-                      },
-                      children: "→"
-                    })]
-                  })]
-                }, c.id);
-              })]
-            }, dia);
-          })]
-        }, rep.id);
-      })]
-    })]
-  });
+            flex: 1,
+            minWidth: 0
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--color-text-primary)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis"
+          }
+        }, c.nombre), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 11,
+            color: "var(--color-text-secondary)",
+            marginTop: 1
+          }
+        }, direccionCliente(c)), ult && /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 10,
+            color: "var(--color-text-tertiary)",
+            marginTop: 1
+          }
+        }, "Última venta: ", ult)), /*#__PURE__*/React.createElement("div", {
+          style: {
+            textAlign: "right",
+            flexShrink: 0
+          }
+        }, saldo < 0 && /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#e05252"
+          }
+        }, "−", fmt(Math.abs(saldo))), saldo > 0 && /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#4dd9a0"
+          }
+        }, "+", fmt(saldo)), saldo === 0 && /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 11,
+            color: "var(--color-text-tertiary)"
+          }
+        }, "✓"), /*#__PURE__*/React.createElement("span", {
+          style: {
+            fontSize: 14,
+            color: "var(--color-text-tertiary)"
+          }
+        }, "→")));
+      }));
+    }));
+  })));
 }
 
 // ── ImportarClientesExcel ──────────────────────────────────────────────────
@@ -3375,309 +3066,267 @@ function ImportarClientesExcel({
     onGuardar(nuevos);
     setFase("listo");
   };
-  if (fase === "listo") return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Importar clientes",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "60px 20px",
-        textAlign: "center"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 48,
-          marginBottom: 16
-        },
-        children: "\u2705"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 18,
-          fontWeight: 700,
-          color: "var(--color-text-primary)",
-          marginBottom: 8
-        },
-        children: ["\u00a1", importados, " clientes importados!"]
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-secondary)",
-          marginBottom: 24
-        },
-        children: "Ya estan disponibles en cada reparto"
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          padding: "12px 28px"
-        },
-        onClick: onVolver,
-        children: "Ir al panel"
-      })]
-    })]
-  });
-  if (fase === "preview") return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Revisa los datos",
-      onVolver: () => setFase("inicio")
-    }), repartoPreseleccionado && /*#__PURE__*/_jsxs("div", {
-      style: {
-        margin: "8px 14px 0",
-        background: "var(--color-background-info)",
-        border: "0.5px solid var(--color-border-secondary)",
-        borderRadius: 10,
-        padding: "10px 14px",
-        fontSize: 13,
-        color: "var(--color-text-info)"
-      },
-      children: ["🚐 Todos los clientes se asignarán automáticamente a ", /*#__PURE__*/_jsx("b", {
-        children: repartoPreseleccionado.repartidorNombre || repartoPreseleccionado.nombre
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8,
-        padding: "10px 14px 8px"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0,
-          background: "#0a2e1f",
-          border: "1px solid #4dd9a0",
-          padding: "10px 12px",
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 22,
-            fontWeight: 800,
-            color: "#4dd9a0"
-          },
-          children: filas.length
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Clientes listos"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0,
-          background: errores.length ? "#2e0a0a" : "#0a2e1f",
-          border: "1px solid " + (errores.length ? "#f07070" : "#4dd9a0"),
-          padding: "10px 12px",
-          textAlign: "center"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 22,
-            fontWeight: 800,
-            color: errores.length ? "#f07070" : "#4dd9a0"
-          },
-          children: errores.length
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Filas con error"
-        })]
-      })]
-    }), errores.length > 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "0 14px 8px"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          fontWeight: 600,
-          color: "#f07070",
-          marginBottom: 6
-        },
-        children: "Filas con problemas (se omiten):"
-      }), errores.slice(0, 5).map((e, i) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 4px",
-          padding: "8px 10px",
-          background: "rgba(220,50,50,0.1)"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-primary)"
-          },
-          children: ["Fila ", e.fila, ": ", /*#__PURE__*/_jsx("b", {
-            children: e.nombre
-          })]
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 11,
-            color: "#f07070"
-          },
-          children: e.problemas.join(" · ")
-        })]
-      }, i))]
-    }), filas.length > 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "0 14px 8px"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          fontWeight: 600,
-          color: "var(--color-text-secondary)",
-          marginBottom: 6
-        },
-        children: "Vista previa (primeros 5):"
-      }), filas.slice(0, 5).map((f, i) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 4px",
-          padding: "8px 10px"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            fontWeight: 600,
-            color: "var(--color-text-primary)"
-          },
-          children: f.nombre
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-secondary)"
-          },
-          children: [f.dia, " · ", f.calle ? f.calle + " " + f.nro : f.manzana ? "Mz " + f.manzana + " L " + f.lote : f.barrio, f.lat ? " · 📍 GPS ok" : "", f.saldo < 0 ? " · Debe " + fmt(Math.abs(f.saldo)) : ""]
-        })]
-      }, i)), filas.length > 5 && /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary)",
-          padding: "4px 0"
-        },
-        children: ["...y ", filas.length - 5, " mas"]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "8px 14px 20px",
-        display: "flex",
-        gap: 8
-      },
-      children: [/*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          flex: 1
-        },
-        onClick: () => setFase("inicio"),
-        children: "Cancelar"
-      }), /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.btnPrimary,
-          flex: 2,
-          padding: "12px"
-        },
-        disabled: filas.length === 0,
-        onClick: confirmarImport,
-        children: ["Importar ", filas.length, " clientes"]
-      })]
-    })]
-  });
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Importar clientes",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: "24px 14px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0,
-          background: "var(--color-background-info)",
-          textAlign: "center",
-          padding: "24px"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 36,
-            marginBottom: 8
-          },
-          children: "\u{1F4CA}"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 15,
-            fontWeight: 600,
-            color: "var(--color-text-primary)",
-            marginBottom: 6
-          },
-          children: "Importar desde Excel"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)",
-            lineHeight: 1.6
-          },
-          children: ["Usa la planilla oficial ", /*#__PURE__*/_jsx("b", {
-            children: "planilla_clientes_SR2026.xlsx"
-          }), ".", /*#__PURE__*/_jsx("br", {}), "Completa los datos y selecciona el archivo."]
-        })]
-      }), /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.btnPrimary,
-          padding: "16px",
-          fontSize: 15
-        },
-        onClick: () => fileRef.current?.click(),
-        children: ["\u{1F4CE}", " Seleccionar archivo Excel"]
-      }), /*#__PURE__*/_jsx("input", {
-        ref: fileRef,
-        type: "file",
-        accept: ".xlsx,.xls",
-        style: {
-          display: "none"
-        },
-        onChange: e => {
-          const f = e.target.files?.[0];
-          if (f) procesarExcel(f);
-          e.target.value = "";
-        }
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0,
-          padding: "12px 14px"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--color-text-secondary)",
-            marginBottom: 8
-          },
-          children: "La planilla debe tener estas columnas:"
-        }), ["Nombre y Apellido *", "Dia de Reparto *", "N Orden *", "Barrio · Calle · Numero · Manzana · Lote", "Telefono · Link Google Maps", "Sifones · Bidones 10L · Bidones 20L · Dispenser", "Saldo Inicial · Notas"].map((c, i) => /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 11,
-            color: i < 3 ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-            padding: "2px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [i < 3 ? "* " : "", c]
-        }, i))]
-      })]
-    })]
-  });
+  if (fase === "listo") return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Importar clientes",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "60px 20px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 48,
+      marginBottom: 16
+    }
+  }, "\u2705"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 700,
+      color: "var(--color-text-primary)",
+      marginBottom: 8
+    }
+  }, "\u00a1", importados, " clientes importados!"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginBottom: 24
+    }
+  }, "Ya estan disponibles en cada reparto"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      padding: "12px 28px"
+    },
+    onClick: onVolver
+  }, "Ir al panel")));
+  if (fase === "preview") return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Revisa los datos",
+    onVolver: () => setFase("inicio")
+  }), repartoPreseleccionado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "8px 14px 0",
+      background: "var(--color-background-info)",
+      border: "0.5px solid var(--color-border-secondary)",
+      borderRadius: 10,
+      padding: "10px 14px",
+      fontSize: 13,
+      color: "var(--color-text-info)"
+    }
+  }, "🚐 Todos los clientes se asignarán automáticamente a ", /*#__PURE__*/React.createElement("b", null, repartoPreseleccionado.repartidorNombre || repartoPreseleccionado.nombre)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 8,
+      padding: "10px 14px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: 0,
+      background: "#0a2e1f",
+      border: "1px solid #4dd9a0",
+      padding: "10px 12px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      color: "#4dd9a0"
+    }
+  }, filas.length), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Clientes listos")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: 0,
+      background: errores.length ? "#2e0a0a" : "#0a2e1f",
+      border: "1px solid " + (errores.length ? "#f07070" : "#4dd9a0"),
+      padding: "10px 12px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      color: errores.length ? "#f07070" : "#4dd9a0"
+    }
+  }, errores.length), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Filas con error"))), errores.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#f07070",
+      marginBottom: 6
+    }
+  }, "Filas con problemas (se omiten):"), errores.slice(0, 5).map((e, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      ...s.card,
+      margin: "0 0 4px",
+      padding: "8px 10px",
+      background: "rgba(220,50,50,0.1)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-primary)"
+    }
+  }, "Fila ", e.fila, ": ", /*#__PURE__*/React.createElement("b", null, e.nombre)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#f07070"
+    }
+  }, e.problemas.join(" · "))))), filas.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--color-text-secondary)",
+      marginBottom: 6
+    }
+  }, "Vista previa (primeros 5):"), filas.slice(0, 5).map((f, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      ...s.card,
+      margin: "0 0 4px",
+      padding: "8px 10px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-primary)"
+    }
+  }, f.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)"
+    }
+  }, f.dia, " · ", f.calle ? f.calle + " " + f.nro : f.manzana ? "Mz " + f.manzana + " L " + f.lote : f.barrio, f.lat ? " · 📍 GPS ok" : "", f.saldo < 0 ? " · Debe " + fmt(Math.abs(f.saldo)) : ""))), filas.length > 5 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      padding: "4px 0"
+    }
+  }, "...y ", filas.length - 5, " mas")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "8px 14px 20px",
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1
+    },
+    onClick: () => setFase("inicio")
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2,
+      padding: "12px"
+    },
+    disabled: filas.length === 0,
+    onClick: confirmarImport
+  }, "Importar ", filas.length, " clientes")));
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Importar clientes",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "24px 14px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: 0,
+      background: "var(--color-background-info)",
+      textAlign: "center",
+      padding: "24px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 36,
+      marginBottom: 8
+    }
+  }, "\u{1F4CA}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 6
+    }
+  }, "Importar desde Excel"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      lineHeight: 1.6
+    }
+  }, "Usa la planilla oficial ", /*#__PURE__*/React.createElement("b", null, "planilla_clientes_SR2026.xlsx"), ".", /*#__PURE__*/React.createElement("br", null), "Completa los datos y selecciona el archivo.")), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      padding: "16px",
+      fontSize: 15
+    },
+    onClick: () => fileRef.current?.click()
+  }, "\u{1F4CE}", " Seleccionar archivo Excel"), /*#__PURE__*/React.createElement("input", {
+    ref: fileRef,
+    type: "file",
+    accept: ".xlsx,.xls",
+    style: {
+      display: "none"
+    },
+    onChange: e => {
+      const f = e.target.files?.[0];
+      if (f) procesarExcel(f);
+      e.target.value = "";
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: 0,
+      padding: "12px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8
+    }
+  }, "La planilla debe tener estas columnas:"), ["Nombre y Apellido *", "Dia de Reparto *", "N Orden *", "Barrio · Calle · Numero · Manzana · Lote", "Telefono · Link Google Maps", "Sifones · Bidones 10L · Bidones 20L · Dispenser", "Saldo Inicial · Notas"].map((c, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      fontSize: 11,
+      color: i < 3 ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+      padding: "2px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, i < 3 ? "* " : "", c)))));
 }
 
 // ── MapaClientes ─────────────────────────────────────────────────────────────
@@ -3772,249 +3421,224 @@ function MapaClientes({
   }, [leafletOk, filtroDia, clientesFiltrados.length]);
   const entregadosCount = clientesFiltrados.filter(c => ventasHoy.some(v => v.clienteId === c.id)).length;
   const pendientesCount = clientesFiltrados.filter(c => !ventasHoy.some(v => v.clienteId === c.id) && !noVisHoy.some(v => v.clienteId === c.id)).length;
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.screen,
       display: "flex",
       flexDirection: "column"
+    }
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Mapa de clientes",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "8px 14px",
+      display: "flex",
+      gap: 6,
+      overflowX: "auto",
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, ["todos", ...DIAS].map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    style: {
+      ...s.btn,
+      padding: "5px 12px",
+      fontSize: 12,
+      flexShrink: 0,
+      background: filtroDia === d ? "#185FA5" : "var(--color-background-tertiary)",
+      color: filtroDia === d ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: filtroDia === d ? "none" : "0.5px solid var(--color-border-secondary)"
     },
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Mapa de clientes",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        padding: "8px 14px",
-        display: "flex",
-        gap: 6,
-        overflowX: "auto",
-        background: "var(--color-background-secondary)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)"
-      },
-      children: ["todos", ...DIAS].map(d => /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          padding: "5px 12px",
-          fontSize: 12,
-          flexShrink: 0,
-          background: filtroDia === d ? "#185FA5" : "var(--color-background-tertiary)",
-          color: filtroDia === d ? "#e2eaf4" : "var(--color-text-secondary)",
-          border: filtroDia === d ? "none" : "0.5px solid var(--color-border-secondary)"
-        },
-        onClick: () => setFiltroDia(d),
-        children: d === "todos" ? "Todos" : d
-      }, d))
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        gap: 0,
-        background: "var(--color-background-secondary)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1,
-          textAlign: "center",
-          padding: "8px 4px",
-          borderRight: "0.5px solid var(--color-border-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 600,
-            color: "#5daaff"
-          },
-          children: clientesFiltrados.length
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 9,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Con GPS"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1,
-          textAlign: "center",
-          padding: "8px 4px",
-          borderRight: "0.5px solid var(--color-border-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 600,
-            color: "#4dd9a0"
-          },
-          children: entregadosCount
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 9,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Entregados"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1,
-          textAlign: "center",
-          padding: "8px 4px",
-          borderRight: "0.5px solid var(--color-border-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 600,
-            color: "#f5b942"
-          },
-          children: pendientesCount
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 9,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Pendientes"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          flex: 1,
-          textAlign: "center",
-          padding: "8px 4px"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 16,
-            fontWeight: 600,
-            color: "var(--color-text-tertiary)"
-          },
-          children: sinCoordenadas
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 9,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Sin GPS"
-        })]
-      })]
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        display: "flex",
-        gap: 12,
-        padding: "6px 14px",
-        background: "var(--color-background-secondary)",
-        borderBottom: "0.5px solid var(--color-border-tertiary)"
-      },
-      children: [["#4dd9a0", "Entregado"], ["#5daaff", "Pendiente"], ["#f07070", "No visitado"]].map(([c, l]) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 4
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: c
-          }
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-secondary)"
-          },
-          children: l
-        })]
-      }, l))
-    }), !leafletOk && /*#__PURE__*/_jsxs("div", {
-      style: {
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: 8
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 24
-        },
-        children: "\u{1F5FA}"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-secondary)"
-        },
-        children: "Cargando mapa..."
-      })]
-    }), leafletOk && clientesFiltrados.length === 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: 8,
-        padding: "20px 24px 8px"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 32
-        },
-        children: "\u{1F4CD}"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 14,
-          fontWeight: 500,
-          color: "var(--color-text-primary)"
-        },
-        children: "Ningún cliente tiene GPS aún"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--color-text-secondary)",
-          textAlign: "center",
-          lineHeight: 1.5
-        },
-        children: "Pegá el link de Google Maps de cada cliente abajo para que aparezcan en el mapa."
-      })]
-    }), /*#__PURE__*/_jsx("div", {
-      ref: mapRef,
-      style: {
-        flex: 1,
-        minHeight: 350,
-        display: leafletOk && clientesFiltrados.length > 0 ? "block" : "none"
+    onClick: () => setFiltroDia(d)
+  }, d === "todos" ? "Todos" : d))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 0,
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      textAlign: "center",
+      padding: "8px 4px",
+      borderRight: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: "#5daaff"
+    }
+  }, clientesFiltrados.length), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Con GPS")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      textAlign: "center",
+      padding: "8px 4px",
+      borderRight: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: "#4dd9a0"
+    }
+  }, entregadosCount), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Entregados")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      textAlign: "center",
+      padding: "8px 4px",
+      borderRight: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: "#f5b942"
+    }
+  }, pendientesCount), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Pendientes")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      textAlign: "center",
+      padding: "8px 4px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: "var(--color-text-tertiary)"
+    }
+  }, sinCoordenadas), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Sin GPS"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 12,
+      padding: "6px 14px",
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, [["#4dd9a0", "Entregado"], ["#5daaff", "Pendiente"], ["#f07070", "No visitado"]].map(([c, l]) => /*#__PURE__*/React.createElement("div", {
+    key: l,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 10,
+      height: 10,
+      borderRadius: "50%",
+      background: c
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-secondary)"
+    }
+  }, l)))), !leafletOk && /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24
+    }
+  }, "\u{1F5FA}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Cargando mapa...")), leafletOk && clientesFiltrados.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "column",
+      gap: 8,
+      padding: "20px 24px 8px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32
+    }
+  }, "\u{1F4CD}"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Ningún cliente tiene GPS aún"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      textAlign: "center",
+      lineHeight: 1.5
+    }
+  }, "Pegá el link de Google Maps de cada cliente abajo para que aparezcan en el mapa.")), /*#__PURE__*/React.createElement("div", {
+    ref: mapRef,
+    style: {
+      flex: 1,
+      minHeight: 350,
+      display: leafletOk && clientesFiltrados.length > 0 ? "block" : "none"
+    }
+  }), sinCoordenadas > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "0.5px solid var(--color-border-tertiary)",
+      paddingBottom: 40
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px 4px",
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--color-text-tertiary)",
+      textTransform: "uppercase",
+      letterSpacing: "0.07em"
+    }
+  }, "\u{1F4CD}", " ", sinCoordenadas, " clientes sin GPS — pegá el link de Google Maps"), clientes.filter(c => (filtroDia === "todos" || c.dia === filtroDia) && (!c.lat || !c.lng)).sort((a, b) => (a.dia || "").localeCompare(b.dia || "") || (a.orden || 99) - (b.orden || 99)).map(c => /*#__PURE__*/React.createElement(SinGpsItem, {
+    key: c.id,
+    cliente: c,
+    onGuardar: mapsUrl => {
+      if (onActualizar) {
+        const {
+          lat,
+          lng
+        } = extractCoords(mapsUrl);
+        onActualizar(clientes.map(x => x.id === c.id ? {
+          ...x,
+          maps: mapsUrl,
+          lat,
+          lng
+        } : x));
       }
-    }), sinCoordenadas > 0 && /*#__PURE__*/_jsxs("div", {
-      style: {
-        borderTop: "0.5px solid var(--color-border-tertiary)",
-        paddingBottom: 40
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          padding: "10px 14px 4px",
-          fontSize: 11,
-          fontWeight: 600,
-          color: "var(--color-text-tertiary)",
-          textTransform: "uppercase",
-          letterSpacing: "0.07em"
-        },
-        children: ["\u{1F4CD}", " ", sinCoordenadas, " clientes sin GPS — pegá el link de Google Maps"]
-      }), clientes.filter(c => (filtroDia === "todos" || c.dia === filtroDia) && (!c.lat || !c.lng)).sort((a, b) => (a.dia || "").localeCompare(b.dia || "") || (a.orden || 99) - (b.orden || 99)).map(c => /*#__PURE__*/_jsx(SinGpsItem, {
-        cliente: c,
-        onGuardar: mapsUrl => {
-          if (onActualizar) {
-            const {
-              lat,
-              lng
-            } = extractCoords(mapsUrl);
-            onActualizar(clientes.map(x => x.id === c.id ? {
-              ...x,
-              maps: mapsUrl,
-              lat,
-              lng
-            } : x));
-          }
-        }
-      }, c.id))]
-    })]
-  });
+    }
+  }))));
 }
 function SinGpsItem({
   cliente,
@@ -4031,71 +3655,62 @@ function SinGpsItem({
     setGuardado(true);
     setTimeout(() => setGuardado(false), 2000);
   };
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       margin: "6px 14px",
       background: "var(--color-background-secondary)",
       borderRadius: 10,
       padding: "10px 12px",
       border: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, cliente.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, cliente.dia, " · Orden ", cliente.orden || "-", " · ", cliente.barrio || cliente.calle || "")), guardado && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-success)",
+      fontWeight: 600
+    }
+  }, "✓ Guardado")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      fontSize: 12,
+      flex: 1
     },
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        marginBottom: 6
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: cliente.nombre
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-tertiary)"
-          },
-          children: [cliente.dia, " · Orden ", cliente.orden || "-", " · ", cliente.barrio || cliente.calle || ""]
-        })]
-      }), guardado && /*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-success)",
-          fontWeight: 600
-        },
-        children: "✓ Guardado"
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        gap: 8
-      },
-      children: [/*#__PURE__*/_jsx("input", {
-        style: {
-          ...s.input,
-          fontSize: 12,
-          flex: 1
-        },
-        placeholder: "https://maps.app.goo.gl/...",
-        value: link,
-        onChange: e => setLink(e.target.value)
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          padding: "6px 14px",
-          fontSize: 12,
-          width: "auto",
-          whiteSpace: "nowrap"
-        },
-        onClick: guardar,
-        children: "📍 Guardar"
-      })]
-    })]
-  });
+    placeholder: "https://maps.app.goo.gl/...",
+    value: link,
+    onChange: e => setLink(e.target.value)
+  }), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      padding: "6px 14px",
+      fontSize: 12,
+      width: "auto",
+      whiteSpace: "nowrap"
+    },
+    onClick: guardar
+  }, "📍 Guardar")));
 }
 function usarInformes({
   ventas,

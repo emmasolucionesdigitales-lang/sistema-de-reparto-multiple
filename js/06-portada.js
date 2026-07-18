@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  06-portada.js — Portada · fechas · SelectorFecha · SyncBar
 // ════════════════════════════════════════════════════════════════════
@@ -15,7 +14,7 @@ function Portada({
   })();
   const logo = lic?.logo || null;
   const negocio = lic?.negocio || "Sistema de Reparto 2026 · Multi";
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: "flex",
@@ -25,67 +24,60 @@ function Portada({
       gap: 20,
       padding: 32,
       minHeight: "100vh"
+    }
+  }, logo ? /*#__PURE__*/React.createElement("img", {
+    src: logo,
+    alt: "Logo",
+    style: {
+      height: 100,
+      maxWidth: 220,
+      objectFit: "contain",
+      borderRadius: 12
+    }
+  }) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 80,
+      height: 80,
+      borderRadius: "50%",
+      background: "var(--color-background-info)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 38
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 24,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 6
+    }
+  }, negocio), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 15,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Sistema de Reparto 2026 · Multi")), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: 200,
+      marginTop: 8
     },
-    children: [logo ? /*#__PURE__*/_jsx("img", {
-      src: logo,
-      alt: "Logo",
-      style: {
-        height: 100,
-        maxWidth: 220,
-        objectFit: "contain",
-        borderRadius: 12
-      }
-    }) : /*#__PURE__*/_jsx("div", {
-      style: {
-        width: 80,
-        height: 80,
-        borderRadius: "50%",
-        background: "var(--color-background-info)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 38
-      },
-      children: "💧"
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        textAlign: "center"
-      },
-      children: [/*#__PURE__*/_jsx("h1", {
-        style: {
-          fontSize: 24,
-          fontWeight: 500,
-          color: "var(--color-text-primary)",
-          marginBottom: 6
-        },
-        children: negocio
-      }), /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 15,
-          color: "var(--color-text-secondary)"
-        },
-        children: "Sistema de Reparto 2026 · Multi"
-      })]
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        ...s.btnPrimary,
-        width: 200,
-        marginTop: 8
-      },
-      onClick: onIngresar,
-      children: "Ingresar"
-    }), typeof window !== "undefined" && window.matchMedia && !window.matchMedia("(display-mode: standalone)").matches && /*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--color-text-tertiary)",
-        textAlign: "center",
-        lineHeight: 1.6,
-        marginTop: 4,
-        maxWidth: 240
-      },
-      children: "💡 Instalá la app: menú del navegador → \"Agregar a pantalla de inicio\""
-    })]
-  });
+    onClick: onIngresar
+  }, "Ingresar"), typeof window !== "undefined" && window.matchMedia && !window.matchMedia("(display-mode: standalone)").matches && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      textAlign: "center",
+      lineHeight: 1.6,
+      marginTop: 4,
+      maxWidth: 240
+    }
+  }, "💡 Instalá la app: menú del navegador → \"Agregar a pantalla de inicio\""));
 }
 
 // ── Generador de fechas por día de semana ────────────────────────────────────
@@ -163,146 +155,129 @@ function SelectorFecha({
   (noVisitas || []).filter(v => v.dia === dia).forEach(v => {
     visitasPorFecha[v.fecha] = (visitasPorFecha[v.fecha] || 0) + 1;
   });
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: `Fechas de visita · ${dia}`,
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: `Fechas de visita · ${dia}`,
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "8px 16px"
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8
+    }
+  }, "Seleccioná la fecha de reparto para comenzar o continuar la jornada."), meses.map(mes => {
+    const abierto = mes === mesAbierto;
+    return /*#__PURE__*/React.createElement("div", {
+      key: mes,
       style: {
-        padding: "8px 16px"
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.card,
+        margin: 0,
+        width: "100%",
+        textAlign: "left",
+        cursor: "pointer",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "10px 14px",
+        background: abierto ? "var(--color-background-info)" : "var(--color-background-secondary)"
       },
-      children: [/*#__PURE__*/_jsx("p", {
+      onClick: () => setMesAbierto(abierto ? null : mes)
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: abierto ? "var(--color-text-info)" : "var(--color-text-primary)",
+        textTransform: "capitalize"
+      }
+    }, mes), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--color-text-tertiary)"
+      }
+    }, abierto ? "▲" : "▼")), abierto && /*#__PURE__*/React.createElement("div", {
+      style: {
+        border: "0.5px solid var(--color-border-tertiary)",
+        borderTop: "none",
+        borderRadius: "0 0 12px 12px",
+        overflow: "hidden"
+      }
+    }, porMes[mes].map(f => {
+      const fk = fechaKey(f);
+      const planKey = claveDiaReparto(dia, fk, repartoId);
+      const tienePlanilla = !!planillas[planKey];
+      const nVentas = ventasPorFecha[fk] || 0;
+      const nVisitas = visitasPorFecha[fk] || 0;
+      const esHoy = fk === hoy;
+      return /*#__PURE__*/React.createElement("button", {
+        key: fk,
         style: {
-          fontSize: 13,
-          color: "var(--color-text-secondary)",
-          marginBottom: 8
+          width: "100%",
+          textAlign: "left",
+          padding: "12px 16px",
+          cursor: "pointer",
+          border: "none",
+          borderBottom: "0.5px solid var(--color-border-tertiary)",
+          background: esHoy ? "var(--color-background-success)" : "var(--color-background-primary)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
         },
-        children: "Seleccioná la fecha de reparto para comenzar o continuar la jornada."
-      }), meses.map(mes => {
-        const abierto = mes === mesAbierto;
-        return /*#__PURE__*/_jsxs("div", {
-          style: {
-            marginBottom: 8
-          },
-          children: [/*#__PURE__*/_jsxs("button", {
-            style: {
-              ...s.card,
-              margin: 0,
-              width: "100%",
-              textAlign: "left",
-              cursor: "pointer",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "10px 14px",
-              background: abierto ? "var(--color-background-info)" : "var(--color-background-secondary)"
-            },
-            onClick: () => setMesAbierto(abierto ? null : mes),
-            children: [/*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 14,
-                fontWeight: 500,
-                color: abierto ? "var(--color-text-info)" : "var(--color-text-primary)",
-                textTransform: "capitalize"
-              },
-              children: mes
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                color: "var(--color-text-tertiary)"
-              },
-              children: abierto ? "▲" : "▼"
-            })]
-          }), abierto && /*#__PURE__*/_jsx("div", {
-            style: {
-              border: "0.5px solid var(--color-border-tertiary)",
-              borderTop: "none",
-              borderRadius: "0 0 12px 12px",
-              overflow: "hidden"
-            },
-            children: porMes[mes].map(f => {
-              const fk = fechaKey(f);
-              const planKey = claveDiaReparto(dia, fk, repartoId);
-              const tienePlanilla = !!planillas[planKey];
-              const nVentas = ventasPorFecha[fk] || 0;
-              const nVisitas = visitasPorFecha[fk] || 0;
-              const esHoy = fk === hoy;
-              return /*#__PURE__*/_jsxs("button", {
-                style: {
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "12px 16px",
-                  cursor: "pointer",
-                  border: "none",
-                  borderBottom: "0.5px solid var(--color-border-tertiary)",
-                  background: esHoy ? "var(--color-background-success)" : "var(--color-background-primary)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center"
-                },
-                onClick: () => onSeleccionar(fk, f),
-                children: [/*#__PURE__*/_jsxs("div", {
-                  children: [/*#__PURE__*/_jsxs("span", {
-                    style: {
-                      fontSize: 14,
-                      fontWeight: esHoy ? 500 : 400,
-                      color: esHoy ? "var(--color-text-success)" : "var(--color-text-primary)",
-                      textTransform: "capitalize"
-                    },
-                    children: [formatFecha(f), esHoy ? " · Hoy" : ""]
-                  }), /*#__PURE__*/_jsxs("div", {
-                    style: {
-                      display: "flex",
-                      gap: 6,
-                      marginTop: 4
-                    },
-                    children: [nVentas > 0 && /*#__PURE__*/_jsxs("span", {
-                      style: s.badge("success"),
-                      children: [nVentas, " entregas"]
-                    }), nVisitas > 0 && /*#__PURE__*/_jsxs("span", {
-                      style: s.badge("warning"),
-                      children: [nVisitas, " visitas s/venta"]
-                    }), tienePlanilla && /*#__PURE__*/_jsx("span", {
-                      style: s.badge("info"),
-                      children: "planilla ✓"
-                    })]
-                  })]
-                }), /*#__PURE__*/_jsx("span", {
-                  style: {
-                    color: "var(--color-text-tertiary)"
-                  },
-                  children: "→"
-                })]
-              }, fk);
-            })
-          })]
-        }, mes);
-      }), /*#__PURE__*/_jsxs("div", {
+        onClick: () => onSeleccionar(fk, f)
+      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
         style: {
-          ...s.card,
-          margin: "12px 0 0",
-          background: "var(--color-background-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "📅 Fecha especial (feriado o reparto extra)"
-        }), /*#__PURE__*/_jsx("input", {
-          type: "date",
-          style: {
-            ...s.input,
-            fontSize: 14,
-            marginTop: 4
-          },
-          onChange: e => {
-            if (e.target.value) {
-              const d = new Date(e.target.value + 'T12:00:00');
-              onSeleccionar(e.target.value, d);
-            }
-          }
-        })]
-      })]
-    })]
-  });
+          fontSize: 14,
+          fontWeight: esHoy ? 500 : 400,
+          color: esHoy ? "var(--color-text-success)" : "var(--color-text-primary)",
+          textTransform: "capitalize"
+        }
+      }, formatFecha(f), esHoy ? " · Hoy" : ""), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 6,
+          marginTop: 4
+        }
+      }, nVentas > 0 && /*#__PURE__*/React.createElement("span", {
+        style: s.badge("success")
+      }, nVentas, " entregas"), nVisitas > 0 && /*#__PURE__*/React.createElement("span", {
+        style: s.badge("warning")
+      }, nVisitas, " visitas s/venta"), tienePlanilla && /*#__PURE__*/React.createElement("span", {
+        style: s.badge("info")
+      }, "planilla ✓"))), /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--color-text-tertiary)"
+        }
+      }, "→"));
+    })));
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "12px 0 0",
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "📅 Fecha especial (feriado o reparto extra)"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: {
+      ...s.input,
+      fontSize: 14,
+      marginTop: 4
+    },
+    onChange: e => {
+      if (e.target.value) {
+        const d = new Date(e.target.value + 'T12:00:00');
+        onSeleccionar(e.target.value, d);
+      }
+    }
+  }))));
 }
 function SyncBar({
   status,
@@ -341,7 +316,7 @@ function SyncBar({
     }
   };
   if (status === "idle") {
-    if (!isOnline) return /*#__PURE__*/_jsx("div", {
+    if (!isOnline) return /*#__PURE__*/React.createElement("div", {
       style: {
         background: "#3d2e1e",
         color: "#f59e0b",
@@ -349,12 +324,11 @@ function SyncBar({
         fontSize: 11,
         padding: "4px",
         fontWeight: 500
-      },
-      children: "📵 Sin conexión · Los cambios se sincronizan al reconectar"
-    });
+      }
+    }, "📵 Sin conexión · Los cambios se sincronizan al reconectar");
     return null;
   }
-  if (status === "saved") return /*#__PURE__*/_jsx("div", {
+  if (status === "saved") return /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--color-background-success)",
       color: "var(--color-text-success)",
@@ -362,11 +336,10 @@ function SyncBar({
       fontSize: 12,
       padding: "5px",
       fontWeight: 500
-    },
-    children: "✓ Guardado"
-  });
+    }
+  }, "✓ Guardado");
   const c = cfg[status] || cfg.saving;
-  return /*#__PURE__*/_jsx("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       background: c.bg,
       color: c.color,
@@ -374,7 +347,6 @@ function SyncBar({
       fontSize: 12,
       padding: "6px",
       fontWeight: 500
-    },
-    children: c.txt
-  });
+    }
+  }, c.txt);
 }

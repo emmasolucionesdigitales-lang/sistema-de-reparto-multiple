@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  03-utils.js — debounceSave · useLS · calcVenta · comprimirFoto
 // ════════════════════════════════════════════════════════════════════
@@ -505,152 +504,138 @@ function PieEnvases({
     setDraft(null);
   };
   const abierto = !!draft;
-  return /*#__PURE__*/_jsxs(_Fragment, {
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        gap: 6,
-        marginTop: 10,
-        borderTop: "0.5px solid var(--color-border-tertiary)",
-        paddingTop: 8
-      },
-      children: [izquierda || null, /*#__PURE__*/_jsx("button", {
-        style: {
-          fontSize: 11,
-          fontWeight: 600,
-          padding: "5px 12px",
-          borderRadius: 20,
-          cursor: "pointer",
-          background: abierto ? "var(--color-background-warning)" : "var(--color-background-tertiary)",
-          color: abierto ? "var(--color-text-warning)" : "var(--color-text-secondary)",
-          border: abierto ? "1px solid var(--color-border-warning)" : "0.5px solid var(--color-border-secondary)"
-        },
-        onClick: e => {
-          e.stopPropagation();
-          abierto ? setDraft(null) : abrir();
-        },
-        children: "♻️ Envases"
-      }), children]
-    }), abierto && /*#__PURE__*/_jsxs("div", {
-      style: {
-        marginTop: 8,
-        background: "var(--color-background-tertiary)",
-        borderRadius: 8,
-        padding: "8px 10px"
-      },
-      onClick: e => e.stopPropagation(),
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: "82px 1fr 1fr 1fr 1fr",
-          gap: 4,
-          fontSize: 10,
-          color: "var(--color-text-tertiary)",
-          marginBottom: 4
-        },
-        children: [/*#__PURE__*/_jsx("span", {}), /*#__PURE__*/_jsx("span", {
-          style: {
-            textAlign: "center"
-          },
-          children: "Sifón"
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            textAlign: "center"
-          },
-          children: "10L"
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            textAlign: "center"
-          },
-          children: "20L"
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            textAlign: "center"
-          },
-          children: "Disp"
-        })]
-      }), [["fijos", "🏠 Fijos"], ["prest", "📦 Prestados"]].map(([t, l]) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: "82px 1fr 1fr 1fr 1fr",
-          gap: 4,
-          alignItems: "center",
-          marginBottom: 4
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 11,
-            color: t === "prest" ? "var(--color-text-warning)" : "var(--color-text-secondary)"
-          },
-          children: l
-        }), KEYS.map(k => /*#__PURE__*/_jsx("input", {
-          type: "number",
-          value: draft[t][k],
-          onChange: e => {
-            const n = Math.round(Number(e.target.value) || 0);
-            setDraft(d => ({
-              ...d,
-              [t]: {
-                ...d[t],
-                [k]: n
-              }
-            }));
-          },
-          style: {
-            ...s.inputNum,
-            padding: "6px 2px",
-            fontSize: 14,
-            textAlign: "center",
-            fontWeight: t === "prest" && draft[t][k] !== 0 ? 600 : 400,
-            color: t === "prest" ? draft[t][k] > 0 ? "var(--color-text-warning)" : draft[t][k] < 0 ? "var(--color-text-success)" : "var(--color-text-primary)" : "var(--color-text-primary)"
-          }
-        }, k))]
-      }, t)), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 10,
-          color: "var(--color-text-tertiary)",
-          margin: "2px 0 6px"
-        },
-        children: "Prestados = total extra que tiene hoy · 0 = devolvió todo"
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 6
-        },
-        children: [/*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            flex: 1,
-            fontSize: 12
-          },
-          onClick: e => {
-            e.stopPropagation();
-            setDraft(null);
-          },
-          children: "Cancelar"
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            flex: 2,
-            background: "#1d9e75",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "9px",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer"
-          },
-          onClick: e => {
-            e.stopPropagation();
-            confirmar();
-          },
-          children: "✓ Confirmar"
-        })]
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: 6,
+      marginTop: 10,
+      borderTop: "0.5px solid var(--color-border-tertiary)",
+      paddingTop: 8
+    }
+  }, izquierda || null, /*#__PURE__*/React.createElement("button", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      padding: "5px 12px",
+      borderRadius: 20,
+      cursor: "pointer",
+      background: abierto ? "var(--color-background-warning)" : "var(--color-background-tertiary)",
+      color: abierto ? "var(--color-text-warning)" : "var(--color-text-secondary)",
+      border: abierto ? "1px solid var(--color-border-warning)" : "0.5px solid var(--color-border-secondary)"
+    },
+    onClick: e => {
+      e.stopPropagation();
+      abierto ? setDraft(null) : abrir();
+    }
+  }, "♻️ Envases"), children), abierto && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8,
+      background: "var(--color-background-tertiary)",
+      borderRadius: 8,
+      padding: "8px 10px"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "82px 1fr 1fr 1fr 1fr",
+      gap: 4,
+      fontSize: 10,
+      color: "var(--color-text-tertiary)",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "Sifón"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "10L"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "20L"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "Disp")), [["fijos", "🏠 Fijos"], ["prest", "📦 Prestados"]].map(([t, l]) => /*#__PURE__*/React.createElement("div", {
+    key: t,
+    style: {
+      display: "grid",
+      gridTemplateColumns: "82px 1fr 1fr 1fr 1fr",
+      gap: 4,
+      alignItems: "center",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: t === "prest" ? "var(--color-text-warning)" : "var(--color-text-secondary)"
+    }
+  }, l), KEYS.map(k => /*#__PURE__*/React.createElement("input", {
+    key: k,
+    type: "number",
+    value: draft[t][k],
+    onChange: e => {
+      const n = Math.round(Number(e.target.value) || 0);
+      setDraft(d => ({
+        ...d,
+        [t]: {
+          ...d[t],
+          [k]: n
+        }
+      }));
+    },
+    style: {
+      ...s.inputNum,
+      padding: "6px 2px",
+      fontSize: 14,
+      textAlign: "center",
+      fontWeight: t === "prest" && draft[t][k] !== 0 ? 600 : 400,
+      color: t === "prest" ? draft[t][k] > 0 ? "var(--color-text-warning)" : draft[t][k] < 0 ? "var(--color-text-success)" : "var(--color-text-primary)" : "var(--color-text-primary)"
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--color-text-tertiary)",
+      margin: "2px 0 6px"
+    }
+  }, "Prestados = total extra que tiene hoy · 0 = devolvió todo"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12
+    },
+    onClick: e => {
+      e.stopPropagation();
+      setDraft(null);
+    }
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 2,
+      background: "#1d9e75",
+      color: "#fff",
+      border: "none",
+      borderRadius: 8,
+      padding: "9px",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer"
+    },
+    onClick: e => {
+      e.stopPropagation();
+      confirmar();
+    }
+  }, "✓ Confirmar"))));
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -666,7 +651,7 @@ function HeaderBotones() {
       return 1;
     }
   });
-  return /*#__PURE__*/_jsx("button", {
+  return /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       const nv = (scaleIdx + 1) % 4;
       setScaleIdxLocal(nv);
@@ -686,9 +671,8 @@ function HeaderBotones() {
       justifyContent: "center",
       flexShrink: 0
     },
-    title: "Tamaño de texto",
-    children: SCALE_LABELS_LC[scaleIdx]
-  });
+    title: "Tamaño de texto"
+  }, SCALE_LABELS_LC[scaleIdx]);
 }
 function HeaderApp({
   titulo,
@@ -701,20 +685,17 @@ function HeaderApp({
       return null;
     }
   })() || "Sistema de Reparto";
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.header,
-    children: [/*#__PURE__*/_jsx("button", {
-      style: s.backBtn,
-      onClick: onVolver,
-      children: "← Volver"
-    }), /*#__PURE__*/_jsx("span", {
-      style: {
-        ...s.headerTitle,
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis"
-      },
-      children: titulo ? `${negocio} · ${titulo}` : negocio
-    }), /*#__PURE__*/_jsx(HeaderBotones, {})]
-  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.header
+  }, /*#__PURE__*/React.createElement("button", {
+    style: s.backBtn,
+    onClick: onVolver
+  }, "← Volver"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.headerTitle,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }
+  }, titulo ? `${negocio} · ${titulo}` : negocio), /*#__PURE__*/React.createElement(HeaderBotones, null));
 }

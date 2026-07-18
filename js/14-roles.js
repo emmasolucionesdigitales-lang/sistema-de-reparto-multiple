@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  13-roles.js — OnboardingRoles · AppRepartidor · Login · RepartidoresPanel
 // ════════════════════════════════════════════════════════════════════
@@ -59,7 +58,7 @@ function OnboardingRoles({
     };
     onListo(p);
   };
-  if (modo === "") return /*#__PURE__*/_jsxs("div", {
+  if (modo === "") return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
       display: "flex",
@@ -69,52 +68,46 @@ function OnboardingRoles({
       background: "var(--color-background-primary)",
       padding: 24,
       gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 600,
+      color: "var(--color-text-primary)"
+    }
+  }, "Sistema de Reparto"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8,
+      textAlign: "center"
+    }
+  }, "¿Cómo vas a usar la app?"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%",
+      maxWidth: 320,
+      padding: 16,
+      fontSize: 15,
+      borderRadius: 12
     },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 40
-      },
-      children: "💧"
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 20,
-        fontWeight: 600,
-        color: "var(--color-text-primary)"
-      },
-      children: "Sistema de Reparto"
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 13,
-        color: "var(--color-text-secondary)",
-        marginBottom: 8,
-        textAlign: "center"
-      },
-      children: "¿Cómo vas a usar la app?"
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        ...s.btnPrimary,
-        width: "100%",
-        maxWidth: 320,
-        padding: 16,
-        fontSize: 15,
-        borderRadius: 12
-      },
-      onClick: () => setModo("dueño"),
-      children: "👤 Soy dueño — crear mi negocio"
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        ...s.btn,
-        width: "100%",
-        maxWidth: 320,
-        padding: 16,
-        fontSize: 15,
-        borderRadius: 12
-      },
-      onClick: () => setModo("repartidor"),
-      children: "🚐 Soy repartidor — tengo un código"
-    })]
-  });
-  if (modo === "dueño") return /*#__PURE__*/_jsx("div", {
+    onClick: () => setModo("dueño")
+  }, "👤 Soy dueño — crear mi negocio"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      width: "100%",
+      maxWidth: 320,
+      padding: 16,
+      fontSize: 15,
+      borderRadius: 12
+    },
+    onClick: () => setModo("repartidor")
+  }, "🚐 Soy repartidor — tengo un código"));
+  if (modo === "dueño") return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
       display: "flex",
@@ -123,71 +116,63 @@ function OnboardingRoles({
       justifyContent: "center",
       background: "var(--color-background-primary)",
       padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 380
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      marginBottom: 16,
+      fontSize: 13
     },
-    children: /*#__PURE__*/_jsxs("div", {
-      style: {
-        width: "100%",
-        maxWidth: 380
-      },
-      children: [/*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          marginBottom: 16,
-          fontSize: 13
-        },
-        onClick: () => setModo(""),
-        children: "← Volver"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 18,
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          marginBottom: 20
-        },
-        children: "👤 Crear mi negocio"
-      }), /*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Tu nombre"
-      }), /*#__PURE__*/_jsx("input", {
-        style: {
-          ...s.input,
-          marginBottom: 12
-        },
-        placeholder: "Ej: Carlos",
-        value: nombre,
-        onChange: e => setNombre(e.target.value)
-      }), /*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Nombre del negocio"
-      }), /*#__PURE__*/_jsx("input", {
-        style: {
-          ...s.input,
-          marginBottom: 20
-        },
-        placeholder: "Ej: Distribuidora El Sol",
-        value: negocio,
-        onChange: e => setNegocio(e.target.value)
-      }), error && /*#__PURE__*/_jsx("div", {
-        style: {
-          color: "var(--color-text-danger)",
-          fontSize: 13,
-          marginBottom: 12
-        },
-        children: error
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          width: "100%",
-          padding: 14,
-          fontSize: 15
-        },
-        onClick: crearCuentaDueño,
-        disabled: cargando,
-        children: cargando ? "Creando..." : "Crear negocio"
-      })]
-    })
-  });
-  return /*#__PURE__*/_jsx("div", {
+    onClick: () => setModo("")
+  }, "← Volver"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 20
+    }
+  }, "👤 Crear mi negocio"), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Tu nombre"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      marginBottom: 12
+    },
+    placeholder: "Ej: Carlos",
+    value: nombre,
+    onChange: e => setNombre(e.target.value)
+  }), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Nombre del negocio"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      marginBottom: 20
+    },
+    placeholder: "Ej: Distribuidora El Sol",
+    value: negocio,
+    onChange: e => setNegocio(e.target.value)
+  }), error && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--color-text-danger)",
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, error), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%",
+      padding: 14,
+      fontSize: 15
+    },
+    onClick: crearCuentaDueño,
+    disabled: cargando
+  }, cargando ? "Creando..." : "Crear negocio")));
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
       display: "flex",
@@ -196,71 +181,63 @@ function OnboardingRoles({
       justifyContent: "center",
       background: "var(--color-background-primary)",
       padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 380
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      marginBottom: 16,
+      fontSize: 13
     },
-    children: /*#__PURE__*/_jsxs("div", {
-      style: {
-        width: "100%",
-        maxWidth: 380
-      },
-      children: [/*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          marginBottom: 16,
-          fontSize: 13
-        },
-        onClick: () => setModo(""),
-        children: "← Volver"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 18,
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          marginBottom: 8
-        },
-        children: "🚐 Unirme como repartidor"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-secondary)",
-          marginBottom: 20
-        },
-        children: "El dueño te tiene que dar un código de 6 letras."
-      }), /*#__PURE__*/_jsx("label", {
-        style: s.label,
-        children: "Código de invitación"
-      }), /*#__PURE__*/_jsx("input", {
-        style: {
-          ...s.input,
-          marginBottom: 20,
-          textTransform: "uppercase",
-          letterSpacing: "0.15em",
-          fontSize: 18,
-          textAlign: "center"
-        },
-        placeholder: "XXXXXX",
-        maxLength: 6,
-        value: codigo,
-        onChange: e => setCodigo(e.target.value.toUpperCase())
-      }), error && /*#__PURE__*/_jsx("div", {
-        style: {
-          color: "var(--color-text-danger)",
-          fontSize: 13,
-          marginBottom: 12
-        },
-        children: error
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          width: "100%",
-          padding: 14,
-          fontSize: 15
-        },
-        onClick: unirseConCodigo,
-        disabled: cargando,
-        children: cargando ? "Verificando..." : "Unirme al negocio"
-      })]
-    })
-  });
+    onClick: () => setModo("")
+  }, "← Volver"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 8
+    }
+  }, "🚐 Unirme como repartidor"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginBottom: 20
+    }
+  }, "El dueño te tiene que dar un código de 6 letras."), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Código de invitación"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      marginBottom: 20,
+      textTransform: "uppercase",
+      letterSpacing: "0.15em",
+      fontSize: 18,
+      textAlign: "center"
+    },
+    placeholder: "XXXXXX",
+    maxLength: 6,
+    value: codigo,
+    onChange: e => setCodigo(e.target.value.toUpperCase())
+  }), error && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--color-text-danger)",
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, error), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%",
+      padding: 14,
+      fontSize: 15
+    },
+    onClick: unirseConCodigo,
+    disabled: cargando
+  }, cargando ? "Verificando..." : "Unirme al negocio")));
 }
 
 // ── AppRepartidor ──────────────────────────────────────────────
@@ -381,61 +358,58 @@ function GateRepartidor({
       setError("Ese código no coincide. Pedíselo al dueño.");
     }
   };
-  const Teclado = /*#__PURE__*/_jsxs(_Fragment, {
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        display: "flex",
-        gap: 16,
-        marginBottom: 6
-      },
-      children: [0, 1, 2, 3].map(i => /*#__PURE__*/_jsx("div", {
-        style: {
-          width: 18,
-          height: 18,
-          borderRadius: "50%",
-          background: valor.length > i ? "#185FA5" : "transparent",
-          border: "2px solid var(--color-border-secondary)"
-        }
-      }, i))
-    }), error && /*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 13,
-        color: "var(--color-text-danger)",
-        textAlign: "center",
-        maxWidth: 270,
-        lineHeight: 1.4
-      },
-      children: error
-    }), msg && /*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 13,
-        color: "#f5b942",
-        textAlign: "center"
-      },
-      children: msg
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "repeat(3,72px)",
-        gap: 10
-      },
-      children: [1, 2, 3, 4, 5, 6, 7, 8, 9, "", "0", "⌫"].map((t, i) => t === "" ? /*#__PURE__*/_jsx("div", {}, i) : /*#__PURE__*/_jsx("button", {
-        onClick: () => tecla(t),
-        style: {
-          height: 60,
-          borderRadius: 14,
-          border: "0.5px solid var(--color-border-secondary)",
-          background: "var(--color-background-tertiary)",
-          color: "var(--color-text-primary)",
-          fontSize: 22,
-          fontWeight: 500,
-          cursor: "pointer"
-        },
-        children: t
-      }, i))
-    })]
-  });
-  const shell = contenido => /*#__PURE__*/_jsxs("div", {
+  const Teclado = /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 16,
+      marginBottom: 6
+    }
+  }, [0, 1, 2, 3].map(i => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      width: 18,
+      height: 18,
+      borderRadius: "50%",
+      background: valor.length > i ? "#185FA5" : "transparent",
+      border: "2px solid var(--color-border-secondary)"
+    }
+  }))), error && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)",
+      textAlign: "center",
+      maxWidth: 270,
+      lineHeight: 1.4
+    }
+  }, error), msg && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#f5b942",
+      textAlign: "center"
+    }
+  }, msg), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(3,72px)",
+      gap: 10
+    }
+  }, [1, 2, 3, 4, 5, 6, 7, 8, 9, "", "0", "⌫"].map((t, i) => t === "" ? /*#__PURE__*/React.createElement("div", {
+    key: i
+  }) : /*#__PURE__*/React.createElement("button", {
+    key: i,
+    onClick: () => tecla(t),
+    style: {
+      height: 60,
+      borderRadius: 14,
+      border: "0.5px solid var(--color-border-secondary)",
+      background: "var(--color-background-tertiary)",
+      color: "var(--color-text-primary)",
+      fontSize: 22,
+      fontWeight: 500,
+      cursor: "pointer"
+    }
+  }, t))));
+  const shell = contenido => /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: "flex",
@@ -445,142 +419,126 @@ function GateRepartidor({
       padding: 32,
       minHeight: "100vh",
       gap: 18
-    },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        width: 64,
-        height: 64,
-        borderRadius: "50%",
-        background: "var(--color-background-info)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 30
-      },
-      children: "💧"
-    }), /*#__PURE__*/_jsxs("h1", {
-      style: {
-        fontSize: 18,
-        fontWeight: 600,
-        color: "var(--color-text-primary)",
-        textAlign: "center"
-      },
-      children: ["Reparto", perfil && perfil.nombre ? ` · ${perfil.nombre}` : ""]
-    }), contenido]
-  });
-  if (fase === "bio") return shell(/*#__PURE__*/_jsxs("div", {
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 64,
+      height: 64,
+      borderRadius: "50%",
+      background: "var(--color-background-info)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 30
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 18,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      textAlign: "center"
+    }
+  }, "Reparto", perfil && perfil.nombre ? ` · ${perfil.nombre}` : ""), contenido);
+  if (fase === "bio") return shell(/*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 52
+    }
+  }, "👆"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 15,
+      color: "var(--color-text-secondary)",
+      textAlign: "center"
+    }
+  }, "Verificando huella..."), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-tertiary)",
+      fontSize: 13,
+      cursor: "pointer"
     },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 52
-      },
-      children: "👆"
-    }), /*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 15,
-        color: "var(--color-text-secondary)",
-        textAlign: "center"
-      },
-      children: "Verificando huella..."
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        background: "none",
-        border: "none",
-        color: "var(--color-text-tertiary)",
-        fontSize: 13,
-        cursor: "pointer"
-      },
-      onClick: () => setFase("pin"),
-      children: "Usar PIN"
-    })]
-  }));
-  if (fase === "ofrecerBio") return shell(/*#__PURE__*/_jsxs("div", {
+    onClick: () => setFase("pin")
+  }, "Usar PIN")));
+  if (fase === "ofrecerBio") return shell(/*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       gap: 14,
       maxWidth: 280
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 46
+    }
+  }, "👆"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 16,
+      color: "var(--color-text-primary)",
+      textAlign: "center",
+      margin: 0,
+      fontWeight: 600
+    }
+  }, "¿Entrar con tu huella la próxima vez?"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      textAlign: "center",
+      margin: 0,
+      lineHeight: 1.5
+    }
+  }, "Tu PIN sigue funcionando por si lo necesitás."), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#185FA5",
+      color: "#fff",
+      border: "none",
+      borderRadius: 10,
+      padding: "12px 20px",
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: "pointer",
+      width: 210
     },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 46
-      },
-      children: "👆"
-    }), /*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 16,
-        color: "var(--color-text-primary)",
-        textAlign: "center",
-        margin: 0,
-        fontWeight: 600
-      },
-      children: "¿Entrar con tu huella la próxima vez?"
-    }), /*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 12,
-        color: "var(--color-text-secondary)",
-        textAlign: "center",
-        margin: 0,
-        lineHeight: 1.5
-      },
-      children: "Tu PIN sigue funcionando por si lo necesitás."
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        background: "#185FA5",
-        color: "#fff",
-        border: "none",
-        borderRadius: 10,
-        padding: "12px 20px",
-        fontSize: 15,
-        fontWeight: 600,
-        cursor: "pointer",
-        width: 210
-      },
-      onClick: async () => {
-        try {
-          await srBioRegistrar();
-        } catch (e) {}
-        onOk();
-      },
-      children: "Activar huella"
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        background: "none",
-        border: "none",
-        color: "var(--color-text-secondary)",
-        fontSize: 13,
-        cursor: "pointer"
-      },
-      onClick: () => {
-        try {
-          localStorage.setItem("sr_bio_no", "1");
-        } catch (e) {}
-        onOk();
-      },
-      children: "Ahora no"
-    })]
-  }));
-  if (fase === "crear" || fase === "confirmar") return shell(/*#__PURE__*/_jsxs(_Fragment, {
-    children: [/*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 14,
-        color: "var(--color-text-secondary)",
-        textAlign: "center",
-        maxWidth: 280,
-        lineHeight: 1.5
-      },
-      children: fase === "crear" ? "Creá un PIN de 4 números para proteger la app. Lo vas a usar para entrar." : "Repetí el PIN para confirmar."
-    }), Teclado]
-  }));
+    onClick: async () => {
+      try {
+        await srBioRegistrar();
+      } catch (e) {}
+      onOk();
+    }
+  }, "Activar huella"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-secondary)",
+      fontSize: 13,
+      cursor: "pointer"
+    },
+    onClick: () => {
+      try {
+        localStorage.setItem("sr_bio_no", "1");
+      } catch (e) {}
+      onOk();
+    }
+  }, "Ahora no")));
+  if (fase === "crear" || fase === "confirmar") return shell(/*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)",
+      textAlign: "center",
+      maxWidth: 280,
+      lineHeight: 1.5
+    }
+  }, fase === "crear" ? "Creá un PIN de 4 números para proteger la app. Lo vas a usar para entrar." : "Repetí el PIN para confirmar."), Teclado));
 
   // fase === "pin"
-  return shell(olvido ? /*#__PURE__*/_jsxs("div", {
+  return shell(olvido ? /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -588,108 +546,95 @@ function GateRepartidor({
       gap: 12,
       maxWidth: 300,
       width: "100%"
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)",
+      textAlign: "center",
+      lineHeight: 1.5
+    }
+  }, "Ingresá tu ", /*#__PURE__*/React.createElement("b", null, "código de repartidor"), " (el de 6 letras que te dio el dueño) para crear un PIN nuevo."), /*#__PURE__*/React.createElement("input", {
+    value: codReset,
+    onChange: e => {
+      setCodReset(e.target.value);
+      setError("");
     },
-    children: [/*#__PURE__*/_jsxs("p", {
-      style: {
-        fontSize: 14,
-        color: "var(--color-text-secondary)",
-        textAlign: "center",
-        lineHeight: 1.5
-      },
-      children: ["Ingresá tu ", /*#__PURE__*/_jsx("b", {
-        children: "código de repartidor"
-      }), " (el de 6 letras que te dio el dueño) para crear un PIN nuevo."]
-    }), /*#__PURE__*/_jsx("input", {
-      value: codReset,
-      onChange: e => {
-        setCodReset(e.target.value);
-        setError("");
-      },
-      placeholder: "Código (6 letras)",
-      maxLength: 6,
-      style: {
-        ...s.input,
-        textAlign: "center",
-        textTransform: "uppercase",
-        letterSpacing: "0.15em",
-        fontSize: 18
-      }
-    }), error && /*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 13,
-        color: "var(--color-text-danger)",
-        textAlign: "center"
-      },
-      children: error
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        ...s.btnPrimary,
-        width: "100%"
-      },
-      onClick: resetConCodigo,
-      children: "Crear PIN nuevo"
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        background: "none",
-        border: "none",
-        color: "var(--color-text-tertiary)",
-        fontSize: 13,
-        cursor: "pointer"
-      },
-      onClick: () => {
-        setOlvido(false);
-        setError("");
-        setCodReset("");
-      },
-      children: "Volver al PIN"
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        background: "none",
-        border: "none",
-        color: "var(--color-text-danger)",
-        fontSize: 12,
-        cursor: "pointer",
-        marginTop: 4
-      },
-      onClick: () => {
-        if (window.confirm("¿Cerrar sesión? Vas a tener que ingresar de nuevo con tu código.")) onSalir();
-      },
-      children: "Cerrar sesión y volver a ingresar"
-    })]
-  }) : /*#__PURE__*/_jsxs(_Fragment, {
-    children: [/*#__PURE__*/_jsx("p", {
-      style: {
-        fontSize: 14,
-        color: "var(--color-text-secondary)"
-      },
-      children: "Ingresá tu PIN"
-    }), Teclado, puedeBio && bioOn && /*#__PURE__*/_jsx("button", {
-      style: {
-        background: "none",
-        border: "none",
-        color: "var(--color-text-tertiary)",
-        fontSize: 13,
-        cursor: "pointer",
-        marginTop: 6
-      },
-      onClick: () => setFase("bio"),
-      children: "👆 Usar huella"
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        background: "none",
-        border: "none",
-        color: "var(--color-text-info)",
-        fontSize: 13,
-        cursor: "pointer",
-        marginTop: 2
-      },
-      onClick: () => {
-        setOlvido(true);
-        setError("");
-      },
-      children: "¿Olvidaste tu PIN?"
-    })]
-  }));
+    placeholder: "Código (6 letras)",
+    maxLength: 6,
+    style: {
+      ...s.input,
+      textAlign: "center",
+      textTransform: "uppercase",
+      letterSpacing: "0.15em",
+      fontSize: 18
+    }
+  }), error && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)",
+      textAlign: "center"
+    }
+  }, error), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%"
+    },
+    onClick: resetConCodigo
+  }, "Crear PIN nuevo"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-tertiary)",
+      fontSize: 13,
+      cursor: "pointer"
+    },
+    onClick: () => {
+      setOlvido(false);
+      setError("");
+      setCodReset("");
+    }
+  }, "Volver al PIN"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-danger)",
+      fontSize: 12,
+      cursor: "pointer",
+      marginTop: 4
+    },
+    onClick: () => {
+      if (window.confirm("¿Cerrar sesión? Vas a tener que ingresar de nuevo con tu código.")) onSalir();
+    }
+  }, "Cerrar sesión y volver a ingresar")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Ingresá tu PIN"), Teclado, puedeBio && bioOn && /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-tertiary)",
+      fontSize: 13,
+      cursor: "pointer",
+      marginTop: 6
+    },
+    onClick: () => setFase("bio")
+  }, "👆 Usar huella"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-info)",
+      fontSize: 13,
+      cursor: "pointer",
+      marginTop: 2
+    },
+    onClick: () => {
+      setOlvido(true);
+      setError("");
+    }
+  }, "¿Olvidaste tu PIN?")));
 }
 function AppRepartidorWrapper({
   uid,
@@ -703,12 +648,12 @@ function AppRepartidorWrapper({
     } catch {}
   }, []);
   const [desbloqueado, setDesbloqueado] = React.useState(false);
-  if (!desbloqueado) return /*#__PURE__*/_jsx(GateRepartidor, {
+  if (!desbloqueado) return /*#__PURE__*/React.createElement(GateRepartidor, {
     perfil: perfil,
     onSalir: onSalir,
     onOk: () => setDesbloqueado(true)
   });
-  return /*#__PURE__*/_jsx(AppRepartidor, {
+  return /*#__PURE__*/React.createElement(AppRepartidor, {
     uid: uid,
     perfil: perfil,
     onSalir: onSalir
@@ -777,16 +722,15 @@ function AppRepartidor({
       });
     });
   }, []);
-  if (!datos) return /*#__PURE__*/_jsx("div", {
+  if (!datos) return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       color: "var(--color-text-secondary)"
-    },
-    children: "⏳ Cargando..."
-  });
+    }
+  }, "⏳ Cargando...");
 
   // Leer repartos desde Firestore (datos descargados), con fallback a localStorage
   const todosRepartos = datos.repartos && datos.repartos.length > 0 ? datos.repartos : (() => {
@@ -1053,637 +997,628 @@ function AppRepartidor({
   };
   const ventasHoy = ventas.filter(v => v.fechaKey === fechaActual);
   const noVisHoy = noVisitas.filter(v => v.fecha === fechaActual);
-  return /*#__PURE__*/_jsxs(_Fragment, {
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        position: "fixed",
-        top: 10,
-        right: 14,
-        zIndex: 9999,
-        display: "flex",
-        gap: 6
-      },
-      children: /*#__PURE__*/_jsx("button", {
-        onClick: () => setScaleIdx(i => (i + 1) % 4),
-        style: {
-          padding: "6px 10px",
-          borderRadius: 8,
-          border: "none",
-          background: "var(--color-background-tertiary)",
-          color: "var(--color-text-secondary)",
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        },
-        title: "Tamaño de texto",
-        children: SCALE_LABELS[scaleIdx]
-      })
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.app,
-        zoom: SCALES[scaleIdx]
-      },
-      children: [pantalla === "inicio" && /*#__PURE__*/_jsx(InicioRepartidor, {
-        perfil: perfil,
-        diaActual: diaActual,
-        fechaActual: fechaActual,
-        setFechaActual: setFechaActual,
-        repartoId: miReparto?.id,
-        clientes: clientes,
-        ventas: ventas,
-        noVisitas: noVisitas,
-        planillas: planillas,
-        savePlanilla: (key, p) => sync({
-          planillas: {
-            ...planillas,
-            [key]: p
-          }
-        }),
-        productos: productos,
-        recordatorios: (datos.recordatorios || []).filter(r => r.paraRepartidor === perfil.nombre),
-        scaleIdx: scaleIdx,
-        onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
-        scaleLabel: SCALE_LABELS[scaleIdx],
-        onSaveRecordatorio: r => {
-          const lista = [...(datos.recordatorios || []), r];
-          sync({
-            recordatorios: lista
-          });
-        },
-        onConfirmarRecordatorio: id => {
-          const lista = (datos.recordatorios || []).map(r => r.id === id ? {
-            ...r,
-            confirmado: true
-          } : r);
-          sync({
-            recordatorios: lista
-          });
-        },
-        onIrCliente: cId => {
-          setClienteId(cId);
-          setDiaClienteActual(clientes.find(c => c.id === cId)?.dia || diaActual);
-          irA("venta");
-        },
-        onIrCarga: () => irA("cargaDia"),
-        onIrClientes: () => irA("clientes"),
-        onIrPlanilla: () => irA("planilla"),
-        onIrTodosClientes: () => irA("todosClientes"),
-        onIrAgenda: () => irA("agendaRep"),
-        onIrTransfers: () => irA("confirmTransferRep"),
-        onCambiarDia: () => irA("elegirDia"),
-        onSalir: onSalirProp || (() => window.auth.signOut()),
-        onEnviarInforme: async () => {
-          if (typeof usarInformes !== "function") {
-            alert("Función de informe no disponible.");
-            return;
-          }
-          try {
-            // Buscar email del dueño desde Firestore
-            let emailDueno = "";
-            if (window.db && perfil.negocioId) {
-              const negSnap = await window.db.collection("negocios").doc(perfil.negocioId).get();
-              if (negSnap.exists) emailDueno = negSnap.data().ownerEmail || negSnap.data().email || "";
-              // Si no está en negocios, buscar en licencias
-              if (!emailDueno) {
-                const licSnap = await window.dbLicencias.collection("licencias").where("negocioId", "==", perfil.negocioId).limit(1).get();
-                if (!licSnap.empty) emailDueno = licSnap.docs[0].data().email || "";
-              }
-            }
-            if (!emailDueno) {
-              alert("No se encontró el email del dueño. Contactá al soporte.");
-              return;
-            }
-            // Guardar email temporalmente en rm_licencia para que usarInformes lo encuentre
-            const licTemp = {
-              email: emailDueno,
-              negocio: perfil.nombre || "Reparto"
-            };
-            const prevLic = localStorage.getItem("rm_licencia");
-            localStorage.setItem("rm_licencia", JSON.stringify(licTemp));
-            const inf = usarInformes({
-              ventas,
-              clientes,
-              planillas,
-              noVisitas,
-              productos,
-              repartoId: miReparto?.id
-            });
-            const ok = await inf.enviarDiario(fechaActual, diaActual);
-            // Restaurar licencia original
-            if (prevLic) localStorage.setItem("rm_licencia", prevLic);else localStorage.removeItem("rm_licencia");
-            if (ok) alert("\u2705 Informe enviado al dueño (" + emailDueno + ") correctamente.");else alert("\u26A0\uFE0F Error al enviar. Verificá la conexión.");
-          } catch (e) {
-            alert("Error: " + e.message);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 10,
+      right: 14,
+      zIndex: 9999,
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setScaleIdx(i => (i + 1) % 4),
+    style: {
+      padding: "6px 10px",
+      borderRadius: 8,
+      border: "none",
+      background: "var(--color-background-tertiary)",
+      color: "var(--color-text-secondary)",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    },
+    title: "Tamaño de texto"
+  }, SCALE_LABELS[scaleIdx])), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.app,
+      zoom: SCALES[scaleIdx]
+    }
+  }, pantalla === "inicio" && /*#__PURE__*/React.createElement(InicioRepartidor, {
+    perfil: perfil,
+    diaActual: diaActual,
+    fechaActual: fechaActual,
+    setFechaActual: setFechaActual,
+    repartoId: miReparto?.id,
+    clientes: clientes,
+    ventas: ventas,
+    noVisitas: noVisitas,
+    planillas: planillas,
+    savePlanilla: (key, p) => sync({
+      planillas: {
+        ...planillas,
+        [key]: p
+      }
+    }),
+    productos: productos,
+    recordatorios: (datos.recordatorios || []).filter(r => r.paraRepartidor === perfil.nombre),
+    scaleIdx: scaleIdx,
+    onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
+    scaleLabel: SCALE_LABELS[scaleIdx],
+    onSaveRecordatorio: r => {
+      const lista = [...(datos.recordatorios || []), r];
+      sync({
+        recordatorios: lista
+      });
+    },
+    onConfirmarRecordatorio: id => {
+      const lista = (datos.recordatorios || []).map(r => r.id === id ? {
+        ...r,
+        confirmado: true
+      } : r);
+      sync({
+        recordatorios: lista
+      });
+    },
+    onIrCliente: cId => {
+      setClienteId(cId);
+      setDiaClienteActual(clientes.find(c => c.id === cId)?.dia || diaActual);
+      irA("venta");
+    },
+    onIrCarga: () => irA("cargaDia"),
+    onIrClientes: () => irA("clientes"),
+    onIrPlanilla: () => irA("planilla"),
+    onIrTodosClientes: () => irA("todosClientes"),
+    onIrAgenda: () => irA("agendaRep"),
+    onIrTransfers: () => irA("confirmTransferRep"),
+    onCambiarDia: () => irA("elegirDia"),
+    onSalir: onSalirProp || (() => window.auth.signOut()),
+    onEnviarInforme: async () => {
+      if (typeof usarInformes !== "function") {
+        alert("Función de informe no disponible.");
+        return;
+      }
+      try {
+        // Buscar email del dueño desde Firestore
+        let emailDueno = "";
+        if (window.db && perfil.negocioId) {
+          const negSnap = await window.db.collection("negocios").doc(perfil.negocioId).get();
+          if (negSnap.exists) emailDueno = negSnap.data().ownerEmail || negSnap.data().email || "";
+          // Si no está en negocios, buscar en licencias
+          if (!emailDueno) {
+            const licSnap = await window.dbLicencias.collection("licencias").where("negocioId", "==", perfil.negocioId).limit(1).get();
+            if (!licSnap.empty) emailDueno = licSnap.docs[0].data().email || "";
           }
         }
-      }), pantalla === "elegirDia" && /*#__PURE__*/_jsxs("div", {
-        style: s.screen,
-        children: [/*#__PURE__*/_jsx(HeaderApp, {
-          titulo: "Elegir día de reparto",
-          onVolver: () => irA("inicio")
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            padding: "10px 14px"
-          },
-          children: [/*#__PURE__*/_jsxs("p", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-secondary)",
-              marginBottom: 12
-            },
-            children: ["Por defecto ves el día de hoy (", diaDeHoy, "). Elegí otro día si necesitás adelantar un reparto o ponerte al día con uno pendiente."]
-          }), DIAS.map(d => /*#__PURE__*/_jsxs("button", {
-            style: {
-              ...s.card,
-              width: "100%",
-              textAlign: "left",
-              cursor: "pointer",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "14px 16px",
-              background: d === diaActual ? "var(--color-background-info)" : "var(--color-background-secondary)"
-            },
-            onClick: () => {
-              setDiaTemporal(d);
-              irA("elegirFecha");
-            },
-            children: [/*#__PURE__*/_jsxs("span", {
-              style: {
-                fontSize: 15,
-                fontWeight: 500,
-                color: d === diaActual ? "var(--color-text-info)" : "var(--color-text-primary)"
-              },
-              children: [d, d === diaDeHoy ? " · hoy" : ""]
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                color: "var(--color-text-tertiary)"
-              },
-              children: "→"
-            })]
-          }, d))]
-        })]
-      }), pantalla === "elegirFecha" && diaTemporal && /*#__PURE__*/_jsx(SelectorFecha, {
-        dia: diaTemporal,
-        repartoId: miReparto?.id,
-        planillas: planillas,
-        ventas: ventas.filter(v => {
-          const cl = todosClientes.find(c => c.id === v.clienteId);
-          return !miReparto || cl?.repartoId === miReparto.id;
-        }),
-        noVisitas: (noVisitas || []).filter(v => {
-          const cl = todosClientes.find(c => c.id === v.clienteId);
-          return !miReparto || cl?.repartoId === miReparto.id;
-        }),
-        onSeleccionar: (fk, fo) => {
-          setDiaActual(diaTemporal);
-          setDiaClienteActual(diaTemporal);
-          setFechaActual(fk);
-          setDiaTemporal(null);
-          irA("inicio");
-        },
-        onVolver: () => irA("elegirDia")
-      }), pantalla === "cargaDia" && /*#__PURE__*/_jsx(InicioReparto, {
-        dia: diaActual,
-        fecha: fechaActual,
-        planilla: planillas[claveDiaReparto(diaActual, fechaActual, miReparto?.id)] || planillaDiaVacia(),
-        productos: productos,
-        cargasDia: datos.cargasDia && miReparto && datos.cargasDia[miReparto.id] || CARGA_DIA_DEFAULT,
-        stock: datos.stock || {},
-        onGuardar: (p, descontar) => {
-          savePlanilla(claveDiaReparto(diaActual, fechaActual, miReparto?.id), p);
-          if (descontar && miReparto) {
-            const s = JSON.parse(JSON.stringify(datos.stock || {
-              soderia: {},
-              soderia_vacios: {},
-              casa: {},
-              camiones: {}
-            }));
-            if (!s.soderia) s.soderia = {
-              sifon: 0,
-              bidon10: 0,
-              bidon20: 0
-            };
-            if (!s.camiones) s.camiones = {};
-            if (!s.camiones[miReparto.id]) s.camiones[miReparto.id] = {
-              sifon: 0,
-              bidon10: 0,
-              bidon20: 0,
-              dispenser: 0
-            };
-            const soda = Number(p.productos?.soda?.llenos || 0);
-            const b10 = Number(p.productos?.b10?.llenos || 0);
-            const b20 = Number(p.productos?.b20?.llenos || 0);
-            s.soderia.sifon = Math.max(0, (s.soderia.sifon || 0) - soda);
-            s.soderia.bidon10 = Math.max(0, (s.soderia.bidon10 || 0) - b10);
-            s.soderia.bidon20 = Math.max(0, (s.soderia.bidon20 || 0) - b20);
-            s.camiones[miReparto.id].sifon = (s.camiones[miReparto.id].sifon || 0) + soda;
-            s.camiones[miReparto.id].bidon10 = (s.camiones[miReparto.id].bidon10 || 0) + b10;
-            s.camiones[miReparto.id].bidon20 = (s.camiones[miReparto.id].bidon20 || 0) + b20;
-            // La carga real de hoy queda como sugerencia para la próxima vez que
-            // este reparto salga este mismo día — no depende de un número fijo.
-            const cargasDiaNuevo = {
-              ...(datos.cargasDia || {}),
-              [miReparto.id]: {
-                ...((datos.cargasDia || {})[miReparto.id] || {}),
-                [diaActual]: {
-                  soda,
-                  b10,
-                  b20
-                }
-              }
-            };
-            sync({
-              stock: s,
-              cargasDia: cargasDiaNuevo
-            });
-          }
-          irA("clientes");
-        },
-        onVolver: () => irA("inicio")
-      }), pantalla === "clientes" && /*#__PURE__*/_jsx(ListaClientes, {
-        clientes: clientes,
-        dia: diaActual,
-        fecha: fechaActual,
-        ventas: ventasHoy,
-        todasVentas: ventas,
-        noVisitas: noVisHoy,
-        onSeleccionar: c => {
-          setClienteId(c.id);
-          setDiaClienteActual(c.dia || diaActual);
-          setOrigenDetalle("clientes");
-          irA("detalleCliente");
-        },
-        onEntregar: c => {
-          setClienteId(c.id);
-          setDiaClienteActual(c.dia || diaActual);
-          irA("venta");
-        },
-        onNuevoCliente: null,
-        onVolver: () => irA("inicio"),
-        onEditarCliente: (id, cambios) => {
-          const clientesActualizados = todosClientes.map(x => x.id === id ? {
-            ...x,
-            ...cambios,
-            _upd: Date.now()
-          } : x);
-          sync({
-            clientes: clientesActualizados
-          });
-        },
-        onReordenar: lista => {
-          const otros = todosClientes.filter(c => !(c.dia === diaActual && (sectores.length === 0 || sectores.some(s => (c.barrio || "").toLowerCase().includes(s.toLowerCase())))));
-          saveClientes([...otros, ...lista]);
-        },
-        onRegistrarNoVisita: (cId, motivo) => {
-          const nv = [...noVisitas.filter(v => !(v.clienteId === cId && v.fecha === fechaActual)), {
-            clienteId: cId,
-            dia: diaClienteActual,
-            fecha: fechaActual,
-            motivo
-          }];
-          saveNoVisitas(nv);
-        },
-        onQuitarNoVisita: cId => saveNoVisitas(noVisitas.filter(v => !(v.clienteId === cId && v.fecha === fechaActual))),
-        onVentaProspecto: p => {
-          if (!todosClientes.find(c => c.id === p.id)) {
-            saveClientes([...todosClientes, {
-              ...p,
-              saldo: 0,
-              _esProspecto: true
-            }]);
-          }
-          setClienteId(p.id);
-          irA("venta");
-        },
-        onNoEstaProspecto: id => {
-          const nv = [...noVisitas.filter(v => !(v.clienteId === id && v.fecha === fechaActual)), {
-            clienteId: id,
-            dia: diaActual,
-            fecha: fechaActual,
-            motivo: "noesta"
-          }];
-          saveNoVisitas(nv);
-        },
-        onNoQuiereProspecto: id => {
-          const nv = [...noVisitas.filter(v => !(v.clienteId === id && v.fecha === fechaActual)), {
-            clienteId: id,
-            dia: diaActual,
-            fecha: fechaActual,
-            motivo: "noquiso"
-          }];
-          saveNoVisitas(nv);
-        },
-        onConfirmarTransfer: null,
-        prospectos: prospectos,
-        recordatorios: []
-      }), pantalla === "clientes" && ventasHoy.length + noVisHoy.length >= clientes.length && clientes.length > 0 && /*#__PURE__*/_jsx("div", {
-        style: {
-          padding: "0 14px 16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8
-        },
-        children: /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btnPrimary,
-            background: "#1a8a4a"
-          },
-          onClick: () => irA("planilla"),
-          children: "\u2705 Recorrido terminado \u2014 Ir a planilla del d\u00eda"
-        })
-      }), pantalla === "nuevoCliente" && false && /*#__PURE__*/_jsx(NuevoClienteForm, {
-        sectores: sectores,
-        diaActual: diaActual,
-        onGuardar: datosNuevo => {
-          const nuevoC = Object.assign({}, datosNuevo, {
-            id: Date.now(),
-            saldo: 0,
-            repartoId: miReparto ? miReparto.id : null
-          });
-          saveClientes(todosClientes.concat([nuevoC]));
-          irA("clientes");
-        },
-        onVolver: () => irA("clientes")
-      }), pantalla === "detalleCliente" && cliente && /*#__PURE__*/_jsx(DetalleCliente, {
-        cliente: cliente,
-        ventas: ventas.filter(v => v.clienteId === cliente.id),
-        dia: diaActual,
-        fecha: fechaActual,
-        productos: productos,
-        soloLectura: true,
-        onVenta: () => irA("venta"),
-        onVentaLibre: null,
-        onVolver: () => irA(origenDetalle),
-        onEditar: cambios => {
-          const clientesActualizados = todosClientes.map(x => x.id === cliente.id ? {
-            ...x,
-            ...cambios,
-            _upd: Date.now()
-          } : x);
-          sync({
-            clientes: clientesActualizados
-          });
-        },
-        onEliminarVenta: () => {},
-        onEditarVenta: () => {},
-        onEliminarCliente: () => {},
-        onNoEstaCliente: () => {
-          const nv = [...noVisitas.filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
-            clienteId: cliente.id,
-            dia: diaActual,
-            fecha: fechaActual,
-            motivo: "noesta"
-          }];
-          saveNoVisitas(nv);
-        },
-        onNoQuiereCliente: () => {
-          const nv = [...noVisitas.filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
-            clienteId: cliente.id,
-            dia: diaActual,
-            fecha: fechaActual,
-            motivo: "noquiso"
-          }];
-          saveNoVisitas(nv);
-        },
-        recordatorios: [],
-        onGuardarRecordatorio: () => {},
-        onConfirmarRecordatorio: () => {},
-        onCobrarSaldo: (monto, pago) => {
-          const cobro = {
-            id: Date.now(),
-            clienteId: cliente.id,
-            cliente: cliente.nombre,
-            dia: diaActual,
-            fechaKey: fechaActual,
-            fecha: new Date().toLocaleString("es-AR"),
-            detalle: [],
-            pago: pago,
-            neto: monto,
-            saldoDelta: monto,
-            _esCobro: true,
-            _upd: Date.now(),
-            repartidor: perfil.nombre
-          };
-          const clientesActualizados = todosClientes.map(x => x.id === cliente.id ? {
-            ...x,
-            saldo: (x.saldo || 0) + monto,
-            _upd: Date.now()
-          } : x);
-          sync({
-            ventas: [...ventas, cobro],
-            clientes: clientesActualizados
-          });
+        if (!emailDueno) {
+          alert("No se encontró el email del dueño. Contactá al soporte.");
+          return;
         }
-      }), pantalla === "venta" && !cliente && (() => {
-        setTimeout(() => irA("clientes"), 0);
-        return null;
-      })(), pantalla === "venta" && cliente && /*#__PURE__*/_jsx(NuevaVenta, {
-        cliente: cliente,
-        productos: productos,
-        fecha: fechaActual,
-        ventasCliente: ventas.filter(v => v.clienteId === cliente?.id),
-        onNoEsta: () => {
-          saveNoVisitas([...noVisitas.filter(v => !(v.clienteId === clienteId && v.fecha === fechaActual)), {
-            clienteId,
-            dia: diaClienteActual,
-            fecha: fechaActual,
-            motivo: "noesta"
-          }]);
-          irAlSiguiente();
-        },
-        onNoQuiere: () => {
-          saveNoVisitas([...noVisitas.filter(v => !(v.clienteId === clienteId && v.fecha === fechaActual)), {
-            clienteId,
-            dia: diaClienteActual,
-            fecha: fechaActual,
-            motivo: "noquiso"
-          }]);
-          irAlSiguiente();
-        },
-        onGuardar: (d, p, m, sa, ep, ed, obs, op, mt2, sd, tc) => {
-          registrarVenta(d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
-          irAlSiguiente();
-        },
-        onSaltar: () => {
-          saveNoVisitas([...noVisitas.filter(v => !(v.clienteId === clienteId && v.fecha === fechaActual)), {
-            clienteId,
-            dia: diaClienteActual,
-            fecha: fechaActual,
-            motivo: "salteado"
-          }]);
-          irAlSiguiente();
-        },
-        progressData: (() => {
-          const visitadosIds = new Set([...ventasHoy.map(v => v.clienteId), ...noVisHoy.map(v => v.clienteId)]);
-          const montoHoy = ventasHoy.reduce((a, v) => a + (v.neto || 0), 0);
-          return {
-            visitados: visitadosIds.size,
-            total: clientes.length,
-            montoHoy,
-            stock: null
-          };
-        })(),
-        onVolver: () => irA("clientes")
-      }, clienteId), pantalla === "confirmTransferRep" && /*#__PURE__*/_jsx(ConfirmacionesDia, {
-        dia: diaActual,
-        ventas: ventas.filter(v => v.pago === "transferencia" || v.pago === "mixto"),
-        clientes: todosClientes,
-        onConfirmar: ventaId => {
-          const nv = (datos.ventas || []).map(v => v.id === ventaId ? {
-            ...v,
-            transConfirmada: !v.transConfirmada
-          } : v);
-          sync({
-            ventas: nv
-          });
-        },
-        onVolver: () => irA("inicio")
-      }), pantalla === "todosClientes" && /*#__PURE__*/_jsx(TodosClientesRepartidor, {
-        clientes: misClientesTodos,
-        prospectos: prospectos,
-        ventas: ventas.filter(v => misClientesTodos.some(c => c.id === v.clienteId)),
-        onSeleccionar: c => {
-          setClienteId(c.id);
-          setDiaClienteActual(c.dia || diaActual);
-          setOrigenDetalle("todosClientes");
-          // Si es prospecto, agregarlo temporalmente a clientes
-          if (c._esProspecto && !todosClientes.find(x => x.id === c.id)) {
-            saveClientes([...todosClientes, {
-              ...c,
-              saldo: 0
-            }]);
+        // Guardar email temporalmente en rm_licencia para que usarInformes lo encuentre
+        const licTemp = {
+          email: emailDueno,
+          negocio: perfil.nombre || "Reparto"
+        };
+        const prevLic = localStorage.getItem("rm_licencia");
+        localStorage.setItem("rm_licencia", JSON.stringify(licTemp));
+        const inf = usarInformes({
+          ventas,
+          clientes,
+          planillas,
+          noVisitas,
+          productos,
+          repartoId: miReparto?.id
+        });
+        const ok = await inf.enviarDiario(fechaActual, diaActual);
+        // Restaurar licencia original
+        if (prevLic) localStorage.setItem("rm_licencia", prevLic);else localStorage.removeItem("rm_licencia");
+        if (ok) alert("\u2705 Informe enviado al dueño (" + emailDueno + ") correctamente.");else alert("\u26A0\uFE0F Error al enviar. Verificá la conexión.");
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+  }), pantalla === "elegirDia" && /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Elegir día de reparto",
+    onVolver: () => irA("inicio")
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginBottom: 12
+    }
+  }, "Por defecto ves el día de hoy (", diaDeHoy, "). Elegí otro día si necesitás adelantar un reparto o ponerte al día con uno pendiente."), DIAS.map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    style: {
+      ...s.card,
+      width: "100%",
+      textAlign: "left",
+      cursor: "pointer",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "14px 16px",
+      background: d === diaActual ? "var(--color-background-info)" : "var(--color-background-secondary)"
+    },
+    onClick: () => {
+      setDiaTemporal(d);
+      irA("elegirFecha");
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 15,
+      fontWeight: 500,
+      color: d === diaActual ? "var(--color-text-info)" : "var(--color-text-primary)"
+    }
+  }, d, d === diaDeHoy ? " · hoy" : ""), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "→"))))), pantalla === "elegirFecha" && diaTemporal && /*#__PURE__*/React.createElement(SelectorFecha, {
+    dia: diaTemporal,
+    repartoId: miReparto?.id,
+    planillas: planillas,
+    ventas: ventas.filter(v => {
+      const cl = todosClientes.find(c => c.id === v.clienteId);
+      return !miReparto || cl?.repartoId === miReparto.id;
+    }),
+    noVisitas: (noVisitas || []).filter(v => {
+      const cl = todosClientes.find(c => c.id === v.clienteId);
+      return !miReparto || cl?.repartoId === miReparto.id;
+    }),
+    onSeleccionar: (fk, fo) => {
+      setDiaActual(diaTemporal);
+      setDiaClienteActual(diaTemporal);
+      setFechaActual(fk);
+      setDiaTemporal(null);
+      irA("inicio");
+    },
+    onVolver: () => irA("elegirDia")
+  }), pantalla === "cargaDia" && /*#__PURE__*/React.createElement(InicioReparto, {
+    dia: diaActual,
+    fecha: fechaActual,
+    planilla: planillas[claveDiaReparto(diaActual, fechaActual, miReparto?.id)] || planillaDiaVacia(),
+    productos: productos,
+    cargasDia: datos.cargasDia && miReparto && datos.cargasDia[miReparto.id] || CARGA_DIA_DEFAULT,
+    stock: datos.stock || {},
+    onGuardar: (p, descontar) => {
+      savePlanilla(claveDiaReparto(diaActual, fechaActual, miReparto?.id), p);
+      if (descontar && miReparto) {
+        const s = JSON.parse(JSON.stringify(datos.stock || {
+          soderia: {},
+          soderia_vacios: {},
+          casa: {},
+          camiones: {}
+        }));
+        if (!s.soderia) s.soderia = {
+          sifon: 0,
+          bidon10: 0,
+          bidon20: 0
+        };
+        if (!s.camiones) s.camiones = {};
+        if (!s.camiones[miReparto.id]) s.camiones[miReparto.id] = {
+          sifon: 0,
+          bidon10: 0,
+          bidon20: 0,
+          dispenser: 0
+        };
+        const soda = Number(p.productos?.soda?.llenos || 0);
+        const b10 = Number(p.productos?.b10?.llenos || 0);
+        const b20 = Number(p.productos?.b20?.llenos || 0);
+        s.soderia.sifon = Math.max(0, (s.soderia.sifon || 0) - soda);
+        s.soderia.bidon10 = Math.max(0, (s.soderia.bidon10 || 0) - b10);
+        s.soderia.bidon20 = Math.max(0, (s.soderia.bidon20 || 0) - b20);
+        s.camiones[miReparto.id].sifon = (s.camiones[miReparto.id].sifon || 0) + soda;
+        s.camiones[miReparto.id].bidon10 = (s.camiones[miReparto.id].bidon10 || 0) + b10;
+        s.camiones[miReparto.id].bidon20 = (s.camiones[miReparto.id].bidon20 || 0) + b20;
+        // La carga real de hoy queda como sugerencia para la próxima vez que
+        // este reparto salga este mismo día — no depende de un número fijo.
+        const cargasDiaNuevo = {
+          ...(datos.cargasDia || {}),
+          [miReparto.id]: {
+            ...((datos.cargasDia || {})[miReparto.id] || {}),
+            [diaActual]: {
+              soda,
+              b10,
+              b20
+            }
           }
-          irA("detalleCliente");
-        },
-        onNuevoCliente: null,
-        onVolver: () => irA("inicio")
-      }), pantalla === "agendaRep" && /*#__PURE__*/_jsx(AgendaRepartidor, {
-        recordatorios: (datos.recordatorios || []).filter(r => r.paraRepartidor === perfil.nombre),
-        clientes: misClientesTodos,
-        negocioId: perfil.negocioId,
-        repartidorNombre: perfil.nombre,
-        onConfirmar: async id => {
-          const l = (datos.recordatorios || []).map(r => r.id === id && r.paraRepartidor === perfil.nombre ? {
-            ...r,
-            confirmado: true
-          } : r);
-          sync({
-            recordatorios: l
-          });
-        },
-        onEliminar: async id => {
-          const l = (datos.recordatorios || []).filter(r => !(r.id === id && r.paraRepartidor === perfil.nombre));
-          sync({
-            recordatorios: l
-          });
-        },
-        onNuevo: async datos2 => {
-          const c = misClientesTodos.find(x => x.id === datos2.clienteId);
-          const nuevo = {
-            ...datos2,
-            id: Date.now(),
-            clienteId: c?.id || null,
-            clienteNombre: c?.nombre || datos2.clienteNombre || "Sin cliente",
-            dia: c?.dia || "",
-            confirmado: false,
-            creadoPor: perfil.nombre,
-            creadoEn: new Date().toISOString(),
-            paraRepartidor: perfil.nombre
-          };
-          const l = [...(datos.recordatorios || []), nuevo];
-          sync({
-            recordatorios: l
-          });
-        },
-        onIrCliente: cId => {
-          setClienteId(cId);
-          setDiaClienteActual(misClientesTodos.find(c => c.id === cId)?.dia || diaActual);
-          irA("venta");
-        },
-        onVolver: () => irA("inicio")
-      }), pantalla === "planilla" && /*#__PURE__*/_jsx(PlanillaDelDia, {
+        };
+        sync({
+          stock: s,
+          cargasDia: cargasDiaNuevo
+        });
+      }
+      irA("clientes");
+    },
+    onVolver: () => irA("inicio")
+  }), pantalla === "clientes" && /*#__PURE__*/React.createElement(ListaClientes, {
+    clientes: clientes,
+    dia: diaActual,
+    fecha: fechaActual,
+    ventas: ventasHoy,
+    todasVentas: ventas,
+    noVisitas: noVisHoy,
+    onSeleccionar: c => {
+      setClienteId(c.id);
+      setDiaClienteActual(c.dia || diaActual);
+      setOrigenDetalle("clientes");
+      irA("detalleCliente");
+    },
+    onEntregar: c => {
+      setClienteId(c.id);
+      setDiaClienteActual(c.dia || diaActual);
+      irA("venta");
+    },
+    onNuevoCliente: null,
+    onVolver: () => irA("inicio"),
+    onEditarCliente: (id, cambios) => {
+      const clientesActualizados = todosClientes.map(x => x.id === id ? {
+        ...x,
+        ...cambios,
+        _upd: Date.now()
+      } : x);
+      sync({
+        clientes: clientesActualizados
+      });
+    },
+    onReordenar: lista => {
+      const otros = todosClientes.filter(c => !(c.dia === diaActual && (sectores.length === 0 || sectores.some(s => (c.barrio || "").toLowerCase().includes(s.toLowerCase())))));
+      saveClientes([...otros, ...lista]);
+    },
+    onRegistrarNoVisita: (cId, motivo) => {
+      const nv = [...noVisitas.filter(v => !(v.clienteId === cId && v.fecha === fechaActual)), {
+        clienteId: cId,
+        dia: diaClienteActual,
+        fecha: fechaActual,
+        motivo
+      }];
+      saveNoVisitas(nv);
+    },
+    onQuitarNoVisita: cId => saveNoVisitas(noVisitas.filter(v => !(v.clienteId === cId && v.fecha === fechaActual))),
+    onVentaProspecto: p => {
+      if (!todosClientes.find(c => c.id === p.id)) {
+        saveClientes([...todosClientes, {
+          ...p,
+          saldo: 0,
+          _esProspecto: true
+        }]);
+      }
+      setClienteId(p.id);
+      irA("venta");
+    },
+    onNoEstaProspecto: id => {
+      const nv = [...noVisitas.filter(v => !(v.clienteId === id && v.fecha === fechaActual)), {
+        clienteId: id,
         dia: diaActual,
         fecha: fechaActual,
-        repartoId: miReparto?.id,
-        ventas: ventas.filter(v => {
-          const cl = todosClientes.find(c => c.id === v.clienteId);
-          return !miReparto || cl?.repartoId === miReparto.id;
-        }),
-        clientes: clientes,
-        planilla: planillas[claveDiaReparto(diaActual, fechaActual, miReparto?.id)] || planillaDiaVacia(),
-        productos: productos,
-        stock: datos.stock || {},
-        cargasDia: datos.cargasDia && miReparto && datos.cargasDia[miReparto.id] || CARGA_DIA_DEFAULT,
-        setStock: ns => sync({
-          stock: ns
-        }),
-        syncData: overrides => sync(overrides),
-        onGuardar: d => {
-          savePlanilla(claveDiaReparto(diaActual, fechaActual, miReparto?.id), d);
-          irA("inicio");
-        },
-        onVolver: () => irA("inicio"),
-        onCerrarDia: async imgData => {
-          try {
-            // Buscar email del dueño
-            let emailDueno = "";
-            if (window.db && perfil.negocioId) {
-              const negSnap = await window.db.collection("negocios").doc(perfil.negocioId).get();
-              if (negSnap.exists) emailDueno = negSnap.data().ownerEmail || negSnap.data().email || "";
-              if (!emailDueno) {
-                const licSnap = await window.dbLicencias.collection("licencias").where("negocioId", "==", perfil.negocioId).limit(1).get();
-                if (!licSnap.empty) emailDueno = licSnap.docs[0].data().email || "";
-              }
-            }
-            if (!emailDueno) {
-              alert("No se encontró el email del dueño.");
-              return false;
-            }
-            // Datos del informe
-            const planKey = claveDiaReparto(diaActual, fechaActual, miReparto?.id);
-            const plan = planillas[planKey] || {};
-            const misClientesIds = new Set(clientes.map(c => c.id));
-            const ventasDia = ventas.filter(v => v.fechaKey === fechaActual && !v._esCobro && !v._esAjuste && misClientesIds.has(v.clienteId));
-            // Efectivo: contado + parte efectivo de mixto (igual que planilla)
-            const totalEfectivo = ventasDia.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0), 0);
-            // Transferencias: transfer + parte transfer de mixto (igual que planilla)
-            const totalTransfer = ventasDia.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0);
-            const totalFiado = ventasDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
-            const totalNeto = totalEfectivo + totalTransfer + totalFiado;
-            const retencion = Math.round(totalTransfer * 0.025);
-            const transferNeto = totalTransfer - retencion;
-            const gastosExtras = (plan.gastos || []).filter(g => g.monto);
-            const totalGastos = gastosExtras.reduce((a, g) => a + Math.round(Number(g.monto) || 0), 0);
-            const costSifon = productos.find(p => p.nombre === "Sifón 1.5L")?.costo || 133.33;
-            const costB10 = productos.find(p => p.nombre === "Bidón 10L")?.costo || 800;
-            const costB20 = productos.find(p => p.nombre === "Bidón 20L")?.costo || 1100;
-            const CAJON = 6;
-            let vendSoda = 0,
-              vendB10 = 0,
-              vendB20 = 0;
-            ventasDia.forEach(v => (v.detalle || []).forEach(d => {
-              if (d.nombre === "Sifón 1.5L") vendSoda += d.cantidad || 0;
-              if (d.nombre === "Bidón 10L") vendB10 += d.cantidad || 0;
-              if (d.nombre === "Bidón 20L") vendB20 += d.cantidad || 0;
-            }));
-            const salSoda = Number(plan.productos?.soda?.llenos || 0);
-            const salB10 = Number(plan.productos?.b10?.llenos || 0);
-            const salB20 = Number(plan.productos?.b20?.llenos || 0);
-            const volvSoda = salSoda - vendSoda;
-            const volvB10 = salB10 - vendB10;
-            const volvB20 = salB20 - vendB20;
-            const cajSoda = Math.floor(vendSoda / CAJON);
-            const totalCosto = cajSoda * (costSifon * CAJON) + vendB10 * costB10 + vendB20 * costB20;
-            const plataEnMano = totalEfectivo - totalCosto - totalGastos;
-            const fmtP = n => "$" + Math.round(Number(n) || 0).toLocaleString("es-AR");
-            const fila = (l, v, color = "") => `<tr><td style="padding:7px 0;color:#555;border-bottom:1px solid #eee">${l}</td><td style="text-align:right;font-weight:600;border-bottom:1px solid #eee;color:${color || "#222"}">${v}</td></tr>`;
-            const sep = t => `<tr><td colspan="2" style="padding:10px 0 4px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">${t}</td></tr>`;
-            const noVisHoyCount = (datos.noVisitas || []).filter(v => v.fecha === fechaActual).length;
-            const htmlContent = imgData ? `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:16px;background:#f9fafb"><div style="background:#185FA5;border-radius:12px 12px 0 0;padding:16px 20px"><h2 style="color:#fff;margin:0;font-size:17px">📋 Reparto · ${diaActual} ${fechaActual}</h2><p style="color:#c8dcf0;margin:4px 0 0;font-size:12px">Repartidor: <b>${perfil.nombre}</b></p></div><div style="background:#fff;border-radius:0 0 12px 12px;padding:12px"><img src="${imgData}" style="width:100%;border-radius:8px;display:block;" alt="Planilla del día"/></div><p style="color:#aaa;font-size:11px;text-align:center;margin-top:12px">Sistema de Reparto · Emma Soluciones Digitales</p></div>` : `
+        motivo: "noesta"
+      }];
+      saveNoVisitas(nv);
+    },
+    onNoQuiereProspecto: id => {
+      const nv = [...noVisitas.filter(v => !(v.clienteId === id && v.fecha === fechaActual)), {
+        clienteId: id,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "noquiso"
+      }];
+      saveNoVisitas(nv);
+    },
+    onConfirmarTransfer: null,
+    prospectos: prospectos,
+    recordatorios: []
+  }), pantalla === "clientes" && ventasHoy.length + noVisHoy.length >= clientes.length && clientes.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 16px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      background: "#1a8a4a"
+    },
+    onClick: () => irA("planilla")
+  }, "\u2705 Recorrido terminado \u2014 Ir a planilla del d\u00eda")), pantalla === "nuevoCliente" && false && /*#__PURE__*/React.createElement(NuevoClienteForm, {
+    sectores: sectores,
+    diaActual: diaActual,
+    onGuardar: datosNuevo => {
+      const nuevoC = Object.assign({}, datosNuevo, {
+        id: Date.now(),
+        saldo: 0,
+        repartoId: miReparto ? miReparto.id : null
+      });
+      saveClientes(todosClientes.concat([nuevoC]));
+      irA("clientes");
+    },
+    onVolver: () => irA("clientes")
+  }), pantalla === "detalleCliente" && cliente && /*#__PURE__*/React.createElement(DetalleCliente, {
+    cliente: cliente,
+    ventas: ventas.filter(v => v.clienteId === cliente.id),
+    dia: diaActual,
+    fecha: fechaActual,
+    productos: productos,
+    soloLectura: true,
+    onVenta: () => irA("venta"),
+    onVentaLibre: null,
+    onVolver: () => irA(origenDetalle),
+    onEditar: cambios => {
+      const clientesActualizados = todosClientes.map(x => x.id === cliente.id ? {
+        ...x,
+        ...cambios,
+        _upd: Date.now()
+      } : x);
+      sync({
+        clientes: clientesActualizados
+      });
+    },
+    onEliminarVenta: () => {},
+    onEditarVenta: () => {},
+    onEliminarCliente: () => {},
+    onNoEstaCliente: () => {
+      const nv = [...noVisitas.filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId: cliente.id,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "noesta"
+      }];
+      saveNoVisitas(nv);
+    },
+    onNoQuiereCliente: () => {
+      const nv = [...noVisitas.filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId: cliente.id,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "noquiso"
+      }];
+      saveNoVisitas(nv);
+    },
+    recordatorios: [],
+    onGuardarRecordatorio: () => {},
+    onConfirmarRecordatorio: () => {},
+    onCobrarSaldo: (monto, pago) => {
+      const cobro = {
+        id: Date.now(),
+        clienteId: cliente.id,
+        cliente: cliente.nombre,
+        dia: diaActual,
+        fechaKey: fechaActual,
+        fecha: new Date().toLocaleString("es-AR"),
+        detalle: [],
+        pago: pago,
+        neto: monto,
+        saldoDelta: monto,
+        _esCobro: true,
+        _upd: Date.now(),
+        repartidor: perfil.nombre
+      };
+      const clientesActualizados = todosClientes.map(x => x.id === cliente.id ? {
+        ...x,
+        saldo: (x.saldo || 0) + monto,
+        _upd: Date.now()
+      } : x);
+      sync({
+        ventas: [...ventas, cobro],
+        clientes: clientesActualizados
+      });
+    }
+  }), pantalla === "venta" && !cliente && (() => {
+    setTimeout(() => irA("clientes"), 0);
+    return null;
+  })(), pantalla === "venta" && cliente && /*#__PURE__*/React.createElement(NuevaVenta, {
+    key: clienteId,
+    cliente: cliente,
+    productos: productos,
+    fecha: fechaActual,
+    ventasCliente: ventas.filter(v => v.clienteId === cliente?.id),
+    onNoEsta: () => {
+      saveNoVisitas([...noVisitas.filter(v => !(v.clienteId === clienteId && v.fecha === fechaActual)), {
+        clienteId,
+        dia: diaClienteActual,
+        fecha: fechaActual,
+        motivo: "noesta"
+      }]);
+      irAlSiguiente();
+    },
+    onNoQuiere: () => {
+      saveNoVisitas([...noVisitas.filter(v => !(v.clienteId === clienteId && v.fecha === fechaActual)), {
+        clienteId,
+        dia: diaClienteActual,
+        fecha: fechaActual,
+        motivo: "noquiso"
+      }]);
+      irAlSiguiente();
+    },
+    onGuardar: (d, p, m, sa, ep, ed, obs, op, mt2, sd, tc) => {
+      registrarVenta(d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
+      irAlSiguiente();
+    },
+    onSaltar: () => {
+      saveNoVisitas([...noVisitas.filter(v => !(v.clienteId === clienteId && v.fecha === fechaActual)), {
+        clienteId,
+        dia: diaClienteActual,
+        fecha: fechaActual,
+        motivo: "salteado"
+      }]);
+      irAlSiguiente();
+    },
+    progressData: (() => {
+      const visitadosIds = new Set([...ventasHoy.map(v => v.clienteId), ...noVisHoy.map(v => v.clienteId)]);
+      const montoHoy = ventasHoy.reduce((a, v) => a + (v.neto || 0), 0);
+      return {
+        visitados: visitadosIds.size,
+        total: clientes.length,
+        montoHoy,
+        stock: null
+      };
+    })(),
+    onVolver: () => irA("clientes")
+  }), pantalla === "confirmTransferRep" && /*#__PURE__*/React.createElement(ConfirmacionesDia, {
+    dia: diaActual,
+    ventas: ventas.filter(v => v.pago === "transferencia" || v.pago === "mixto"),
+    clientes: todosClientes,
+    onConfirmar: ventaId => {
+      const nv = (datos.ventas || []).map(v => v.id === ventaId ? {
+        ...v,
+        transConfirmada: !v.transConfirmada
+      } : v);
+      sync({
+        ventas: nv
+      });
+    },
+    onVolver: () => irA("inicio")
+  }), pantalla === "todosClientes" && /*#__PURE__*/React.createElement(TodosClientesRepartidor, {
+    clientes: misClientesTodos,
+    prospectos: prospectos,
+    ventas: ventas.filter(v => misClientesTodos.some(c => c.id === v.clienteId)),
+    onSeleccionar: c => {
+      setClienteId(c.id);
+      setDiaClienteActual(c.dia || diaActual);
+      setOrigenDetalle("todosClientes");
+      // Si es prospecto, agregarlo temporalmente a clientes
+      if (c._esProspecto && !todosClientes.find(x => x.id === c.id)) {
+        saveClientes([...todosClientes, {
+          ...c,
+          saldo: 0
+        }]);
+      }
+      irA("detalleCliente");
+    },
+    onNuevoCliente: null,
+    onVolver: () => irA("inicio")
+  }), pantalla === "agendaRep" && /*#__PURE__*/React.createElement(AgendaRepartidor, {
+    recordatorios: (datos.recordatorios || []).filter(r => r.paraRepartidor === perfil.nombre),
+    clientes: misClientesTodos,
+    negocioId: perfil.negocioId,
+    repartidorNombre: perfil.nombre,
+    onConfirmar: async id => {
+      const l = (datos.recordatorios || []).map(r => r.id === id && r.paraRepartidor === perfil.nombre ? {
+        ...r,
+        confirmado: true
+      } : r);
+      sync({
+        recordatorios: l
+      });
+    },
+    onEliminar: async id => {
+      const l = (datos.recordatorios || []).filter(r => !(r.id === id && r.paraRepartidor === perfil.nombre));
+      sync({
+        recordatorios: l
+      });
+    },
+    onNuevo: async datos2 => {
+      const c = misClientesTodos.find(x => x.id === datos2.clienteId);
+      const nuevo = {
+        ...datos2,
+        id: Date.now(),
+        clienteId: c?.id || null,
+        clienteNombre: c?.nombre || datos2.clienteNombre || "Sin cliente",
+        dia: c?.dia || "",
+        confirmado: false,
+        creadoPor: perfil.nombre,
+        creadoEn: new Date().toISOString(),
+        paraRepartidor: perfil.nombre
+      };
+      const l = [...(datos.recordatorios || []), nuevo];
+      sync({
+        recordatorios: l
+      });
+    },
+    onIrCliente: cId => {
+      setClienteId(cId);
+      setDiaClienteActual(misClientesTodos.find(c => c.id === cId)?.dia || diaActual);
+      irA("venta");
+    },
+    onVolver: () => irA("inicio")
+  }), pantalla === "planilla" && /*#__PURE__*/React.createElement(PlanillaDelDia, {
+    dia: diaActual,
+    fecha: fechaActual,
+    repartoId: miReparto?.id,
+    ventas: ventas.filter(v => {
+      const cl = todosClientes.find(c => c.id === v.clienteId);
+      return !miReparto || cl?.repartoId === miReparto.id;
+    }),
+    clientes: clientes,
+    planilla: planillas[claveDiaReparto(diaActual, fechaActual, miReparto?.id)] || planillaDiaVacia(),
+    productos: productos,
+    stock: datos.stock || {},
+    cargasDia: datos.cargasDia && miReparto && datos.cargasDia[miReparto.id] || CARGA_DIA_DEFAULT,
+    setStock: ns => sync({
+      stock: ns
+    }),
+    syncData: overrides => sync(overrides),
+    onGuardar: d => {
+      savePlanilla(claveDiaReparto(diaActual, fechaActual, miReparto?.id), d);
+      irA("inicio");
+    },
+    onVolver: () => irA("inicio"),
+    onCerrarDia: async imgData => {
+      try {
+        // Buscar email del dueño
+        let emailDueno = "";
+        if (window.db && perfil.negocioId) {
+          const negSnap = await window.db.collection("negocios").doc(perfil.negocioId).get();
+          if (negSnap.exists) emailDueno = negSnap.data().ownerEmail || negSnap.data().email || "";
+          if (!emailDueno) {
+            const licSnap = await window.dbLicencias.collection("licencias").where("negocioId", "==", perfil.negocioId).limit(1).get();
+            if (!licSnap.empty) emailDueno = licSnap.docs[0].data().email || "";
+          }
+        }
+        if (!emailDueno) {
+          alert("No se encontró el email del dueño.");
+          return false;
+        }
+        // Datos del informe
+        const planKey = claveDiaReparto(diaActual, fechaActual, miReparto?.id);
+        const plan = planillas[planKey] || {};
+        const misClientesIds = new Set(clientes.map(c => c.id));
+        const ventasDia = ventas.filter(v => v.fechaKey === fechaActual && !v._esCobro && !v._esAjuste && misClientesIds.has(v.clienteId));
+        // Efectivo: contado + parte efectivo de mixto (igual que planilla)
+        const totalEfectivo = ventasDia.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0), 0);
+        // Transferencias: transfer + parte transfer de mixto (igual que planilla)
+        const totalTransfer = ventasDia.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0);
+        const totalFiado = ventasDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
+        const totalNeto = totalEfectivo + totalTransfer + totalFiado;
+        const retencion = Math.round(totalTransfer * 0.025);
+        const transferNeto = totalTransfer - retencion;
+        const gastosExtras = (plan.gastos || []).filter(g => g.monto);
+        const totalGastos = gastosExtras.reduce((a, g) => a + Math.round(Number(g.monto) || 0), 0);
+        const costSifon = productos.find(p => p.nombre === "Sifón 1.5L")?.costo || 133.33;
+        const costB10 = productos.find(p => p.nombre === "Bidón 10L")?.costo || 800;
+        const costB20 = productos.find(p => p.nombre === "Bidón 20L")?.costo || 1100;
+        const CAJON = 6;
+        let vendSoda = 0,
+          vendB10 = 0,
+          vendB20 = 0;
+        ventasDia.forEach(v => (v.detalle || []).forEach(d => {
+          if (d.nombre === "Sifón 1.5L") vendSoda += d.cantidad || 0;
+          if (d.nombre === "Bidón 10L") vendB10 += d.cantidad || 0;
+          if (d.nombre === "Bidón 20L") vendB20 += d.cantidad || 0;
+        }));
+        const salSoda = Number(plan.productos?.soda?.llenos || 0);
+        const salB10 = Number(plan.productos?.b10?.llenos || 0);
+        const salB20 = Number(plan.productos?.b20?.llenos || 0);
+        const volvSoda = salSoda - vendSoda;
+        const volvB10 = salB10 - vendB10;
+        const volvB20 = salB20 - vendB20;
+        const cajSoda = Math.floor(vendSoda / CAJON);
+        const totalCosto = cajSoda * (costSifon * CAJON) + vendB10 * costB10 + vendB20 * costB20;
+        const plataEnMano = totalEfectivo - totalCosto - totalGastos;
+        const fmtP = n => "$" + Math.round(Number(n) || 0).toLocaleString("es-AR");
+        const fila = (l, v, color = "") => `<tr><td style="padding:7px 0;color:#555;border-bottom:1px solid #eee">${l}</td><td style="text-align:right;font-weight:600;border-bottom:1px solid #eee;color:${color || "#222"}">${v}</td></tr>`;
+        const sep = t => `<tr><td colspan="2" style="padding:10px 0 4px;font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em">${t}</td></tr>`;
+        const noVisHoyCount = (datos.noVisitas || []).filter(v => v.fecha === fechaActual).length;
+        const htmlContent = imgData ? `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:16px;background:#f9fafb"><div style="background:#185FA5;border-radius:12px 12px 0 0;padding:16px 20px"><h2 style="color:#fff;margin:0;font-size:17px">📋 Reparto · ${diaActual} ${fechaActual}</h2><p style="color:#c8dcf0;margin:4px 0 0;font-size:12px">Repartidor: <b>${perfil.nombre}</b></p></div><div style="background:#fff;border-radius:0 0 12px 12px;padding:12px"><img src="${imgData}" style="width:100%;border-radius:8px;display:block;" alt="Planilla del día"/></div><p style="color:#aaa;font-size:11px;text-align:center;margin-top:12px">Sistema de Reparto · Emma Soluciones Digitales</p></div>` : `
                 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#f9fafb">
                   <div style="background:#185FA5;border-radius:12px 12px 0 0;padding:20px 24px">
                     <h2 style="color:#fff;margin:0;font-size:18px">📋 Informe de reparto · ${diaActual} ${fechaActual}</h2>
@@ -1718,22 +1653,20 @@ function AppRepartidor({
                   </div>
                   <p style="color:#aaa;font-size:11px;text-align:center;margin-top:16px">Sistema de Reparto · Emma Soluciones Digitales</p>
                 </div>`;
-            const ok = await window.enviarEmailBrevoRM({
-              to: emailDueno,
-              toName: "Dueno",
-              subject: `📋 Reparto ${diaActual} ${fechaActual} · ${perfil.nombre} · ${fmtP(totalNeto)} · En mano ${fmtP(plataEnMano)}`,
-              htmlContent
-            });
-            if (ok) localStorage.setItem(`sr_informe_${fechaActual}_${diaActual}`, "1");
-            return ok;
-          } catch (e) {
-            console.error(e);
-            return false;
-          }
-        }
-      })]
-    })]
-  });
+        const ok = await window.enviarEmailBrevoRM({
+          to: emailDueno,
+          toName: "Dueno",
+          subject: `📋 Reparto ${diaActual} ${fechaActual} · ${perfil.nombre} · ${fmtP(totalNeto)} · En mano ${fmtP(plataEnMano)}`,
+          htmlContent
+        });
+        if (ok) localStorage.setItem(`sr_informe_${fechaActual}_${diaActual}`, "1");
+        return ok;
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
+    }
+  })));
 }
 
 // ── PantallaActivacionRM ──────────────────────────────────────────────
@@ -1968,7 +1901,7 @@ function PantallaActivacionRM({
     textTransform: "uppercase",
     letterSpacing: "0.06em"
   };
-  return /*#__PURE__*/_jsx("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
       display: "flex",
@@ -1978,288 +1911,244 @@ function PantallaActivacionRM({
       background: "var(--color-background-primary,#0f1923)",
       padding: 24,
       overflowY: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 360
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginBottom: 28
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: "icon-192.png",
+    alt: "",
+    onError: e => e.target.remove(),
+    style: {
+      width: 64,
+      height: 64,
+      borderRadius: 16,
+      marginBottom: 12
+    }
+  }), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "var(--color-text-primary,#e2eaf4)",
+      margin: 0
+    }
+  }, "Activación de cuenta"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary,#7a9ab8)",
+      marginTop: 6,
+      lineHeight: 1.5
+    }
+  }, paso === 1 ? /*#__PURE__*/React.createElement(React.Fragment, null, "Ingresá el código que recibiste.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-tertiary,#4a6a85)"
+    }
+  }, "Dueños: RM-XXXX · Repartidores: 6 letras")) : /*#__PURE__*/React.createElement(React.Fragment, null, "Completá tus datos para activar el sistema.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#5daaff",
+      fontWeight: 500
+    }
+  }, "Código: ", codigo.trim().toUpperCase())))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary,#1a2b3c)",
+      borderRadius: 16,
+      padding: 24,
+      border: "0.5px solid rgba(255,255,255,0.08)",
+      display: "flex",
+      flexDirection: "column",
+      gap: 16
+    }
+  }, paso === 1 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "Código de activación"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...inp,
+      textAlign: "center",
+      fontSize: 18,
+      letterSpacing: "0.1em",
+      textTransform: "uppercase"
     },
-    children: /*#__PURE__*/_jsxs("div", {
-      style: {
-        width: "100%",
-        maxWidth: 360
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          textAlign: "center",
-          marginBottom: 28
-        },
-        children: [/*#__PURE__*/_jsx("img", {
-          src: "icon-192.png",
-          alt: "",
-          onError: e => e.target.remove(),
-          style: {
-            width: 64,
-            height: 64,
-            borderRadius: 16,
-            marginBottom: 12
-          }
-        }), /*#__PURE__*/_jsx("h1", {
-          style: {
-            fontSize: 20,
-            fontWeight: 700,
-            color: "var(--color-text-primary,#e2eaf4)",
-            margin: 0
-          },
-          children: "Activación de cuenta"
-        }), /*#__PURE__*/_jsx("p", {
-          style: {
-            fontSize: 13,
-            color: "var(--color-text-secondary,#7a9ab8)",
-            marginTop: 6,
-            lineHeight: 1.5
-          },
-          children: paso === 1 ? /*#__PURE__*/_jsxs(_Fragment, {
-            children: ["Ingresá el código que recibiste.", /*#__PURE__*/_jsx("br", {}), /*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 12,
-                color: "var(--color-text-tertiary,#4a6a85)"
-              },
-              children: "Dueños: RM-XXXX · Repartidores: 6 letras"
-            })]
-          }) : /*#__PURE__*/_jsxs(_Fragment, {
-            children: ["Completá tus datos para activar el sistema.", /*#__PURE__*/_jsx("br", {}), /*#__PURE__*/_jsxs("span", {
-              style: {
-                color: "#5daaff",
-                fontWeight: 500
-              },
-              children: ["Código: ", codigo.trim().toUpperCase()]
-            })]
-          })
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          background: "var(--color-background-secondary,#1a2b3c)",
-          borderRadius: 16,
-          padding: 24,
-          border: "0.5px solid rgba(255,255,255,0.08)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16
-        },
-        children: [paso === 1 && /*#__PURE__*/_jsxs(_Fragment, {
-          children: [/*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("label", {
-              style: lbl,
-              children: "Código de activación"
-            }), /*#__PURE__*/_jsx("input", {
-              style: {
-                ...inp,
-                textAlign: "center",
-                fontSize: 18,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase"
-              },
-              placeholder: "RM-XXXX o 6 letras",
-              value: codigo,
-              onChange: e => setCodigo(e.target.value.toUpperCase()),
-              onKeyDown: e => e.key === "Enter" && verificarCodigo()
-            })]
-          }), error && /*#__PURE__*/_jsxs("div", {
-            style: {
-              background: "rgba(240,112,112,0.1)",
-              border: "0.5px solid #f07070",
-              borderRadius: 8,
-              padding: "10px 12px",
-              fontSize: 13,
-              color: "#f07070"
-            },
-            children: ["⚠️ ", error]
-          }), /*#__PURE__*/_jsx("button", {
-            onClick: verificarCodigo,
-            disabled: cargando,
-            style: {
-              width: "100%",
-              padding: "14px",
-              borderRadius: 10,
-              border: "none",
-              background: "#185FA5",
-              color: "#fff",
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: cargando ? "wait" : "pointer",
-              opacity: cargando ? 0.7 : 1
-            },
-            children: cargando ? "Verificando..." : "Verificar código →"
-          }), /*#__PURE__*/_jsx("a", {
-            href: "https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto",
-            target: "_blank",
-            rel: "noopener",
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-tertiary,#4a6a85)",
-              textDecoration: "none",
-              textAlign: "center"
-            },
-            children: "💬 ¿Necesitás ayuda? Escribinos por WhatsApp"
-          })]
-        }), paso === 2 && /*#__PURE__*/_jsxs(_Fragment, {
-          children: [/*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("label", {
-              style: lbl,
-              children: "Nombre de tu negocio *"
-            }), /*#__PURE__*/_jsx("input", {
-              style: inp,
-              placeholder: "Ej: Distribuidora La Catalina",
-              value: nombre,
-              onChange: e => setNombre(e.target.value)
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("label", {
-              style: lbl,
-              children: "Número de celular *"
-            }), /*#__PURE__*/_jsx("input", {
-              style: inp,
-              type: "tel",
-              placeholder: "3816559001",
-              value: celular,
-              onChange: e => setCelular(e.target.value)
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("label", {
-              style: lbl,
-              children: "Email registrado *"
-            }), /*#__PURE__*/_jsx("input", {
-              style: inp,
-              type: "email",
-              placeholder: "tumail@ejemplo.com",
-              value: email,
-              onChange: e => setEmail(e.target.value)
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-tertiary,#4a6a85)",
-                marginTop: 4
-              },
-              children: "Recibirás los informes en este email."
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("label", {
-              style: lbl,
-              children: "PIN de activación *"
-            }), /*#__PURE__*/_jsx("input", {
-              style: {
-                ...inp,
-                textAlign: "center",
-                letterSpacing: "0.3em",
-                fontSize: 20,
-                fontWeight: 700,
-                color: "#5daaff",
-                background: "rgba(24,95,165,0.12)",
-                borderColor: "#185FA5"
-              },
-              type: "number",
-              placeholder: "••••",
-              value: pinIngresado,
-              onChange: e => setPinIngresado(e.target.value)
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-tertiary,#4a6a85)",
-                marginTop: 4
-              },
-              children: "Ingresá el PIN que te asignó el administrador. Lo vas a usar cada vez que abras la app."
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              background: "rgba(255,255,255,0.03)",
-              borderRadius: 10,
-              padding: 12,
-              border: "0.5px solid rgba(255,255,255,0.08)"
-            },
-            children: [/*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-secondary,#7a9ab8)",
-                marginBottom: 10,
-                lineHeight: 1.6,
-                maxHeight: 100,
-                overflowY: "auto"
-              },
-              children: [/*#__PURE__*/_jsx("strong", {
-                style: {
-                  color: "var(--color-text-primary,#e2eaf4)"
-                },
-                children: "Términos y Condiciones de uso"
-              }), /*#__PURE__*/_jsx("br", {}), "Al activar esta cuenta aceptás que: (1) El sistema es de uso exclusivo para gestión de reparto. (2) Los datos ingresados son responsabilidad del usuario. (3) La suscripción es mensual y se renueva automáticamente; el acceso se suspende si el pago no se realiza antes del día 11 de cada mes. (4) Emma Soluciones Digitales no se responsabiliza por pérdida de datos por falta de conectividad. (5) El PIN es personal e intransferible."]
-            }), /*#__PURE__*/_jsxs("label", {
-              style: {
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                cursor: "pointer"
-              },
-              children: [/*#__PURE__*/_jsx("input", {
-                type: "checkbox",
-                checked: terminos,
-                onChange: e => setTerminos(e.target.checked),
-                style: {
-                  width: 18,
-                  height: 18,
-                  cursor: "pointer",
-                  accentColor: "#185FA5",
-                  flexShrink: 0
-                }
-              }), /*#__PURE__*/_jsx("span", {
-                style: {
-                  fontSize: 13,
-                  color: "var(--color-text-primary,#e2eaf4)"
-                },
-                children: "Acepto los Términos y Condiciones"
-              })]
-            })]
-          }), error && /*#__PURE__*/_jsxs("div", {
-            style: {
-              background: "rgba(240,112,112,0.1)",
-              border: "0.5px solid #f07070",
-              borderRadius: 8,
-              padding: "10px 12px",
-              fontSize: 13,
-              color: "#f07070"
-            },
-            children: ["⚠️ ", error]
-          }), /*#__PURE__*/_jsx("button", {
-            onClick: completarActivacion,
-            disabled: cargando,
-            style: {
-              width: "100%",
-              padding: "14px",
-              borderRadius: 10,
-              border: "none",
-              background: "#185FA5",
-              color: "#fff",
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: cargando ? "wait" : "pointer",
-              opacity: cargando ? 0.7 : 1
-            },
-            children: cargando ? "Activando..." : "Activar cuenta →"
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-tertiary,#4a6a85)",
-          textAlign: "center",
-          marginTop: 16,
-          lineHeight: 1.6
-        },
-        children: "Sistema de Reparto · Emma Soluciones Digitales"
-      })]
-    })
-  });
+    placeholder: "RM-XXXX o 6 letras",
+    value: codigo,
+    onChange: e => setCodigo(e.target.value.toUpperCase()),
+    onKeyDown: e => e.key === "Enter" && verificarCodigo()
+  })), error && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(240,112,112,0.1)",
+      border: "0.5px solid #f07070",
+      borderRadius: 8,
+      padding: "10px 12px",
+      fontSize: 13,
+      color: "#f07070"
+    }
+  }, "⚠️ ", error), /*#__PURE__*/React.createElement("button", {
+    onClick: verificarCodigo,
+    disabled: cargando,
+    style: {
+      width: "100%",
+      padding: "14px",
+      borderRadius: 10,
+      border: "none",
+      background: "#185FA5",
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: cargando ? "wait" : "pointer",
+      opacity: cargando ? 0.7 : 1
+    }
+  }, cargando ? "Verificando..." : "Verificar código →"), /*#__PURE__*/React.createElement("a", {
+    href: "https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto",
+    target: "_blank",
+    rel: "noopener",
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-tertiary,#4a6a85)",
+      textDecoration: "none",
+      textAlign: "center"
+    }
+  }, "💬 ¿Necesitás ayuda? Escribinos por WhatsApp")), paso === 2 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "Nombre de tu negocio *"), /*#__PURE__*/React.createElement("input", {
+    style: inp,
+    placeholder: "Ej: Distribuidora La Catalina",
+    value: nombre,
+    onChange: e => setNombre(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "Número de celular *"), /*#__PURE__*/React.createElement("input", {
+    style: inp,
+    type: "tel",
+    placeholder: "3816559001",
+    value: celular,
+    onChange: e => setCelular(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "Email registrado *"), /*#__PURE__*/React.createElement("input", {
+    style: inp,
+    type: "email",
+    placeholder: "tumail@ejemplo.com",
+    value: email,
+    onChange: e => setEmail(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary,#4a6a85)",
+      marginTop: 4
+    }
+  }, "Recibirás los informes en este email.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "PIN de activación *"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...inp,
+      textAlign: "center",
+      letterSpacing: "0.3em",
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#5daaff",
+      background: "rgba(24,95,165,0.12)",
+      borderColor: "#185FA5"
+    },
+    type: "number",
+    placeholder: "••••",
+    value: pinIngresado,
+    onChange: e => setPinIngresado(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary,#4a6a85)",
+      marginTop: 4
+    }
+  }, "Ingresá el PIN que te asignó el administrador. Lo vas a usar cada vez que abras la app.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,255,255,0.03)",
+      borderRadius: 10,
+      padding: 12,
+      border: "0.5px solid rgba(255,255,255,0.08)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary,#7a9ab8)",
+      marginBottom: 10,
+      lineHeight: 1.6,
+      maxHeight: 100,
+      overflowY: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--color-text-primary,#e2eaf4)"
+    }
+  }, "Términos y Condiciones de uso"), /*#__PURE__*/React.createElement("br", null), "Al activar esta cuenta aceptás que: (1) El sistema es de uso exclusivo para gestión de reparto. (2) Los datos ingresados son responsabilidad del usuario. (3) La suscripción es mensual y se renueva automáticamente; el acceso se suspende si el pago no se realiza antes del día 11 de cada mes. (4) Emma Soluciones Digitales no se responsabiliza por pérdida de datos por falta de conectividad. (5) El PIN es personal e intransferible."), /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      cursor: "pointer"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: terminos,
+    onChange: e => setTerminos(e.target.checked),
+    style: {
+      width: 18,
+      height: 18,
+      cursor: "pointer",
+      accentColor: "#185FA5",
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary,#e2eaf4)"
+    }
+  }, "Acepto los Términos y Condiciones"))), error && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(240,112,112,0.1)",
+      border: "0.5px solid #f07070",
+      borderRadius: 8,
+      padding: "10px 12px",
+      fontSize: 13,
+      color: "#f07070"
+    }
+  }, "⚠️ ", error), /*#__PURE__*/React.createElement("button", {
+    onClick: completarActivacion,
+    disabled: cargando,
+    style: {
+      width: "100%",
+      padding: "14px",
+      borderRadius: 10,
+      border: "none",
+      background: "#185FA5",
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: cargando ? "wait" : "pointer",
+      opacity: cargando ? 0.7 : 1
+    }
+  }, cargando ? "Activando..." : "Activar cuenta →"))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary,#4a6a85)",
+      textAlign: "center",
+      marginTop: 16,
+      lineHeight: 1.6
+    }
+  }, "Sistema de Reparto · Emma Soluciones Digitales")));
 }
 
 // ── Login (ya no se usa, reemplazado por PantallaActivacionRM) ──────────────────────────────────────────────
 function Login({
   onLogin
 }) {
-  return /*#__PURE__*/_jsx(PantallaActivacionRM, {
+  return /*#__PURE__*/React.createElement(PantallaActivacionRM, {
     onActivado: onLogin || function () {}
   });
 }
@@ -2401,216 +2290,190 @@ function RepartidoresPanel({
       }
     }
     ;
-    return /*#__PURE__*/_jsxs("div", {
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         padding: 16,
         display: "flex",
         flexDirection: "column",
         gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: "var(--color-text-primary)",
+        marginBottom: 12
+      }
+    }, "👥 Repartidores activos"), cargando && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "Cargando..."), !cargando && repartidores.length === 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "Aún no hay repartidores activos."), repartidores.map(r => /*#__PURE__*/React.createElement("div", {
+      key: r.uid,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "10px 0",
+        borderBottom: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, r.nombre), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)"
+      }
+    }, (r.sectores || []).join(", ") || "Sin sectores", " · ", r.email)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        fontSize: 11,
+        padding: "4px 10px",
+        borderRadius: 8,
+        border: "0.5px solid #f5b942",
+        background: "rgba(245,185,66,0.12)",
+        color: "#f5b942",
+        cursor: "pointer",
+        fontWeight: 500
       },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 14,
-            fontWeight: 500,
-            color: "var(--color-text-primary)",
-            marginBottom: 12
-          },
-          children: "👥 Repartidores activos"
-        }), cargando && /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            color: "var(--color-text-tertiary)"
-          },
-          children: "Cargando..."
-        }), !cargando && repartidores.length === 0 && /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            color: "var(--color-text-tertiary)"
-          },
-          children: "Aún no hay repartidores activos."
-        }), repartidores.map(r => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "10px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--color-text-primary)"
-              },
-              children: r.nombre
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 11,
-                color: "var(--color-text-tertiary)"
-              },
-              children: [(r.sectores || []).join(", ") || "Sin sectores", " · ", r.email]
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              gap: 6
-            },
-            children: [/*#__PURE__*/_jsx("button", {
-              style: {
-                fontSize: 11,
-                padding: "4px 10px",
-                borderRadius: 8,
-                border: "0.5px solid #f5b942",
-                background: "rgba(245,185,66,0.12)",
-                color: "#f5b942",
-                cursor: "pointer",
-                fontWeight: 500
-              },
-              onClick: () => resetearDispositivo(r.uid, r.nombre),
-              children: "🔄 Reset"
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                fontSize: 11,
-                padding: "4px 10px",
-                borderRadius: 8,
-                border: "0.5px solid var(--color-text-success)",
-                background: "var(--color-background-success)",
-                color: "var(--color-text-success)",
-                cursor: "pointer",
-                fontWeight: 500
-              },
-              onClick: () => {
-                const enlace = typeof generarEnlaceActivacion === "function" ? generarEnlaceActivacion(r, negocioId) : "";
-                if (!enlace) {
-                  alert("Error al generar enlace");
-                  return;
-                }
-                if (navigator.share) {
-                  navigator.share({
-                    title: "Activación reparto",
-                    text: "Abrí este enlace para activar la app",
-                    url: enlace
-                  }).catch(() => {
-                    navigator.clipboard?.writeText(enlace);
-                    alert("Enlace copiado: " + enlace);
-                  });
-                } else {
-                  navigator.clipboard?.writeText(enlace).then(() => alert("✅ Enlace copiado.\nPegalo en WhatsApp y enviáselo al repartidor.")).catch(() => alert("Enlace: " + enlace));
-                }
-              },
-              children: "📤 Compartir"
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                ...s.btnDanger,
-                fontSize: 11,
-                padding: "4px 10px"
-              },
-              onClick: () => eliminar(r.uid),
-              children: "Eliminar"
-            })]
-          })]
-        }, r.uid))]
-      }), invitesPendientes.length > 0 && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0,
-          borderLeft: "3px solid #f5b942"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#f5b942",
-            marginBottom: 10
-          },
-          children: "⏳ Invitaciones pendientes"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)",
-            marginBottom: 10
-          },
-          children: "El repartidor aún no usó su código para ingresar."
-        }), invitesPendientes.map(inv => /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "8px 0",
-            borderBottom: "0.5px solid var(--color-border-tertiary)"
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 13,
-                fontWeight: 500,
-                color: "var(--color-text-primary)"
-              },
-              children: inv.nombre
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontFamily: "monospace",
-                fontSize: 16,
-                fontWeight: 700,
-                color: "#f5b942",
-                letterSpacing: "0.15em"
-              },
-              children: inv.codigo
-            })]
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "4px 10px"
-            },
-            onClick: () => {
-              const txt = `Código para ingresar a Sistema de Reparto: ${inv.codigo}`;
-              if (navigator.share) {
-                navigator.share({
-                  title: "Código de acceso",
-                  text: txt
-                });
-              } else {
-                navigator.clipboard?.writeText(txt);
-                alert("Código copiado: " + inv.codigo);
-              }
-            },
-            children: "📤 Compartir"
-          })]
-        }, inv.codigo))]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: 0,
-          background: "var(--color-background-info)",
-          border: "0.5px solid var(--color-border-info)"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            color: "var(--color-text-info)",
-            fontWeight: 600,
-            marginBottom: 6
-          },
-          children: "💡 ¿Cómo agregar un repartidor?"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)",
-            lineHeight: 1.6
-          },
-          children: ["Andá a ", /*#__PURE__*/_jsx("b", {
-            children: "Panel del dueño → + Nuevo reparto"
-          }), ", completá el nombre y el código se genera solo.", /*#__PURE__*/_jsx("br", {}), "Compartí ese código con el repartidor para que entre a la app."]
-        })]
-      })]
-    });
+      onClick: () => resetearDispositivo(r.uid, r.nombre)
+    }, "🔄 Reset"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        fontSize: 11,
+        padding: "4px 10px",
+        borderRadius: 8,
+        border: "0.5px solid var(--color-text-success)",
+        background: "var(--color-background-success)",
+        color: "var(--color-text-success)",
+        cursor: "pointer",
+        fontWeight: 500
+      },
+      onClick: () => {
+        const enlace = typeof generarEnlaceActivacion === "function" ? generarEnlaceActivacion(r, negocioId) : "";
+        if (!enlace) {
+          alert("Error al generar enlace");
+          return;
+        }
+        if (navigator.share) {
+          navigator.share({
+            title: "Activación reparto",
+            text: "Abrí este enlace para activar la app",
+            url: enlace
+          }).catch(() => {
+            navigator.clipboard?.writeText(enlace);
+            alert("Enlace copiado: " + enlace);
+          });
+        } else {
+          navigator.clipboard?.writeText(enlace).then(() => alert("✅ Enlace copiado.\nPegalo en WhatsApp y enviáselo al repartidor.")).catch(() => alert("Enlace: " + enlace));
+        }
+      }
+    }, "📤 Compartir"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btnDanger,
+        fontSize: 11,
+        padding: "4px 10px"
+      },
+      onClick: () => eliminar(r.uid)
+    }, "Eliminar"))))), invitesPendientes.length > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: 0,
+        borderLeft: "3px solid #f5b942"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: "#f5b942",
+        marginBottom: 10
+      }
+    }, "⏳ Invitaciones pendientes"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        marginBottom: 10
+      }
+    }, "El repartidor aún no usó su código para ingresar."), invitesPendientes.map(inv => /*#__PURE__*/React.createElement("div", {
+      key: inv.codigo,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "8px 0",
+        borderBottom: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, inv.nombre), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "monospace",
+        fontSize: 16,
+        fontWeight: 700,
+        color: "#f5b942",
+        letterSpacing: "0.15em"
+      }
+    }, inv.codigo)), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        fontSize: 11,
+        padding: "4px 10px"
+      },
+      onClick: () => {
+        const txt = `Código para ingresar a Sistema de Reparto: ${inv.codigo}`;
+        if (navigator.share) {
+          navigator.share({
+            title: "Código de acceso",
+            text: txt
+          });
+        } else {
+          navigator.clipboard?.writeText(txt);
+          alert("Código copiado: " + inv.codigo);
+        }
+      }
+    }, "📤 Compartir")))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: 0,
+        background: "var(--color-background-info)",
+        border: "0.5px solid var(--color-border-info)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-info)",
+        fontWeight: 600,
+        marginBottom: 6
+      }
+    }, "💡 ¿Cómo agregar un repartidor?"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        lineHeight: 1.6
+      }
+    }, "Andá a ", /*#__PURE__*/React.createElement("b", null, "Panel del dueño → + Nuevo reparto"), ", completá el nombre y el código se genera solo.", /*#__PURE__*/React.createElement("br", null), "Compartí ese código con el repartidor para que entre a la app.")));
   };
 }
 

@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  04-pdf.js — Generación PDF · usarInformes · PantallaElegirTema · Cargando
 // ════════════════════════════════════════════════════════════════════
@@ -813,167 +812,153 @@ function PantallaElegirTema({
     }
   })();
   const logo = lic?.logo || null;
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: "flex",
       flexDirection: "column",
       minHeight: "100vh",
       padding: "24px 16px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginBottom: 20
+    }
+  }, logo ? /*#__PURE__*/React.createElement("img", {
+    src: logo,
+    alt: "logo",
+    style: {
+      height: 60,
+      objectFit: "contain",
+      marginBottom: 8
+    }
+  }) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 64,
+      height: 64,
+      borderRadius: "50%",
+      background: "var(--color-background-info)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 30,
+      margin: "0 auto 8px"
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("h2", {
+    style: {
+      fontSize: 20,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 4
+    }
+  }, "Elegí tu estilo"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Esta elección va a quedar fija en tu app.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 16,
+      justifyContent: "center"
+    }
+  }, [["oscuro", "🌙 Modo oscuro"], ["claro", "☀️ Modo claro"]].map(([m, l]) => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    style: {
+      flex: 1,
+      maxWidth: 160,
+      padding: "8px 12px",
+      fontSize: 13,
+      fontWeight: 500,
+      borderRadius: 10,
+      cursor: "pointer",
+      background: modoVista === m ? "var(--color-accent)" : "var(--color-background-secondary)",
+      color: modoVista === m ? "#fff" : "var(--color-text-secondary)",
+      border: `1px solid ${modoVista === m ? "transparent" : "var(--color-border-secondary)"}`
     },
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: {
-        textAlign: "center",
-        marginBottom: 20
-      },
-      children: [logo ? /*#__PURE__*/_jsx("img", {
-        src: logo,
-        alt: "logo",
-        style: {
-          height: 60,
-          objectFit: "contain",
-          marginBottom: 8
-        }
-      }) : /*#__PURE__*/_jsx("div", {
-        style: {
-          width: 64,
-          height: 64,
-          borderRadius: "50%",
-          background: "var(--color-background-info)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 30,
-          margin: "0 auto 8px"
-        },
-        children: "💧"
-      }), /*#__PURE__*/_jsx("h2", {
-        style: {
-          fontSize: 20,
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
-          marginBottom: 4
-        },
-        children: "Elegí tu estilo"
-      }), /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-secondary)"
-        },
-        children: "Esta elección va a quedar fija en tu app."
-      })]
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        marginBottom: 16,
-        justifyContent: "center"
-      },
-      children: [["oscuro", "🌙 Modo oscuro"], ["claro", "☀️ Modo claro"]].map(([m, l]) => /*#__PURE__*/_jsx("button", {
-        style: {
-          flex: 1,
-          maxWidth: 160,
-          padding: "8px 12px",
-          fontSize: 13,
-          fontWeight: 500,
-          borderRadius: 10,
-          cursor: "pointer",
-          background: modoVista === m ? "var(--color-accent)" : "var(--color-background-secondary)",
-          color: modoVista === m ? "#fff" : "var(--color-text-secondary)",
-          border: `1px solid ${modoVista === m ? "transparent" : "var(--color-border-secondary)"}`
-        },
-        onClick: () => setModoVista(m),
-        children: l
-      }, m))
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 10,
-        marginBottom: 20
-      },
-      children: temasFiltrados.map(([id, tema]) => /*#__PURE__*/_jsxs("button", {
-        onClick: () => setSeleccion(id),
-        style: {
-          padding: "12px 10px",
-          borderRadius: 12,
-          cursor: "pointer",
-          textAlign: "center",
-          border: `2px solid ${seleccion === id ? "var(--color-accent)" : "var(--color-border-secondary)"}`,
-          background: seleccion === id ? "var(--color-background-secondary)" : "var(--color-background-tertiary)",
-          boxShadow: seleccion === id ? "0 0 0 1px var(--color-accent)" : "none"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 24,
-            marginBottom: 4
-          },
-          children: tema.emoji
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: tema.nombre
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            display: "flex",
-            gap: 3,
-            justifyContent: "center",
-            marginTop: 6
-          },
-          children: [tema.vars["--color-background-primary"], tema.vars["--color-accent"] || tema.vars["--color-text-info"], tema.vars["--color-text-success"], tema.vars["--color-text-warning"]].map((c, i) => /*#__PURE__*/_jsx("div", {
-            style: {
-              width: 14,
-              height: 14,
-              borderRadius: "50%",
-              background: c,
-              border: "1px solid rgba(128,128,128,0.3)"
-            }
-          }, i))
-        })]
-      }, id))
-    }), /*#__PURE__*/_jsx("button", {
-      style: {
-        ...s.btnPrimary,
-        width: "100%",
-        padding: "14px",
-        fontSize: 15
-      },
-      onClick: () => onElegido(seleccion),
-      children: "Confirmar estilo →"
-    })]
-  });
+    onClick: () => setModoVista(m)
+  }, l))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10,
+      marginBottom: 20
+    }
+  }, temasFiltrados.map(([id, tema]) => /*#__PURE__*/React.createElement("button", {
+    key: id,
+    onClick: () => setSeleccion(id),
+    style: {
+      padding: "12px 10px",
+      borderRadius: 12,
+      cursor: "pointer",
+      textAlign: "center",
+      border: `2px solid ${seleccion === id ? "var(--color-accent)" : "var(--color-border-secondary)"}`,
+      background: seleccion === id ? "var(--color-background-secondary)" : "var(--color-background-tertiary)",
+      boxShadow: seleccion === id ? "0 0 0 1px var(--color-accent)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      marginBottom: 4
+    }
+  }, tema.emoji), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, tema.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 3,
+      justifyContent: "center",
+      marginTop: 6
+    }
+  }, [tema.vars["--color-background-primary"], tema.vars["--color-accent"] || tema.vars["--color-text-info"], tema.vars["--color-text-success"], tema.vars["--color-text-warning"]].map((c, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      width: 14,
+      height: 14,
+      borderRadius: "50%",
+      background: c,
+      border: "1px solid rgba(128,128,128,0.3)"
+    }
+  })))))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%",
+      padding: "14px",
+      fontSize: 15
+    },
+    onClick: () => onElegido(seleccion)
+  }, "Confirmar estilo →"));
 }
 function Cargando({
   texto
 }) {
-  return /*#__PURE__*/_jsx("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       background: "var(--color-background-primary)"
-    },
-    children: /*#__PURE__*/_jsxs("div", {
-      style: {
-        textAlign: "center"
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 40,
-          marginBottom: 12
-        },
-        children: "💧"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 14,
-          color: "var(--color-text-secondary)"
-        },
-        children: texto || "Cargando..."
-      })]
-    })
-  });
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 12
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)"
+    }
+  }, texto || "Cargando...")));
 }

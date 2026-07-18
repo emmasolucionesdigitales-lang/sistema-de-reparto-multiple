@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  05-licencias.js — Brevo · PantallaActivacion · PantallaPin · getDeviceId · getLogo
 // ════════════════════════════════════════════════════════════════════
@@ -167,7 +166,7 @@ function PantallaActivacion({
     }
     setCargando(false);
   };
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: "flex",
@@ -177,179 +176,151 @@ function PantallaActivacion({
       padding: 32,
       minHeight: "100vh",
       gap: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 70,
+      height: 70,
+      borderRadius: "50%",
+      background: "var(--color-background-info)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 34
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 22,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      textAlign: "center"
+    }
+  }, "Sistema de Reparto 2026 · Multi"), paso === 1 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)",
+      textAlign: "center",
+      maxWidth: 280,
+      lineHeight: 1.5
+    }
+  }, "Primera vez aquí. Ingresá el código de activación que recibiste."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 320
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Código de activación"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      textAlign: "center",
+      fontSize: 20,
+      letterSpacing: 4,
+      textTransform: "uppercase"
     },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        width: 70,
-        height: 70,
-        borderRadius: "50%",
-        background: "var(--color-background-info)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 34
-      },
-      children: "💧"
-    }), /*#__PURE__*/_jsx("h1", {
-      style: {
-        fontSize: 22,
-        fontWeight: 600,
-        color: "var(--color-text-primary)",
-        textAlign: "center"
-      },
-      children: "Sistema de Reparto 2026 · Multi"
-    }), paso === 1 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 14,
-          color: "var(--color-text-secondary)",
-          textAlign: "center",
-          maxWidth: 280,
-          lineHeight: 1.5
-        },
-        children: "Primera vez aquí. Ingresá el código de activación que recibiste."
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          width: "100%",
-          maxWidth: 320
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Código de activación"
-        }), /*#__PURE__*/_jsx("input", {
-          style: {
-            ...s.input,
-            textAlign: "center",
-            fontSize: 20,
-            letterSpacing: 4,
-            textTransform: "uppercase"
-          },
-          placeholder: "SR2026-XXXX",
-          value: codigo,
-          onChange: e => setCodigo(e.target.value.toUpperCase()),
-          onKeyDown: e => e.key === "Enter" && verificarCodigo()
-        })]
-      }), error && /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-danger)",
-          textAlign: "center"
-        },
-        children: error
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          width: 200,
-          opacity: cargando ? 0.6 : 1
-        },
-        disabled: cargando,
-        onClick: verificarCodigo,
-        children: cargando ? "Verificando..." : "Continuar →"
-      })]
-    }), paso === 2 && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 14,
-          color: "var(--color-text-secondary)",
-          textAlign: "center",
-          maxWidth: 280,
-          lineHeight: 1.5
-        },
-        children: "✓ Código válido. Completá tus datos para activar la app."
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          width: "100%",
-          maxWidth: 320,
-          display: "flex",
-          flexDirection: "column",
-          gap: 10
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Nombre del negocio *"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Ej: Sodería La Esperanza",
-            value: negocio,
-            onChange: e => setNegocio(e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Número de celular *"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            type: "tel",
-            placeholder: "3816559001",
-            value: celular,
-            onChange: e => setCelular(e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Email (recibirás los informes aquí) *"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            type: "email",
-            placeholder: "tu@email.com",
-            value: email,
-            onChange: e => setEmail(e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("label", {
-        style: {
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 10,
-          maxWidth: 320,
-          cursor: "pointer",
-          marginTop: 4
-        },
-        children: [/*#__PURE__*/_jsx("input", {
-          type: "checkbox",
-          checked: terminos,
-          onChange: e => setTerminos(e.target.checked),
-          style: {
-            marginTop: 3,
-            width: 18,
-            height: 18,
-            accentColor: "var(--color-accent)",
-            flexShrink: 0
-          }
-        }), /*#__PURE__*/_jsxs("span", {
-          style: {
-            fontSize: 13,
-            color: "var(--color-text-secondary)",
-            lineHeight: 1.5
-          },
-          children: ["Acepto los ", /*#__PURE__*/_jsx("span", {
-            style: {
-              color: "var(--color-text-info)",
-              fontWeight: 600
-            },
-            children: "Términos y Condiciones"
-          }), " del servicio. La aplicación se contrata en modalidad mensual. El acceso se suspende si el pago no se realiza antes del día 11 de cada mes."]
-        })]
-      }), error && /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-danger)",
-          textAlign: "center"
-        },
-        children: error
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          width: 200,
-          opacity: cargando ? 0.6 : 1
-        },
-        disabled: cargando,
-        onClick: completarActivacion,
-        children: cargando ? "Activando..." : "Activar app →"
-      })]
-    })]
-  });
+    placeholder: "SR2026-XXXX",
+    value: codigo,
+    onChange: e => setCodigo(e.target.value.toUpperCase()),
+    onKeyDown: e => e.key === "Enter" && verificarCodigo()
+  })), error && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)",
+      textAlign: "center"
+    }
+  }, error), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: 200,
+      opacity: cargando ? 0.6 : 1
+    },
+    disabled: cargando,
+    onClick: verificarCodigo
+  }, cargando ? "Verificando..." : "Continuar →")), paso === 2 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)",
+      textAlign: "center",
+      maxWidth: 280,
+      lineHeight: 1.5
+    }
+  }, "✓ Código válido. Completá tus datos para activar la app."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: "100%",
+      maxWidth: 320,
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Nombre del negocio *"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Ej: Sodería La Esperanza",
+    value: negocio,
+    onChange: e => setNegocio(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Número de celular *"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "tel",
+    placeholder: "3816559001",
+    value: celular,
+    onChange: e => setCelular(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Email (recibirás los informes aquí) *"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "email",
+    placeholder: "tu@email.com",
+    value: email,
+    onChange: e => setEmail(e.target.value)
+  }))), /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 10,
+      maxWidth: 320,
+      cursor: "pointer",
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: terminos,
+    onChange: e => setTerminos(e.target.checked),
+    style: {
+      marginTop: 3,
+      width: 18,
+      height: 18,
+      accentColor: "var(--color-accent)",
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      lineHeight: 1.5
+    }
+  }, "Acepto los ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-info)",
+      fontWeight: 600
+    }
+  }, "Términos y Condiciones"), " del servicio. La aplicación se contrata en modalidad mensual. El acceso se suspende si el pago no se realiza antes del día 11 de cada mes.")), error && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)",
+      textAlign: "center"
+    }
+  }, error), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: 200,
+      opacity: cargando ? 0.6 : 1
+    },
+    disabled: cargando,
+    onClick: completarActivacion
+  }, cargando ? "Activando..." : "Activar app →")));
 }
 
 // ── Acceso biométrico (huella / Face ID) con WebAuthn — Multi ──────────────
@@ -503,7 +474,7 @@ function PantallaPin({
     onOk();
   };
   const teclas = [1, 2, 3, 4, 5, 6, 7, 8, 9, "", "0", "⌫"];
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       display: "flex",
@@ -513,216 +484,195 @@ function PantallaPin({
       padding: 32,
       minHeight: "100vh",
       gap: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 70,
+      height: 70,
+      borderRadius: "50%",
+      background: "var(--color-background-info)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 34
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      fontSize: 20,
+      fontWeight: 600,
+      color: "var(--color-text-primary)"
+    }
+  }, "Sistema de Reparto 2026 · Multi"), faseEnrolar ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 14,
+      maxWidth: 280
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 46
+    }
+  }, "👆"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 16,
+      color: "var(--color-text-primary)",
+      textAlign: "center",
+      margin: 0,
+      fontWeight: 600
+    }
+  }, "¿Entrar con tu huella la próxima vez?"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      textAlign: "center",
+      margin: 0,
+      lineHeight: 1.5
+    }
+  }, "Tu PIN sigue funcionando por si lo necesitás."), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#185FA5",
+      color: "#fff",
+      border: "none",
+      borderRadius: 10,
+      padding: "12px 20px",
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: "pointer",
+      width: 210
     },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        width: 70,
-        height: 70,
-        borderRadius: "50%",
-        background: "var(--color-background-info)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 34
-      },
-      children: "💧"
-    }), /*#__PURE__*/_jsx("h1", {
-      style: {
-        fontSize: 20,
-        fontWeight: 600,
-        color: "var(--color-text-primary)"
-      },
-      children: "Sistema de Reparto 2026 · Multi"
-    }), faseEnrolar ? /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 14,
-        maxWidth: 280
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 46
-        },
-        children: "👆"
-      }), /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 16,
-          color: "var(--color-text-primary)",
-          textAlign: "center",
-          margin: 0,
-          fontWeight: 600
-        },
-        children: "¿Entrar con tu huella la próxima vez?"
-      }), /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 12,
-          color: "var(--color-text-secondary)",
-          textAlign: "center",
-          margin: 0,
-          lineHeight: 1.5
-        },
-        children: "Tu PIN sigue funcionando por si lo necesitás."
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          background: "#185FA5",
-          color: "#fff",
-          border: "none",
-          borderRadius: 10,
-          padding: "12px 20px",
-          fontSize: 15,
-          fontWeight: 600,
-          cursor: "pointer",
-          width: 210
-        },
-        onClick: activarHuella,
-        children: "Activar huella"
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          background: "none",
-          border: "none",
-          color: "var(--color-text-secondary)",
-          fontSize: 13,
-          cursor: "pointer"
-        },
-        onClick: saltarHuella,
-        children: "Ahora no"
-      })]
-    }) : !mostrarPin && bioOn ? /*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 16
-      },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 56
-        },
-        children: "👆"
-      }), /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 15,
-          color: "var(--color-text-secondary)",
-          textAlign: "center"
-        },
-        children: "Verificando huella..."
-      }), bioMsg && /*#__PURE__*/_jsx("p", {
-        style: {
-          color: "#f5b942",
-          fontSize: 13,
-          textAlign: "center"
-        },
-        children: bioMsg
-      }), fallosBio > 0 && fallosBio < 3 && /*#__PURE__*/_jsx("button", {
-        style: {
-          background: "#185FA5",
-          color: "#fff",
-          border: "none",
-          borderRadius: 10,
-          padding: "10px 20px",
-          fontSize: 14,
-          cursor: "pointer"
-        },
-        onClick: intentarHuellaDeNuevo,
-        children: "Reintentar huella"
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          background: "none",
-          border: "none",
-          color: "var(--color-text-tertiary)",
-          fontSize: 13,
-          cursor: "pointer",
-          marginTop: 8
-        },
-        onClick: () => setMostrarPin(true),
-        children: "Usar PIN"
-      })]
-    }) : /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 14,
-          color: "var(--color-text-secondary)"
-        },
-        children: "Ingresá tu PIN de acceso"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          display: "flex",
-          gap: 16,
-          marginBottom: 8
-        },
-        children: [0, 1, 2, 3].map(i => /*#__PURE__*/_jsx("div", {
-          style: {
-            width: 18,
-            height: 18,
-            borderRadius: "50%",
-            background: intento.length > i ? "#185FA5" : "transparent",
-            border: "2px solid var(--color-border-secondary)"
+    onClick: activarHuella
+  }, "Activar huella"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-secondary)",
+      fontSize: 13,
+      cursor: "pointer"
+    },
+    onClick: saltarHuella
+  }, "Ahora no")) : !mostrarPin && bioOn ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 56
+    }
+  }, "👆"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 15,
+      color: "var(--color-text-secondary)",
+      textAlign: "center"
+    }
+  }, "Verificando huella..."), bioMsg && /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#f5b942",
+      fontSize: 13,
+      textAlign: "center"
+    }
+  }, bioMsg), fallosBio > 0 && fallosBio < 3 && /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#185FA5",
+      color: "#fff",
+      border: "none",
+      borderRadius: 10,
+      padding: "10px 20px",
+      fontSize: 14,
+      cursor: "pointer"
+    },
+    onClick: intentarHuellaDeNuevo
+  }, "Reintentar huella"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--color-text-tertiary)",
+      fontSize: 13,
+      cursor: "pointer",
+      marginTop: 8
+    },
+    onClick: () => setMostrarPin(true)
+  }, "Usar PIN")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Ingresá tu PIN de acceso"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 16,
+      marginBottom: 8
+    }
+  }, [0, 1, 2, 3].map(i => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      width: 18,
+      height: 18,
+      borderRadius: "50%",
+      background: intento.length > i ? "#185FA5" : "transparent",
+      border: "2px solid var(--color-border-secondary)"
+    }
+  }))), error && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-danger)",
+      textAlign: "center"
+    }
+  }, error), bioMsg && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#f5b942",
+      textAlign: "center"
+    }
+  }, bioMsg), !bloqueado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(3,72px)",
+      gap: 10
+    }
+  }, teclas.map((t, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    style: {
+      height: 60,
+      fontSize: t === "⌫" ? 20 : 22,
+      fontWeight: 500,
+      borderRadius: 12,
+      background: t === "" ? "transparent" : "var(--color-background-secondary)",
+      border: t === "" ? "none" : "0.5px solid var(--color-border-secondary)",
+      color: "var(--color-text-primary)",
+      cursor: t === "" ? "default" : "pointer",
+      opacity: t === "" ? 0 : 1
+    },
+    onClick: () => {
+      if (t === "") return;
+      if (t === "⌫") setIntento(v => v.slice(0, -1));else if (intento.length < 4) {
+        const nv = intento + t;
+        setIntento(nv);
+        if (nv.length === 4) setTimeout(() => {
+          if (nv === String(pin)) {
+            setError("");
+            finalizar();
+          } else {
+            setIntento("");
+            setIntentos(prev => {
+              const n2 = prev + 1;
+              if (n2 >= 5) {
+                setBloqueado(true);
+                setError("Demasiados intentos. Contactá al soporte.");
+              } else {
+                setError(`PIN incorrecto (${5 - n2} intento${5 - n2 !== 1 ? "s" : ""} restante${5 - n2 !== 1 ? "s" : ""})`);
+              }
+              return n2;
+            });
           }
-        }, i))
-      }), error && /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-danger)",
-          textAlign: "center"
-        },
-        children: error
-      }), bioMsg && /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 13,
-          color: "#f5b942",
-          textAlign: "center"
-        },
-        children: bioMsg
-      }), !bloqueado && /*#__PURE__*/_jsx("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: "repeat(3,72px)",
-          gap: 10
-        },
-        children: teclas.map((t, i) => /*#__PURE__*/_jsx("button", {
-          style: {
-            height: 60,
-            fontSize: t === "⌫" ? 20 : 22,
-            fontWeight: 500,
-            borderRadius: 12,
-            background: t === "" ? "transparent" : "var(--color-background-secondary)",
-            border: t === "" ? "none" : "0.5px solid var(--color-border-secondary)",
-            color: "var(--color-text-primary)",
-            cursor: t === "" ? "default" : "pointer",
-            opacity: t === "" ? 0 : 1
-          },
-          onClick: () => {
-            if (t === "") return;
-            if (t === "⌫") setIntento(v => v.slice(0, -1));else if (intento.length < 4) {
-              const nv = intento + t;
-              setIntento(nv);
-              if (nv.length === 4) setTimeout(() => {
-                if (nv === String(pin)) {
-                  setError("");
-                  finalizar();
-                } else {
-                  setIntento("");
-                  setIntentos(prev => {
-                    const n2 = prev + 1;
-                    if (n2 >= 5) {
-                      setBloqueado(true);
-                      setError("Demasiados intentos. Contactá al soporte.");
-                    } else {
-                      setError(`PIN incorrecto (${5 - n2} intento${5 - n2 !== 1 ? "s" : ""} restante${5 - n2 !== 1 ? "s" : ""})`);
-                    }
-                    return n2;
-                  });
-                }
-              }, 200);
-            }
-          },
-          children: t
-        }, i))
-      })]
-    })]
-  });
+        }, 200);
+      }
+    }
+  }, t)))));
 }
 function getDeviceId() {
   let id = localStorage.getItem("sr_device_id");

@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  11-promocion.js — CargaHistorica · Módulo Promoción · TagsCliente
 // ════════════════════════════════════════════════════════════════════
@@ -120,234 +119,202 @@ function CargaHistorica({
     setGuardando(false);
     alert(`✅ ${nuevasVentas.length} ventas guardadas para el ${fecha}`);
   };
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [!enConfig && /*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Carga histórica",
-      onVolver: onVolver
-    }), !enConfig && guardados > 0 && /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, !enConfig && /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Carga histórica",
+    onVolver: onVolver
+  }), !enConfig && guardados > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "4px 16px 0",
+      fontSize: 12,
+      color: "#4dd9a0"
+    }
+  }, "✓ ", guardados, " guardadas"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 2
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Fecha del reparto"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: s.input,
+    value: fecha,
+    min: "2026-01-01",
+    max: "2026-03-31",
+    onChange: e => onFechaChange(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Día"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: dia,
+    onChange: e => setDia(e.target.value)
+  }, DIAS_REP.map(d => /*#__PURE__*/React.createElement("option", {
+    key: d
+  }, d))))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%",
+      padding: "12px",
+      fontSize: 14
+    },
+    onClick: cargarClientes
+  }, "📋 Cargar clientes del ", dia, " (", clientesDia.length, " clientes)")), filas.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginBottom: 8
+    }
+  }, "Dejá en 0 los que no compraron ese día. Solo se guardan los que tienen cantidad o monto."), filas.map((f, i) => {
+    const c = clientes.find(x => x.id === f.clienteId);
+    if (!c) return null;
+    const tieneVenta = f.cantidad_sifon > 0 || f.cantidad_b10 > 0 || f.cantidad_b20 > 0 || Number(f.monto) > 0;
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
       style: {
-        padding: "4px 16px 0",
+        ...s.card,
+        margin: "0 0 8px",
+        borderLeft: tieneVenta ? "3px solid #4dd9a0" : "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: "var(--color-text-primary)",
+        marginBottom: 8
+      }
+    }, c.orden && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--color-text-tertiary)",
         fontSize: 12,
-        color: "#4dd9a0"
-      },
-      children: ["✓ ", guardados, " guardadas"]
-    }), /*#__PURE__*/_jsxs("div", {
+        marginRight: 6
+      }
+    }, "#", c.orden), c.nombre, c.sifon > 0 && /*#__PURE__*/React.createElement("span", {
       style: {
-        padding: 16
+        fontSize: 11,
+        color: "var(--color-text-tertiary)",
+        marginLeft: 6
+      }
+    }, "hab: S×", c.sifon, c.bidon10 > 0 ? ` B10×${c.bidon10}` : "", c.bidon20 > 0 ? ` B20×${c.bidon20}` : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 1fr",
+        gap: 6,
+        marginBottom: 8
+      }
+    }, [["cantidad_sifon", "Sifón"], ["cantidad_b10", "Bidón 10L"], ["cantidad_b20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+      key: k
+    }, /*#__PURE__*/React.createElement("label", {
+      style: {
+        ...s.label,
+        fontSize: 10
+      }
+    }, l), /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.inputNum,
+        textAlign: "center"
       },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          marginBottom: 12
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 8,
-            marginBottom: 10
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 2
-            },
-            children: [/*#__PURE__*/_jsx("label", {
-              style: s.label,
-              children: "Fecha del reparto"
-            }), /*#__PURE__*/_jsx("input", {
-              type: "date",
-              style: s.input,
-              value: fecha,
-              min: "2026-01-01",
-              max: "2026-03-31",
-              onChange: e => onFechaChange(e.target.value)
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              flex: 1
-            },
-            children: [/*#__PURE__*/_jsx("label", {
-              style: s.label,
-              children: "Día"
-            }), /*#__PURE__*/_jsx("select", {
-              style: s.select,
-              value: dia,
-              onChange: e => setDia(e.target.value),
-              children: DIAS_REP.map(d => /*#__PURE__*/_jsx("option", {
-                children: d
-              }, d))
-            })]
-          })]
-        }), /*#__PURE__*/_jsxs("button", {
-          style: {
-            ...s.btnPrimary,
-            width: "100%",
-            padding: "12px",
-            fontSize: 14
-          },
-          onClick: cargarClientes,
-          children: ["📋 Cargar clientes del ", dia, " (", clientesDia.length, " clientes)"]
-        })]
-      }), filas.length > 0 && /*#__PURE__*/_jsxs(_Fragment, {
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)",
-            marginBottom: 8
-          },
-          children: "Dejá en 0 los que no compraron ese día. Solo se guardan los que tienen cantidad o monto."
-        }), filas.map((f, i) => {
-          const c = clientes.find(x => x.id === f.clienteId);
-          if (!c) return null;
-          const tieneVenta = f.cantidad_sifon > 0 || f.cantidad_b10 > 0 || f.cantidad_b20 > 0 || Number(f.monto) > 0;
-          return /*#__PURE__*/_jsxs("div", {
-            style: {
-              ...s.card,
-              margin: "0 0 8px",
-              borderLeft: tieneVenta ? "3px solid #4dd9a0" : "0.5px solid var(--color-border-tertiary)"
-            },
-            children: [/*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--color-text-primary)",
-                marginBottom: 8
-              },
-              children: [c.orden && /*#__PURE__*/_jsxs("span", {
-                style: {
-                  color: "var(--color-text-tertiary)",
-                  fontSize: 12,
-                  marginRight: 6
-                },
-                children: ["#", c.orden]
-              }), c.nombre, c.sifon > 0 && /*#__PURE__*/_jsxs("span", {
-                style: {
-                  fontSize: 11,
-                  color: "var(--color-text-tertiary)",
-                  marginLeft: 6
-                },
-                children: ["hab: S×", c.sifon, c.bidon10 > 0 ? ` B10×${c.bidon10}` : "", c.bidon20 > 0 ? ` B20×${c.bidon20}` : ""]
-              })]
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: 6,
-                marginBottom: 8
-              },
-              children: [["cantidad_sifon", "Sifón"], ["cantidad_b10", "Bidón 10L"], ["cantidad_b20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-                children: [/*#__PURE__*/_jsx("label", {
-                  style: {
-                    ...s.label,
-                    fontSize: 10
-                  },
-                  children: l
-                }), /*#__PURE__*/_jsx("input", {
-                  style: {
-                    ...s.inputNum,
-                    textAlign: "center"
-                  },
-                  type: "number",
-                  min: 0,
-                  value: f[k] || "",
-                  placeholder: "0",
-                  onChange: e => setFila(i, k, Number(e.target.value) || 0)
-                })]
-              }, k))
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 6
-              },
-              children: [/*#__PURE__*/_jsxs("div", {
-                children: [/*#__PURE__*/_jsx("label", {
-                  style: {
-                    ...s.label,
-                    fontSize: 10
-                  },
-                  children: "Pago"
-                }), /*#__PURE__*/_jsx("select", {
-                  style: {
-                    ...s.select,
-                    fontSize: 12
-                  },
-                  value: f.pago,
-                  onChange: e => setFila(i, "pago", e.target.value),
-                  children: [["contado", "Contado"], ["transferencia", "Transfer."], ["fiado", "Fiado"]].map(([v, l]) => /*#__PURE__*/_jsx("option", {
-                    value: v,
-                    children: l
-                  }, v))
-                })]
-              }), /*#__PURE__*/_jsxs("div", {
-                children: [/*#__PURE__*/_jsx("label", {
-                  style: {
-                    ...s.label,
-                    fontSize: 10
-                  },
-                  children: "Monto cobrado $"
-                }), /*#__PURE__*/_jsx("input", {
-                  style: {
-                    ...s.inputNum,
-                    textAlign: "right"
-                  },
-                  type: "number",
-                  min: 0,
-                  value: f.monto,
-                  placeholder: "auto",
-                  onChange: e => setFila(i, "monto", e.target.value)
-                })]
-              })]
-            })]
-          }, i);
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.card,
-            margin: "8px 0",
-            background: "var(--color-background-secondary)"
-          },
-          children: /*#__PURE__*/_jsxs("div", {
-            style: {
-              fontSize: 13,
-              color: "var(--color-text-secondary)"
-            },
-            children: [filasConVenta.length, " ventas a guardar del ", fecha]
-          })
-        }), /*#__PURE__*/_jsxs("button", {
-          style: {
-            ...s.btnPrimary,
-            width: "100%",
-            padding: "14px",
-            fontSize: 15,
-            borderRadius: 12,
-            opacity: filasConVenta.length === 0 ? 0.5 : 1
-          },
-          disabled: filasConVenta.length === 0,
-          onClick: guardar,
-          children: ["💾 Guardar ", filasConVenta.length, " ventas del ", fecha]
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            width: "100%",
-            padding: "10px",
-            fontSize: 13,
-            marginTop: 8
-          },
-          onClick: () => setFilas([]),
-          children: "Limpiar y cargar otro día"
-        })]
-      }), filas.length === 0 && /*#__PURE__*/_jsxs("div", {
-        style: {
-          textAlign: "center",
-          padding: "40px 20px",
-          color: "var(--color-text-tertiary)",
-          fontSize: 14,
-          lineHeight: 1.8
-        },
-        children: ["Seleccioná una fecha y tocá", "\n", "\"Cargar clientes del día\"", "\n", "para empezar la carga."]
-      })]
-    })]
-  });
+      type: "number",
+      min: 0,
+      value: f[k] || "",
+      placeholder: "0",
+      onChange: e => setFila(i, k, Number(e.target.value) || 0)
+    })))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+      style: {
+        ...s.label,
+        fontSize: 10
+      }
+    }, "Pago"), /*#__PURE__*/React.createElement("select", {
+      style: {
+        ...s.select,
+        fontSize: 12
+      },
+      value: f.pago,
+      onChange: e => setFila(i, "pago", e.target.value)
+    }, [["contado", "Contado"], ["transferencia", "Transfer."], ["fiado", "Fiado"]].map(([v, l]) => /*#__PURE__*/React.createElement("option", {
+      key: v,
+      value: v
+    }, l)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+      style: {
+        ...s.label,
+        fontSize: 10
+      }
+    }, "Monto cobrado $"), /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.inputNum,
+        textAlign: "right"
+      },
+      type: "number",
+      min: 0,
+      value: f.monto,
+      placeholder: "auto",
+      onChange: e => setFila(i, "monto", e.target.value)
+    }))));
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "8px 0",
+      background: "var(--color-background-secondary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, filasConVenta.length, " ventas a guardar del ", fecha)), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      width: "100%",
+      padding: "14px",
+      fontSize: 15,
+      borderRadius: 12,
+      opacity: filasConVenta.length === 0 ? 0.5 : 1
+    },
+    disabled: filasConVenta.length === 0,
+    onClick: guardar
+  }, "💾 Guardar ", filasConVenta.length, " ventas del ", fecha), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      width: "100%",
+      padding: "10px",
+      fontSize: 13,
+      marginTop: 8
+    },
+    onClick: () => setFilas([])
+  }, "Limpiar y cargar otro día")), filas.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "40px 20px",
+      color: "var(--color-text-tertiary)",
+      fontSize: 14,
+      lineHeight: 1.8
+    }
+  }, "Seleccioná una fecha y tocá", "\n", "\"Cargar clientes del día\"", "\n", "para empezar la carga.")));
 }
 function Promocion({
   prospectos,
@@ -542,7 +509,7 @@ function Promocion({
   const eliminar = id => {
     onSave(prospectos.filter(p => p.id !== id));
   };
-  if (subVista === "nuevo") return /*#__PURE__*/_jsx(PromoNuevo, {
+  if (subVista === "nuevo") return /*#__PURE__*/React.createElement(PromoNuevo, {
     diaInicial: diaActivo || "Martes",
     onGuardar: d => {
       agregarProspecto(d);
@@ -551,7 +518,7 @@ function Promocion({
     },
     onVolver: () => setSubVista(diaActivo ? "dia" : "menu")
   });
-  if (subVista === "comodato" && selP) return /*#__PURE__*/_jsx(PromoComodato, {
+  if (subVista === "comodato" && selP) return /*#__PURE__*/React.createElement(PromoComodato, {
     prospecto: selP,
     onGuardar: cmd => {
       guardarComodato(selP.id, cmd);
@@ -559,7 +526,7 @@ function Promocion({
     },
     onVolver: () => setSubVista("detalle")
   });
-  if (subVista === "detalle" && selP) return /*#__PURE__*/_jsx(PromoDetalle, {
+  if (subVista === "detalle" && selP) return /*#__PURE__*/React.createElement(PromoDetalle, {
     prospecto: selP,
     listo: listo(selP),
     comprasCount: compras(selP),
@@ -607,411 +574,356 @@ function Promocion({
   });
   if (subVista === "dia") {
     const lista = porDia(diaActivo);
-    return /*#__PURE__*/_jsxs("div", {
-      style: s.screen,
-      children: [/*#__PURE__*/_jsx(HeaderApp, {
-        titulo: `Promoción · ${diaActivo}`,
-        onVolver: () => setSubVista("menu")
-      }), /*#__PURE__*/_jsx("div", {
+    return /*#__PURE__*/React.createElement("div", {
+      style: s.screen
+    }, /*#__PURE__*/React.createElement(HeaderApp, {
+      titulo: `Promoción · ${diaActivo}`,
+      onVolver: () => setSubVista("menu")
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "8px 14px 4px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        flexWrap: "wrap",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: s.badge("info")
+    }, lista.length, " prospectos"), lista.filter(listo).length > 0 && /*#__PURE__*/React.createElement("span", {
+      style: s.badge("success")
+    }, lista.filter(listo).length, " listos ✓"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        fontSize: 11,
+        padding: "3px 10px",
+        marginLeft: "auto",
+        background: "#185FA5",
+        color: "#e2eaf4",
+        border: "none"
+      },
+      onClick: () => setSubVista("nuevo")
+    }, "+ Nuevo"))), lista.length === 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        padding: "40px 20px",
+        color: "var(--color-text-tertiary)",
+        fontSize: 14
+      }
+    }, "No hay prospectos para ", diaActivo, ".", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12
+      }
+    }, "Tocá \"+ Nuevo\" para agregar uno.")), lista.map(p => {
+      const c = compras(p),
+        s = semanas(p),
+        vhoy = visitadoHoy(p),
+        lst = listo(p);
+      const bc = lst ? "#4dd9a0" : vhoy ? "#5daaff" : "var(--color-border-tertiary)";
+      return /*#__PURE__*/React.createElement("div", {
+        key: p.id,
         style: {
-          padding: "8px 14px 4px"
+          ...s.card,
+          borderLeft: `3px solid ${bc}`,
+          cursor: "pointer"
         },
-        children: /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            flexWrap: "wrap",
-            alignItems: "center"
-          },
-          children: [/*#__PURE__*/_jsxs("span", {
-            style: s.badge("info"),
-            children: [lista.length, " prospectos"]
-          }), lista.filter(listo).length > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.badge("success"),
-            children: [lista.filter(listo).length, " listos ✓"]
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              fontSize: 11,
-              padding: "3px 10px",
-              marginLeft: "auto",
-              background: "#185FA5",
-              color: "#e2eaf4",
-              border: "none"
-            },
-            onClick: () => setSubVista("nuevo"),
-            children: "+ Nuevo"
-          })]
-        })
-      }), lista.length === 0 && /*#__PURE__*/_jsxs("div", {
+        onClick: () => {
+          setSelId(p.id);
+          setSubVista("detalle");
+        }
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
-          textAlign: "center",
-          padding: "40px 20px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 500,
+          fontSize: 14,
+          color: "var(--color-text-primary)"
+        }
+      }, p.nombre), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: "var(--color-text-secondary)",
+          marginTop: 2
+        }
+      }, direccionProspecto(p)), p.fechaInicio && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 10,
           color: "var(--color-text-tertiary)",
-          fontSize: 14
+          marginTop: 1
+        }
+      }, "Cargado: ", new Date(p.fechaInicio).toLocaleDateString("es-AR")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 5,
+          flexWrap: "wrap",
+          marginTop: 5
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: s.tag
+      }, s, " sem."), /*#__PURE__*/React.createElement("span", {
+        style: {
+          ...s.tag,
+          color: "#4dd9a0"
+        }
+      }, c, "/4 compras"), lst && /*#__PURE__*/React.createElement("span", {
+        style: s.badge("success")
+      }, "✓ Listo"), vhoy && /*#__PURE__*/React.createElement("span", {
+        style: s.badge("info")
+      }, "Visitado hoy"), p.comodato && /*#__PURE__*/React.createElement("span", {
+        style: s.badge("warning")
+      }, "📋 Comodato"))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 8,
+          marginLeft: 10
+        }
+      }, p.maps && /*#__PURE__*/React.createElement("a", {
+        href: p.maps,
+        target: "_blank",
+        rel: "noreferrer",
+        style: {
+          fontSize: 18,
+          textDecoration: "none"
         },
-        children: ["No hay prospectos para ", diaActivo, ".", /*#__PURE__*/_jsx("br", {}), /*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 12
-          },
-          children: "Tocá \"+ Nuevo\" para agregar uno."
-        })]
-      }), lista.map(p => {
-        const c = compras(p),
-          s = semanas(p),
-          vhoy = visitadoHoy(p),
-          lst = listo(p);
-        const bc = lst ? "#4dd9a0" : vhoy ? "#5daaff" : "var(--color-border-tertiary)";
-        return /*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.card,
-            borderLeft: `3px solid ${bc}`,
-            cursor: "pointer"
-          },
-          onClick: () => {
-            setSelId(p.id);
-            setSubVista("detalle");
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start"
-            },
-            children: [/*#__PURE__*/_jsxs("div", {
-              style: {
-                flex: 1
-              },
-              children: [/*#__PURE__*/_jsx("div", {
-                style: {
-                  fontWeight: 500,
-                  fontSize: 14,
-                  color: "var(--color-text-primary)"
-                },
-                children: p.nombre
-              }), /*#__PURE__*/_jsx("div", {
-                style: {
-                  fontSize: 11,
-                  color: "var(--color-text-secondary)",
-                  marginTop: 2
-                },
-                children: direccionProspecto(p)
-              }), p.fechaInicio && /*#__PURE__*/_jsxs("div", {
-                style: {
-                  fontSize: 10,
-                  color: "var(--color-text-tertiary)",
-                  marginTop: 1
-                },
-                children: ["Cargado: ", new Date(p.fechaInicio).toLocaleDateString("es-AR")]
-              }), /*#__PURE__*/_jsxs("div", {
-                style: {
-                  display: "flex",
-                  gap: 5,
-                  flexWrap: "wrap",
-                  marginTop: 5
-                },
-                children: [/*#__PURE__*/_jsxs("span", {
-                  style: s.tag,
-                  children: [s, " sem."]
-                }), /*#__PURE__*/_jsxs("span", {
-                  style: {
-                    ...s.tag,
-                    color: "#4dd9a0"
-                  },
-                  children: [c, "/4 compras"]
-                }), lst && /*#__PURE__*/_jsx("span", {
-                  style: s.badge("success"),
-                  children: "✓ Listo"
-                }), vhoy && /*#__PURE__*/_jsx("span", {
-                  style: s.badge("info"),
-                  children: "Visitado hoy"
-                }), p.comodato && /*#__PURE__*/_jsx("span", {
-                  style: s.badge("warning"),
-                  children: "📋 Comodato"
-                })]
-              })]
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                gap: 8,
-                marginLeft: 10
-              },
-              children: [p.maps && /*#__PURE__*/_jsx("a", {
-                href: p.maps,
-                target: "_blank",
-                rel: "noreferrer",
-                style: {
-                  fontSize: 18,
-                  textDecoration: "none"
-                },
-                onClick: e => e.stopPropagation(),
-                children: "📍"
-              }), p.telefono && /*#__PURE__*/_jsx("a", {
-                href: `https://wa.me/54${p.telefono}`,
-                target: "_blank",
-                rel: "noreferrer",
-                style: {
-                  fontSize: 18,
-                  textDecoration: "none"
-                },
-                onClick: e => e.stopPropagation(),
-                children: "💬"
-              })]
-            })]
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              height: 5,
-              borderRadius: 3,
-              background: "var(--color-background-tertiary)",
-              marginTop: 8
-            },
-            children: /*#__PURE__*/_jsx("div", {
-              style: {
-                height: 5,
-                borderRadius: 3,
-                background: lst ? "#4dd9a0" : "#185FA5",
-                width: `${Math.min(100, c / 4 * 100)}%`
-              }
-            })
-          }), /*#__PURE__*/_jsx("div", {
-            style: {
-              fontSize: 10,
-              color: "var(--color-text-tertiary)",
-              marginTop: 3
-            },
-            children: lst ? "✓ 4 semanas completadas" : `${c}/4 semanas de compra`
-          })]
-        }, p.id);
-      })]
-    });
+        onClick: e => e.stopPropagation()
+      }, "📍"), p.telefono && /*#__PURE__*/React.createElement("a", {
+        href: `https://wa.me/54${p.telefono}`,
+        target: "_blank",
+        rel: "noreferrer",
+        style: {
+          fontSize: 18,
+          textDecoration: "none"
+        },
+        onClick: e => e.stopPropagation()
+      }, "💬"))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          height: 5,
+          borderRadius: 3,
+          background: "var(--color-background-tertiary)",
+          marginTop: 8
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          height: 5,
+          borderRadius: 3,
+          background: lst ? "#4dd9a0" : "#185FA5",
+          width: `${Math.min(100, c / 4 * 100)}%`
+        }
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 10,
+          color: "var(--color-text-tertiary)",
+          marginTop: 3
+        }
+      }, lst ? "✓ 4 semanas completadas" : `${c}/4 semanas de compra`));
+    }));
   }
 
   // ── Menú principal ─────────────────────────────────────────────────────────
   const activos = prospectos.filter(p => p.estado === "activo").length;
   const listos = prospectos.filter(p => p.listoConvertir && p.estado === "activo").length;
   const convertidos = prospectos.filter(p => p.estado === "convertido").length;
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Promoción",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        ...s.grid3,
-        padding: "10px 14px 8px",
-        gap: 6
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "En promoción"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.metricVal,
-            color: "#5daaff"
-          },
-          children: activos
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Listos ✓"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            ...s.metricVal,
-            color: "#4dd9a0"
-          },
-          children: listos
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.metricCard,
-        children: [/*#__PURE__*/_jsx("div", {
-          style: s.metricLabel,
-          children: "Convertidos"
-        }), /*#__PURE__*/_jsx("div", {
-          style: s.metricVal,
-          children: convertidos
-        })]
-      })]
-    }), listos > 0 && /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Promoción",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.grid3,
+      padding: "10px 14px 8px",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "En promoción"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricVal,
+      color: "#5daaff"
+    }
+  }, activos)), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Listos ✓"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricVal,
+      color: "#4dd9a0"
+    }
+  }, listos)), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Convertidos"), /*#__PURE__*/React.createElement("div", {
+    style: s.metricVal
+  }, convertidos))), listos > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 14px 6px",
+      background: "#0a2e1f",
+      border: "0.5px solid #4dd9a0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "#4dd9a0",
+      fontWeight: 500
+    }
+  }, "✓ ", listos, " listo", listos > 1 ? "s" : "", " para convertir"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-secondary)",
+      marginTop: 2
+    }
+  }, "Entrá al día para agregarlos como clientes")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      padding: "4px 14px 2px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      padding: "13px 10px",
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 12,
+      fontSize: 14,
+      fontWeight: 600,
+      cursor: "pointer"
+    },
+    onClick: () => setSubVista("nuevo")
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      lineHeight: 1
+    }
+  }, "➕"), "Agregar prospecto"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      padding: "13px 10px",
+      background: "var(--color-background-secondary)",
+      color: "var(--color-text-secondary)",
+      border: "1.5px solid var(--color-border-secondary)",
+      borderRadius: 12,
+      fontSize: 14,
+      fontWeight: 600,
+      cursor: "pointer"
+    },
+    onClick: () => importRef.current?.click()
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      lineHeight: 1
+    }
+  }, "📥"), "Importar Excel")), /*#__PURE__*/React.createElement("input", {
+    ref: importRef,
+    type: "file",
+    accept: ".xlsx,.xls",
+    style: {
+      display: "none"
+    },
+    onChange: e => {
+      importarDesdeExcel(e.target.files?.[0]);
+      e.target.value = "";
+    }
+  }), importMsg && /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "4px 14px 0",
+      padding: "10px 14px",
+      borderRadius: 10,
+      background: importMsg.tipo === "ok" ? "var(--color-background-success)" : "var(--color-background-danger)",
+      border: "0.5px solid " + (importMsg.tipo === "ok" ? "var(--color-text-success)" : "var(--color-text-danger)"),
+      display: "flex",
+      alignItems: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16
+    }
+  }, importMsg.tipo === "ok" ? "✅" : "⚠️"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: importMsg.tipo === "ok" ? "var(--color-text-success)" : "var(--color-text-danger)",
+      fontWeight: 500
+    }
+  }, importMsg.txt)), /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Seleccionar día"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, DIAS.map(d => {
+    const total = porDia(d).length,
+      lst = porDia(d).filter(listo).length;
+    return /*#__PURE__*/React.createElement("button", {
+      key: d,
       style: {
         ...s.card,
-        margin: "0 14px 6px",
-        background: "#0a2e1f",
-        border: "0.5px solid #4dd9a0"
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 13,
-          color: "#4dd9a0",
-          fontWeight: 500
-        },
-        children: ["✓ ", listos, " listo", listos > 1 ? "s" : "", " para convertir"]
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--color-text-secondary)",
-          marginTop: 2
-        },
-        children: "Entrá al día para agregarlos como clientes"
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
+        margin: 0,
+        cursor: "pointer",
+        textAlign: "left",
         display: "flex",
-        gap: 8,
-        padding: "4px 14px 2px"
-      },
-      children: [/*#__PURE__*/_jsxs("button", {
-        style: {
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          padding: "13px 10px",
-          background: "#185FA5",
-          color: "#e2eaf4",
-          border: "none",
-          borderRadius: 12,
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: "pointer"
-        },
-        onClick: () => setSubVista("nuevo"),
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 18,
-            lineHeight: 1
-          },
-          children: "➕"
-        }), "Agregar prospecto"]
-      }), /*#__PURE__*/_jsxs("button", {
-        style: {
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          padding: "13px 10px",
-          background: "var(--color-background-secondary)",
-          color: "var(--color-text-secondary)",
-          border: "1.5px solid var(--color-border-secondary)",
-          borderRadius: 12,
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: "pointer"
-        },
-        onClick: () => importRef.current?.click(),
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 18,
-            lineHeight: 1
-          },
-          children: "📥"
-        }), "Importar Excel"]
-      })]
-    }), /*#__PURE__*/_jsx("input", {
-      ref: importRef,
-      type: "file",
-      accept: ".xlsx,.xls",
-      style: {
-        display: "none"
-      },
-      onChange: e => {
-        importarDesdeExcel(e.target.files?.[0]);
-        e.target.value = "";
-      }
-    }), importMsg && /*#__PURE__*/_jsxs("div", {
-      style: {
-        margin: "4px 14px 0",
-        padding: "10px 14px",
-        borderRadius: 10,
-        background: importMsg.tipo === "ok" ? "var(--color-background-success)" : "var(--color-background-danger)",
-        border: "0.5px solid " + (importMsg.tipo === "ok" ? "var(--color-text-success)" : "var(--color-text-danger)"),
-        display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
-        gap: 8
+        padding: "14px 16px"
       },
-      children: [/*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 16
-        },
-        children: importMsg.tipo === "ok" ? "✅" : "⚠️"
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 13,
-          color: importMsg.tipo === "ok" ? "var(--color-text-success)" : "var(--color-text-danger)",
-          fontWeight: 500
-        },
-        children: importMsg.txt
-      })]
-    }), /*#__PURE__*/_jsx("span", {
-      style: s.sectionTitle,
-      children: "Seleccionar día"
-    }), /*#__PURE__*/_jsx("div", {
+      onClick: () => {
+        setDiaActivo(d);
+        setSubVista("dia");
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
-        padding: "0 14px",
+        fontSize: 15,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, d), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        marginTop: 2
+      }
+    }, total, " prospectos", lst > 0 ? ` · ${lst} listos` : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
         display: "flex",
-        flexDirection: "column",
-        gap: 8
-      },
-      children: DIAS.map(d => {
-        const total = porDia(d).length,
-          lst = porDia(d).filter(listo).length;
-        return /*#__PURE__*/_jsxs("button", {
-          style: {
-            ...s.card,
-            margin: 0,
-            cursor: "pointer",
-            textAlign: "left",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "14px 16px"
-          },
-          onClick: () => {
-            setDiaActivo(d);
-            setSubVista("dia");
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 15,
-                fontWeight: 500,
-                color: "var(--color-text-primary)"
-              },
-              children: d
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 12,
-                color: "var(--color-text-secondary)",
-                marginTop: 2
-              },
-              children: [total, " prospectos", lst > 0 ? ` · ${lst} listos` : ""]
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              gap: 6,
-              alignItems: "center"
-            },
-            children: [lst > 0 && /*#__PURE__*/_jsxs("span", {
-              style: s.badge("success"),
-              children: [lst, " ✓"]
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                color: "var(--color-text-tertiary)",
-                fontSize: 18
-              },
-              children: "→"
-            })]
-          })]
-        }, d);
-      })
-    })]
-  });
+        gap: 6,
+        alignItems: "center"
+      }
+    }, lst > 0 && /*#__PURE__*/React.createElement("span", {
+      style: s.badge("success")
+    }, lst, " ✓"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--color-text-tertiary)",
+        fontSize: 18
+      }
+    }, "→")));
+  })));
 }
 function EditarProspecto({
   prospecto: p,
@@ -1044,282 +956,216 @@ function EditarProspecto({
     ...x,
     [k]: v
   }));
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Editar prospecto",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: 14,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: s.grid2,
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Día de visita"
-          }), /*#__PURE__*/_jsx("select", {
-            style: s.select,
-            value: d.dia,
-            onChange: e => s2("dia", e.target.value),
-            children: DIAS.map(x => /*#__PURE__*/_jsx("option", {
-              value: x,
-              children: x
-            }, x))
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Orden en promoción"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            type: "number",
-            min: 1,
-            placeholder: "opcional",
-            value: d.orden || "",
-            onChange: e => s2("orden", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Familia / Nombre *"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Apellido y nombre",
-          value: d.nombre,
-          onChange: e => s2("nombre", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Barrio"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Barrio",
-          value: d.barrio,
-          onChange: e => s2("barrio", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.grid3,
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Sector"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Sec",
-            value: d.sector,
-            onChange: e => s2("sector", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Manzana"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Mz",
-            value: d.manzana,
-            onChange: e => s2("manzana", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Lote"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Lote",
-            value: d.lote,
-            onChange: e => s2("lote", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.grid2,
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Calle"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Calle",
-            value: d.calle,
-            onChange: e => s2("calle", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Número"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Nro",
-            value: d.nro,
-            onChange: e => s2("nro", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.grid2,
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Piso"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "—",
-            value: d.piso,
-            onChange: e => s2("piso", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Depto"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "—",
-            value: d.depto,
-            onChange: e => s2("depto", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Teléfono (sin 0 ni 15)"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "3816559000",
-          value: d.telefono,
-          onChange: e => s2("telefono", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "D.N.I."
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "00.000.000",
-          value: d.dni,
-          onChange: e => s2("dni", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Link Google Maps"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "https://maps.app.goo.gl/...",
-          value: d.maps,
-          onChange: e => s2("maps", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Link foto del domicilio"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "https://...",
-          value: d.foto,
-          onChange: e => s2("foto", e.target.value)
-        })]
-      }), d.foto && /*#__PURE__*/_jsx("img", {
-        src: d.foto,
-        alt: "Domicilio",
-        style: {
-          width: "100%",
-          borderRadius: 8,
-          maxHeight: 180,
-          objectFit: "cover"
-        }
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Notas"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "timbre roto, perro, deuda...",
-          value: d.notas,
-          onChange: e => s2("notas", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          ...s.label,
-          fontSize: 13,
-          marginTop: 4
-        },
-        children: "Envases en comodato"
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.grid3,
-        children: [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: {
-              ...s.label,
-              textAlign: "center"
-            },
-            children: l
-          }), /*#__PURE__*/_jsx("input", {
-            style: {
-              ...s.input,
-              textAlign: "center"
-            },
-            type: "number",
-            min: 0,
-            value: d[k] || 0,
-            onChange: e => s2(k, Number(e.target.value))
-          })]
-        }, k))
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Dispenser"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 12
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => s2("dispenser", Math.max(0, (d.dispenser || 0) - 1)),
-            children: "−"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 18,
-              fontWeight: 500,
-              minWidth: 28,
-              textAlign: "center",
-              color: "var(--color-text-primary)"
-            },
-            children: d.dispenser || 0
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => s2("dispenser", (d.dispenser || 0) + 1),
-            children: "+"
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          marginTop: 6,
-          opacity: !d.nombre ? 0.45 : 1
-        },
-        disabled: !d.nombre,
-        onClick: () => onGuardar(d),
-        children: "Guardar cambios"
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Editar prospecto",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 14,
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Día de visita"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: d.dia,
+    onChange: e => s2("dia", e.target.value)
+  }, DIAS.map(x => /*#__PURE__*/React.createElement("option", {
+    key: x,
+    value: x
+  }, x)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Orden en promoción"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    min: 1,
+    placeholder: "opcional",
+    value: d.orden || "",
+    onChange: e => s2("orden", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Familia / Nombre *"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Apellido y nombre",
+    value: d.nombre,
+    onChange: e => s2("nombre", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Barrio"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Barrio",
+    value: d.barrio,
+    onChange: e => s2("barrio", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Sector"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Sec",
+    value: d.sector,
+    onChange: e => s2("sector", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Manzana"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Mz",
+    value: d.manzana,
+    onChange: e => s2("manzana", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Lote"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Lote",
+    value: d.lote,
+    onChange: e => s2("lote", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Calle"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Calle",
+    value: d.calle,
+    onChange: e => s2("calle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Número"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Nro",
+    value: d.nro,
+    onChange: e => s2("nro", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Piso"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "—",
+    value: d.piso,
+    onChange: e => s2("piso", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Depto"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "—",
+    value: d.depto,
+    onChange: e => s2("depto", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Teléfono (sin 0 ni 15)"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "3816559000",
+    value: d.telefono,
+    onChange: e => s2("telefono", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "D.N.I."), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "00.000.000",
+    value: d.dni,
+    onChange: e => s2("dni", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Link Google Maps"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "https://maps.app.goo.gl/...",
+    value: d.maps,
+    onChange: e => s2("maps", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Link foto del domicilio"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "https://...",
+    value: d.foto,
+    onChange: e => s2("foto", e.target.value)
+  })), d.foto && /*#__PURE__*/React.createElement("img", {
+    src: d.foto,
+    alt: "Domicilio",
+    style: {
+      width: "100%",
+      borderRadius: 8,
+      maxHeight: 180,
+      objectFit: "cover"
+    }
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Notas"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "timbre roto, perro, deuda...",
+    value: d.notas,
+    onChange: e => s2("notas", e.target.value)
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.label,
+      fontSize: 13,
+      marginTop: 4
+    }
+  }, "Envases en comodato"), /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+    key: k
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      textAlign: "center"
+    }
+  }, l), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      textAlign: "center"
+    },
+    type: "number",
+    min: 0,
+    value: d[k] || 0,
+    onChange: e => s2(k, Number(e.target.value))
+  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Dispenser"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => s2("dispenser", Math.max(0, (d.dispenser || 0) - 1))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      minWidth: 28,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, d.dispenser || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => s2("dispenser", (d.dispenser || 0) + 1)
+  }, "+"))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      marginTop: 6,
+      opacity: !d.nombre ? 0.45 : 1
+    },
+    disabled: !d.nombre,
+    onClick: () => onGuardar(d)
+  }, "Guardar cambios")));
 }
 function EnvasesProspecto({
   prospecto: p,
@@ -1337,173 +1183,146 @@ function EnvasesProspecto({
     [k]: v
   }));
   const tiene = vals.sifon > 0 || vals.bidon10 > 0 || vals.bidon20 > 0 || vals.dispenser > 0;
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: editando ? 10 : 0
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Envases en comodato"), !editando && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 5,
+      flexWrap: "wrap",
+      marginTop: 4
+    }
+  }, vals.sifon > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.tag
+  }, "Sifón ×", vals.sifon), vals.bidon10 > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.tag
+  }, "10L ×", vals.bidon10), vals.bidon20 > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.tag
+  }, "20L ×", vals.bidon20), vals.dispenser > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.tag,
+      color: "#5daaff"
+    }
+  }, "Disp ×", vals.dispenser), !tiene && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, "Sin envases cargados"))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "4px 10px"
     },
-    children: [/*#__PURE__*/_jsxs("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: editando ? 10 : 0
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: "Envases en comodato"
-        }), !editando && /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 5,
-            flexWrap: "wrap",
-            marginTop: 4
-          },
-          children: [vals.sifon > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.tag,
-            children: ["Sifón ×", vals.sifon]
-          }), vals.bidon10 > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.tag,
-            children: ["10L ×", vals.bidon10]
-          }), vals.bidon20 > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.tag,
-            children: ["20L ×", vals.bidon20]
-          }), vals.dispenser > 0 && /*#__PURE__*/_jsxs("span", {
-            style: {
-              ...s.tag,
-              color: "#5daaff"
-            },
-            children: ["Disp ×", vals.dispenser]
-          }), !tiene && /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 11,
-              color: "var(--color-text-tertiary)"
-            },
-            children: "Sin envases cargados"
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btn,
-          fontSize: 11,
-          padding: "4px 10px"
-        },
-        onClick: () => {
-          if (editando) {
-            onActualizar({
-              sifon: vals.sifon,
-              bidon10: vals.bidon10,
-              bidon20: vals.bidon20,
-              dispenser: vals.dispenser
-            });
-          }
-          setEditando(!editando);
-        },
-        children: editando ? "Guardar" : "Editar"
-      })]
-    }), editando && /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("div", {
-        style: s.grid3,
-        children: [["sifon", "Sifón"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: {
-              ...s.label,
-              textAlign: "center"
-            },
-            children: l
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              justifyContent: "center"
-            },
-            children: [/*#__PURE__*/_jsx("button", {
-              style: {
-                ...s.btn,
-                padding: "3px 10px",
-                fontSize: 16,
-                lineHeight: 1
-              },
-              onClick: () => sv(k, Math.max(0, (vals[k] || 0) - 1)),
-              children: "−"
-            }), /*#__PURE__*/_jsx("span", {
-              style: {
-                fontSize: 16,
-                fontWeight: 500,
-                minWidth: 24,
-                textAlign: "center",
-                color: "var(--color-text-primary)"
-              },
-              children: vals[k] || 0
-            }), /*#__PURE__*/_jsx("button", {
-              style: {
-                ...s.btn,
-                padding: "3px 10px",
-                fontSize: 16,
-                lineHeight: 1
-              },
-              onClick: () => sv(k, (vals[k] || 0) + 1),
-              children: "+"
-            })]
-          })]
-        }, k))
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          marginTop: 8
-        },
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Dispenser"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 10
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "4px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => sv("dispenser", Math.max(0, (vals.dispenser || 0) - 1)),
-            children: "−"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 18,
-              fontWeight: 500,
-              minWidth: 28,
-              textAlign: "center",
-              color: "var(--color-text-primary)"
-            },
-            children: vals.dispenser || 0
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "4px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => sv("dispenser", (vals.dispenser || 0) + 1),
-            children: "+"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-secondary)"
-            },
-            children: "unidades"
-          })]
-        })]
-      })]
-    })]
-  });
+    onClick: () => {
+      if (editando) {
+        onActualizar({
+          sifon: vals.sifon,
+          bidon10: vals.bidon10,
+          bidon20: vals.bidon20,
+          dispenser: vals.dispenser
+        });
+      }
+      setEditando(!editando);
+    }
+  }, editando ? "Guardar" : "Editar")), editando && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, [["sifon", "Sifón"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+    key: k
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      textAlign: "center"
+    }
+  }, l), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "3px 10px",
+      fontSize: 16,
+      lineHeight: 1
+    },
+    onClick: () => sv(k, Math.max(0, (vals[k] || 0) - 1))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      minWidth: 24,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, vals[k] || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "3px 10px",
+      fontSize: 16,
+      lineHeight: 1
+    },
+    onClick: () => sv(k, (vals[k] || 0) + 1)
+  }, "+"))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Dispenser"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "4px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => sv("dispenser", Math.max(0, (vals.dispenser || 0) - 1))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      minWidth: 28,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, vals.dispenser || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "4px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => sv("dispenser", (vals.dispenser || 0) + 1)
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "unidades")))));
 }
 function PromoDetalle({
   prospecto: p,
@@ -1520,7 +1339,7 @@ function PromoDetalle({
   onEditar
 }) {
   const [editando, setEditando] = useState(false);
-  if (editando) return /*#__PURE__*/_jsx(EditarProspecto, {
+  if (editando) return /*#__PURE__*/React.createElement(EditarProspecto, {
     prospecto: p,
     onGuardar: datos => {
       onEditar(datos);
@@ -1528,347 +1347,297 @@ function PromoDetalle({
     },
     onVolver: () => setEditando(false)
   });
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Promoción",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        background: "var(--color-background-secondary)",
-        borderRadius: 10,
-        margin: "8px 14px 0",
-        padding: "10px 14px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 8
-      },
-      children: [/*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 15,
-          fontWeight: 600,
-          color: "var(--color-text-primary)"
-        },
-        children: p.nombre
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          gap: 6,
-          flexShrink: 0
-        },
-        children: [/*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "4px 10px"
-          },
-          onClick: () => setEditando(true),
-          children: "Editar"
-        }), /*#__PURE__*/_jsx("button", {
-          style: {
-            ...s.btn,
-            fontSize: 11,
-            padding: "4px 10px"
-          },
-          onClick: onComodato,
-          children: "📋"
-        })]
-      })]
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: 14
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          borderLeft: "3px solid #5daaff",
-          marginBottom: 10
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: [p.dia, " · ", p.fechaInicio && /*#__PURE__*/_jsxs("span", {
-            style: {
-              color: "var(--color-text-tertiary)"
-            },
-            children: ["Desde ", new Date(p.fechaInicio).toLocaleDateString("es-AR"), " · "]
-          }), direccionProspecto(p)]
-        }), p.dni && /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)",
-            marginTop: 2
-          },
-          children: ["DNI: ", p.dni]
-        }), p.notas && /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-warning)",
-            marginTop: 4
-          },
-          children: ["📝 ", p.notas]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 8,
-            marginTop: 8
-          },
-          children: [p.telefono && /*#__PURE__*/_jsx("a", {
-            href: `https://wa.me/54${p.telefono}`,
-            target: "_blank",
-            rel: "noreferrer",
-            style: {
-              ...s.badge("success"),
-              textDecoration: "none"
-            },
-            children: "💬 WhatsApp"
-          }), p.maps && /*#__PURE__*/_jsx("a", {
-            href: p.maps,
-            target: "_blank",
-            rel: "noreferrer",
-            style: {
-              ...s.badge("info"),
-              textDecoration: "none"
-            },
-            children: "📍 Maps"
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.grid3,
-          marginBottom: 10,
-          gap: 6
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: s.metricCard,
-          children: [/*#__PURE__*/_jsx("div", {
-            style: s.metricLabel,
-            children: "Semanas"
-          }), /*#__PURE__*/_jsx("div", {
-            style: s.metricVal,
-            children: semanasCount
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            ...s.metricCard,
-            background: comprasCount >= 4 ? "#0a2e1f" : undefined
-          },
-          children: [/*#__PURE__*/_jsx("div", {
-            style: s.metricLabel,
-            children: "Compras"
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              ...s.metricVal,
-              color: comprasCount >= 4 ? "#4dd9a0" : "var(--color-text-primary)"
-            },
-            children: [comprasCount, "/4"]
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: s.metricCard,
-          children: [/*#__PURE__*/_jsx("div", {
-            style: s.metricLabel,
-            children: "Visitas tot."
-          }), /*#__PURE__*/_jsx("div", {
-            style: s.metricVal,
-            children: (p.visitas || []).length
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          marginBottom: 10
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            height: 10,
-            borderRadius: 5,
-            background: "var(--color-background-tertiary)",
-            marginBottom: 6
-          },
-          children: /*#__PURE__*/_jsx("div", {
-            style: {
-              height: 10,
-              borderRadius: 5,
-              background: listo ? "#4dd9a0" : "#185FA5",
-              width: `${Math.min(100, comprasCount / 4 * 100)}%`,
-              transition: "width 0.4s"
-            }
-          })
-        }), listo ? /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            color: "#4dd9a0",
-            fontWeight: 500
-          },
-          children: "✓ Completó 4 semanas de compra"
-        }) : /*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: ["Faltan ", 4 - comprasCount, " compras más"]
-        })]
-      }), /*#__PURE__*/_jsx(EnvasesProspecto, {
-        prospecto: p,
-        onActualizar: cambios => {
-          onActualizarEnvases(p.id, cambios);
-        }
-      }), p.comodato && /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          marginBottom: 10,
-          background: "var(--color-background-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)",
-            marginBottom: 4,
-            fontWeight: 500
-          },
-          children: ["📋 Comodato entregado · ", p.comodato.fecha]
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            flexWrap: "wrap"
-          },
-          children: [p.comodato.sifon > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.tag,
-            children: ["Sifón ×", p.comodato.sifon]
-          }), p.comodato.bidon10 > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.tag,
-            children: ["Bidón 10L ×", p.comodato.bidon10]
-          }), p.comodato.bidon20 > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.tag,
-            children: ["Bidón 20L ×", p.comodato.bidon20]
-          }), p.comodato.dispenser > 0 && /*#__PURE__*/_jsxs("span", {
-            style: s.tag,
-            children: ["Dispenser ×", p.comodato.dispenser]
-          })]
-        })]
-      }), listo && /*#__PURE__*/_jsxs("button", {
-        style: {
-          ...s.btnPrimary,
-          marginBottom: 10,
-          background: "#0F6E56"
-        },
-        onClick: () => {
-          if (window.confirm(`¿Convertir a ${p.nombre} en cliente regular de ${p.dia}?
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Promoción",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: 10,
+      margin: "8px 14px 0",
+      padding: "10px 14px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 15,
+      fontWeight: 600,
+      color: "var(--color-text-primary)"
+    }
+  }, p.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "4px 10px"
+    },
+    onClick: () => setEditando(true)
+  }, "Editar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "4px 10px"
+    },
+    onClick: onComodato
+  }, "📋"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      borderLeft: "3px solid #5daaff",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, p.dia, " · ", p.fechaInicio && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-tertiary)"
+    }
+  }, "Desde ", new Date(p.fechaInicio).toLocaleDateString("es-AR"), " · "), direccionProspecto(p)), p.dni && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginTop: 2
+    }
+  }, "DNI: ", p.dni), p.notas && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-warning)",
+      marginTop: 4
+    }
+  }, "📝 ", p.notas), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 8
+    }
+  }, p.telefono && /*#__PURE__*/React.createElement("a", {
+    href: `https://wa.me/54${p.telefono}`,
+    target: "_blank",
+    rel: "noreferrer",
+    style: {
+      ...s.badge("success"),
+      textDecoration: "none"
+    }
+  }, "💬 WhatsApp"), p.maps && /*#__PURE__*/React.createElement("a", {
+    href: p.maps,
+    target: "_blank",
+    rel: "noreferrer",
+    style: {
+      ...s.badge("info"),
+      textDecoration: "none"
+    }
+  }, "📍 Maps"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.grid3,
+      marginBottom: 10,
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Semanas"), /*#__PURE__*/React.createElement("div", {
+    style: s.metricVal
+  }, semanasCount)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricCard,
+      background: comprasCount >= 4 ? "#0a2e1f" : undefined
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Compras"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.metricVal,
+      color: comprasCount >= 4 ? "#4dd9a0" : "var(--color-text-primary)"
+    }
+  }, comprasCount, "/4")), /*#__PURE__*/React.createElement("div", {
+    style: s.metricCard
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.metricLabel
+  }, "Visitas tot."), /*#__PURE__*/React.createElement("div", {
+    style: s.metricVal
+  }, (p.visitas || []).length))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 10,
+      borderRadius: 5,
+      background: "var(--color-background-tertiary)",
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 10,
+      borderRadius: 5,
+      background: listo ? "#4dd9a0" : "#185FA5",
+      width: `${Math.min(100, comprasCount / 4 * 100)}%`,
+      transition: "width 0.4s"
+    }
+  })), listo ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "#4dd9a0",
+      fontWeight: 500
+    }
+  }, "✓ Completó 4 semanas de compra") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Faltan ", 4 - comprasCount, " compras más")), /*#__PURE__*/React.createElement(EnvasesProspecto, {
+    prospecto: p,
+    onActualizar: cambios => {
+      onActualizarEnvases(p.id, cambios);
+    }
+  }), p.comodato && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      marginBottom: 10,
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginBottom: 4,
+      fontWeight: 500
+    }
+  }, "📋 Comodato entregado · ", p.comodato.fecha), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap"
+    }
+  }, p.comodato.sifon > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.tag
+  }, "Sifón ×", p.comodato.sifon), p.comodato.bidon10 > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.tag
+  }, "Bidón 10L ×", p.comodato.bidon10), p.comodato.bidon20 > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.tag
+  }, "Bidón 20L ×", p.comodato.bidon20), p.comodato.dispenser > 0 && /*#__PURE__*/React.createElement("span", {
+    style: s.tag
+  }, "Dispenser ×", p.comodato.dispenser))), listo && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      marginBottom: 10,
+      background: "#0F6E56"
+    },
+    onClick: () => {
+      if (window.confirm(`¿Convertir a ${p.nombre} en cliente regular de ${p.dia}?
 
 El número de orden en la ruta se asigna después desde Gestión de clientes.`)) onConvertir();
-        },
-        children: ["✓ Convertir a cliente regular de ", p.dia]
-      }), !visitadoHoy && /*#__PURE__*/_jsxs(_Fragment, {
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            ...s.sectionTitle,
-            padding: "0 0 8px"
-          },
-          children: "Registrar visita de hoy"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 8,
-            marginBottom: 12
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              background: "#0a2e1f",
-              color: "#4dd9a0",
-              border: "0.5px solid #4dd9a0",
-              borderRadius: 8,
-              padding: "12px 4px",
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: "pointer"
-            },
-            onClick: () => onRegistrar("compro"),
-            children: "✓ Compró"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              background: "var(--color-background-warning)",
-              color: "var(--color-text-warning)",
-              border: "0.5px solid var(--color-border-warning)",
-              borderRadius: 8,
-              padding: "12px 4px",
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: "pointer"
-            },
-            onClick: () => onRegistrar("noesta"),
-            children: "No estaba"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btnDanger,
-              padding: "12px 4px",
-              fontSize: 12
-            },
-            onClick: () => onRegistrar("noquiso"),
-            children: "No quiso"
-          })]
-        })]
-      }), visitadoHoy && /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.badge("info"),
-          display: "inline-block",
-          marginBottom: 12,
-          fontSize: 12,
-          padding: "6px 12px"
-        },
-        children: "✓ Ya visitado hoy"
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          ...s.sectionTitle,
-          padding: "0 0 8px"
-        },
-        children: "Historial"
-      }), (p.visitas || []).length === 0 && /*#__PURE__*/_jsx("p", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-tertiary)"
-        },
-        children: "Sin visitas aún"
-      }), [...(p.visitas || [])].reverse().map((v, i) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          margin: "0 0 6px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: v.fecha
-        }), /*#__PURE__*/_jsx("span", {
-          style: v.resultado === "compro" ? s.badge("success") : v.resultado === "noquiso" ? s.badge("danger") : s.badge("warning"),
-          children: v.resultado === "compro" ? "✓ Compró" : v.resultado === "noquiso" ? "No quiso" : "No estaba"
-        })]
-      }, i)), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.divider,
-          marginTop: 16
-        }
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnDanger,
-          width: "100%",
-          padding: "10px"
-        },
-        onClick: () => {
-          if (window.confirm(`¿Eliminar a ${p.nombre}?`)) onEliminar();
-        },
-        children: "Eliminar prospecto"
-      })]
-    })]
-  });
+    }
+  }, "✓ Convertir a cliente regular de ", p.dia), !visitadoHoy && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.sectionTitle,
+      padding: "0 0 8px"
+    }
+  }, "Registrar visita de hoy"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 8,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#0a2e1f",
+      color: "#4dd9a0",
+      border: "0.5px solid #4dd9a0",
+      borderRadius: 8,
+      padding: "12px 4px",
+      fontSize: 12,
+      fontWeight: 500,
+      cursor: "pointer"
+    },
+    onClick: () => onRegistrar("compro")
+  }, "✓ Compró"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "var(--color-background-warning)",
+      color: "var(--color-text-warning)",
+      border: "0.5px solid var(--color-border-warning)",
+      borderRadius: 8,
+      padding: "12px 4px",
+      fontSize: 12,
+      fontWeight: 500,
+      cursor: "pointer"
+    },
+    onClick: () => onRegistrar("noesta")
+  }, "No estaba"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnDanger,
+      padding: "12px 4px",
+      fontSize: 12
+    },
+    onClick: () => onRegistrar("noquiso")
+  }, "No quiso"))), visitadoHoy && /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.badge("info"),
+      display: "inline-block",
+      marginBottom: 12,
+      fontSize: 12,
+      padding: "6px 12px"
+    }
+  }, "✓ Ya visitado hoy"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.sectionTitle,
+      padding: "0 0 8px"
+    }
+  }, "Historial"), (p.visitas || []).length === 0 && /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-tertiary)"
+    }
+  }, "Sin visitas aún"), [...(p.visitas || [])].reverse().map((v, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      ...s.card,
+      margin: "0 0 6px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, v.fecha), /*#__PURE__*/React.createElement("span", {
+    style: v.resultado === "compro" ? s.badge("success") : v.resultado === "noquiso" ? s.badge("danger") : s.badge("warning")
+  }, v.resultado === "compro" ? "✓ Compró" : v.resultado === "noquiso" ? "No quiso" : "No estaba"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.divider,
+      marginTop: 16
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnDanger,
+      width: "100%",
+      padding: "10px"
+    },
+    onClick: () => {
+      if (window.confirm(`¿Eliminar a ${p.nombre}?`)) onEliminar();
+    }
+  }, "Eliminar prospecto")));
 }
 function PromoNuevo({
   diaInicial,
@@ -1900,273 +1669,209 @@ function PromoNuevo({
     ...x,
     [k]: v
   }));
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: "Nuevo prospecto",
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: 14,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Día de visita"
-        }), /*#__PURE__*/_jsx("select", {
-          style: s.select,
-          value: d.dia,
-          onChange: e => s2("dia", e.target.value),
-          children: DIAS.map(x => /*#__PURE__*/_jsx("option", {
-            value: x,
-            children: x
-          }, x))
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Orden en promoción (opcional)"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          type: "number",
-          min: 1,
-          placeholder: "solo para ordenar la lista de promoción",
-          value: d.orden || "",
-          onChange: e => s2("orden", e.target.value)
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-tertiary)",
-            marginTop: 3
-          },
-          children: "El número de ruta se asigna cuando se convierte en cliente regular"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Familia / Nombre *"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Apellido y nombre",
-          value: d.nombre,
-          onChange: e => s2("nombre", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Barrio"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "Barrio",
-          value: d.barrio,
-          onChange: e => s2("barrio", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.grid3,
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Sector"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Sec",
-            value: d.sector,
-            onChange: e => s2("sector", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Manzana"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Mz",
-            value: d.manzana,
-            onChange: e => s2("manzana", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Lote"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Lote",
-            value: d.lote,
-            onChange: e => s2("lote", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.grid2,
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Calle"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Calle",
-            value: d.calle,
-            onChange: e => s2("calle", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Número"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Nro",
-            value: d.nro,
-            onChange: e => s2("nro", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: s.grid2,
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Piso"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "—",
-            value: d.piso,
-            onChange: e => s2("piso", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Depto"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "—",
-            value: d.depto,
-            onChange: e => s2("depto", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Teléfono (sin 0 ni 15)"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "3816559000",
-          value: d.telefono,
-          onChange: e => s2("telefono", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "D.N.I."
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "00.000.000",
-          value: d.dni,
-          onChange: e => s2("dni", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Link Google Maps"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "https://maps.app.goo.gl/...",
-          value: d.maps,
-          onChange: e => s2("maps", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Notas"
-        }), /*#__PURE__*/_jsx("input", {
-          style: s.input,
-          placeholder: "timbre roto, perro, deuda...",
-          value: d.notas,
-          onChange: e => s2("notas", e.target.value)
-        })]
-      }), /*#__PURE__*/_jsx("span", {
-        style: {
-          ...s.label,
-          fontSize: 13,
-          marginTop: 4
-        },
-        children: "Envases entregados en comodato"
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.grid3,
-        children: [["sifon", "Sifón"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: {
-              ...s.label,
-              textAlign: "center"
-            },
-            children: l
-          }), /*#__PURE__*/_jsx("input", {
-            style: {
-              ...s.input,
-              textAlign: "center"
-            },
-            type: "number",
-            min: 0,
-            value: d[k] || 0,
-            onChange: e => s2(k, Number(e.target.value))
-          })]
-        }, k))
-      }), /*#__PURE__*/_jsxs("div", {
-        children: [/*#__PURE__*/_jsx("label", {
-          style: s.label,
-          children: "Dispenser"
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 12
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => s2("dispenser", Math.max(0, (d.dispenser || 0) - 1)),
-            children: "−"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 18,
-              fontWeight: 500,
-              minWidth: 28,
-              textAlign: "center",
-              color: "var(--color-text-primary)"
-            },
-            children: d.dispenser || 0
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "5px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => s2("dispenser", (d.dispenser || 0) + 1),
-            children: "+"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-secondary)"
-            },
-            children: "unidades"
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          ...s.btnPrimary,
-          marginTop: 4,
-          opacity: !d.nombre ? 0.45 : 1
-        },
-        disabled: !d.nombre,
-        onClick: () => onGuardar(d),
-        children: "Agregar prospecto"
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Nuevo prospecto",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 14,
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Día de visita"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: d.dia,
+    onChange: e => s2("dia", e.target.value)
+  }, DIAS.map(x => /*#__PURE__*/React.createElement("option", {
+    key: x,
+    value: x
+  }, x)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Orden en promoción (opcional)"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    min: 1,
+    placeholder: "solo para ordenar la lista de promoción",
+    value: d.orden || "",
+    onChange: e => s2("orden", e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      marginTop: 3
+    }
+  }, "El número de ruta se asigna cuando se convierte en cliente regular")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Familia / Nombre *"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Apellido y nombre",
+    value: d.nombre,
+    onChange: e => s2("nombre", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Barrio"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Barrio",
+    value: d.barrio,
+    onChange: e => s2("barrio", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Sector"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Sec",
+    value: d.sector,
+    onChange: e => s2("sector", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Manzana"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Mz",
+    value: d.manzana,
+    onChange: e => s2("manzana", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Lote"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Lote",
+    value: d.lote,
+    onChange: e => s2("lote", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Calle"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Calle",
+    value: d.calle,
+    onChange: e => s2("calle", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Número"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Nro",
+    value: d.nro,
+    onChange: e => s2("nro", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Piso"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "—",
+    value: d.piso,
+    onChange: e => s2("piso", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Depto"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "—",
+    value: d.depto,
+    onChange: e => s2("depto", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Teléfono (sin 0 ni 15)"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "3816559000",
+    value: d.telefono,
+    onChange: e => s2("telefono", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "D.N.I."), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "00.000.000",
+    value: d.dni,
+    onChange: e => s2("dni", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Link Google Maps"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "https://maps.app.goo.gl/...",
+    value: d.maps,
+    onChange: e => s2("maps", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Notas"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "timbre roto, perro, deuda...",
+    value: d.notas,
+    onChange: e => s2("notas", e.target.value)
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.label,
+      fontSize: 13,
+      marginTop: 4
+    }
+  }, "Envases entregados en comodato"), /*#__PURE__*/React.createElement("div", {
+    style: s.grid3
+  }, [["sifon", "Sifón"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+    key: k
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      textAlign: "center"
+    }
+  }, l), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      textAlign: "center"
+    },
+    type: "number",
+    min: 0,
+    value: d[k] || 0,
+    onChange: e => s2(k, Number(e.target.value))
+  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Dispenser"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => s2("dispenser", Math.max(0, (d.dispenser || 0) - 1))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      minWidth: 28,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, d.dispenser || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "5px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => s2("dispenser", (d.dispenser || 0) + 1)
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "unidades"))), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      marginTop: 4,
+      opacity: !d.nombre ? 0.45 : 1
+    },
+    disabled: !d.nombre,
+    onClick: () => onGuardar(d)
+  }, "Agregar prospecto")));
 }
 function PromoComodato({
   prospecto: p,
@@ -2187,232 +1892,196 @@ function PromoComodato({
     ...x,
     [k]: v
   }));
-  return /*#__PURE__*/_jsxs("div", {
-    style: s.screen,
-    children: [/*#__PURE__*/_jsx(HeaderApp, {
-      titulo: `Comodato · ${p.nombre}`,
-      onVolver: onVolver
-    }), /*#__PURE__*/_jsxs("div", {
-      style: {
-        padding: 14
-      },
-      children: [/*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.card,
-          textAlign: "center",
-          marginBottom: 10,
-          background: "var(--color-background-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: "Soda y Agua Tratada Envasada"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 18,
-            fontWeight: 500,
-            color: "#5daaff",
-            margin: "4px 0"
-          },
-          children: "LA CATALINA"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: "De Guillermo Carabajal Ponce"
-        }), /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-primary)",
-            marginTop: 6
-          },
-          children: "Comodato — Ficha del cliente"
-        })]
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--color-text-secondary)",
-          marginBottom: 10
-        },
-        children: ["San Miguel de Tucumán: ", new Date().toLocaleDateString("es-AR")]
-      }), [["Familia", p.nombre], ["Barrio", p.barrio], ["Sec / Mz / Lote", `${p.sector || "—"} / ${p.manzana || "—"} / ${p.lote || "—"}`], ["Calle", p.calle ? `${p.calle} ${p.nro || ""}` : ""]].filter(([, v]) => v).map(([l, v]) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          padding: "6px 0",
-          borderBottom: "0.5px solid var(--color-border-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 12,
-            color: "var(--color-text-secondary)"
-          },
-          children: l
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 13,
-            color: "var(--color-text-primary)",
-            fontWeight: 500
-          },
-          children: v
-        })]
-      }, l)), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.grid2,
-          margin: "10px 0"
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Piso"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "—",
-            value: c.piso || "",
-            onChange: e => sc("piso", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Depto"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "—",
-            value: c.depto || "",
-            onChange: e => sc("depto", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("div", {
-        style: s.divider
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          padding: "4px 0 10px"
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: "Producto"
-        }), /*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--color-text-primary)"
-          },
-          children: "Cantidad"
-        })]
-      }), [["sifon", "Sifón 1500cc"], ["bidon10", "Bidón 10 lts."], ["bidon20", "Bidón 20 lts."], ["dispenser", "Dispenser"]].map(([k, l]) => /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "8px 0",
-          borderBottom: "0.5px solid var(--color-border-tertiary)"
-        },
-        children: [/*#__PURE__*/_jsx("span", {
-          style: {
-            fontSize: 14,
-            color: "var(--color-text-primary)"
-          },
-          children: l
-        }), /*#__PURE__*/_jsxs("div", {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 10
-          },
-          children: [/*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "4px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => sc(k, Math.max(0, (c[k] || 0) - 1)),
-            children: "−"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 18,
-              fontWeight: 500,
-              minWidth: 30,
-              textAlign: "center",
-              color: "var(--color-text-primary)"
-            },
-            children: c[k] || 0
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              padding: "4px 14px",
-              fontSize: 18,
-              lineHeight: 1
-            },
-            onClick: () => sc(k, (c[k] || 0) + 1),
-            children: "+"
-          }), /*#__PURE__*/_jsx("span", {
-            style: {
-              fontSize: 12,
-              color: "var(--color-text-secondary)"
-            },
-            children: "Unid."
-          })]
-        })]
-      }, k)), /*#__PURE__*/_jsxs("div", {
-        style: {
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          marginTop: 14
-        },
-        children: [/*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "Aclaración / Firma"
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "Nombre en letra de imprenta",
-            value: c.aclaracion || "",
-            onChange: e => sc("aclaracion", e.target.value)
-          })]
-        }), /*#__PURE__*/_jsxs("div", {
-          children: [/*#__PURE__*/_jsx("label", {
-            style: s.label,
-            children: "D.N.I."
-          }), /*#__PURE__*/_jsx("input", {
-            style: s.input,
-            placeholder: "00.000.000",
-            value: c.dni || "",
-            onChange: e => sc("dni", e.target.value)
-          })]
-        })]
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          ...s.card,
-          margin: "12px 0",
-          background: "var(--color-background-tertiary)"
-        },
-        children: /*#__PURE__*/_jsx("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--color-text-tertiary)",
-            lineHeight: 1.6
-          },
-          children: "El comodato es un contrato por el cual una parte entrega a la otra gratuitamente una especie, mueble o bien raíz, para que haga uso de ella, con cargo de restituir la misma especie después de terminado el uso."
-        })
-      }), /*#__PURE__*/_jsx("button", {
-        style: s.btnPrimary,
-        onClick: () => onGuardar(c),
-        children: "Guardar comodato"
-      })]
-    })]
-  });
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: `Comodato · ${p.nombre}`,
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      textAlign: "center",
+      marginBottom: 10,
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Soda y Agua Tratada Envasada"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      color: "#5daaff",
+      margin: "4px 0"
+    }
+  }, "LA CATALINA"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "De Guillermo Carabajal Ponce"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginTop: 6
+    }
+  }, "Comodato — Ficha del cliente")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginBottom: 10
+    }
+  }, "San Miguel de Tucumán: ", new Date().toLocaleDateString("es-AR")), [["Familia", p.nombre], ["Barrio", p.barrio], ["Sec / Mz / Lote", `${p.sector || "—"} / ${p.manzana || "—"} / ${p.lote || "—"}`], ["Calle", p.calle ? `${p.calle} ${p.nro || ""}` : ""]].filter(([, v]) => v).map(([l, v]) => /*#__PURE__*/React.createElement("div", {
+    key: l,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "6px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, l), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary)",
+      fontWeight: 500
+    }
+  }, v))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.grid2,
+      margin: "10px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Piso"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "—",
+    value: c.piso || "",
+    onChange: e => sc("piso", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Depto"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "—",
+    value: c.depto || "",
+    onChange: e => sc("depto", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: s.divider
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "4px 0 10px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Producto"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, "Cantidad")), [["sifon", "Sifón 1500cc"], ["bidon10", "Bidón 10 lts."], ["bidon20", "Bidón 20 lts."], ["dispenser", "Dispenser"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
+    key: k,
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "8px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-primary)"
+    }
+  }, l), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "4px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => sc(k, Math.max(0, (c[k] || 0) - 1))
+  }, "−"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 500,
+      minWidth: 30,
+      textAlign: "center",
+      color: "var(--color-text-primary)"
+    }
+  }, c[k] || 0), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "4px 14px",
+      fontSize: 18,
+      lineHeight: 1
+    },
+    onClick: () => sc(k, (c[k] || 0) + 1)
+  }, "+"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Unid.")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      marginTop: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Aclaración / Firma"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "Nombre en letra de imprenta",
+    value: c.aclaracion || "",
+    onChange: e => sc("aclaracion", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "D.N.I."), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "00.000.000",
+    value: c.dni || "",
+    onChange: e => sc("dni", e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "12px 0",
+      background: "var(--color-background-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      lineHeight: 1.6
+    }
+  }, "El comodato es un contrato por el cual una parte entrega a la otra gratuitamente una especie, mueble o bien raíz, para que haga uso de ella, con cargo de restituir la misma especie después de terminado el uso.")), /*#__PURE__*/React.createElement("button", {
+    style: s.btnPrimary,
+    onClick: () => onGuardar(c)
+  }, "Guardar comodato")));
 }
 function TagsCliente({
   cliente,
@@ -2482,40 +2151,31 @@ function TagsCliente({
   ex.sifon += Number(_aj.sifon) || 0;
   ex.b10 += Number(_aj.bidon10) || 0;
   ex.b20 += Number(_aj.bidon20) || 0;
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
       gap: 5,
       ...(style || {})
-    },
-    children: [(() => {
-      const real = {
-        sifon: Math.max(0, (Number(cl.sifon) || 0) + ex.sifon),
-        b10: Math.max(0, (Number(cl.bidon10) || 0) + ex.b10),
-        b20: Math.max(0, (Number(cl.bidon20) || 0) + ex.b20)
-      };
-      return /*#__PURE__*/_jsxs(_Fragment, {
-        children: [real.sifon > 0 && /*#__PURE__*/_jsxs("span", {
-          style: TH,
-          children: ["Sif ×", real.sifon]
-        }), real.b10 > 0 && /*#__PURE__*/_jsxs("span", {
-          style: TH,
-          children: ["10L ×", real.b10]
-        }), real.b20 > 0 && /*#__PURE__*/_jsxs("span", {
-          style: TH,
-          children: ["20L ×", real.b20]
-        }), cl.dispenser > 0 && /*#__PURE__*/_jsxs("span", {
-          style: TH,
-          children: ["Disp ×", cl.dispenser]
-        })]
-      });
-    })(), (cl.saldo || 0) < 0 && /*#__PURE__*/_jsxs("span", {
-      style: TD,
-      children: ["Debe ", fmt(Math.abs(cl.saldo))]
-    }), (cl.saldo || 0) > 0 && /*#__PURE__*/_jsxs("span", {
-      style: TF,
-      children: ["A favor ", fmt(cl.saldo)]
-    })]
-  });
+    }
+  }, (() => {
+    const real = {
+      sifon: Math.max(0, (Number(cl.sifon) || 0) + ex.sifon),
+      b10: Math.max(0, (Number(cl.bidon10) || 0) + ex.b10),
+      b20: Math.max(0, (Number(cl.bidon20) || 0) + ex.b20)
+    };
+    return /*#__PURE__*/React.createElement(React.Fragment, null, real.sifon > 0 && /*#__PURE__*/React.createElement("span", {
+      style: TH
+    }, "Sif ×", real.sifon), real.b10 > 0 && /*#__PURE__*/React.createElement("span", {
+      style: TH
+    }, "10L ×", real.b10), real.b20 > 0 && /*#__PURE__*/React.createElement("span", {
+      style: TH
+    }, "20L ×", real.b20), cl.dispenser > 0 && /*#__PURE__*/React.createElement("span", {
+      style: TH
+    }, "Disp ×", cl.dispenser));
+  })(), (cl.saldo || 0) < 0 && /*#__PURE__*/React.createElement("span", {
+    style: TD
+  }, "Debe ", fmt(Math.abs(cl.saldo))), (cl.saldo || 0) > 0 && /*#__PURE__*/React.createElement("span", {
+    style: TF
+  }, "A favor ", fmt(cl.saldo)));
 }

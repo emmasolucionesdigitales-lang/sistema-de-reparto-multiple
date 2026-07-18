@@ -91,19 +91,17 @@ self.addEventListener('notificationclick',e=>{
         firebase.initializeApp(firebaseConfig);
       }
       window.db = firebase.firestore(); window.firebaseDB = window.db;
-      // Persistencia offline multi-pestaña (API nueva, reemplaza al
-      // enablePersistence() deprecado) + long-polling automático para
-      // evitar errores de conexión QUIC en redes que lo bloquean/limitan.
-      try {
-        window.db.settings({
-          cache: firebase.firestore.persistentLocalCache({
-            tabManager: firebase.firestore.persistentMultipleTabManager()
-          }),
-          experimentalAutoDetectLongPolling: true
-        });
-      } catch(errCache) {
-        console.warn("No se pudo configurar el cache persistente de Firestore:", errCache);
-      }
+      // Long-polling automático: evita el error de conexión QUIC en redes
+      // que lo bloquean/limitan (net::ERR_QUIC_PROTOCOL_ERROR).
+      window.db.settings({ experimentalAutoDetectLongPolling: true });
+      // El SDK compat no tiene la API nueva de cache (persistentLocalCache);
+      // esa solo existe en el SDK modular v9. enablePersistence() sigue
+      // siendo la forma correcta acá — el aviso de deprecación en consola
+      // es solo informativo, no afecta el funcionamiento.
+      window.db.enablePersistence({synchronizeTabs:true}).catch(function(err){
+        if(err.code==="failed-precondition"){console.warn("Persistencia offline: múltiples pestañas abiertas");}
+        else if(err.code==="unimplemented"){console.warn("Persistencia offline: navegador no compatible");}
+      });
 
       // Cloud Messaging — para las notificaciones push (activarNotif la usa
       // más abajo con window.messagingLC.getToken(...))
@@ -553,22 +551,22 @@ self.addEventListener('notificationclick',e=>{
   </script>
 <div id="root"></div>
 
-<script src="js/01-temas.js?v=20260718c"></script>
-<script src="js/02-constantes.js?v=20260718c"></script>
-<script src="js/03-utils.js?v=20260718c"></script>
-<script src="js/04-pdf.js?v=20260718c"></script>
-<script src="js/05-licencias.js?v=20260718c"></script>
-<script src="js/06-portada.js?v=20260718c"></script>
-<script src="js/07-stock.js?v=20260718c"></script>
-<script src="js/08-menu.js?v=20260718c"></script>
-<script src="js/09-clientes.js?v=20260718c"></script>
-<script src="js/10-ventas.js?v=20260718c"></script>
-<script src="js/11-promocion.js?v=20260718c"></script>
-<script src="js/12-gestion.js?v=20260718c"></script>
-<script src="js/13-resumen.js?v=20260718c"></script>
-<script src="js/14-roles.js?v=20260718c"></script>
-<script src="js/15-config.js?v=20260718c"></script>
-<script src="js/16-extras.js?v=20260718c"></script>
-<script src="js/17-app.js?v=20260718c"></script>
+<script src="js/01-temas.js?v=20260718d"></script>
+<script src="js/02-constantes.js?v=20260718d"></script>
+<script src="js/03-utils.js?v=20260718d"></script>
+<script src="js/04-pdf.js?v=20260718d"></script>
+<script src="js/05-licencias.js?v=20260718d"></script>
+<script src="js/06-portada.js?v=20260718d"></script>
+<script src="js/07-stock.js?v=20260718d"></script>
+<script src="js/08-menu.js?v=20260718d"></script>
+<script src="js/09-clientes.js?v=20260718d"></script>
+<script src="js/10-ventas.js?v=20260718d"></script>
+<script src="js/11-promocion.js?v=20260718d"></script>
+<script src="js/12-gestion.js?v=20260718d"></script>
+<script src="js/13-resumen.js?v=20260718d"></script>
+<script src="js/14-roles.js?v=20260718d"></script>
+<script src="js/15-config.js?v=20260718d"></script>
+<script src="js/16-extras.js?v=20260718d"></script>
+<script src="js/17-app.js?v=20260718d"></script>
 </body>
 </html>

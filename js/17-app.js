@@ -1,4 +1,3 @@
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // ════════════════════════════════════════════════════════════════════
 // ◆  16-app.js — App (auth) · AppPrincipal (estado global)
 // ════════════════════════════════════════════════════════════════════
@@ -73,7 +72,7 @@ function App() {
     }
   })();
   if (_rmLic && _rmLic.activado && _rmLic.rol === "repartidor") {
-    return /*#__PURE__*/_jsx(AppRepartidorWrapper, {
+    return /*#__PURE__*/React.createElement(AppRepartidorWrapper, {
       uid: _rmLic.deviceId,
       perfil: _rmLic,
       onSalir: () => {
@@ -84,7 +83,7 @@ function App() {
   }
 
   // ── PASO 1b: Buscando sesión en Firebase ──────────────────────────
-  if (buscandoSesion) return /*#__PURE__*/_jsxs("div", {
+  if (buscandoSesion) return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
       display: "flex",
@@ -93,24 +92,21 @@ function App() {
       justifyContent: "center",
       gap: 12,
       background: "var(--color-background-primary)"
-    },
-    children: [/*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 36
-      },
-      children: "💧"
-    }), /*#__PURE__*/_jsx("div", {
-      style: {
-        fontSize: 14,
-        color: "var(--color-text-secondary)"
-      },
-      children: "Verificando sesión..."
-    })]
-  });
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 36
+    }
+  }, "💧"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Verificando sesión..."));
 
   // ── PASO 1c: Sesión recuperada de Firebase ────────────────────────
   if (perfilRecuperado && perfilRecuperado.rol === "repartidor") {
-    return /*#__PURE__*/_jsx(AppRepartidorWrapper, {
+    return /*#__PURE__*/React.createElement(AppRepartidorWrapper, {
       uid: perfilRecuperado.deviceId,
       perfil: perfilRecuperado,
       onSalir: () => {
@@ -121,24 +117,24 @@ function App() {
   }
 
   // ── PASO 2: Dueño — flujo normal ─────────────────────────────────
-  if (fase === "activacion") return /*#__PURE__*/_jsx(PantallaActivacionRM, {
+  if (fase === "activacion") return /*#__PURE__*/React.createElement(PantallaActivacionRM, {
     onActivado: handleActivado
   });
-  if (fase === "pin") return /*#__PURE__*/_jsx(PantallaPin, {
+  if (fase === "pin") return /*#__PURE__*/React.createElement(PantallaPin, {
     pin: _srLic?.pin,
     onOk: () => setFase("app")
   });
-  if (!temaElegido) return /*#__PURE__*/_jsx(PantallaElegirTema, {
+  if (!temaElegido) return /*#__PURE__*/React.createElement(PantallaElegirTema, {
     onElegido: id => {
       localStorage.setItem("rm_tema", JSON.stringify(id));
       aplicarTema(id);
       setTemaElegido(true);
     }
   });
-  if (!_srLic) return /*#__PURE__*/_jsx(PantallaActivacionRM, {
+  if (!_srLic) return /*#__PURE__*/React.createElement(PantallaActivacionRM, {
     onActivado: handleActivado
   });
-  return /*#__PURE__*/_jsx(AppPrincipal, {
+  return /*#__PURE__*/React.createElement(AppPrincipal, {
     uid: _srLic.deviceId || _srLic.negocioId,
     email: _srLic.email,
     perfil: _srLic
@@ -1702,1110 +1698,1082 @@ function AppPrincipal({
       saldo: (Number(x.saldo) || 0) + netDeltaCambio
     } : x));
   };
-  return /*#__PURE__*/_jsxs("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       position: "relative"
+    }
+  }, operandoReparto ? /*#__PURE__*/React.createElement(AppRepartidor, {
+    uid: uid,
+    perfil: {
+      nombre: operandoReparto.repartidorNombre,
+      codigo: operandoReparto.codigo,
+      sectores: [],
+      rol: "repartidor",
+      negocioId
     },
-    children: [operandoReparto ? /*#__PURE__*/_jsx(AppRepartidor, {
-      uid: uid,
-      perfil: {
-        nombre: operandoReparto.repartidorNombre,
-        codigo: operandoReparto.codigo,
-        sectores: [],
-        rol: "repartidor",
-        negocioId
-      },
-      onSalir: () => setOperandoReparto(null)
-    }) : /*#__PURE__*/_jsxs(_Fragment, {
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          position: "fixed",
-          top: 10,
-          right: 14,
-          zIndex: 9999,
-          display: "flex",
-          gap: 6
-        },
-        children: /*#__PURE__*/_jsx("button", {
-          onClick: () => setScaleIdx(i => (i + 1) % 4),
-          style: {
-            padding: "6px 10px",
-            borderRadius: 8,
-            border: "none",
-            background: "var(--color-background-tertiary)",
-            color: "var(--color-text-secondary)",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          },
-          title: "Tamaño de texto",
-          children: SCALE_LABELS[scaleIdx]
-        })
-      }), /*#__PURE__*/_jsxs("div", {
-        style: {
-          ...s.app,
-          zoom: SCALES[scaleIdx]
-        },
-        children: [/*#__PURE__*/_jsx(SyncBar, {
-          status: syncStatus,
-          isOnline: isOnline
-        }), pantalla === "portada" && /*#__PURE__*/_jsx(Portada, {
-          onIngresar: () => irA("menu")
-        }), pantalla === "menu" && /*#__PURE__*/_jsx(MenuRepartos, {
-          negocioId: negocioId,
-          repartos: repartos,
-          clientes: clientes,
-          ventas: ventas,
-          recordatorios: recordatorios,
-          onSeleccionar: rep => {
-            setRepartoActual(rep);
-            irA("diasReparto");
-          },
-          onConfig: tab => {
-            setTabConfig(tab || "stock");
-            irA("config");
-          },
-          onResumen: () => irA("resumen"),
-          onStock: () => irA("stock"),
-          onAgenda: () => irA("agenda"),
-          onVolver: () => irA("portada"),
-          saveRepartos: saveRepartos,
-          onOperarReparto: rep => setOperandoReparto(rep),
-          onTodosClientes: () => irA("gestionClientes"),
-          onImportarClientes: () => irA("importarClientes"),
-          onMapaClientes: () => irA("mapaClientes"),
-          tabInicial: tabMenu,
-          onTabChange: setTabMenu,
-          scaleIdx: scaleIdx,
-          onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
-          scaleLabel: SCALE_LABELS[scaleIdx]
-        }), pantalla === "diasReparto" && !repartoActual && (() => {
-          setTimeout(() => irA("menu"), 0);
-          return null;
-        })(), pantalla === "diasReparto" && repartoActual && /*#__PURE__*/_jsx(MenuDias, {
-          dias: DIAS,
-          reparto: repartoActual,
-          onDia: d => {
-            setDiaActual(d);
-            irA("diaPrincipal");
-          },
-          onResumen: () => irA("resumen"),
-          onConfig: () => irA("config"),
-          onGestionClientes: () => irA("gestionClientes"),
-          onPromocion: () => irA("promocion"),
-          onStock: () => irA("stock"),
-          onAgenda: () => irA("agenda"),
-          onVolver: () => irA("menu"),
-          scaleIdx: scaleIdx,
-          onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
-          scaleLabel: SCALE_LABELS[scaleIdx],
-          clientes: clientes.filter(c => c.repartoId === repartoActual.id),
-          ventas: ventas.filter(v => {
-            const cl = clientes.find(c => c.id === v.clienteId);
-            return cl?.repartoId === repartoActual.id;
-          }),
-          stock: stockNorm,
-          recordatoriosActivos: recordatoriosActivos,
-          onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
-            ...r,
-            confirmado: true
-          } : r)),
-          onVerConfirmaciones: dia => {
-            setDiaActual(dia);
-            irA("confirmacionesDia");
-          },
-          transferenciasPendientes: DIAS.map(dia => {
-            const clientesRep = clientes.filter(c => c.repartoId === repartoActual.id);
-            const vts = ventas.filter(v => v.dia === dia && (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada && clientesRep.some(c => c.id === v.clienteId));
-            if (!vts.length) return null;
-            const fechas = [...new Set(vts.map(v => v.fechaKey))].sort().reverse();
-            return {
-              dia,
-              fecha: fechas[0] || "",
-              count: vts.length,
-              monto: vts.reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0),
-              ventas: vts
-            };
-          }).filter(Boolean),
-          zonasReparto: zonasReparto,
-          onSetZona: (dia, zona) => {
-            const nz = {
-              ...zonasReparto,
-              [dia]: zona
-            };
-            setZonasReparto(nz);
-            syncData({
-              zonasReparto: nz
-            });
-          },
-          onDiaHoy: (dia, fechaKey) => {
-            setDiaActual(dia);
-            setFechaActual(fechaKey);
-            setFechaObj(new Date(fechaKey + "T12:00:00"));
-            const yaIniciado = planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?.iniciado;
-            irA(yaIniciado ? "clientes" : "inicioReparto");
-          },
-          onDiaResumen: (dia, fechaKey) => {
-            setDiaActual(dia);
-            setFechaActual(fechaKey);
-            setFechaObj(new Date(fechaKey + "T12:00:00"));
-            setInitCierre(!planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?._diaCerrado);
-            irA("planilla");
-          },
-          noVisitas: (noVisitas || []).filter(v => {
-            const cl = clientes.find(c => c.id === v.clienteId);
-            return cl?.repartoId === repartoActual.id;
-          }),
-          prospectos: prospectos || [],
-          onFiados: () => irA("fiadosPendientes")
-        }), pantalla === "confirmacionesDia" && /*#__PURE__*/_jsx(ConfirmacionesDia, {
-          dia: diaActual,
-          ventas: ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada),
-          clientes: clientes,
-          onConfirmar: ventaId => {
-            saveVentas(prev => prev.map(v => v.id === ventaId ? {
-              ...v,
-              transConfirmada: !v.transConfirmada,
-              _upd: Date.now()
-            } : v));
-          },
-          onVolver: () => irA("menu")
-        }), pantalla === "diaPrincipal" && /*#__PURE__*/_jsx(DiaPrincipal, {
-          dia: diaActual,
-          onIrClientes: () => irA("selectorFechaClientes"),
-          onIrPlanilla: () => irA("selectorFechaPlanilla"),
-          onVolver: () => irA("menu"),
-          onVerConfirmaciones: () => irA("confirmacionesDia"),
-          ventasPendientesTransfer: ventas.filter(v => v.dia === diaActual && (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada).length
-        }), pantalla === "selectorFechaPlanilla" && /*#__PURE__*/_jsx(SelectorFecha, {
-          dia: diaActual,
-          repartoId: repartoActual?.id,
-          planillas: planillas,
-          ventas: ventas.filter(v => {
-            const cl = clientes.find(c => c.id === v.clienteId);
-            return !repartoActual || cl?.repartoId === repartoActual.id;
-          }),
-          noVisitas: (noVisitas || []).filter(v => {
-            const cl = clientes.find(c => c.id === v.clienteId);
-            return !repartoActual || cl?.repartoId === repartoActual.id;
-          }),
-          onSeleccionar: (fk, fo) => {
-            setFechaActual(fk);
-            setFechaObj(fo);
-            irA("planilla");
-          },
-          onVolver: () => irA("diaPrincipal")
-        }), pantalla === "planilla" && /*#__PURE__*/_jsx(PlanillaDelDia, {
-          dia: diaActual,
-          fecha: fechaActual,
-          repartoId: repartoActual?.id,
-          ventas: ventas.filter(v => v.dia === diaActual && v.fechaKey === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
-          clientes: clientes.filter(c => !repartoActual || c.repartoId === repartoActual.id),
-          planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
-          productos: productos,
-          stock: stockNorm,
-          setStock: setStock,
-          syncData: syncData,
-          onGuardar: d => {
-            savePlanilla(claveDiaReparto(diaActual, fechaActual, repartoActual?.id), d);
-            irA("planilla");
-          },
-          onVolver: () => irA("selectorFechaPlanilla"),
-          onCerrarDia: img => cerrarDia(fechaActual, diaActual, img),
-          initCierre: initCierre,
-          prospectos: prospectos || [],
-          noVisitas: (noVisitas || []).filter(v => {
-            const cl = clientes.find(c => c.id === v.clienteId);
-            return !repartoActual || cl?.repartoId === repartoActual.id;
-          }),
-          cargasDia: cargasDiaDe(repartoActual?.id)
-        }), pantalla === "selectorFechaClientes" && /*#__PURE__*/_jsx(SelectorFecha, {
-          dia: diaActual,
-          repartoId: repartoActual?.id,
-          planillas: planillas,
-          ventas: ventas.filter(v => {
-            const cl = clientes.find(c => c.id === v.clienteId);
-            return !repartoActual || cl?.repartoId === repartoActual.id;
-          }),
-          noVisitas: (noVisitas || []).filter(v => {
-            const cl = clientes.find(c => c.id === v.clienteId);
-            return !repartoActual || cl?.repartoId === repartoActual.id;
-          }),
-          onSeleccionar: (fk, fo) => {
-            setFechaActual(fk);
-            setFechaObj(fo);
-            irA("inicioReparto");
-          },
-          onVolver: () => irA("diaPrincipal")
-        }), pantalla === "inicioReparto" && /*#__PURE__*/_jsx(InicioReparto, {
-          dia: diaActual,
-          fecha: fechaActual,
-          planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
-          productos: productos,
-          cargasDia: cargasDiaDe(repartoActual?.id),
-          stock: stockNorm,
-          onGuardar: (p, descontar) => {
-            savePlanilla(claveDiaReparto(diaActual, fechaActual, repartoActual?.id), p);
-            if (descontar && repartoActual) {
-              const soda = Number(p.productos?.soda?.llenos || 0);
-              const b10 = Number(p.productos?.b10?.llenos || 0);
-              const b20 = Number(p.productos?.b20?.llenos || 0);
-              const s = JSON.parse(JSON.stringify(normStock(stockNorm)));
-              if (!s.camiones[repartoActual.id]) s.camiones[repartoActual.id] = stockCamionVacio();
-              s.soderia.sifon = Math.max(0, (s.soderia.sifon || 0) - soda);
-              s.soderia.bidon10 = Math.max(0, (s.soderia.bidon10 || 0) - b10);
-              s.soderia.bidon20 = Math.max(0, (s.soderia.bidon20 || 0) - b20);
-              s.camiones[repartoActual.id].sifon = (s.camiones[repartoActual.id].sifon || 0) + soda;
-              s.camiones[repartoActual.id].bidon10 = (s.camiones[repartoActual.id].bidon10 || 0) + b10;
-              s.camiones[repartoActual.id].bidon20 = (s.camiones[repartoActual.id].bidon20 || 0) + b20;
-              setStock(normStock(s));
-              syncData({
-                stock: normStock(s)
-              });
-              // La carga real de hoy queda como sugerencia para la próxima vez que
-              // este reparto salga este mismo día — no depende de un número fijo.
-              saveCargasDiaDe(repartoActual.id, prev => ({
-                ...prev,
-                [diaActual]: {
-                  soda,
-                  b10,
-                  b20
-                }
-              }));
-            }
-            irA("clientes");
-          },
-          onVolver: () => irA("selectorFechaClientes")
-        }), pantalla === "clientes" && /*#__PURE__*/_jsx(ListaClientes, {
-          clientes: clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)),
-          dia: diaActual,
-          fecha: fechaActual,
-          ventas: ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
-          todasVentas: ventas,
-          noVisitas: (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
-          onEditarCliente: (id, cambios) => updateCliente(id, cambios),
-          onSeleccionar: c => {
-            setClienteId(c.id);
-            irA("detalleCliente");
-          },
-          onEntregar: c => {
-            setClienteId(c.id);
-            irA("venta");
-          },
-          onNuevoCliente: () => irA("nuevoCliente"),
-          onVolver: () => irA("selectorFechaClientes"),
-          onReordenar: lista => {
-            saveClientes(prev => [...prev.filter(c => c.dia !== diaActual), ...lista]);
-          },
-          onRegistrarNoVisita: (clienteId, motivo) => {
-            saveNoVisitas(prev => [...(prev || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
-              clienteId,
-              dia: diaActual,
-              fecha: fechaActual,
-              motivo,
-              _upd: Date.now()
-            }]);
-          },
-          onQuitarNoVisita: clienteId => {
-            saveNoVisitas(prev => (prev || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)));
-          },
-          onConfirmarTransfer: (clienteId, ventaId) => {
-            saveVentas(prev => prev.map(v => v.id === ventaId ? {
-              ...v,
-              transConfirmada: !v.transConfirmada,
-              _upd: Date.now()
-            } : v));
-          },
-          prospectos: (prospectos || []).filter(p => p.dia === diaActual && p.estado === "activo"),
-          recordatorios: recordatorios,
-          onVentaProspecto: p => {
-            saveClientes(prev => prev.find(c => c.id === p.id) ? prev : [...prev, {
-              ...p,
-              saldo: 0,
-              _esProspecto: true
-            }]);
-            setClienteId(p.id);
-            irA("venta");
-          },
-          onNoEstaProspecto: id => {
-            saveNoVisitas(prev => [...(prev || []).filter(v => !(v.clienteId === id && v.dia === diaActual && v.fecha === fechaActual)), {
-              clienteId: id,
-              dia: diaActual,
-              fecha: fechaActual,
-              motivo: "noesta",
-              _upd: Date.now()
-            }]);
-          },
-          onVerProspecto: p => {
-            saveClientes(prev => prev.find(c => c.id === p.id) ? prev : [...prev, {
-              ...p,
-              saldo: p.saldo || 0,
-              _esProspecto: true
-            }]);
-            setClienteId(p.id);
-            irA("detalleCliente");
-          },
-          onIrPlanilla: () => {
-            setInitCierre(!planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)]?._diaCerrado);
-            irA("planilla");
-          },
-          onIrMenu: () => irA("menu"),
-          onAbrirMapa: () => irA("mapaClientes")
-        }), pantalla === "detalleCliente" && cliente && /*#__PURE__*/_jsx(DetalleCliente, {
-          cliente: cliente,
-          ventas: ventas.filter(v => v.clienteId === cliente.id),
-          dia: diaActual,
-          fecha: fechaActual,
-          productos: productos,
-          onVenta: () => irA("venta"),
-          onVolver: () => irA("clientes"),
-          onEditar: cambios => updateCliente(cliente.id, cambios),
-          onEliminarVenta: eliminarVenta,
-          onEditarVenta: editarVenta,
-          onEliminarCliente: () => eliminarCliente(cliente.id),
-          onNoEstaCliente: () => {
-            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
-              clienteId: cliente.id,
-              dia: diaActual,
-              fecha: fechaActual,
-              motivo: "noesta",
-              _upd: Date.now()
-            }];
-            saveNoVisitas(nv);
-            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-            const ventasIds = new Set(ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId));
-            const noVMap = {};
-            nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
-              noVMap[v.clienteId] = v.motivo;
-            });
-            const terminados = new Set(clientesDia.filter(c => ventasIds.has(c.id) || noVMap[c.id] === "noquiso" || noVMap[c.id] === "noesta2").map(c => c.id));
-            const normalPend = clientesDia.filter(c => !terminados.has(c.id) && noVMap[c.id] !== "noesta" && c.id !== cliente.id);
-            const noestaPend = clientesDia.filter(c => noVMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== cliente.id);
-            const sig = normalPend[0] || noestaPend[0];
-            if (sig) {
-              setClienteId(sig.id);
-              irA("detalleCliente");
-            } else irA("clientes");
-          },
-          onNoQuiereCliente: () => {
-            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
-              clienteId: cliente.id,
-              dia: diaActual,
-              fecha: fechaActual,
-              motivo: "noquiso",
-              _upd: Date.now()
-            }];
-            saveNoVisitas(nv);
-            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-            const ventasIds = new Set(ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId));
-            const noVMap = {};
-            nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
-              noVMap[v.clienteId] = v.motivo;
-            });
-            const terminados = new Set(clientesDia.filter(c => ventasIds.has(c.id) || noVMap[c.id] === "noquiso" || noVMap[c.id] === "noesta2").map(c => c.id));
-            const normalPend = clientesDia.filter(c => !terminados.has(c.id) && noVMap[c.id] !== "noesta" && c.id !== cliente.id);
-            const noestaPend = clientesDia.filter(c => noVMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== cliente.id);
-            const sig = normalPend[0] || noestaPend[0];
-            if (sig) {
-              setClienteId(sig.id);
-              irA("detalleCliente");
-            } else irA("clientes");
-          },
-          recordatorios: recordatorios,
-          onGuardarRecordatorio: r => saveRecordatorios(prev => [...(prev || []), r]),
-          onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
-            ...r,
-            confirmado: true
-          } : r)),
-          onCobrarSaldo: (monto, pago) => {
-            const c = cliente;
-            const det = [{
-              nombre: "Cobro de deuda",
-              cantidad: 1,
-              precio: 0,
-              total: 0
-            }];
-            const vt = {
-              id: Date.now(),
-              clienteId: c.id,
-              cliente: c.nombre,
-              dia: diaActual,
-              fechaKey: fechaActual,
-              fecha: new Date().toLocaleString("es-AR"),
-              detalle: det,
-              pago,
-              obs: `Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,
-              saldoAplicado: 0,
-              neto: 0,
-              bruto: 0,
-              desc: 0,
-              costo: 0,
-              ganancia: 0,
-              pagadoNum: monto,
-              saldoDelta: monto,
-              envPrest: [],
-              envDev: [],
-              _esCobro: true,
-              _upd: Date.now()
-            };
-            saveVentas(prev => [...prev, vt]);
-            saveClientes(prev => prev.map(x => x.id === c.id ? {
-              ...x,
-              saldo: (Number(x.saldo) || 0) + monto
-            } : x));
-          },
-          onGuardarCambio: vt => {
-            saveVentas(prev => [...prev, vt]);
-          }
-        }), pantalla === "venta" && cliente && /*#__PURE__*/_jsx(NuevaVenta, {
-          cliente: cliente,
-          productos: productos,
-          fecha: fechaActual,
-          ventasCliente: ventas.filter(v => v.clienteId === cliente.id),
-          progressData: (() => {
-            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id));
-            const ventasHoy = ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste);
-            const noVHoy = (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual);
-            const visitadosIds = new Set([...ventasHoy.map(v => v.clienteId), ...noVHoy.map(v => v.clienteId)]);
-            const montoHoy = ventasHoy.reduce((a, v) => a + (v.neto || 0), 0);
-            const sifs = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Sifón 1.5L").reduce((b, d) => b + d.cantidad, 0), 0);
-            const b10 = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Bidón 10L").reduce((b, d) => b + d.cantidad, 0), 0);
-            const b20 = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Bidón 20L").reduce((b, d) => b + d.cantidad, 0), 0);
-            const planillaHoy = planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || {};
-            return {
-              visitados: visitadosIds.size,
-              total: clientesDia.length,
-              montoHoy,
-              stock: {
-                "Sif": Math.max(0, (Number(planillaHoy.productos?.soda?.llenos) || 0) - sifs),
-                "10L": Math.max(0, (Number(planillaHoy.productos?.b10?.llenos) || 0) - b10),
-                "20L": Math.max(0, (Number(planillaHoy.productos?.b20?.llenos) || 0) - b20)
-              }
-            };
-          })(),
-          onNoEsta: () => {
-            const base = noVisitas || [];
-            const anterior = base.find(v => v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual);
-            const motivo = anterior?.motivo === "noesta" ? "noesta2" : "noesta";
-            const nv = [...base.filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
-              clienteId,
-              dia: diaActual,
-              fecha: fechaActual,
-              motivo,
-              _upd: Date.now()
-            }];
-            saveNoVisitas(nv);
-            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-            const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta")).map(v => v.clienteId)]);
-            visitadosIds.add(clienteId);
-            const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
-            if (siguiente) {
-              setClienteId(siguiente.id);
-              irA("venta");
-            } else irA("clientes");
-          },
-          onNoQuiere: () => {
-            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
-              clienteId,
-              dia: diaActual,
-              fecha: fechaActual,
-              motivo: "noquiso",
-              _upd: Date.now()
-            }];
-            saveNoVisitas(nv);
-            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-            const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta")).map(v => v.clienteId)]);
-            visitadosIds.add(clienteId);
-            const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
-            if (siguiente) {
-              setClienteId(siguiente.id);
-              irA("venta");
-            } else irA("clientes");
-          },
-          onGuardar: (d, p, m, sa, ep, ed, obs, op, mt2, sd, tc) => {
-            registrarVenta(d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
-            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-            const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...(noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta" || v.motivo === "salteado")).map(v => v.clienteId)]);
-            visitadosIds.add(clienteId);
-            const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
-            if (siguiente) {
-              setClienteId(siguiente.id);
-              irA("venta");
-            } else irA("clientes");
-          },
-          onSaltar: () => {
-            const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
-              clienteId,
-              dia: diaActual,
-              fecha: fechaActual,
-              motivo: "salteado",
-              _upd: Date.now()
-            }];
-            saveNoVisitas(nv);
-            const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-            const nvMap = {};
-            nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
-              nvMap[v.clienteId] = v.motivo;
-            });
-            const terminados = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2")).map(v => v.clienteId)]);
-            const normalPend = clientesDia.filter(c => !terminados.has(c.id) && nvMap[c.id] !== "noesta" && nvMap[c.id] !== "salteado" && c.id !== clienteId);
-            const noestaPend = clientesDia.filter(c => nvMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== clienteId);
-            const saltadosPend = clientesDia.filter(c => nvMap[c.id] === "salteado" && c.id !== clienteId);
-            const sig = normalPend[0] || noestaPend[0] || saltadosPend[0];
-            if (sig) {
-              setClienteId(sig.id);
-              irA("venta");
-            } else irA("clientes");
-          },
-          onVolver: () => irA("detalleCliente")
-        }, clienteId), pantalla === "nuevoCliente" && /*#__PURE__*/_jsx(NuevoCliente, {
-          diaActual: diaActual,
-          repartoActual: repartoActual,
-          onGuardar: datos => {
-            const orden = datos.orden;
-            saveClientes(prevC => {
-              let base = prevC;
-              if (orden && prevC.some(c => c.dia === datos.dia && (c.orden || 0) === Number(orden))) {
-                base = prevC.map(c => c.dia === datos.dia && (c.orden || 0) >= Number(orden) ? {
-                  ...c,
-                  orden: (c.orden || 0) + 1
-                } : c);
-              }
-              return [...base, {
-                ...datos,
-                id: Date.now(),
-                saldo: 0,
-                dispenser: datos.dispenser || 0,
-                repartoId: repartoActual?.id || null
-              }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
-            });
-            irA("clientes");
-          },
-          onVolver: () => irA("clientes")
-        }), pantalla === "historial" && /*#__PURE__*/_jsx(CargaHistorica, {
-          clientes: clientes,
-          productos: productos,
-          onGuardar: vts => {
-            saveVentas(prev => [...prev, ...vts]);
-            irA("menu");
-          },
-          onVolver: () => irA("menu")
-        }), pantalla === "promocion" && /*#__PURE__*/_jsx(Promocion, {
-          prospectos: prospectos,
-          clientes: clientes,
-          onSave: saveProspectos,
-          onConvertir: p => {
-            const nuevo = {
-              ...p,
-              id: Date.now(),
-              saldo: 0,
-              sifon: 0,
-              bidon10: 1,
-              bidon20: 0
-            };
-            saveClientes(prev => [...prev, nuevo]);
-            saveProspectos(prev => (prev || []).map(x => x.id === p.id ? {
-              ...x,
-              estado: "convertido"
-            } : x));
-            irA("promocion");
-          },
-          onVolver: () => irA("menu")
-        }), pantalla === "gestionClientes" && /*#__PURE__*/_jsx(GestionClientes, {
-          clientes: clientes,
-          repartos: repartos,
-          repartoActual: repartoActual,
-          onIrTab: irA,
-          onReordenarTodo: lista => saveClientes(lista),
-          onEditar: (id, cambios) => {
-            saveClientes(prev => prev.map(c => c.id === id ? {
-              ...c,
-              ...cambios
-            } : c));
-          },
-          onEliminar: id => {
-            if (window.confirm("¿Eliminar cliente?")) {
-              saveClientes(prev => {
-                const eliminado = prev.find(c => c.id === id);
-                let nc = prev.filter(c => c.id !== id);
-                if (eliminado) nc = renumerarTrasEliminar(nc, eliminado);
-                return nc;
-              });
-            }
-          },
-          onNuevo: datos => {
-            const orden = datos.orden;
-            saveClientes(prevC => {
-              let nuevos;
-              if (orden && prevC.some(c => c.dia === datos.dia && c.orden === orden)) {
-                // Shift all clients with same day and order >= new order
-                nuevos = prevC.map(c => c.dia === datos.dia && (c.orden || 0) >= orden ? {
-                  ...c,
-                  orden: (c.orden || 0) + 1
-                } : c);
-              } else {
-                nuevos = [...prevC];
-              }
-              return [...nuevos, {
-                ...datos,
-                id: Date.now(),
-                saldo: 0,
-                dispenser: datos.dispenser || 0
-              }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
-            });
-          },
-          onVolver: () => irA("menu"),
-          onRegistrarVenta: c => {
-            setClienteId(c.id);
-            // Asegurar que fechaActual esté seteado a hoy
-            const hoyKey = new Date().toLocaleDateString("en-CA");
-            if (!fechaActual) setFechaActual(hoyKey);
-            // Si no hay diaActual, usar el día del cliente como fallback
-            if (!diaActual) setDiaActual(c.dia);
-            irA("venta");
-          },
-          onVerDetalle: c => {
-            setClienteId(c.id);
-            irA("detalleDesdeGestion");
-          },
-          ventas: ventas,
-          productos: productos,
-          onGuardarCambio: vt => {
-            saveVentas(prev => [...prev, vt]);
-          }
-        }), pantalla === "clientesDormidos" && /*#__PURE__*/_jsxs(React.Fragment, {
-          children: [/*#__PURE__*/_jsx(ClientesTabs, {
-            activo: "dormidos",
-            onIr: irA
-          }), /*#__PURE__*/_jsx(ClientesDormidos, {
-            clientes: clientes,
-            ventas: ventas,
-            repartos: repartos,
-            onVolver: () => irA("gestionClientes"),
-            onSeleccionar: c => {
-              setClienteId(c.id);
-              irA("detalleDesdeGestion");
-            },
-            onEditarCliente: (id, cambios) => {
-              saveClientes(prev => prev.map(c => c.id === id ? {
-                ...c,
-                ...cambios
-              } : c));
-            },
-            onEliminar: eliminarCliente,
-            onPerdida: registrarPerdida
-          })]
-        }), pantalla === "detalleDesdeGestion" && cliente && /*#__PURE__*/_jsx(DetalleCliente, {
-          cliente: cliente,
-          ventas: ventas.filter(v => v.clienteId === cliente.id),
-          dia: diaActual || cliente.dia,
-          fecha: fechaActual,
-          productos: productos,
-          onVenta: () => {
-            setDiaActual(cliente.dia);
-            const hoy = new Date().toLocaleDateString("en-CA");
-            if (!fechaActual) setFechaActual(hoy);
-            irA("venta");
-          },
-          onVolver: () => irA("gestionClientes"),
-          onEditar: cambios => updateCliente(cliente.id, cambios),
-          onEliminarVenta: eliminarVenta,
-          onEditarVenta: editarVenta,
-          onEliminarCliente: () => {
-            eliminarCliente(cliente.id);
-            irA("gestionClientes");
-          },
-          onNoEstaCliente: () => {},
-          onNoQuiereCliente: () => {},
-          recordatorios: recordatorios,
-          onGuardarRecordatorio: r => saveRecordatorios(prev => [...(prev || []), r]),
-          onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
-            ...r,
-            confirmado: true
-          } : r)),
-          onCobrarSaldo: (monto, pago) => {
-            if (cliente) {
-              const det = [{
-                nombre: "Cobro de deuda",
-                cantidad: 1,
-                precio: 0,
-                total: 0
-              }];
-              const fk = fechaActual || new Date().toLocaleDateString("en-CA");
-              const vt = {
-                id: Date.now(),
-                clienteId: cliente.id,
-                cliente: cliente.nombre,
-                dia: diaActual || cliente.dia,
-                fechaKey: fk,
-                fecha: new Date().toLocaleString("es-AR"),
-                detalle: det,
-                pago,
-                obs: `Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,
-                saldoAplicado: 0,
-                neto: 0,
-                bruto: 0,
-                desc: 0,
-                costo: 0,
-                ganancia: 0,
-                pagadoNum: monto,
-                saldoDelta: monto,
-                envPrest: [],
-                envDev: [],
-                saldoAntes: cliente.saldo || 0,
-                saldoDespues: (cliente.saldo || 0) + monto,
-                _esCobro: true,
-                _upd: Date.now()
-              };
-              saveVentas(prev => [...prev, vt]);
-              saveClientes(prev => prev.map(x => x.id === cliente.id ? {
-                ...x,
-                saldo: (Number(x.saldo) || 0) + monto
-              } : x));
-            }
-          },
-          onGuardarCambio: vt => {
-            saveVentas(prev => [...prev, vt]);
-          }
-        }), pantalla === "importarClientes" && /*#__PURE__*/_jsx(ImportarClientesExcel, {
-          repartos: repartos,
-          clientes: clientes,
-          repartoPreseleccionado: repartoActual,
-          onGuardar: nuevos => {
-            saveClientes(prev => [...prev, ...nuevos]);
-            irA("menu");
-          },
-          onVolver: () => irA("menu")
-        }), pantalla === "mapaClientes" && /*#__PURE__*/_jsxs(React.Fragment, {
-          children: [/*#__PURE__*/_jsx(ClientesTabs, {
-            activo: "mapa",
-            onIr: irA
-          }), /*#__PURE__*/_jsx(MapaClientes, {
-            clientes: clientes,
-            dia: diaActual,
-            fecha: fechaActual,
-            ventas: ventas,
-            noVisitas: noVisitas,
-            onSeleccionar: c => {
-              setClienteId(c.id);
-              irA("detalleDesdeGestion");
-            },
-            onActualizar: nuevosClientes => saveClientes(nuevosClientes),
-            onVolver: () => irA("menu")
-          })]
-        }), pantalla === "agenda" && /*#__PURE__*/_jsx(AgendaScreen, {
-          recordatorios: recordatorios || [],
-          clientes: clientes,
-          repartidores: repartidoresUnicos,
-          onConfirmar: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
-            ...r,
-            confirmado: true
-          } : r)),
-          onEliminar: id => saveRecordatorios(prev => (prev || []).filter(r => r.id !== id)),
-          onNuevo: datos => {
-            const c = clientes.find(x => x.id === datos.clienteId);
-            if (!c) {
-              alert("Seleccioná un cliente");
-              return;
-            }
-            saveRecordatorios(prev => [...(prev || []), {
-              ...datos,
-              id: Date.now(),
-              clienteId: c.id,
-              clienteNombre: c.nombre,
-              dia: c.dia,
-              confirmado: false,
-              paraRepartidor: datos.paraRepartidor || null
-            }]);
-          },
-          onIrCliente: cId => {
-            const c = clientes.find(x => x.id === cId);
-            if (c) {
-              setClienteId(cId);
-              setDiaActual(c.dia);
-              irA("detalleCliente");
-            }
-          },
-          onVolver: () => irA("menu")
-        }), pantalla === "stock" && /*#__PURE__*/_jsx(StockGeneral, {
-          stock: stockNorm,
-          setStock: ns => {
-            setStock(ns);
-            syncData({
-              stock: ns
-            });
-          },
-          clientes: clientes,
-          setClientes: saveClientes,
-          ventas: ventas,
-          productos: productos,
-          setProductos: saveProductos,
-          cargasDia: cargasDiaDe(repartoActual?.id),
-          setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
-          planillas: planillas,
-          repartos: repartos,
-          perdidas: perdidas,
-          registrarPerdida: registrarPerdida,
-          onVolver: () => irA("menu"),
-          onResumen: () => irA("resumen")
-        }), pantalla === "fiadosPendientes" && /*#__PURE__*/_jsxs(React.Fragment, {
-          children: [/*#__PURE__*/_jsx(ClientesTabs, {
-            activo: "fiados",
-            onIr: irA
-          }), /*#__PURE__*/_jsx(FiadosPendientes, {
-            clientes: clientes,
-            ventas: ventas,
-            onEditarCliente: (id, cambios) => updateCliente(id, cambios),
-            onCobrar: (cId, monto, pago) => {
-              const cl = clientes.find(c => c.id === cId);
-              if (!cl) return;
-              const vt = {
-                id: Date.now(),
-                clienteId: cl.id,
-                cliente: cl.nombre,
-                dia: cl.dia,
-                fechaKey: new Date().toLocaleDateString("en-CA"),
-                fecha: new Date().toLocaleString("es-AR"),
-                detalle: [{
-                  nombre: "Cobro de deuda",
-                  cantidad: 1,
-                  precio: 0,
-                  total: 0
-                }],
-                pago,
-                obs: `Cobro de deuda ${fmt(monto)} (${pago})`,
-                neto: 0,
-                bruto: 0,
-                desc: 0,
-                costo: 0,
-                ganancia: 0,
-                pagadoNum: monto,
-                saldoDelta: monto,
-                envPrest: [],
-                envDev: [],
-                saldoAntes: cl.saldo || 0,
-                saldoDespues: (cl.saldo || 0) + monto,
-                _esCobro: true,
-                _upd: Date.now()
-              };
-              saveVentas(prev => [...prev, vt]);
-              saveClientes(prev => prev.map(c => c.id === cId ? {
-                ...c,
-                saldo: (Number(c.saldo) || 0) + monto
-              } : c));
-            },
-            onVolver: () => irA("menu")
-          })]
-        }), pantalla === "resumen" && /*#__PURE__*/_jsx(Resumen, {
-          ventas: ventas,
-          clientes: clientes,
-          productos: productos,
-          planillas: planillas,
-          noVisitas: noVisitas || [],
-          repartos: repartos,
-          onVolver: () => irA("menu")
-        }), pantalla === "config" && /*#__PURE__*/_jsx(Config, {
-          productos: productos,
-          setProductos: saveProductos,
-          clientes: clientes,
-          setClientes: saveClientes,
-          ventas: ventas,
-          setVentas: saveVentas,
-          planillas: planillas,
-          setPlanillas: savePlanillasCloud,
-          stock: stockNorm,
-          setStock: s => {
-            const ns = normStock(s);
-            setStockRaw(ns);
-            syncData({
-              stock: ns
-            });
-          },
-          cargasDia: cargasDiaDe(repartoActual?.id),
-          setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
-          syncData: syncData,
-          onVolver: () => irA("menu"),
-          negocioId: negocioId,
-          tabInicial: tabConfig,
-          repartos: repartos,
-          repartoActual: repartoActual
-        })]
-      })]
-    }), modalResumenDia && (() => {
-      const {
+    onSalir: () => setOperandoReparto(null)
+  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 10,
+      right: 14,
+      zIndex: 9999,
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setScaleIdx(i => (i + 1) % 4),
+    style: {
+      padding: "6px 10px",
+      borderRadius: 8,
+      border: "none",
+      background: "var(--color-background-tertiary)",
+      color: "var(--color-text-secondary)",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    },
+    title: "Tamaño de texto"
+  }, SCALE_LABELS[scaleIdx])), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.app,
+      zoom: SCALES[scaleIdx]
+    }
+  }, /*#__PURE__*/React.createElement(SyncBar, {
+    status: syncStatus,
+    isOnline: isOnline
+  }), pantalla === "portada" && /*#__PURE__*/React.createElement(Portada, {
+    onIngresar: () => irA("menu")
+  }), pantalla === "menu" && /*#__PURE__*/React.createElement(MenuRepartos, {
+    negocioId: negocioId,
+    repartos: repartos,
+    clientes: clientes,
+    ventas: ventas,
+    recordatorios: recordatorios,
+    onSeleccionar: rep => {
+      setRepartoActual(rep);
+      irA("diasReparto");
+    },
+    onConfig: tab => {
+      setTabConfig(tab || "stock");
+      irA("config");
+    },
+    onResumen: () => irA("resumen"),
+    onStock: () => irA("stock"),
+    onAgenda: () => irA("agenda"),
+    onVolver: () => irA("portada"),
+    saveRepartos: saveRepartos,
+    onOperarReparto: rep => setOperandoReparto(rep),
+    onTodosClientes: () => irA("gestionClientes"),
+    onImportarClientes: () => irA("importarClientes"),
+    onMapaClientes: () => irA("mapaClientes"),
+    tabInicial: tabMenu,
+    onTabChange: setTabMenu,
+    scaleIdx: scaleIdx,
+    onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
+    scaleLabel: SCALE_LABELS[scaleIdx]
+  }), pantalla === "diasReparto" && !repartoActual && (() => {
+    setTimeout(() => irA("menu"), 0);
+    return null;
+  })(), pantalla === "diasReparto" && repartoActual && /*#__PURE__*/React.createElement(MenuDias, {
+    dias: DIAS,
+    reparto: repartoActual,
+    onDia: d => {
+      setDiaActual(d);
+      irA("diaPrincipal");
+    },
+    onResumen: () => irA("resumen"),
+    onConfig: () => irA("config"),
+    onGestionClientes: () => irA("gestionClientes"),
+    onPromocion: () => irA("promocion"),
+    onStock: () => irA("stock"),
+    onAgenda: () => irA("agenda"),
+    onVolver: () => irA("menu"),
+    scaleIdx: scaleIdx,
+    onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
+    scaleLabel: SCALE_LABELS[scaleIdx],
+    clientes: clientes.filter(c => c.repartoId === repartoActual.id),
+    ventas: ventas.filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return cl?.repartoId === repartoActual.id;
+    }),
+    stock: stockNorm,
+    recordatoriosActivos: recordatoriosActivos,
+    onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+      ...r,
+      confirmado: true
+    } : r)),
+    onVerConfirmaciones: dia => {
+      setDiaActual(dia);
+      irA("confirmacionesDia");
+    },
+    transferenciasPendientes: DIAS.map(dia => {
+      const clientesRep = clientes.filter(c => c.repartoId === repartoActual.id);
+      const vts = ventas.filter(v => v.dia === dia && (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada && clientesRep.some(c => c.id === v.clienteId));
+      if (!vts.length) return null;
+      const fechas = [...new Set(vts.map(v => v.fechaKey))].sort().reverse();
+      return {
         dia,
-        fechaKey
-      } = modalResumenDia;
-      const vDia = ventas.filter(v => v.fechaKey === fechaKey && v.dia === dia && !v._esCobro && !v._esAjuste);
-      const ef = vDia.filter(v => v.pago === "contado").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
-      const tr = vDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
-      const trP = tr - vDia.filter(v => v.pago === "transferencia" && v.transConfirmada).reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
-      const fi = vDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
-      return /*#__PURE__*/_jsx("div", {
-        style: {
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0,0,0,0.75)",
-          zIndex: 2000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 20
-        },
-        children: /*#__PURE__*/_jsxs("div", {
-          style: {
-            background: "var(--color-background-primary)",
-            borderRadius: 16,
-            padding: 24,
-            width: "100%",
-            maxWidth: 360,
-            display: "flex",
-            flexDirection: "column",
-            gap: 14
-          },
-          children: [/*#__PURE__*/_jsxs("div", {
-            style: {
-              textAlign: "center"
-            },
-            children: [/*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 36
-              },
-              children: "✅"
-            }), /*#__PURE__*/_jsx("div", {
-              style: {
-                fontSize: 17,
-                fontWeight: 600,
-                color: "var(--color-text-primary)"
-              },
-              children: "Día completado"
-            }), /*#__PURE__*/_jsxs("div", {
-              style: {
-                fontSize: 12,
-                color: "var(--color-text-tertiary)",
-                textTransform: "capitalize"
-              },
-              children: [dia, " · ", new Date(fechaKey + "T12:00:00").toLocaleDateString("es-AR", {
-                day: "numeric",
-                month: "long"
-              })]
-            })]
-          }), /*#__PURE__*/_jsxs("div", {
-            style: {
-              display: "flex",
-              flexDirection: "column",
-              gap: 8
-            },
-            children: [[["💵 Efectivo", ef, "success"], ["💳 Transferencias", tr, "info"], ...(trP > 0 ? [["  🔴 Pendientes", trP, "warning"]] : []), ["📋 Fiado nuevo", fi, "warning"]].map(([l, v, cl]) => /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "8px 12px",
-                borderRadius: 8,
-                background: "var(--color-background-secondary)"
-              },
-              children: [/*#__PURE__*/_jsx("span", {
-                style: {
-                  fontSize: 13,
-                  color: "var(--color-text-secondary)"
-                },
-                children: l
-              }), /*#__PURE__*/_jsx("span", {
-                style: {
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: `var(--color-text-${cl})`
-                },
-                children: fmt(v)
-              })]
-            }, l)), /*#__PURE__*/_jsxs("div", {
-              style: {
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "10px 12px",
-                borderRadius: 8,
-                background: "var(--color-background-tertiary)"
-              },
-              children: [/*#__PURE__*/_jsx("span", {
-                style: {
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)"
-                },
-                children: "Total del día"
-              }), /*#__PURE__*/_jsx("span", {
-                style: {
-                  fontSize: 17,
-                  fontWeight: 700,
-                  color: "var(--color-text-success)"
-                },
-                children: fmt(ef + tr + fi)
-              })]
-            })]
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btnPrimary
-            },
-            onClick: () => {
-              setModalResumenDia(null);
-              irA("planilla");
-            },
-            children: "Ver planilla completa →"
-          }), /*#__PURE__*/_jsx("button", {
-            style: {
-              ...s.btn,
-              textAlign: "center"
-            },
-            onClick: () => setModalResumenDia(null),
-            children: "Cerrar"
-          })]
-        })
+        fecha: fechas[0] || "",
+        count: vts.length,
+        monto: vts.reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0),
+        ventas: vts
+      };
+    }).filter(Boolean),
+    zonasReparto: zonasReparto,
+    onSetZona: (dia, zona) => {
+      const nz = {
+        ...zonasReparto,
+        [dia]: zona
+      };
+      setZonasReparto(nz);
+      syncData({
+        zonasReparto: nz
       });
-    })(), deshacerVenta && /*#__PURE__*/_jsxs("div", {
+    },
+    onDiaHoy: (dia, fechaKey) => {
+      setDiaActual(dia);
+      setFechaActual(fechaKey);
+      setFechaObj(new Date(fechaKey + "T12:00:00"));
+      const yaIniciado = planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?.iniciado;
+      irA(yaIniciado ? "clientes" : "inicioReparto");
+    },
+    onDiaResumen: (dia, fechaKey) => {
+      setDiaActual(dia);
+      setFechaActual(fechaKey);
+      setFechaObj(new Date(fechaKey + "T12:00:00"));
+      setInitCierre(!planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?._diaCerrado);
+      irA("planilla");
+    },
+    noVisitas: (noVisitas || []).filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return cl?.repartoId === repartoActual.id;
+    }),
+    prospectos: prospectos || [],
+    onFiados: () => irA("fiadosPendientes")
+  }), pantalla === "confirmacionesDia" && /*#__PURE__*/React.createElement(ConfirmacionesDia, {
+    dia: diaActual,
+    ventas: ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada),
+    clientes: clientes,
+    onConfirmar: ventaId => {
+      saveVentas(prev => prev.map(v => v.id === ventaId ? {
+        ...v,
+        transConfirmada: !v.transConfirmada,
+        _upd: Date.now()
+      } : v));
+    },
+    onVolver: () => irA("menu")
+  }), pantalla === "diaPrincipal" && /*#__PURE__*/React.createElement(DiaPrincipal, {
+    dia: diaActual,
+    onIrClientes: () => irA("selectorFechaClientes"),
+    onIrPlanilla: () => irA("selectorFechaPlanilla"),
+    onVolver: () => irA("menu"),
+    onVerConfirmaciones: () => irA("confirmacionesDia"),
+    ventasPendientesTransfer: ventas.filter(v => v.dia === diaActual && (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada).length
+  }), pantalla === "selectorFechaPlanilla" && /*#__PURE__*/React.createElement(SelectorFecha, {
+    dia: diaActual,
+    repartoId: repartoActual?.id,
+    planillas: planillas,
+    ventas: ventas.filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return !repartoActual || cl?.repartoId === repartoActual.id;
+    }),
+    noVisitas: (noVisitas || []).filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return !repartoActual || cl?.repartoId === repartoActual.id;
+    }),
+    onSeleccionar: (fk, fo) => {
+      setFechaActual(fk);
+      setFechaObj(fo);
+      irA("planilla");
+    },
+    onVolver: () => irA("diaPrincipal")
+  }), pantalla === "planilla" && /*#__PURE__*/React.createElement(PlanillaDelDia, {
+    dia: diaActual,
+    fecha: fechaActual,
+    repartoId: repartoActual?.id,
+    ventas: ventas.filter(v => v.dia === diaActual && v.fechaKey === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+    clientes: clientes.filter(c => !repartoActual || c.repartoId === repartoActual.id),
+    planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
+    productos: productos,
+    stock: stockNorm,
+    setStock: setStock,
+    syncData: syncData,
+    onGuardar: d => {
+      savePlanilla(claveDiaReparto(diaActual, fechaActual, repartoActual?.id), d);
+      irA("planilla");
+    },
+    onVolver: () => irA("selectorFechaPlanilla"),
+    onCerrarDia: img => cerrarDia(fechaActual, diaActual, img),
+    initCierre: initCierre,
+    prospectos: prospectos || [],
+    noVisitas: (noVisitas || []).filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return !repartoActual || cl?.repartoId === repartoActual.id;
+    }),
+    cargasDia: cargasDiaDe(repartoActual?.id)
+  }), pantalla === "selectorFechaClientes" && /*#__PURE__*/React.createElement(SelectorFecha, {
+    dia: diaActual,
+    repartoId: repartoActual?.id,
+    planillas: planillas,
+    ventas: ventas.filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return !repartoActual || cl?.repartoId === repartoActual.id;
+    }),
+    noVisitas: (noVisitas || []).filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return !repartoActual || cl?.repartoId === repartoActual.id;
+    }),
+    onSeleccionar: (fk, fo) => {
+      setFechaActual(fk);
+      setFechaObj(fo);
+      irA("inicioReparto");
+    },
+    onVolver: () => irA("diaPrincipal")
+  }), pantalla === "inicioReparto" && /*#__PURE__*/React.createElement(InicioReparto, {
+    dia: diaActual,
+    fecha: fechaActual,
+    planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
+    productos: productos,
+    cargasDia: cargasDiaDe(repartoActual?.id),
+    stock: stockNorm,
+    onGuardar: (p, descontar) => {
+      savePlanilla(claveDiaReparto(diaActual, fechaActual, repartoActual?.id), p);
+      if (descontar && repartoActual) {
+        const soda = Number(p.productos?.soda?.llenos || 0);
+        const b10 = Number(p.productos?.b10?.llenos || 0);
+        const b20 = Number(p.productos?.b20?.llenos || 0);
+        const s = JSON.parse(JSON.stringify(normStock(stockNorm)));
+        if (!s.camiones[repartoActual.id]) s.camiones[repartoActual.id] = stockCamionVacio();
+        s.soderia.sifon = Math.max(0, (s.soderia.sifon || 0) - soda);
+        s.soderia.bidon10 = Math.max(0, (s.soderia.bidon10 || 0) - b10);
+        s.soderia.bidon20 = Math.max(0, (s.soderia.bidon20 || 0) - b20);
+        s.camiones[repartoActual.id].sifon = (s.camiones[repartoActual.id].sifon || 0) + soda;
+        s.camiones[repartoActual.id].bidon10 = (s.camiones[repartoActual.id].bidon10 || 0) + b10;
+        s.camiones[repartoActual.id].bidon20 = (s.camiones[repartoActual.id].bidon20 || 0) + b20;
+        setStock(normStock(s));
+        syncData({
+          stock: normStock(s)
+        });
+        // La carga real de hoy queda como sugerencia para la próxima vez que
+        // este reparto salga este mismo día — no depende de un número fijo.
+        saveCargasDiaDe(repartoActual.id, prev => ({
+          ...prev,
+          [diaActual]: {
+            soda,
+            b10,
+            b20
+          }
+        }));
+      }
+      irA("clientes");
+    },
+    onVolver: () => irA("selectorFechaClientes")
+  }), pantalla === "clientes" && /*#__PURE__*/React.createElement(ListaClientes, {
+    clientes: clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)),
+    dia: diaActual,
+    fecha: fechaActual,
+    ventas: ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+    todasVentas: ventas,
+    noVisitas: (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+    onEditarCliente: (id, cambios) => updateCliente(id, cambios),
+    onSeleccionar: c => {
+      setClienteId(c.id);
+      irA("detalleCliente");
+    },
+    onEntregar: c => {
+      setClienteId(c.id);
+      irA("venta");
+    },
+    onNuevoCliente: () => irA("nuevoCliente"),
+    onVolver: () => irA("selectorFechaClientes"),
+    onReordenar: lista => {
+      saveClientes(prev => [...prev.filter(c => c.dia !== diaActual), ...lista]);
+    },
+    onRegistrarNoVisita: (clienteId, motivo) => {
+      saveNoVisitas(prev => [...(prev || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo,
+        _upd: Date.now()
+      }]);
+    },
+    onQuitarNoVisita: clienteId => {
+      saveNoVisitas(prev => (prev || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)));
+    },
+    onConfirmarTransfer: (clienteId, ventaId) => {
+      saveVentas(prev => prev.map(v => v.id === ventaId ? {
+        ...v,
+        transConfirmada: !v.transConfirmada,
+        _upd: Date.now()
+      } : v));
+    },
+    prospectos: (prospectos || []).filter(p => p.dia === diaActual && p.estado === "activo"),
+    recordatorios: recordatorios,
+    onVentaProspecto: p => {
+      saveClientes(prev => prev.find(c => c.id === p.id) ? prev : [...prev, {
+        ...p,
+        saldo: 0,
+        _esProspecto: true
+      }]);
+      setClienteId(p.id);
+      irA("venta");
+    },
+    onNoEstaProspecto: id => {
+      saveNoVisitas(prev => [...(prev || []).filter(v => !(v.clienteId === id && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId: id,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "noesta",
+        _upd: Date.now()
+      }]);
+    },
+    onVerProspecto: p => {
+      saveClientes(prev => prev.find(c => c.id === p.id) ? prev : [...prev, {
+        ...p,
+        saldo: p.saldo || 0,
+        _esProspecto: true
+      }]);
+      setClienteId(p.id);
+      irA("detalleCliente");
+    },
+    onIrPlanilla: () => {
+      setInitCierre(!planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)]?._diaCerrado);
+      irA("planilla");
+    },
+    onIrMenu: () => irA("menu"),
+    onAbrirMapa: () => irA("mapaClientes")
+  }), pantalla === "detalleCliente" && cliente && /*#__PURE__*/React.createElement(DetalleCliente, {
+    cliente: cliente,
+    ventas: ventas.filter(v => v.clienteId === cliente.id),
+    dia: diaActual,
+    fecha: fechaActual,
+    productos: productos,
+    onVenta: () => irA("venta"),
+    onVolver: () => irA("clientes"),
+    onEditar: cambios => updateCliente(cliente.id, cambios),
+    onEliminarVenta: eliminarVenta,
+    onEditarVenta: editarVenta,
+    onEliminarCliente: () => eliminarCliente(cliente.id),
+    onNoEstaCliente: () => {
+      const nv = [...(noVisitas || []).filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId: cliente.id,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "noesta",
+        _upd: Date.now()
+      }];
+      saveNoVisitas(nv);
+      const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+      const ventasIds = new Set(ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId));
+      const noVMap = {};
+      nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
+        noVMap[v.clienteId] = v.motivo;
+      });
+      const terminados = new Set(clientesDia.filter(c => ventasIds.has(c.id) || noVMap[c.id] === "noquiso" || noVMap[c.id] === "noesta2").map(c => c.id));
+      const normalPend = clientesDia.filter(c => !terminados.has(c.id) && noVMap[c.id] !== "noesta" && c.id !== cliente.id);
+      const noestaPend = clientesDia.filter(c => noVMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== cliente.id);
+      const sig = normalPend[0] || noestaPend[0];
+      if (sig) {
+        setClienteId(sig.id);
+        irA("detalleCliente");
+      } else irA("clientes");
+    },
+    onNoQuiereCliente: () => {
+      const nv = [...(noVisitas || []).filter(v => !(v.clienteId === cliente.id && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId: cliente.id,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "noquiso",
+        _upd: Date.now()
+      }];
+      saveNoVisitas(nv);
+      const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+      const ventasIds = new Set(ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId));
+      const noVMap = {};
+      nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
+        noVMap[v.clienteId] = v.motivo;
+      });
+      const terminados = new Set(clientesDia.filter(c => ventasIds.has(c.id) || noVMap[c.id] === "noquiso" || noVMap[c.id] === "noesta2").map(c => c.id));
+      const normalPend = clientesDia.filter(c => !terminados.has(c.id) && noVMap[c.id] !== "noesta" && c.id !== cliente.id);
+      const noestaPend = clientesDia.filter(c => noVMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== cliente.id);
+      const sig = normalPend[0] || noestaPend[0];
+      if (sig) {
+        setClienteId(sig.id);
+        irA("detalleCliente");
+      } else irA("clientes");
+    },
+    recordatorios: recordatorios,
+    onGuardarRecordatorio: r => saveRecordatorios(prev => [...(prev || []), r]),
+    onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+      ...r,
+      confirmado: true
+    } : r)),
+    onCobrarSaldo: (monto, pago) => {
+      const c = cliente;
+      const det = [{
+        nombre: "Cobro de deuda",
+        cantidad: 1,
+        precio: 0,
+        total: 0
+      }];
+      const vt = {
+        id: Date.now(),
+        clienteId: c.id,
+        cliente: c.nombre,
+        dia: diaActual,
+        fechaKey: fechaActual,
+        fecha: new Date().toLocaleString("es-AR"),
+        detalle: det,
+        pago,
+        obs: `Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,
+        saldoAplicado: 0,
+        neto: 0,
+        bruto: 0,
+        desc: 0,
+        costo: 0,
+        ganancia: 0,
+        pagadoNum: monto,
+        saldoDelta: monto,
+        envPrest: [],
+        envDev: [],
+        _esCobro: true,
+        _upd: Date.now()
+      };
+      saveVentas(prev => [...prev, vt]);
+      saveClientes(prev => prev.map(x => x.id === c.id ? {
+        ...x,
+        saldo: (Number(x.saldo) || 0) + monto
+      } : x));
+    },
+    onGuardarCambio: vt => {
+      saveVentas(prev => [...prev, vt]);
+    }
+  }), pantalla === "venta" && cliente && /*#__PURE__*/React.createElement(NuevaVenta, {
+    key: clienteId,
+    cliente: cliente,
+    productos: productos,
+    fecha: fechaActual,
+    ventasCliente: ventas.filter(v => v.clienteId === cliente.id),
+    progressData: (() => {
+      const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id));
+      const ventasHoy = ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste);
+      const noVHoy = (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual);
+      const visitadosIds = new Set([...ventasHoy.map(v => v.clienteId), ...noVHoy.map(v => v.clienteId)]);
+      const montoHoy = ventasHoy.reduce((a, v) => a + (v.neto || 0), 0);
+      const sifs = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Sifón 1.5L").reduce((b, d) => b + d.cantidad, 0), 0);
+      const b10 = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Bidón 10L").reduce((b, d) => b + d.cantidad, 0), 0);
+      const b20 = ventasHoy.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === "Bidón 20L").reduce((b, d) => b + d.cantidad, 0), 0);
+      const planillaHoy = planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || {};
+      return {
+        visitados: visitadosIds.size,
+        total: clientesDia.length,
+        montoHoy,
+        stock: {
+          "Sif": Math.max(0, (Number(planillaHoy.productos?.soda?.llenos) || 0) - sifs),
+          "10L": Math.max(0, (Number(planillaHoy.productos?.b10?.llenos) || 0) - b10),
+          "20L": Math.max(0, (Number(planillaHoy.productos?.b20?.llenos) || 0) - b20)
+        }
+      };
+    })(),
+    onNoEsta: () => {
+      const base = noVisitas || [];
+      const anterior = base.find(v => v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual);
+      const motivo = anterior?.motivo === "noesta" ? "noesta2" : "noesta";
+      const nv = [...base.filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo,
+        _upd: Date.now()
+      }];
+      saveNoVisitas(nv);
+      const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+      const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta")).map(v => v.clienteId)]);
+      visitadosIds.add(clienteId);
+      const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
+      if (siguiente) {
+        setClienteId(siguiente.id);
+        irA("venta");
+      } else irA("clientes");
+    },
+    onNoQuiere: () => {
+      const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "noquiso",
+        _upd: Date.now()
+      }];
+      saveNoVisitas(nv);
+      const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+      const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta")).map(v => v.clienteId)]);
+      visitadosIds.add(clienteId);
+      const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
+      if (siguiente) {
+        setClienteId(siguiente.id);
+        irA("venta");
+      } else irA("clientes");
+    },
+    onGuardar: (d, p, m, sa, ep, ed, obs, op, mt2, sd, tc) => {
+      registrarVenta(d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
+      const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+      const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...(noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta" || v.motivo === "salteado")).map(v => v.clienteId)]);
+      visitadosIds.add(clienteId);
+      const siguiente = clientesDia.find(c => !visitadosIds.has(c.id) && c.id !== clienteId);
+      if (siguiente) {
+        setClienteId(siguiente.id);
+        irA("venta");
+      } else irA("clientes");
+    },
+    onSaltar: () => {
+      const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
+        clienteId,
+        dia: diaActual,
+        fecha: fechaActual,
+        motivo: "salteado",
+        _upd: Date.now()
+      }];
+      saveNoVisitas(nv);
+      const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
+      const nvMap = {};
+      nv.filter(v => v.dia === diaActual && v.fecha === fechaActual).forEach(v => {
+        nvMap[v.clienteId] = v.motivo;
+      });
+      const terminados = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2")).map(v => v.clienteId)]);
+      const normalPend = clientesDia.filter(c => !terminados.has(c.id) && nvMap[c.id] !== "noesta" && nvMap[c.id] !== "salteado" && c.id !== clienteId);
+      const noestaPend = clientesDia.filter(c => nvMap[c.id] === "noesta" && !terminados.has(c.id) && c.id !== clienteId);
+      const saltadosPend = clientesDia.filter(c => nvMap[c.id] === "salteado" && c.id !== clienteId);
+      const sig = normalPend[0] || noestaPend[0] || saltadosPend[0];
+      if (sig) {
+        setClienteId(sig.id);
+        irA("venta");
+      } else irA("clientes");
+    },
+    onVolver: () => irA("detalleCliente")
+  }), pantalla === "nuevoCliente" && /*#__PURE__*/React.createElement(NuevoCliente, {
+    diaActual: diaActual,
+    repartoActual: repartoActual,
+    onGuardar: datos => {
+      const orden = datos.orden;
+      saveClientes(prevC => {
+        let base = prevC;
+        if (orden && prevC.some(c => c.dia === datos.dia && (c.orden || 0) === Number(orden))) {
+          base = prevC.map(c => c.dia === datos.dia && (c.orden || 0) >= Number(orden) ? {
+            ...c,
+            orden: (c.orden || 0) + 1
+          } : c);
+        }
+        return [...base, {
+          ...datos,
+          id: Date.now(),
+          saldo: 0,
+          dispenser: datos.dispenser || 0,
+          repartoId: repartoActual?.id || null
+        }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
+      });
+      irA("clientes");
+    },
+    onVolver: () => irA("clientes")
+  }), pantalla === "historial" && /*#__PURE__*/React.createElement(CargaHistorica, {
+    clientes: clientes,
+    productos: productos,
+    onGuardar: vts => {
+      saveVentas(prev => [...prev, ...vts]);
+      irA("menu");
+    },
+    onVolver: () => irA("menu")
+  }), pantalla === "promocion" && /*#__PURE__*/React.createElement(Promocion, {
+    prospectos: prospectos,
+    clientes: clientes,
+    onSave: saveProspectos,
+    onConvertir: p => {
+      const nuevo = {
+        ...p,
+        id: Date.now(),
+        saldo: 0,
+        sifon: 0,
+        bidon10: 1,
+        bidon20: 0
+      };
+      saveClientes(prev => [...prev, nuevo]);
+      saveProspectos(prev => (prev || []).map(x => x.id === p.id ? {
+        ...x,
+        estado: "convertido"
+      } : x));
+      irA("promocion");
+    },
+    onVolver: () => irA("menu")
+  }), pantalla === "gestionClientes" && /*#__PURE__*/React.createElement(GestionClientes, {
+    clientes: clientes,
+    repartos: repartos,
+    repartoActual: repartoActual,
+    onIrTab: irA,
+    onReordenarTodo: lista => saveClientes(lista),
+    onEditar: (id, cambios) => {
+      saveClientes(prev => prev.map(c => c.id === id ? {
+        ...c,
+        ...cambios
+      } : c));
+    },
+    onEliminar: id => {
+      if (window.confirm("¿Eliminar cliente?")) {
+        saveClientes(prev => {
+          const eliminado = prev.find(c => c.id === id);
+          let nc = prev.filter(c => c.id !== id);
+          if (eliminado) nc = renumerarTrasEliminar(nc, eliminado);
+          return nc;
+        });
+      }
+    },
+    onNuevo: datos => {
+      const orden = datos.orden;
+      saveClientes(prevC => {
+        let nuevos;
+        if (orden && prevC.some(c => c.dia === datos.dia && c.orden === orden)) {
+          // Shift all clients with same day and order >= new order
+          nuevos = prevC.map(c => c.dia === datos.dia && (c.orden || 0) >= orden ? {
+            ...c,
+            orden: (c.orden || 0) + 1
+          } : c);
+        } else {
+          nuevos = [...prevC];
+        }
+        return [...nuevos, {
+          ...datos,
+          id: Date.now(),
+          saldo: 0,
+          dispenser: datos.dispenser || 0
+        }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
+      });
+    },
+    onVolver: () => irA("menu"),
+    onRegistrarVenta: c => {
+      setClienteId(c.id);
+      // Asegurar que fechaActual esté seteado a hoy
+      const hoyKey = new Date().toLocaleDateString("en-CA");
+      if (!fechaActual) setFechaActual(hoyKey);
+      // Si no hay diaActual, usar el día del cliente como fallback
+      if (!diaActual) setDiaActual(c.dia);
+      irA("venta");
+    },
+    onVerDetalle: c => {
+      setClienteId(c.id);
+      irA("detalleDesdeGestion");
+    },
+    ventas: ventas,
+    productos: productos,
+    onGuardarCambio: vt => {
+      saveVentas(prev => [...prev, vt]);
+    }
+  }), pantalla === "clientesDormidos" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ClientesTabs, {
+    activo: "dormidos",
+    onIr: irA
+  }), /*#__PURE__*/React.createElement(ClientesDormidos, {
+    clientes: clientes,
+    ventas: ventas,
+    repartos: repartos,
+    onVolver: () => irA("gestionClientes"),
+    onSeleccionar: c => {
+      setClienteId(c.id);
+      irA("detalleDesdeGestion");
+    },
+    onEditarCliente: (id, cambios) => {
+      saveClientes(prev => prev.map(c => c.id === id ? {
+        ...c,
+        ...cambios
+      } : c));
+    },
+    onEliminar: eliminarCliente,
+    onPerdida: registrarPerdida
+  })), pantalla === "detalleDesdeGestion" && cliente && /*#__PURE__*/React.createElement(DetalleCliente, {
+    cliente: cliente,
+    ventas: ventas.filter(v => v.clienteId === cliente.id),
+    dia: diaActual || cliente.dia,
+    fecha: fechaActual,
+    productos: productos,
+    onVenta: () => {
+      setDiaActual(cliente.dia);
+      const hoy = new Date().toLocaleDateString("en-CA");
+      if (!fechaActual) setFechaActual(hoy);
+      irA("venta");
+    },
+    onVolver: () => irA("gestionClientes"),
+    onEditar: cambios => updateCliente(cliente.id, cambios),
+    onEliminarVenta: eliminarVenta,
+    onEditarVenta: editarVenta,
+    onEliminarCliente: () => {
+      eliminarCliente(cliente.id);
+      irA("gestionClientes");
+    },
+    onNoEstaCliente: () => {},
+    onNoQuiereCliente: () => {},
+    recordatorios: recordatorios,
+    onGuardarRecordatorio: r => saveRecordatorios(prev => [...(prev || []), r]),
+    onConfirmarRecordatorio: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+      ...r,
+      confirmado: true
+    } : r)),
+    onCobrarSaldo: (monto, pago) => {
+      if (cliente) {
+        const det = [{
+          nombre: "Cobro de deuda",
+          cantidad: 1,
+          precio: 0,
+          total: 0
+        }];
+        const fk = fechaActual || new Date().toLocaleDateString("en-CA");
+        const vt = {
+          id: Date.now(),
+          clienteId: cliente.id,
+          cliente: cliente.nombre,
+          dia: diaActual || cliente.dia,
+          fechaKey: fk,
+          fecha: new Date().toLocaleString("es-AR"),
+          detalle: det,
+          pago,
+          obs: `Cobro de deuda $${monto.toLocaleString("es-AR")} (${pago})`,
+          saldoAplicado: 0,
+          neto: 0,
+          bruto: 0,
+          desc: 0,
+          costo: 0,
+          ganancia: 0,
+          pagadoNum: monto,
+          saldoDelta: monto,
+          envPrest: [],
+          envDev: [],
+          saldoAntes: cliente.saldo || 0,
+          saldoDespues: (cliente.saldo || 0) + monto,
+          _esCobro: true,
+          _upd: Date.now()
+        };
+        saveVentas(prev => [...prev, vt]);
+        saveClientes(prev => prev.map(x => x.id === cliente.id ? {
+          ...x,
+          saldo: (Number(x.saldo) || 0) + monto
+        } : x));
+      }
+    },
+    onGuardarCambio: vt => {
+      saveVentas(prev => [...prev, vt]);
+    }
+  }), pantalla === "importarClientes" && /*#__PURE__*/React.createElement(ImportarClientesExcel, {
+    repartos: repartos,
+    clientes: clientes,
+    repartoPreseleccionado: repartoActual,
+    onGuardar: nuevos => {
+      saveClientes(prev => [...prev, ...nuevos]);
+      irA("menu");
+    },
+    onVolver: () => irA("menu")
+  }), pantalla === "mapaClientes" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ClientesTabs, {
+    activo: "mapa",
+    onIr: irA
+  }), /*#__PURE__*/React.createElement(MapaClientes, {
+    clientes: clientes,
+    dia: diaActual,
+    fecha: fechaActual,
+    ventas: ventas,
+    noVisitas: noVisitas,
+    onSeleccionar: c => {
+      setClienteId(c.id);
+      irA("detalleDesdeGestion");
+    },
+    onActualizar: nuevosClientes => saveClientes(nuevosClientes),
+    onVolver: () => irA("menu")
+  })), pantalla === "agenda" && /*#__PURE__*/React.createElement(AgendaScreen, {
+    recordatorios: recordatorios || [],
+    clientes: clientes,
+    repartidores: repartidoresUnicos,
+    onConfirmar: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
+      ...r,
+      confirmado: true
+    } : r)),
+    onEliminar: id => saveRecordatorios(prev => (prev || []).filter(r => r.id !== id)),
+    onNuevo: datos => {
+      const c = clientes.find(x => x.id === datos.clienteId);
+      if (!c) {
+        alert("Seleccioná un cliente");
+        return;
+      }
+      saveRecordatorios(prev => [...(prev || []), {
+        ...datos,
+        id: Date.now(),
+        clienteId: c.id,
+        clienteNombre: c.nombre,
+        dia: c.dia,
+        confirmado: false,
+        paraRepartidor: datos.paraRepartidor || null
+      }]);
+    },
+    onIrCliente: cId => {
+      const c = clientes.find(x => x.id === cId);
+      if (c) {
+        setClienteId(cId);
+        setDiaActual(c.dia);
+        irA("detalleCliente");
+      }
+    },
+    onVolver: () => irA("menu")
+  }), pantalla === "stock" && /*#__PURE__*/React.createElement(StockGeneral, {
+    stock: stockNorm,
+    setStock: ns => {
+      setStock(ns);
+      syncData({
+        stock: ns
+      });
+    },
+    clientes: clientes,
+    setClientes: saveClientes,
+    ventas: ventas,
+    productos: productos,
+    setProductos: saveProductos,
+    cargasDia: cargasDiaDe(repartoActual?.id),
+    setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
+    planillas: planillas,
+    repartos: repartos,
+    perdidas: perdidas,
+    registrarPerdida: registrarPerdida,
+    onVolver: () => irA("menu"),
+    onResumen: () => irA("resumen")
+  }), pantalla === "fiadosPendientes" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ClientesTabs, {
+    activo: "fiados",
+    onIr: irA
+  }), /*#__PURE__*/React.createElement(FiadosPendientes, {
+    clientes: clientes,
+    ventas: ventas,
+    onEditarCliente: (id, cambios) => updateCliente(id, cambios),
+    onCobrar: (cId, monto, pago) => {
+      const cl = clientes.find(c => c.id === cId);
+      if (!cl) return;
+      const vt = {
+        id: Date.now(),
+        clienteId: cl.id,
+        cliente: cl.nombre,
+        dia: cl.dia,
+        fechaKey: new Date().toLocaleDateString("en-CA"),
+        fecha: new Date().toLocaleString("es-AR"),
+        detalle: [{
+          nombre: "Cobro de deuda",
+          cantidad: 1,
+          precio: 0,
+          total: 0
+        }],
+        pago,
+        obs: `Cobro de deuda ${fmt(monto)} (${pago})`,
+        neto: 0,
+        bruto: 0,
+        desc: 0,
+        costo: 0,
+        ganancia: 0,
+        pagadoNum: monto,
+        saldoDelta: monto,
+        envPrest: [],
+        envDev: [],
+        saldoAntes: cl.saldo || 0,
+        saldoDespues: (cl.saldo || 0) + monto,
+        _esCobro: true,
+        _upd: Date.now()
+      };
+      saveVentas(prev => [...prev, vt]);
+      saveClientes(prev => prev.map(c => c.id === cId ? {
+        ...c,
+        saldo: (Number(c.saldo) || 0) + monto
+      } : c));
+    },
+    onVolver: () => irA("menu")
+  })), pantalla === "resumen" && /*#__PURE__*/React.createElement(Resumen, {
+    ventas: ventas,
+    clientes: clientes,
+    productos: productos,
+    planillas: planillas,
+    noVisitas: noVisitas || [],
+    repartos: repartos,
+    onVolver: () => irA("menu")
+  }), pantalla === "config" && /*#__PURE__*/React.createElement(Config, {
+    productos: productos,
+    setProductos: saveProductos,
+    clientes: clientes,
+    setClientes: saveClientes,
+    ventas: ventas,
+    setVentas: saveVentas,
+    planillas: planillas,
+    setPlanillas: savePlanillasCloud,
+    stock: stockNorm,
+    setStock: s => {
+      const ns = normStock(s);
+      setStockRaw(ns);
+      syncData({
+        stock: ns
+      });
+    },
+    cargasDia: cargasDiaDe(repartoActual?.id),
+    setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
+    syncData: syncData,
+    onVolver: () => irA("menu"),
+    negocioId: negocioId,
+    tabInicial: tabConfig,
+    repartos: repartos,
+    repartoActual: repartoActual
+  }))), modalResumenDia && (() => {
+    const {
+      dia,
+      fechaKey
+    } = modalResumenDia;
+    const vDia = ventas.filter(v => v.fechaKey === fechaKey && v.dia === dia && !v._esCobro && !v._esAjuste);
+    const ef = vDia.filter(v => v.pago === "contado").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+    const tr = vDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+    const trP = tr - vDia.filter(v => v.pago === "transferencia" && v.transConfirmada).reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+    const fi = vDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         position: "fixed",
-        left: 14,
-        right: 14,
-        bottom: 18,
-        zIndex: 999,
-        background: "var(--color-background-tertiary)",
-        border: "1px solid var(--color-border-secondary)",
-        borderRadius: 12,
-        padding: "12px 14px",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(0,0,0,0.75)",
+        zIndex: 2000,
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        boxShadow: "0 4px 16px rgba(0,0,0,0.35)"
+        justifyContent: "center",
+        padding: 20
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "var(--color-background-primary)",
+        borderRadius: 16,
+        padding: 24,
+        width: "100%",
+        maxWidth: 360,
+        display: "flex",
+        flexDirection: "column",
+        gap: 14
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 36
+      }
+    }, "✅"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 17,
+        fontWeight: 600,
+        color: "var(--color-text-primary)"
+      }
+    }, "Día completado"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-tertiary)",
+        textTransform: "capitalize"
+      }
+    }, dia, " · ", new Date(fechaKey + "T12:00:00").toLocaleDateString("es-AR", {
+      day: "numeric",
+      month: "long"
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 8
+      }
+    }, [["💵 Efectivo", ef, "success"], ["💳 Transferencias", tr, "info"], ...(trP > 0 ? [["  🔴 Pendientes", trP, "warning"]] : []), ["📋 Fiado nuevo", fi, "warning"]].map(([l, v, cl]) => /*#__PURE__*/React.createElement("div", {
+      key: l,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "8px 12px",
+        borderRadius: 8,
+        background: "var(--color-background-secondary)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-secondary)"
+      }
+    }, l), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: `var(--color-text-${cl})`
+      }
+    }, fmt(v)))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "10px 12px",
+        borderRadius: 8,
+        background: "var(--color-background-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 14,
+        fontWeight: 600,
+        color: "var(--color-text-primary)"
+      }
+    }, "Total del día"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 17,
+        fontWeight: 700,
+        color: "var(--color-text-success)"
+      }
+    }, fmt(ef + tr + fi)))), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btnPrimary
       },
-      children: [/*#__PURE__*/_jsx("span", {
-        style: {
-          fontSize: 13,
-          color: "var(--color-text-primary)",
-          flex: 1
-        },
-        children: "🗑️ Venta eliminada"
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          background: "#185FA5",
-          color: "#e2eaf4",
-          border: "none",
-          borderRadius: 8,
-          padding: "8px 16px",
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: "pointer"
-        },
-        onClick: deshacerUltimaVenta,
-        children: "↩️ Deshacer"
-      })]
-    })]
-  });
+      onClick: () => {
+        setModalResumenDia(null);
+        irA("planilla");
+      }
+    }, "Ver planilla completa →"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        textAlign: "center"
+      },
+      onClick: () => setModalResumenDia(null)
+    }, "Cerrar")));
+  })(), deshacerVenta && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      left: 14,
+      right: 14,
+      bottom: 18,
+      zIndex: 999,
+      background: "var(--color-background-tertiary)",
+      border: "1px solid var(--color-border-secondary)",
+      borderRadius: 12,
+      padding: "12px 14px",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      boxShadow: "0 4px 16px rgba(0,0,0,0.35)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-primary)",
+      flex: 1
+    }
+  }, "🗑️ Venta eliminada"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 8,
+      padding: "8px 16px",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer"
+    },
+    onClick: deshacerUltimaVenta
+  }, "↩️ Deshacer")));
 }
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -2823,7 +2791,7 @@ class ErrorBoundary extends React.Component {
     console.error("App error:", e, info);
   }
   render() {
-    if (this.state.error) return /*#__PURE__*/_jsxs("div", {
+    if (this.state.error) return /*#__PURE__*/React.createElement("div", {
       style: {
         padding: 40,
         textAlign: "center",
@@ -2833,48 +2801,43 @@ class ErrorBoundary extends React.Component {
         alignItems: "center",
         justifyContent: "center",
         background: "#0f1923"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 40,
+        marginBottom: 16
+      }
+    }, "⚠️"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 18,
+        fontWeight: 500,
+        color: "#f07070",
+        marginBottom: 8
+      }
+    }, "Algo salió mal"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "#7a9ab8",
+        marginBottom: 20,
+        maxWidth: 300
+      }
+    }, String(this.state.error.message || "Error desconocido")), /*#__PURE__*/React.createElement("button", {
+      style: {
+        background: "#185FA5",
+        color: "#fff",
+        border: "none",
+        borderRadius: 8,
+        padding: "10px 24px",
+        fontSize: 14,
+        cursor: "pointer"
       },
-      children: [/*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 40,
-          marginBottom: 16
-        },
-        children: "⚠️"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 18,
-          fontWeight: 500,
-          color: "#f07070",
-          marginBottom: 8
-        },
-        children: "Algo salió mal"
-      }), /*#__PURE__*/_jsx("div", {
-        style: {
-          fontSize: 13,
-          color: "#7a9ab8",
-          marginBottom: 20,
-          maxWidth: 300
-        },
-        children: String(this.state.error.message || "Error desconocido")
-      }), /*#__PURE__*/_jsx("button", {
-        style: {
-          background: "#185FA5",
-          color: "#fff",
-          border: "none",
-          borderRadius: 8,
-          padding: "10px 24px",
-          fontSize: 14,
-          cursor: "pointer"
-        },
-        onClick: () => {
-          this.setState({
-            error: null
-          });
-          window.location.hash = "portada";
-        },
-        children: "Reiniciar app"
-      })]
-    });
+      onClick: () => {
+        this.setState({
+          error: null
+        });
+        window.location.hash = "portada";
+      }
+    }, "Reiniciar app"));
     return this.props.children;
   }
 }
@@ -2883,6 +2846,4 @@ class ErrorBoundary extends React.Component {
 
 // ── Render raíz ──────────────────────────────────────────────
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(/*#__PURE__*/_jsx(ErrorBoundary, {
-  children: /*#__PURE__*/_jsx(App, {})
-}));
+root.render(/*#__PURE__*/React.createElement(ErrorBoundary, null, /*#__PURE__*/React.createElement(App, null)));
