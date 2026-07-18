@@ -12,11 +12,10 @@
   <title>Reparto Multi 2026</title>
   <script>
     if('serviceWorker' in navigator){
-      const CACHE = 'sr2026-v22';
+      const CACHE = 'sr2026-v23-fix';
       const ASSETS = [
         'https://unpkg.com/react@18/umd/react.production.min.js',
         'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-        'https://unpkg.com/@babel/standalone@7.26.4/babel.min.js',
         'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js',
         'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
         'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
@@ -71,7 +70,6 @@ self.addEventListener('notificationclick',e=>{
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -93,11 +91,19 @@ self.addEventListener('notificationclick',e=>{
         firebase.initializeApp(firebaseConfig);
       }
       window.db = firebase.firestore(); window.firebaseDB = window.db;
-      // Activar persistencia offline (Firebase 10+)
-      window.db.enablePersistence({synchronizeTabs:true}).catch(function(err){
-        if(err.code==="failed-precondition"){console.warn("Persistencia offline: múltiples pestañas abiertas");}
-        else if(err.code==="unimplemented"){console.warn("Persistencia offline: navegador no compatible");}
-      });
+      // Persistencia offline multi-pestaña (API nueva, reemplaza al
+      // enablePersistence() deprecado) + long-polling automático para
+      // evitar errores de conexión QUIC en redes que lo bloquean/limitan.
+      try {
+        window.db.settings({
+          cache: firebase.firestore.persistentLocalCache({
+            tabManager: firebase.firestore.persistentMultipleTabManager()
+          }),
+          experimentalAutoDetectLongPolling: true
+        });
+      } catch(errCache) {
+        console.warn("No se pudo configurar el cache persistente de Firestore:", errCache);
+      }
 
       // Cloud Messaging — para las notificaciones push (activarNotif la usa
       // más abajo con window.messagingLC.getToken(...))
@@ -547,22 +553,22 @@ self.addEventListener('notificationclick',e=>{
   </script>
 <div id="root"></div>
 
-<script type="text/babel" src="js/01-temas.js?v=20260708"></script>
-<script type="text/babel" src="js/02-constantes.js?v=20260708"></script>
-<script type="text/babel" src="js/03-utils.js?v=20260708"></script>
-<script type="text/babel" src="js/04-pdf.js?v=20260708"></script>
-<script type="text/babel" src="js/05-licencias.js?v=20260708"></script>
-<script type="text/babel" src="js/06-portada.js?v=20260708"></script>
-<script type="text/babel" src="js/07-stock.js?v=20260708"></script>
-<script type="text/babel" src="js/08-menu.js?v=20260708"></script>
-<script type="text/babel" src="js/09-clientes.js?v=20260708"></script>
-<script type="text/babel" src="js/10-ventas.js?v=20260708"></script>
-<script type="text/babel" src="js/11-promocion.js?v=20260708"></script>
-<script type="text/babel" src="js/12-gestion.js?v=20260708"></script>
-<script type="text/babel" src="js/13-resumen.js?v=20260708"></script>
-<script type="text/babel" src="js/14-roles.js?v=20260708"></script>
-<script type="text/babel" src="js/15-config.js?v=20260708"></script>
-<script type="text/babel" src="js/16-extras.js?v=20260708"></script>
-<script type="text/babel" src="js/17-app.js?v=20260708"></script>
+<script src="js/01-temas.js?v=20260718c"></script>
+<script src="js/02-constantes.js?v=20260718c"></script>
+<script src="js/03-utils.js?v=20260718c"></script>
+<script src="js/04-pdf.js?v=20260718c"></script>
+<script src="js/05-licencias.js?v=20260718c"></script>
+<script src="js/06-portada.js?v=20260718c"></script>
+<script src="js/07-stock.js?v=20260718c"></script>
+<script src="js/08-menu.js?v=20260718c"></script>
+<script src="js/09-clientes.js?v=20260718c"></script>
+<script src="js/10-ventas.js?v=20260718c"></script>
+<script src="js/11-promocion.js?v=20260718c"></script>
+<script src="js/12-gestion.js?v=20260718c"></script>
+<script src="js/13-resumen.js?v=20260718c"></script>
+<script src="js/14-roles.js?v=20260718c"></script>
+<script src="js/15-config.js?v=20260718c"></script>
+<script src="js/16-extras.js?v=20260718c"></script>
+<script src="js/17-app.js?v=20260718c"></script>
 </body>
 </html>
