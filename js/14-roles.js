@@ -854,6 +854,7 @@ function AppRepartidor({
     setPantalla(p);
     window.scrollTo(0, 0);
   };
+  window._lcIrInicio = () => irA("inicio");
   const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, mt2, sdOverride, transConfirmadaInicial) => {
     const c = cliente;
     // Guard anti doble-tap: ignora una llamada idéntica al mismo cliente
