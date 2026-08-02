@@ -97,12 +97,12 @@ function MenuRepartos({
   const ventasEnPeriodoResGen = React.useMemo(() => {
     if (periodoResGen === "todo") return ventas || [];
     const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+    const hoyKey = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
     return (ventas || []).filter(v => {
-      if (!v.fecha) return false;
-      const f = new Date(v.fecha);
-      if (periodoResGen === "hoy") return f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth() && f.getDate() === hoy.getDate();
-      if (periodoResGen === "mes") return f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth();
+      const fk = v.fechaKey || "";
+      if (!fk) return false;
+      if (periodoResGen === "hoy") return fk === hoyKey;
+      if (periodoResGen === "mes") return fk.slice(0, 7) === hoyKey.slice(0, 7);
       return true;
     });
   }, [ventas, periodoResGen]);

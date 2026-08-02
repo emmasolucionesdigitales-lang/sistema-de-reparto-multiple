@@ -1205,9 +1205,9 @@ function AppPrincipal({
     repartoId: repartoActual?.id
   });
   const cerrarDia = async (fecha, dia, imgData) => {
-    const key = `sr_informe_${fecha}_${dia}`;
+    const key = `sr_informe_${claveDiaReparto(dia, fecha, repartoActual?.id)}`;
     const envios = Number(localStorage.getItem(key) || 0);
-    if (envios >= 3) return false; // máximo 3 envíos por día
+    if (envios >= 3) return false; // máximo 3 envíos por planilla (día+fecha+reparto)
     setSyncStatus("saving");
     const ok = await enviarDiario(fecha, dia, imgData);
     if (ok) {
