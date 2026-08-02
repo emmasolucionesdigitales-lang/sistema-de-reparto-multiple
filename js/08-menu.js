@@ -1016,7 +1016,6 @@ function MenuDias({
   onResumen,
   onConfig,
   onGestionClientes,
-  onPromocion,
   onStock,
   onAgenda,
   onVolver,
@@ -1035,8 +1034,7 @@ function MenuDias({
   onDiaHoy,
   onDiaResumen,
   noVisitas,
-  onFiados,
-  prospectos
+  onFiados
 }) {
   const [editandoZona, setEditandoZona] = React.useState(null);
   const hoyDiaNombre = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][new Date().getDay()];
@@ -1245,7 +1243,6 @@ function MenuDias({
     const deudas = (clientes || []).filter(c => c.dia === d && c.saldo < 0);
     const totalDeuda = deudas.reduce((a, c) => a + Math.abs(c.saldo), 0);
     const totalClientes = (clientes || []).filter(c => c.dia === d).length;
-    const totalProspectos = (prospectos || []).filter(p => p.dia === d && (p.estado === "activo" || !p.estado)).length;
     const zona = (zonasReparto || {})[d] || "";
     // ── Día pasado sin cargar nada (no hoy): busca su última fecha ya ocurrida y
     //    si no hay ninguna venta ni "no visita" registrada ese día, queda pendiente ──
@@ -2041,24 +2038,17 @@ function DetalleTransferencias({
 function DetalleVentasDia({
   ventas,
   clientes,
-  prospectos,
   noVisitas,
   fecha
 }) {
   const [abierto, setAbierto] = React.useState(false);
   const todosMap = React.useMemo(() => {
     const m = {};
-    (prospectos || []).forEach(p => {
-      m[p.id] = {
-        ...p,
-        _esProspecto: true
-      };
-    });
     (clientes || []).forEach(c => {
       m[c.id] = c;
     });
     return m;
-  }, [clientes, prospectos]);
+  }, [clientes]);
   const fmtEnv = arr => (arr || []).filter(e => e.prod && Number(e.cant) > 0).map(e => `${e.cant} ${e.prod}`).join(", ");
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2170,17 +2160,7 @@ function DetalleVentasDia({
         fontWeight: 500,
         color: "var(--color-text-primary)"
       }
-    }, v.cliente), cli._esProspecto && /*#__PURE__*/React.createElement("span", {
-      style: {
-        marginLeft: 6,
-        fontSize: 10,
-        padding: "1px 6px",
-        borderRadius: 4,
-        background: "#2e1f06",
-        color: "#f5b942",
-        fontWeight: 600
-      }
-    }, "🚀 Prospecto"), /*#__PURE__*/React.createElement("span", {
+    }, v.cliente), /*#__PURE__*/React.createElement("span", {
       style: {
         marginLeft: 6,
         fontSize: 10,
@@ -2338,7 +2318,6 @@ function PlanillaDelDia({
   onVolver,
   onCerrarDia,
   initCierre,
-  prospectos,
   noVisitas,
   cargasDia
 }) {
@@ -3394,7 +3373,6 @@ function PlanillaDelDia({
   }, "Resumen del día"), ventasPropias.length > 0 ? /*#__PURE__*/React.createElement(DetalleVentasDia, {
     ventas: ventasPropias,
     clientes: clientes,
-    prospectos: prospectos,
     noVisitas: noVisitas,
     fecha: fecha
   }) : /*#__PURE__*/React.createElement("div", {

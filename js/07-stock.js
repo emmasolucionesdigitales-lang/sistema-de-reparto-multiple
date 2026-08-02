@@ -99,7 +99,7 @@ function StockGeneral({
     nc[dia][key] = Math.max(0, Math.round(Number(val) || 0));
     setCargasDia(nc);
   };
-  const clientesReales = (clientes || []).filter(c => !c._esProspecto);
+  const clientesReales = clientes || [];
   const totClientes = {
     sifon: 0,
     bidon10: 0,

@@ -53,7 +53,6 @@ function ListaClientes({
   ventas,
   todasVentas,
   noVisitas,
-  prospectos,
   recordatorios,
   onSeleccionar,
   onEntregar,
@@ -63,11 +62,7 @@ function ListaClientes({
   onEditarCliente,
   onRegistrarNoVisita,
   onQuitarNoVisita,
-  onVentaProspecto,
-  onNoEstaProspecto,
-  onNoQuiereProspecto,
   onConfirmarTransfer,
-  onVerProspecto,
   onAbrirMapa,
   onIrPlanilla,
   onIrMenu
@@ -83,8 +78,6 @@ function ListaClientes({
   // visitados = ventas + noesta2 + noquiso (noesta 1ra vez NO cuenta)
   const visitadosSinVenta = new Set(Object.entries(noVMap).filter(([, m]) => m === "noesta2" || m === "noquiso").map(([id]) => Number(id)));
   const visitados = new Set([...atendidos, ...visitadosSinVenta]);
-  const prospectosDelDia = (prospectos || []).filter(p => p.dia === dia && p.estado === "activo");
-  const visitadosProspectos = new Set(ventas.filter(v => prospectosDelDia.some(p => p.id === v.clienteId)).map(v => v.clienteId));
   const marcarNoVisita = (id, motivo) => {
     const prev = noVMap[id];
     if (motivo === "noesta" && prev === "noesta") onRegistrarNoVisita(id, "noesta2");else if (prev === motivo) onQuitarNoVisita(id);else onRegistrarNoVisita(id, motivo);
@@ -128,12 +121,10 @@ function ListaClientes({
     c
   }) => {
     const [fotoOpen, setFotoOpen] = React.useState(false);
-    const esProspecto = !!c._esProspecto;
-    const atendido = esProspecto ? visitadosProspectos.has(c.id) : atendidos.has(c.id);
+    const atendido = atendidos.has(c.id);
     const est = noVMap[c.id];
-    // Borde naranja para prospectos, verde/amarillo/rojo para clientes normales
-    const bc = esProspecto ? "#f5b942" : atendido ? "#1D9E75" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
-    const handleClick = () => esProspecto ? onVerProspecto && onVerProspecto(c) : onSeleccionar(c);
+    const bc = atendido ? "#1D9E75" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
+    const handleClick = () => onSeleccionar(c);
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         ...s.card,
@@ -312,7 +303,7 @@ function ListaClientes({
         e.stopPropagation();
         setFotoOpen(true);
       }
-    }, "📷"))), (!visitados.has(c.id) || est === "noesta") && !atendido && !esProspecto && /*#__PURE__*/React.createElement("div", {
+    }, "📷"))), (!visitados.has(c.id) || est === "noesta") && !atendido && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,
@@ -357,51 +348,6 @@ function ListaClientes({
         flex: 2
       },
       onClick: () => (onEntregar || onSeleccionar)(c)
-    }, "Entregar →")), !visitadosProspectos.has(c.id) && !atendido && esProspecto && /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        marginTop: 10
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      style: {
-        background: "var(--color-background-warning)",
-        color: "var(--color-text-warning)",
-        border: "1px solid var(--color-border-warning)",
-        borderRadius: 10,
-        padding: "10px 0",
-        fontSize: 13,
-        cursor: "pointer",
-        fontWeight: 500,
-        flex: 1
-      },
-      onClick: () => onNoEstaProspecto && onNoEstaProspecto(c.id)
-    }, "🔄 No está"), /*#__PURE__*/React.createElement("button", {
-      style: {
-        background: "var(--color-background-danger)",
-        color: "var(--color-text-danger)",
-        border: "1px solid var(--color-border-danger)",
-        borderRadius: 10,
-        padding: "10px 0",
-        fontSize: 13,
-        cursor: "pointer",
-        fontWeight: 500,
-        flex: 1
-      },
-      onClick: () => onNoQuiereProspecto && onNoQuiereProspecto(c.id)
-    }, "No quiere"), /*#__PURE__*/React.createElement("button", {
-      style: {
-        background: "#185FA5",
-        color: "#e2eaf4",
-        border: "none",
-        borderRadius: 10,
-        padding: "10px 0",
-        fontSize: 14,
-        cursor: "pointer",
-        fontWeight: 600,
-        flex: 2
-      },
-      onClick: () => onVentaProspecto && onVentaProspecto(c)
     }, "Entregar →")), (est === "noesta2" || est === "noquiso") && !atendido && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",

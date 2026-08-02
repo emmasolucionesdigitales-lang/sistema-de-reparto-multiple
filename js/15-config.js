@@ -1328,8 +1328,7 @@ function Config({
           planillas,
           stock,
           productos,
-          noVisitas: noVisitas || [],
-          prospectos: prospectos || []
+          noVisitas: noVisitas || []
         }, uid, negocioId).then(() => alert("✅ Datos sincronizados.")).catch(() => alert("❌ Error. Verificá tu conexión."));
       }
     }
@@ -1495,7 +1494,7 @@ function Config({
     },
     onClick: async () => {
       if (!window.confirm("⚠️ ¿Borrar TODOS los clientes, ventas y movimientos?\n\nLos productos, stock y repartos se conservan.")) return;
-      ["rm_clientes_v3", "rm_ventas_v3", "rm_planillas_v1", "rm_novisitas_v1", "rm_prospectos_v1", "rm_recordatorios_v1", "rm_lc_hist_precios", "rm_lc_ultimo_backup"].forEach(k => localStorage.removeItem(k));
+      ["rm_clientes_v3", "rm_ventas_v3", "rm_planillas_v1", "rm_novisitas_v1", "rm_recordatorios_v1", "rm_lc_hist_precios", "rm_lc_ultimo_backup"].forEach(k => localStorage.removeItem(k));
       Object.keys(localStorage).filter(k => k.startsWith("rm_lc_backup_")).forEach(k => localStorage.removeItem(k));
       if (window.db && negocioId) {
         try {
@@ -1511,7 +1510,6 @@ function Config({
                 planillas: {},
                 noVisitas: [],
                 recordatorios: [],
-                prospectos: [],
                 histPrecios: [],
                 mantVeh: []
               }));

@@ -23,27 +23,6 @@ function direccionCliente(c) {
   if (c.barrio) partes.push(c.barrio);
   return partes.join(" · ");
 }
-// Los prospectos (clientes potenciales, todavía no confirmados) usan un
-// esquema de campos un poco distinto — sector, piso y depto por separado,
-// en vez del campo único "Casa/Dpto" de los clientes ya confirmados.
-function direccionProspecto(p) {
-  if (!p) return "";
-  const partes = [];
-  if (p.calle) {
-    let base = `${p.calle} ${p.nro || ""}`.trim();
-    if (p.piso) base += ` P${p.piso}`;
-    if (p.depto) base += ` D${p.depto}`;
-    partes.push(base);
-  } else if (p.manzana || p.lote || p.sector) {
-    let base = "";
-    if (p.sector) base += `S${p.sector} `;
-    if (p.manzana) base += `Mz ${p.manzana} `;
-    if (p.lote) base += `L ${p.lote}`;
-    if (base.trim()) partes.push(base.trim());
-  }
-  if (p.barrio) partes.push(p.barrio);
-  return partes.join(" · ");
-}
 function debounceSave(fn) {
   _saveQueue = fn;
   if (_saveTimer) clearTimeout(_saveTimer);

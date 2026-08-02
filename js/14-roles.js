@@ -716,7 +716,6 @@ function AppRepartidor({
         planillas: {},
         stock: {},
         noVisitas: [],
-        prospectos: [],
         recordatorios: [],
         repartos: []
       });
@@ -759,9 +758,6 @@ function AppRepartidor({
     if (sectores.length > 0 && !sectores.some(s => (c.barrio || "").toLowerCase().includes(s.toLowerCase()))) return false;
     return true;
   }).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
-
-  // Prospectos asignados a este repartidor
-  const prospectos = (datos.prospectos || []).filter(p => !p.repartoId || !miReparto || p.repartoId === miReparto.id);
 
   // Todos los clientes de ESTE repartidor (todos los días, no sólo hoy) —
   // antes de esto, varias pantallas usaban "todosClientes" (de TODO el
@@ -820,9 +816,6 @@ function AppRepartidor({
         }
         if (overrides.noVisitas !== undefined) {
           merged.noVisitas = mergeArrayPorClave(prevDatos.noVisitas, overrides.noVisitas, fresh.noVisitas, v => `${v.clienteId}|${v.dia}|${v.fecha}`);
-        }
-        if (overrides.prospectos !== undefined) {
-          merged.prospectos = mergeArrayPorClave(prevDatos.prospectos, overrides.prospectos, fresh.prospectos, p => p.id);
         }
         // productos, negocio, repartos, zonasReparto, etc.: este repartidor
         // no los edita desde acá — se dejan tal cual estén en "fresh" en
@@ -982,15 +975,6 @@ function AppRepartidor({
       setDiaClienteActual(sigCliente.dia || diaActual);
       setOrigenDetalle("clientes");
       irA("venta");
-      return;
-    }
-    // Si no hay más clientes, pasar a prospectos
-    const visitadosProsp = new Set(ventasHoy.filter(v => v._esProspecto).map(v => v.clienteId));
-    const sigProspecto = prospectos.find(p => p.dia === diaActual && p.estado === "activo" && !visitadosProsp.has(p.id));
-    if (sigProspecto) {
-      setClienteId(sigProspecto.id);
-      setOrigenDetalle("prospectos");
-      irA("clientes"); // volver a lista para que el usuario elija el prospecto
       return;
     }
     // Terminó todo — ir a planilla del día
@@ -1285,37 +1269,7 @@ function AppRepartidor({
       saveNoVisitas(nv);
     },
     onQuitarNoVisita: cId => saveNoVisitas(noVisitas.filter(v => !(v.clienteId === cId && v.fecha === fechaActual))),
-    onVentaProspecto: p => {
-      if (!todosClientes.find(c => c.id === p.id)) {
-        saveClientes([...todosClientes, {
-          ...p,
-          saldo: 0,
-          _esProspecto: true
-        }]);
-      }
-      setClienteId(p.id);
-      irA("venta");
-    },
-    onNoEstaProspecto: id => {
-      const nv = [...noVisitas.filter(v => !(v.clienteId === id && v.fecha === fechaActual)), {
-        clienteId: id,
-        dia: diaActual,
-        fecha: fechaActual,
-        motivo: "noesta"
-      }];
-      saveNoVisitas(nv);
-    },
-    onNoQuiereProspecto: id => {
-      const nv = [...noVisitas.filter(v => !(v.clienteId === id && v.fecha === fechaActual)), {
-        clienteId: id,
-        dia: diaActual,
-        fecha: fechaActual,
-        motivo: "noquiso"
-      }];
-      saveNoVisitas(nv);
-    },
     onConfirmarTransfer: null,
-    prospectos: prospectos,
     recordatorios: []
   }), pantalla === "clientes" && ventasHoy.length + noVisHoy.length >= clientes.length && clientes.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1480,19 +1434,11 @@ function AppRepartidor({
     onVolver: () => irA("inicio")
   }), pantalla === "todosClientes" && /*#__PURE__*/React.createElement(TodosClientesRepartidor, {
     clientes: misClientesTodos,
-    prospectos: prospectos,
     ventas: ventas.filter(v => misClientesTodos.some(c => c.id === v.clienteId)),
     onSeleccionar: c => {
       setClienteId(c.id);
       setDiaClienteActual(c.dia || diaActual);
       setOrigenDetalle("todosClientes");
-      // Si es prospecto, agregarlo temporalmente a clientes
-      if (c._esProspecto && !todosClientes.find(x => x.id === c.id)) {
-        saveClientes([...todosClientes, {
-          ...c,
-          saldo: 0
-        }]);
-      }
       irA("detalleCliente");
     },
     onNuevoCliente: null,

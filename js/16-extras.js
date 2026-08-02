@@ -1231,7 +1231,6 @@ function GastosRepartidor({
 // ── TodosClientesRepartidor ──────────────────────────────────
 function TodosClientesRepartidor({
   clientes,
-  prospectos,
   ventas,
   onSeleccionar,
   onNuevoCliente,
@@ -1240,7 +1239,6 @@ function TodosClientesRepartidor({
   const [busq, setBusq] = React.useState("");
   const [diaFiltro, setDiaFiltro] = React.useState("todos");
   const filtrados = clientes.filter(c => (diaFiltro === "todos" || c.dia === diaFiltro) && (c.nombre.toLowerCase().includes(busq.toLowerCase()) || (c.barrio || "").toLowerCase().includes(busq.toLowerCase()))).sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
-  const prospectosFiltrados = diaFiltro === "todos" ? (prospectos || []).filter(p => (p.estado === "activo" || !p.estado) && (busq === "" || p.nombre.toLowerCase().includes(busq.toLowerCase()))) : [];
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
@@ -1363,74 +1361,7 @@ function TodosClientesRepartidor({
         color: "var(--color-text-tertiary)"
       }
     }, "→"));
-  }), prospectosFiltrados.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...s.sectionTitle,
-      color: "#f5b942"
-    }
-  }, "Prospectos en promocion"), prospectosFiltrados.map(p => /*#__PURE__*/React.createElement("div", {
-    key: p.id,
-    style: {
-      ...s.card,
-      marginBottom: 0,
-      borderRadius: 0,
-      borderBottom: "0.5px solid var(--color-border-tertiary)",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      cursor: "pointer",
-      padding: "12px 14px",
-      borderLeft: "3px solid #f5b942"
-    },
-    onClick: () => onSeleccionar({
-      ...p,
-      _esProspecto: true
-    })
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 600,
-      fontSize: 14,
-      color: "var(--color-text-primary)"
-    }
-  }, p.nombre), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      background: "#2e1f06",
-      color: "#f5b942",
-      padding: "1px 6px",
-      borderRadius: 10,
-      fontWeight: 600
-    }
-  }, "Prospecto"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      background: "#185FA5",
-      color: "#fff",
-      padding: "1px 6px",
-      borderRadius: 10,
-      fontWeight: 600
-    }
-  }, p.dia)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)",
-      marginTop: 2
-    }
-  }, direccionProspecto(p))), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--color-text-tertiary)"
-    }
-  }, "→")))));
+  }));
 }
 
 // ── AgendaRepartidor ─────────────────────────────────────────
