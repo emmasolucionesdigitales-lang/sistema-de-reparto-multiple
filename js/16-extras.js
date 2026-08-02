@@ -3750,6 +3750,11 @@ function usarInformes({
     return null;
   };
   const fmtPesos = n => "$" + Math.round(Number(n) || 0).toLocaleString("es-AR");
+  // IDs de clientes del reparto que está enviando el informe — se usa en
+  // diario, semanal y mensual para que cada repartidor reciba SUS propios
+  // números y no los del negocio entero. Sin repartoId (negocio de una
+  // sola ruta) queda sin filtrar, como siempre.
+  const idsClientesReparto = repartoId ? new Set((clientes || []).filter(c => c.repartoId === repartoId).map(c => c.id)) : null;
   const enviarDiario = async (fecha, dia, imgData) => {
     const lic = getLic();
     const emailDestino = lic.email || (await getEmailDueno());
@@ -3764,9 +3769,13 @@ function usarInformes({
         const f = Math.floor(s / CAJON_SODA);
         return s % CAJON_SODA >= 4 ? f + 1 : f;
       };
-      const todasFecha = (ventas || []).filter(v => v.fechaKey === fecha);
-      const clientesDia = new Set((clientes || []).filter(c => c.dia === dia).map(c => c.id));
-      const todasVentasDia = [...todasFecha.filter(v => clientesDia.has(v.clienteId)), ...todasFecha.filter(v => !clientesDia.has(v.clienteId))];
+      // Ojo: acá antes se armaba todasVentasDia partiendo todasFecha en
+      // "clientesDia" y "no clientesDia" y concatenando las dos mitades —
+      // eso da el conjunto completo sin filtrar nada, así que un cierre de
+      // UN reparto terminaba incluyendo las ventas de TODOS los repartos
+      // del negocio en esa fecha. Ahora se limita a los clientes del
+      // reparto que se está cerrando (idsClientesReparto, definido arriba).
+      const todasVentasDia = (ventas || []).filter(v => v.fechaKey === fecha && (!idsClientesReparto || idsClientesReparto.has(v.clienteId)));
       const plan = (planillas || {})[claveDiaReparto(dia, fecha, repartoId)] || {};
       const planEf = plan.efectivo !== "" && plan.efectivo !== undefined ? Number(plan.efectivo || 0) : null;
       const planRet = plan.retenciones !== "" && plan.retenciones !== undefined ? Number(plan.retenciones || 0) : null;
@@ -3822,7 +3831,7 @@ function usarInformes({
       const lunesPasado = new Date(d);
       lunesPasado.setDate(d.getDate() - 6);
       const desde = lunesPasado.toISOString().slice(0, 10);
-      const ventasSem = (ventas || []).filter(v => v.fechaKey >= desde && v.fechaKey <= fecha && !v._esCobro && !v._esAjuste);
+      const ventasSem = (ventas || []).filter(v => v.fechaKey >= desde && v.fechaKey <= fecha && !v._esCobro && !v._esAjuste && (!idsClientesReparto || idsClientesReparto.has(v.clienteId)));
       const totalSem = ventasSem.reduce((a, v) => a + (v.neto || 0), 0);
       const htmlContent = `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
@@ -3851,7 +3860,7 @@ function usarInformes({
     if (!lic.email || !window.enviarEmailBrevoRM) return false;
     try {
       const prefijo = `${anio}-${String(mes).padStart(2, "0")}`;
-      const ventasMes = (ventas || []).filter(v => (v.fechaKey || "").startsWith(prefijo) && !v._esCobro && !v._esAjuste);
+      const ventasMes = (ventas || []).filter(v => (v.fechaKey || "").startsWith(prefijo) && !v._esCobro && !v._esAjuste && (!idsClientesReparto || idsClientesReparto.has(v.clienteId)));
       const totalMes = ventasMes.reduce((a, v) => a + (v.neto || 0), 0);
       const meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
       const htmlContent = `
