@@ -1081,18 +1081,22 @@ function NuevaVenta({
       transform: envOpen ? "rotate(180deg)" : "rotate(0deg)",
       transition: "transform 0.2s"
     }
-  }, "⌃")), envOpen && prodEntrega.map(p => /*#__PURE__*/React.createElement("div", {
+  }, "⌃")), envOpen && prodEntrega.map(p => {
+  const neto = getEnvCnt(envPrest, p.nombre) - getEnvCnt(envDev, p.nombre);
+  const incrementar = () => {
+    if (neto < 0) subEnv(setEnvDev, p.nombre);else addEnv(setEnvPrest, p.nombre);
+  };
+  const decrementar = () => {
+    if (neto > 0) subEnv(setEnvPrest, p.nombre);else addEnv(setEnvDev, p.nombre);
+  };
+  return /*#__PURE__*/React.createElement("div", {
     key: p.nombre,
     style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
       padding: "10px 14px",
       borderTop: "0.5px solid var(--color-border-tertiary)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 8
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -1100,66 +1104,51 @@ function NuevaVenta({
       fontWeight: 500,
       color: "var(--color-text-primary)"
     }
-  }, p.nombre), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "var(--color-text-tertiary)"
-    }
-  }, getEnvCnt(envPrest, p.nombre) > 0 && `Presté ${getEnvCnt(envPrest, p.nombre)}`, getEnvCnt(envPrest, p.nombre) > 0 && getEnvCnt(envDev, p.nombre) > 0 && " · ", getEnvCnt(envDev, p.nombre) > 0 && `Devolvió ${getEnvCnt(envDev, p.nombre)}`)), /*#__PURE__*/React.createElement("div", {
+  }, p.nombre), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 8
+      alignItems: "center",
+      gap: 10
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: {
-      flex: 1,
-      background: "var(--color-background-info)",
-      color: "var(--color-text-info)",
-      border: "0.5px solid var(--color-border-secondary)",
+      width: 34,
+      height: 34,
       borderRadius: 8,
-      padding: "8px",
-      fontSize: 12,
-      fontWeight: 500,
-      cursor: "pointer"
-    },
-    onClick: () => addEnv(setEnvPrest, p.nombre)
-  }, "+ Presté uno"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      flex: 1,
+      border: "0.5px solid var(--color-border-secondary)",
       background: "var(--color-background-success)",
       color: "var(--color-text-success)",
-      border: "0.5px solid var(--color-border-secondary)",
-      borderRadius: 8,
-      padding: "8px",
-      fontSize: 12,
-      fontWeight: 500,
+      fontSize: 17,
+      fontWeight: 600,
       cursor: "pointer"
     },
-    onClick: () => addEnv(setEnvDev, p.nombre)
-  }, "− Devolvió uno")), getEnvCnt(envPrest, p.nombre) > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: decrementar,
+    title: "Devolvió uno"
+  }, "−"), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 6,
-      background: "none",
-      border: "none",
-      fontSize: 11,
-      color: "var(--color-text-tertiary)",
-      cursor: "pointer",
-      padding: 0
-    },
-    onClick: () => subEnv(setEnvPrest, p.nombre)
-  }, "↩ deshacer último prestado"), getEnvCnt(envDev, p.nombre) > 0 && /*#__PURE__*/React.createElement("button", {
+      minWidth: 74,
+      textAlign: "center",
+      fontSize: 12,
+      fontWeight: 600,
+      color: neto > 0 ? "var(--color-text-info)" : neto < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
+    }
+  }, neto > 0 ? `Presté ${neto}` : neto < 0 ? `Devolvió ${-neto}` : "sin cambio"), /*#__PURE__*/React.createElement("button", {
     style: {
-      marginTop: getEnvCnt(envPrest, p.nombre) > 0 ? 2 : 6,
-      background: "none",
-      border: "none",
-      fontSize: 11,
-      color: "var(--color-text-tertiary)",
-      cursor: "pointer",
-      padding: 0,
-      display: "block"
+      width: 34,
+      height: 34,
+      borderRadius: 8,
+      border: "0.5px solid var(--color-border-secondary)",
+      background: "var(--color-background-info)",
+      color: "var(--color-text-info)",
+      fontSize: 17,
+      fontWeight: 600,
+      cursor: "pointer"
     },
-    onClick: () => subEnv(setEnvDev, p.nombre)
-  }, "↩ deshacer última devolución")))), /*#__PURE__*/React.createElement("div", {
+    onClick: incrementar,
+    title: "Presté uno"
+  }, "+")));
+})), 
+/*#__PURE__*/React.createElement("div", {
     style: s.divider
   }), /*#__PURE__*/React.createElement("label", {
     style: s.label

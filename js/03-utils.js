@@ -695,7 +695,10 @@ function HeaderApp({
       ...s.headerTitle,
       whiteSpace: "nowrap",
       overflow: "hidden",
-      textOverflow: "ellipsis"
-    }
+      textOverflow: "ellipsis",
+      cursor: "pointer"
+    },
+    onClick: () => window._lcIrInicio && window._lcIrInicio(),
+    title: "Ir al inicio"
   }, titulo ? `${negocio} · ${titulo}` : negocio), /*#__PURE__*/React.createElement(HeaderBotones, null));
 }
