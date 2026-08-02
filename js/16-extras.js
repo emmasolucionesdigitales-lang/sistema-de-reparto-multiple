@@ -3775,7 +3775,7 @@ function usarInformes({
       // UN reparto terminaba incluyendo las ventas de TODOS los repartos
       // del negocio en esa fecha. Ahora se limita a los clientes del
       // reparto que se está cerrando (idsClientesReparto, definido arriba).
-      const todasVentasDia = (ventas || []).filter(v => v.fechaKey === fecha && (!idsClientesReparto || idsClientesReparto.has(v.clienteId)));
+      const todasVentasDia = (ventas || []).filter(v => v.fechaKey === fecha && v.dia === dia && (!idsClientesReparto || idsClientesReparto.has(v.clienteId)));
       const plan = (planillas || {})[claveDiaReparto(dia, fecha, repartoId)] || {};
       const planEf = plan.efectivo !== "" && plan.efectivo !== undefined ? Number(plan.efectivo || 0) : null;
       const planRet = plan.retenciones !== "" && plan.retenciones !== undefined ? Number(plan.retenciones || 0) : null;
