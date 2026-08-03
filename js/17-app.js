@@ -2156,7 +2156,7 @@ function AppPrincipal({
         irA("venta");
       } else irA("clientes");
     },
-    onNoQuiere: () => {
+    onNoQuiere: (envPrest, envDev) => {
       const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)), {
         clienteId,
         dia: diaActual,
@@ -2165,6 +2165,37 @@ function AppPrincipal({
         _upd: Date.now()
       }];
       saveNoVisitas(nv);
+      const _ep = (envPrest || []).filter(e => e.prod && Number(e.cant) > 0);
+      const _ed = (envDev || []).filter(e => e.prod && Number(e.cant) > 0);
+      if (_ep.length || _ed.length) {
+        const fk = new Date().toLocaleDateString("en-CA");
+        saveVentas(prev => [...prev, {
+          id: Date.now(),
+          clienteId,
+          cliente: cliente ? cliente.nombre : "",
+          dia: diaActual,
+          fechaKey: fk,
+          fecha: new Date().toLocaleString("es-AR"),
+          detalle: [{
+            nombre: "Movimiento de envases (No quiere)",
+            cantidad: 1,
+            precio: 0,
+            total: 0
+          }],
+          pago: "-",
+          obs: "Envases marcados al no comprar",
+          neto: 0,
+          bruto: 0,
+          desc: 0,
+          costo: 0,
+          ganancia: 0,
+          pagadoNum: 0,
+          saldoDelta: 0,
+          envPrest: _ep,
+          envDev: _ed,
+          _esAjuste: true
+        }]);
+      }
       const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
       const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...nv.filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta")).map(v => v.clienteId)]);
       visitadosIds.add(clienteId);
