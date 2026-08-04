@@ -2639,10 +2639,6 @@ function PlanillaDelDia({
         _cierreDiffs: diffs
       } : {})
     });
-    // Capturar la planilla como imagen y mandar el informe en el MISMO paso
-    // que se cierra el día — antes eran dos acciones separadas (cerrar
-    // stock por un lado, mandar informe por otro) y era fácil quedarse a
-    // mitad de camino sin darse cuenta.
     if (onCerrarDia) {
       setEnviandoCierre(true);
       let imgData = null;
@@ -2927,8 +2923,8 @@ function PlanillaDelDia({
         cursor: enviandoCierre ? "default" : "pointer",
         opacity: enviandoCierre ? 0.7 : 1
       },
-      disabled: enviandoCierre,
-      onClick: confirmarCierre
+      onClick: confirmarCierre,
+      disabled: enviandoCierre
     }, enviandoCierre ? "⏳ Cerrando día y enviando informe..." : "✓ Cerrar día, actualizar stock y enviar informe")));
   }
   return /*#__PURE__*/React.createElement("div", {
@@ -3889,9 +3885,9 @@ function PlanillaDelDia({
       width: "100%",
       padding: "14px",
       borderRadius: 10,
-      border: "2px solid #f5b942",
-      background: "#2e1f06",
-      color: "#f5b942",
+      border: "none",
+      background: "#4c1d95",
+      color: "#e9d5ff",
       fontSize: 15,
       fontWeight: 600,
       cursor: "pointer",
@@ -3909,23 +3905,24 @@ function PlanillaDelDia({
       fontWeight: 500,
       marginTop: 10
     }
-  }, "✅ Día cerrado — stock actualizado"), onCerrarDia && ventas.length > 0 && (() => {
+  }, "✅ Día cerrado · Stock actualizado"), onCerrarDia && ventas.length > 0 && (() => {
     const MAX_ENVIOS = 3;
     const envios = enviosInforme;
     const quedan = MAX_ENVIOS - envios;
     const agotado = quedan <= 0;
     return /*#__PURE__*/React.createElement("button", {
       style: {
-        ...s.btn,
-        background: agotado ? undefined : "#0F6E56",
-        color: agotado ? undefined : "#fff",
-        border: agotado ? undefined : "none",
-        marginTop: 8,
         width: "100%",
+        padding: "10px",
+        borderRadius: 10,
+        border: "none",
+        background: agotado ? "#555" : "#0F6E56",
+        color: agotado ? "#ccc" : "#d1fae5",
         fontSize: 12,
-        padding: "8px",
+        fontWeight: 600,
         cursor: agotado ? "default" : "pointer",
-        opacity: agotado ? 0.6 : 1
+        marginTop: 8,
+        opacity: agotado ? 0.7 : 1
       },
       onClick: async () => {
         if (agotado) {
@@ -3956,7 +3953,7 @@ function PlanillaDelDia({
         const ok = await onCerrarDia(imgData);
         if (ok) {
           setEnviosInforme(Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || envios + 1));
-          alert(`✅ Informe enviado a tu email correctamente.${quedan - 1 > 0 ? `\n\nSi no te llega, podés reenviarlo ${quedan - 1} ${quedan - 1 === 1 ? "vez" : "veces"} más.` : ""}`);
+          alert(`✅ Informe enviado a tu email.${quedan - 1 > 0 ? `\n\nSi no te llega, podés reenviarlo ${quedan - 1} ${quedan - 1 === 1 ? "vez" : "veces"} más.` : ""}`);
         } else {
           alert("❌ No se pudo enviar el informe. Verificá tu conexión e intentá de nuevo.");
         }
