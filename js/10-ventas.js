@@ -12,9 +12,14 @@ function NuevaVenta({
   onVolver,
   onSaltar,
   ventasCliente,
-  progressData
+  progressData,
+  compacto,
+  onCambiarDispenser
 }) {
   const [transConfirmada, setTransConfirmada] = React.useState(false);
+  const [dispDelta, setDispDelta] = React.useState(0);
+  const [masOpcionesCompacto, setMasOpcionesCompacto] = React.useState(false);
+  const [mostrarRotoCompacto, setMostrarRotoCompacto] = React.useState(false);
   const [mostrarCambio, setMostrarCambio] = React.useState(false);
   const [productoViejoCambio, setProductoViejoCambio] = React.useState("Bidón 20L");
   const [productoNuevoCambio, setProductoNuevoCambio] = React.useState("Bidón 20L");
@@ -196,6 +201,606 @@ function NuevaVenta({
       setList(n);
     }
   }));
+  const confirmarRegistro = () => {
+    const envIncompleto = [...envPrest, ...envDev].some(e => {
+      const tieneProd = !!e.prod;
+      const tieneCant = String(e.cant || "").trim() !== "" && Number(e.cant) > 0;
+      return tieneProd && !tieneCant || !tieneProd && tieneCant;
+    });
+    if (envIncompleto) {
+      alert("⚠️ Hay un envase cargado a medias: falta elegir el producto o poner la cantidad. Completalo o borrá esa fila antes de registrar, así no se pierde la devolución o el préstamo.");
+      return;
+    }
+    if (pago === "mixto") {
+      const ef = Number(montoEfec || 0),
+        tr = Number(montoTrans || 0);
+      if (ef === 0 && tr === 0) {
+        alert("Ingresá al menos un monto para el pago mixto");
+        return;
+      }
+      const totalPagado = ef + tr;
+      if (totalACobrar > 0 && totalPagado > totalACobrar * 3 && totalPagado > totalACobrar + 10000) {
+        if (!window.confirm(`Estás cobrando ${fmt(totalPagado)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
+      }
+      const saldoDelta = totalPagado - totalACobrar;
+      if (ef > 0) onGuardar(detalle, "contado", String(ef), saldoApl, envPrest, envDev, obs, "mixto_ef", tr, saldoDelta, transConfMixto);else onGuardar(detalle, "transferencia", String(tr), saldoApl, envPrest, envDev, obs, "mixto_tr", ef, saldoDelta, transConfMixto);
+    } else {
+      const montoFinal = opcionSaldo === "todo" && !monto ? String(Math.round(Math.abs(cliente.saldo) + aPagar)) : monto;
+      const pagadoNum = Number(montoFinal) || 0;
+      if (pago !== "fiado" && totalACobrar > 0 && pagadoNum > totalACobrar * 3 && pagadoNum > totalACobrar + 10000) {
+        if (!window.confirm(`Estás cobrando ${fmt(pagadoNum)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
+      }
+      onGuardar(detalle, pago, montoFinal, saldoApl, envPrest, envDev, obs, opcionSaldo, undefined, undefined, pago === "transferencia" ? transConfirmada : false);
+    }
+    if (dispDelta !== 0 && onCambiarDispenser) onCambiarDispenser(dispDelta);
+  };
+  if (compacto) {
+    return /*#__PURE__*/React.createElement(React.Fragment, null, prodEntrega.map(p => {
+      const netoEnv = getEnvCnt(envPrest, p.nombre) - getEnvCnt(envDev, p.nombre);
+      const incrementarEnv = () => {
+        if (netoEnv < 0) subEnv(setEnvDev, p.nombre);else addEnv(setEnvPrest, p.nombre);
+      };
+      const decrementarEnv = () => {
+        if (netoEnv > 0) subEnv(setEnvPrest, p.nombre);else addEnv(setEnvDev, p.nombre);
+      };
+      return /*#__PURE__*/React.createElement("div", {
+        key: p.id,
+        style: {
+          display: "grid",
+          gridTemplateColumns: "1fr auto 70px",
+          alignItems: "center",
+          columnGap: 6,
+          marginBottom: 8
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 12,
+          color: "var(--color-text-primary)"
+        }
+      }, p.nombre, /*#__PURE__*/React.createElement("span", {
+        style: {
+          display: "block",
+          fontSize: 10,
+          color: "var(--color-text-tertiary)"
+        }
+      }, fmt(p.precio))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          justifySelf: "center"
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        style: {
+          ...s.btn,
+          width: 26,
+          height: 26,
+          padding: 0,
+          fontSize: 15,
+          lineHeight: 1
+        },
+        onClick: () => setCantidades(q => ({
+          ...q,
+          [p.nombre]: Math.max(0, (q[p.nombre] || 0) - 1)
+        }))
+      }, "−"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 15,
+          fontWeight: 500,
+          minWidth: 14,
+          textAlign: "center",
+          color: "var(--color-text-primary)"
+        }
+      }, cantidades[p.nombre] || 0), /*#__PURE__*/React.createElement("button", {
+        style: {
+          ...s.btn,
+          width: 26,
+          height: 26,
+          padding: 0,
+          fontSize: 15,
+          lineHeight: 1
+        },
+        onClick: () => setCantidades(q => ({
+          ...q,
+          [p.nombre]: (q[p.nombre] || 0) + 1
+        }))
+      }, "+")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 3
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        style: {
+          width: 20,
+          height: 20,
+          borderRadius: 5,
+          border: "0.5px solid var(--color-border-secondary)",
+          background: "var(--color-background-tertiary)",
+          color: "var(--color-text-secondary)",
+          fontSize: 12,
+          lineHeight: 1,
+          cursor: "pointer",
+          padding: 0
+        },
+        onClick: decrementarEnv,
+        title: "Devolvió uno"
+      }, "−"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 9,
+          fontWeight: 600,
+          minWidth: 30,
+          textAlign: "center",
+          color: netoEnv > 0 ? "var(--color-text-info)" : netoEnv < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
+        }
+      }, netoEnv > 0 ? `P.${netoEnv}` : netoEnv < 0 ? `D.${-netoEnv}` : "env."), /*#__PURE__*/React.createElement("button", {
+        style: {
+          width: 20,
+          height: 20,
+          borderRadius: 5,
+          border: "0.5px solid var(--color-border-secondary)",
+          background: "var(--color-background-tertiary)",
+          color: "var(--color-text-secondary)",
+          fontSize: 12,
+          lineHeight: 1,
+          cursor: "pointer",
+          padding: 0
+        },
+        onClick: incrementarEnv,
+        title: "Prestó uno"
+      }, "+")));
+    }), dispenser && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr auto 70px",
+        alignItems: "center",
+        columnGap: 6,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-primary)"
+      }
+    }, "🧊 Dispenser", /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "block",
+        fontSize: 10,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "en el cliente: ", cliente.dispenser || 0)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        justifySelf: "center"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        width: 26,
+        height: 26,
+        padding: 0,
+        fontSize: 15,
+        lineHeight: 1
+      },
+      onClick: () => setDispDelta(d => Math.max(-(cliente.dispenser || 0), d - 1)),
+      title: "Retirar dispenser"
+    }, "−"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 15,
+        fontWeight: 500,
+        minWidth: 20,
+        textAlign: "center",
+        color: dispDelta > 0 ? "var(--color-text-info)" : dispDelta < 0 ? "var(--color-text-success)" : "var(--color-text-primary)"
+      }
+    }, dispDelta > 0 ? `+${dispDelta}` : dispDelta), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        width: 26,
+        height: 26,
+        padding: 0,
+        fontSize: 15,
+        lineHeight: 1
+      },
+      onClick: () => setDispDelta(d => d + 1),
+      title: "Prestar dispenser"
+    }, "+")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        fontWeight: 600,
+        textAlign: "center",
+        color: dispDelta > 0 ? "var(--color-text-info)" : dispDelta < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
+      }
+    }, dispDelta > 0 ? `presté ${dispDelta}` : dispDelta < 0 ? `retiré ${-dispDelta}` : "sin cambio")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginBottom: 8
+      }
+    }, dispenser && /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        flex: 1,
+        fontSize: 11,
+        padding: "7px",
+        color: mostrarRotoCompacto ? "#fff" : "var(--color-text-danger)",
+        background: mostrarRotoCompacto ? "#a32d2d" : undefined,
+        border: mostrarRotoCompacto ? "none" : undefined
+      },
+      onClick: () => setMostrarRotoCompacto(r => !r)
+    }, "💔 Dispenser roto"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        flex: 1,
+        fontSize: 11,
+        padding: "7px",
+        background: mostrarCambio ? "#185FA5" : undefined,
+        color: mostrarCambio ? "#fff" : undefined,
+        border: mostrarCambio ? "none" : undefined
+      },
+      onClick: () => setMostrarCambio(m => !m)
+    }, "🔄 Cambio de envase")), mostrarRotoCompacto && dispenser && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: "0 0 8px",
+        padding: 10,
+        border: "1px solid var(--color-border-danger)"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.input,
+        fontSize: 12
+      },
+      type: "number",
+      placeholder: "Precio de reposición $",
+      value: dispRotoPrecio,
+      onChange: e => setDispRotoPrecio(e.target.value)
+    }), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        width: "100%",
+        marginTop: 6,
+        fontSize: 11
+      },
+      onClick: () => {
+        setDispRotoPrecio("");
+        setMostrarRotoCompacto(false);
+      }
+    }, "Cancelar")), mostrarCambio && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: "0 0 8px",
+        border: "1px solid #818cf8",
+        padding: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginBottom: 6
+      }
+    }, /*#__PURE__*/React.createElement("select", {
+      style: {
+        ...s.select,
+        fontSize: 12
+      },
+      value: productoViejoCambio,
+      onChange: e => setProductoViejoCambio(e.target.value)
+    }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+      key: p.id,
+      value: p.nombre
+    }, p.nombre))), /*#__PURE__*/React.createElement("select", {
+      style: {
+        ...s.select,
+        fontSize: 12
+      },
+      value: productoNuevoCambio,
+      onChange: e => setProductoNuevoCambio(e.target.value)
+    }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+      key: p.id,
+      value: p.nombre
+    }, p.nombre)))), /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.input,
+        fontSize: 12,
+        marginBottom: 6
+      },
+      placeholder: "Motivo",
+      value: motivoCambio,
+      onChange: e => setMotivoCambio(e.target.value)
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        flex: 1,
+        fontSize: 12
+      },
+      onClick: () => setMostrarCambio(false)
+    }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btnPrimary,
+        flex: 2,
+        fontSize: 12,
+        padding: "8px"
+      },
+      onClick: () => {
+        const obsTxt = `Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim() ? ` · ${motivoCambio.trim()}` : ""}`;
+        onGuardar([{
+          nombre: "Cambio de envase",
+          cantidad: 1,
+          precio: 0,
+          total: 0
+        }], "cambio", "0", 0, [{
+          prod: productoNuevoCambio,
+          cant: 1
+        }], [{
+          prod: productoViejoCambio,
+          cant: 1
+        }], obsTxt, "cambio_envase");
+        setMostrarCambio(false);
+        setMotivoCambio("Agua en mal estado");
+      }
+    }, "✓ Registrar cambio"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 5,
+        marginBottom: 8
+      }
+    }, [["contado", "Contado"], ["transferencia", "Transfer."], ["fiado", "Fiado"], ["mixto", "Mixto"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+      key: v,
+      style: {
+        ...s.btn,
+        flex: 1,
+        fontSize: 11,
+        padding: "6px 2px",
+        background: pago === v ? "#185FA5" : undefined,
+        color: pago === v ? "#fff" : undefined,
+        border: pago === v ? "none" : undefined
+      },
+      onClick: () => setPago(v)
+    }, l))), pago === "transferencia" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: "0 0 8px",
+        padding: "8px 10px",
+        background: transConfirmada ? "#0a2e1f" : "#1e3a5f",
+        border: transConfirmada ? "0.5px solid #4dd9a0" : "0.5px solid #5daaff"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: transConfirmada ? "#4dd9a0" : "#5daaff"
+      }
+    }, transConfirmada ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        background: transConfirmada ? "#4dd9a0" : "#185FA5",
+        color: transConfirmada ? "#0a2e1f" : "#fff",
+        border: "none",
+        borderRadius: 6,
+        padding: "4px 9px",
+        fontSize: 10,
+        cursor: "pointer"
+      },
+      onClick: () => {
+        setTransConfirmada(!transConfirmada);
+        if (!transConfirmada) sonarTransferencia();
+      }
+    }, transConfirmada ? "✓ OK" : "Confirmar"))), pago === "mixto" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: "0 0 8px",
+        padding: 10,
+        background: "var(--color-background-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginBottom: 6
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.input,
+        fontSize: 12
+      },
+      type: "number",
+      placeholder: "Efectivo $",
+      value: montoEfec,
+      onChange: e => {
+        const ef = e.target.value;
+        setMontoEfec(ef);
+        const resto = totalACobrar - (Number(ef) || 0);
+        setMontoTrans(resto > 0 ? String(Math.round(resto)) : "");
+      }
+    }), /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.input,
+        fontSize: 12
+      },
+      type: "number",
+      placeholder: "Transfer. $",
+      value: montoTrans,
+      onChange: e => setMontoTrans(e.target.value)
+    })), Number(montoTrans || 0) > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: transConfMixto ? "#4dd9a0" : "#5daaff"
+      }
+    }, transConfMixto ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        background: transConfMixto ? "#4dd9a0" : "#185FA5",
+        color: transConfMixto ? "#0a2e1f" : "#fff",
+        border: "none",
+        borderRadius: 6,
+        padding: "4px 9px",
+        fontSize: 10,
+        cursor: "pointer"
+      },
+      onClick: () => {
+        setTransConfMixto(!transConfMixto);
+        if (!transConfMixto) sonarTransferencia();
+      }
+    }, transConfMixto ? "✓ OK" : "Confirmar"))), pago !== "fiado" && pago !== "mixto" && /*#__PURE__*/React.createElement("input", {
+      style: {
+        ...s.input,
+        fontSize: 12,
+        marginBottom: 8
+      },
+      type: "number",
+      placeholder: `Monto cobrado (vacío = ${fmt(aPagar)})`,
+      value: monto,
+      onChange: e => setMonto(e.target.value)
+    }), (saldoDisp > 0 || cliente.saldo < 0) && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-info)",
+        cursor: "pointer"
+      },
+      onClick: () => setMasOpcionesCompacto(m => !m)
+    }, masOpcionesCompacto ? "▲ Menos opciones" : "▼ Más opciones (saldo, deuda, notas)"), masOpcionesCompacto && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 8
+      }
+    }, saldoDisp > 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: "0 0 8px",
+        padding: "8px 10px",
+        background: "var(--color-background-success)",
+        border: "0.5px solid var(--color-border-success)",
+        cursor: "pointer"
+      },
+      onClick: () => setUsarSaldo(!usarSaldo)
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "checkbox",
+      checked: usarSaldo,
+      onChange: e => setUsarSaldo(e.target.checked),
+      style: {
+        width: 16,
+        height: 16,
+        cursor: "pointer",
+        accentColor: "#0F6E56"
+      }
+    }), /*#__PURE__*/React.createElement("label", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-success)",
+        cursor: "pointer",
+        fontWeight: 500
+      }
+    }, "Usar saldo a favor — ", fmt(saldoDisp)))), cliente.saldo < 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        ...s.card,
+        margin: "0 0 8px",
+        padding: "8px 10px",
+        background: "var(--color-background-danger)",
+        border: "0.5px solid var(--color-border-danger)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        fontWeight: 500,
+        color: "var(--color-text-danger)",
+        marginBottom: 6
+      }
+    }, "Deuda pendiente: ", fmt(Math.abs(cliente.saldo))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 5
+      }
+    }, [["todo", "Paga deuda + compra de hoy", Math.abs(cliente.saldo) + aPagar], ["compra", "Solo la compra de hoy", null], ["parcial", "Pago parcial (ingresá el monto)", null]].map(([op, label, total]) => /*#__PURE__*/React.createElement("button", {
+      key: op,
+      style: {
+        textAlign: "left",
+        padding: "6px 10px",
+        borderRadius: 7,
+        border: "0.5px solid var(--color-border-danger)",
+        background: opcionSaldo === op ? "#7f1d1d" : "transparent",
+        color: "var(--color-text-danger)",
+        fontSize: 11,
+        cursor: "pointer",
+        fontWeight: opcionSaldo === op ? 500 : 400
+      },
+      onClick: () => setOpcionSaldo(op)
+    }, opcionSaldo === op ? "✓ " : "", label, total ? ` — ${fmt(total)}` : "")))), cliente.saldo < 0 && /*#__PURE__*/React.createElement(CobroDeudaPanel, {
+      saldo: cliente.saldo,
+      onCobrar: (mCobro, pCobro) => {
+        onGuardar([{
+          nombre: "Cobro de deuda",
+          cantidad: 1,
+          precio: 0,
+          total: 0
+        }], pCobro, String(mCobro), 0, [], [], `Cobro de deuda $${mCobro.toLocaleString("es-AR")} (${pCobro})`, "cobro_deuda");
+      }
+    }), /*#__PURE__*/React.createElement("textarea", {
+      style: {
+        ...s.input,
+        minHeight: 40,
+        fontSize: 12,
+        marginBottom: 8
+      },
+      value: obs,
+      onChange: e => setObs(e.target.value),
+      placeholder: "Notas opcionales..."
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "A cobrar"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, fmt(totalACobrar))), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btnPrimary,
+        marginBottom: 6,
+        padding: "9px",
+        fontSize: 13,
+        opacity: detalle.length === 0 ? 0.45 : 1
+      },
+      disabled: detalle.length === 0,
+      onClick: confirmarRegistro
+    }, "✓ Registrar entrega"));
+  }
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement("div", {
@@ -826,38 +1431,7 @@ function NuevaVenta({
       opacity: detalle.length === 0 ? 0.45 : 1
     },
     disabled: detalle.length === 0,
-    onClick: () => {
-      const envIncompleto = [...envPrest, ...envDev].some(e => {
-        const tieneProd = !!e.prod;
-        const tieneCant = String(e.cant || "").trim() !== "" && Number(e.cant) > 0;
-        return tieneProd && !tieneCant || !tieneProd && tieneCant;
-      });
-      if (envIncompleto) {
-        alert("⚠️ Hay un envase cargado a medias: falta elegir el producto o poner la cantidad. Completalo o borrá esa fila antes de registrar, así no se pierde la devolución o el préstamo.");
-        return;
-      }
-      if (pago === "mixto") {
-        const ef = Number(montoEfec || 0),
-          tr = Number(montoTrans || 0);
-        if (ef === 0 && tr === 0) {
-          alert("Ingresá al menos un monto para el pago mixto");
-          return;
-        }
-        const totalPagado = ef + tr;
-        if (totalACobrar > 0 && totalPagado > totalACobrar * 3 && totalPagado > totalACobrar + 10000) {
-          if (!window.confirm(`Estás cobrando ${fmt(totalPagado)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
-        }
-        const saldoDelta = totalPagado - totalACobrar;
-        if (ef > 0) onGuardar(detalle, "contado", String(ef), saldoApl, envPrest, envDev, obs, "mixto_ef", tr, saldoDelta, transConfMixto);else onGuardar(detalle, "transferencia", String(tr), saldoApl, envPrest, envDev, obs, "mixto_tr", ef, saldoDelta, transConfMixto);
-      } else {
-        const montoFinal = opcionSaldo === "todo" && !monto ? String(Math.round(Math.abs(cliente.saldo) + aPagar)) : monto;
-        const pagadoNum = Number(montoFinal) || 0;
-        if (pago !== "fiado" && totalACobrar > 0 && pagadoNum > totalACobrar * 3 && pagadoNum > totalACobrar + 10000) {
-          if (!window.confirm(`Estás cobrando ${fmt(pagadoNum)}, bastante más que el total a cobrar (${fmt(totalACobrar)}). ¿Está bien?`)) return;
-        }
-        onGuardar(detalle, pago, montoFinal, saldoApl, envPrest, envDev, obs, opcionSaldo, undefined, undefined, pago === "transferencia" ? transConfirmada : false);
-      }
-    }
+    onClick: confirmarRegistro
   }, "✓ Registrar entrega"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",

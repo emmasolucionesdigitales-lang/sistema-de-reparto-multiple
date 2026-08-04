@@ -848,8 +848,15 @@ function AppRepartidor({
     window.scrollTo(0, 0);
   };
   window._lcIrInicio = () => irA("inicio");
-  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, mt2, sdOverride, transConfirmadaInicial) => {
-    const c = cliente;
+  const registrarVenta = (ventaClienteId, detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, mt2, sdOverride, transConfirmadaInicial) => {
+    // Resolver el cliente por id explícito — necesario para poder
+    // registrar desde la tarjeta inline en ListaClientes, donde nunca se
+    // navegó a la pantalla "venta".
+    const c = misClientesTodos.find(cl => cl.id === ventaClienteId);
+    if (!c) {
+      console.warn("registrarVenta: cliente no encontrado", ventaClienteId);
+      return;
+    }
     // Guard anti doble-tap: ignora una llamada idéntica al mismo cliente
     // dentro de 1.5s (botón sin lock + toque duplicado en el celular)
     const firmaReg = JSON.stringify({
@@ -1243,6 +1250,20 @@ function AppRepartidor({
       setDiaClienteActual(c.dia || diaActual);
       irA("venta");
     },
+    productos: productos,
+    onGuardarVenta: (clienteIdVenta, ...args) => registrarVenta(clienteIdVenta, ...args),
+    onCambiarDispenserCliente: (id, delta) => {
+      const cd = todosClientes.find(x => x.id === id);
+      if (!cd) return;
+      const clientesActualizados = todosClientes.map(x => x.id === id ? {
+        ...x,
+        dispenser: Math.max(0, (Number(x.dispenser) || 0) + delta),
+        _upd: Date.now()
+      } : x);
+      sync({
+        clientes: clientesActualizados
+      });
+    },
     onNuevoCliente: null,
     onVolver: () => irA("inicio"),
     onEditarCliente: (id, cambios) => {
@@ -1395,7 +1416,7 @@ function AppRepartidor({
       irAlSiguiente();
     },
     onGuardar: (d, p, m, sa, ep, ed, obs, op, mt2, sd, tc) => {
-      registrarVenta(d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
+      registrarVenta(clienteId, d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
       irAlSiguiente();
     },
     onSaltar: () => {

@@ -556,7 +556,43 @@ function AppPrincipal({
         };
         setStock(normStock);
       }
-      if (data.productos?.length) setProductos(data.productos);
+      if (data.productos?.length) {
+        // ── Productos: MERGEAR por id + _upd (antes se pisaba entero) ────
+        const productosLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_productos_v3") || "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const porIdProd = {};
+        (data.productos || []).forEach(p => {
+          porIdProd[p.id] = p;
+        });
+        let cambiosLocalesProd = 0;
+        productosLocales.forEach(p => {
+          const enNube = porIdProd[p.id];
+          if (!enNube) {
+            porIdProd[p.id] = p;
+            cambiosLocalesProd++;
+            return;
+          }
+          const uL = Number(p._upd) || 0,
+            uN = Number(enNube._upd) || 0;
+          if (uL > uN) {
+            porIdProd[p.id] = p;
+            cambiosLocalesProd++;
+          }
+        });
+        const mergedProd = Object.values(porIdProd);
+        setProductos(mergedProd);
+        if (cambiosLocalesProd > 0) {
+          console.log("Merge: " + cambiosLocalesProd + " productos locales más nuevos, sincronizando");
+          setTimeout(() => syncData({
+            productos: mergedProd
+          }), 2000);
+        }
+      }
       if (data.noVisitas?.length) {
         // ── noVisitas: MERGEAR por clave (cliente+día+fecha) ──────────────
         const noVisitasLocales = (() => {
@@ -1064,6 +1100,9 @@ function AppPrincipal({
         if (overrides.cargasDia !== undefined) {
           merged.cargasDia = mergeNumericoConDeltas(prevData.cargasDia, data.cargasDia, fresh.cargasDia);
         }
+        if (overrides.productos !== undefined) {
+          merged.productos = mergeArrayPorClave(prevData.productos, data.productos, fresh.productos, p => p.id);
+        }
         if (overrides.recordatorios !== undefined) {
           merged.recordatorios = mergeArrayPorClave(prevData.recordatorios, data.recordatorios, fresh.recordatorios, r => r.id);
         }
@@ -1132,7 +1171,13 @@ function AppPrincipal({
       if (pending) {
         setSyncStatus("saving");
         try {
-          const data = JSON.parse(pending);
+          // OJO: antes acá se hacía JSON.parse(pending) y se reenviaba ESA
+          // foto vieja. Si pasó rato (o hubo más cambios mientras tanto)
+          // reenviarla podía pisar datos más nuevos sin pasar por ningún
+          // merge. Usar estadoRef.current en cambio: es el estado más
+          // actualizado que existe en memoria, así el reintento siempre
+          // manda lo más nuevo, nunca una foto vieja.
+          const data = estadoRef.current;
           cloudSave(data, uid, negocioId).then(ok => {
             if (ok) {
               localStorage.removeItem("sr_offline_pending");
@@ -1232,7 +1277,15 @@ function AppPrincipal({
   };
   const saveProductos = v => {
     setProductos(prev => {
-      const next = typeof v === "function" ? v(prev) : v;
+      const base = typeof v === "function" ? v(prev) : v;
+      // Estampar _upd en cada producto — sin esto el merge por id+_upd
+      // (carga inicial y guardado) no puede saber cuál versión es más
+      // nueva.
+      const _t = Date.now();
+      const next = base.map(p => ({
+        ...p,
+        _upd: _t
+      }));
       // Registrar cambio de precio en historial
       const hoy = (() => {
         const d = new Date();
@@ -1414,8 +1467,15 @@ function AppPrincipal({
       savePlanilla(planillaKey, nueva);
     }
   }, [ventas, noVisitas, clientes, diaActual, fechaActual, repartoActual]);
-  const registrarVenta = (detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto, transConfirmadaInicial) => {
-    const c = cliente;
+  const registrarVenta = (ventaClienteId, detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto, transConfirmadaInicial) => {
+    // Resolver el cliente por id explícito en vez de depender del estado
+    // global `cliente` — necesario para poder registrar desde la tarjeta
+    // inline en ListaClientes, donde nunca se navegó a la pantalla "venta".
+    const c = clientes.find(cl => cl.id === ventaClienteId);
+    if (!c) {
+      console.warn("registrarVenta: cliente no encontrado", ventaClienteId);
+      return;
+    }
     // Guard anti doble-tap: ignora una llamada idéntica al mismo cliente
     // dentro de 1.5s (botón sin lock + toque duplicado en el celular)
     const firmaReg = JSON.stringify({
@@ -1962,6 +2022,14 @@ function AppPrincipal({
     ventas: ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
     todasVentas: ventas,
     noVisitas: (noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+    productos: productos,
+    onGuardarVenta: (clienteIdVenta, ...args) => registrarVenta(clienteIdVenta, ...args),
+    onCambiarDispenserCliente: (id, delta) => {
+      const cd = clientes.find(cl => cl.id === id);
+      if (cd) updateCliente(id, {
+        dispenser: Math.max(0, (Number(cd.dispenser) || 0) + delta)
+      });
+    },
     onEditarCliente: (id, cambios) => updateCliente(id, cambios),
     onSeleccionar: c => {
       setClienteId(c.id);
@@ -2206,7 +2274,7 @@ function AppPrincipal({
       } else irA("clientes");
     },
     onGuardar: (d, p, m, sa, ep, ed, obs, op, mt2, sd, tc) => {
-      registrarVenta(d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
+      registrarVenta(clienteId, d, p, m, sa, ep, ed, obs, op, mt2, sd, tc);
       const clientesDia = clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)).sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
       const visitadosIds = new Set([...ventas.filter(v => v.fechaKey === fechaActual && v.dia === diaActual && !v._esCobro && !v._esAjuste).map(v => v.clienteId), ...(noVisitas || []).filter(v => v.dia === diaActual && v.fecha === fechaActual && (v.motivo === "noquiso" || v.motivo === "noesta2" || v.motivo === "noesta" || v.motivo === "salteado")).map(v => v.clienteId)]);
       visitadosIds.add(clienteId);
@@ -2265,15 +2333,7 @@ function AppPrincipal({
       irA("clientes");
     },
     onVolver: () => irA("clientes")
-  }), pantalla === "historial" && /*#__PURE__*/React.createElement(CargaHistorica, {
-    clientes: clientes,
-    productos: productos,
-    onGuardar: vts => {
-      saveVentas(prev => [...prev, ...vts]);
-      irA("menu");
-    },
-    onVolver: () => irA("menu")
-  }), pantalla === "gestionClientes" && /*#__PURE__*/React.createElement(GestionClientes, {
+  }), null, pantalla === "gestionClientes" && /*#__PURE__*/React.createElement(GestionClientes, {
     clientes: clientes,
     repartos: repartos,
     repartoActual: repartoActual,

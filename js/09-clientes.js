@@ -54,6 +54,7 @@ function ListaClientes({
   todasVentas,
   noVisitas,
   recordatorios,
+  productos,
   onSeleccionar,
   onEntregar,
   onNuevoCliente,
@@ -65,9 +66,12 @@ function ListaClientes({
   onConfirmarTransfer,
   onAbrirMapa,
   onIrPlanilla,
-  onIrMenu
+  onIrMenu,
+  onGuardarVenta,
+  onCambiarDispenserCliente
 }) {
   const [busqueda, setBusqueda] = useState("");
+  const [clienteExpandidoId, setClienteExpandidoId] = useState(null);
   const [clienteMoviendo, setClienteMoviendo] = useState(null); // id del cliente "levantado", esperando destino
   // ventas y noVisitas ya filtradas por fecha+dia desde App
   const atendidos = new Set(ventas.filter(v => !v._esCobro && !v._esAjuste).map(v => v.clienteId));
@@ -125,6 +129,13 @@ function ListaClientes({
     const est = noVMap[c.id];
     const bc = atendido ? "#1D9E75" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
     const handleClick = () => onSeleccionar(c);
+    const puedeEntregar = (!visitados.has(c.id) || est === "noesta") && !atendido;
+    const expandido = clienteExpandidoId === c.id;
+    const irAlSiguientePendiente = () => {
+      const idx = pendientes.findIndex(x => x.id === c.id);
+      const siguiente = pendientes.find((x, i) => x.id !== c.id && (idx === -1 || i > idx));
+      setClienteExpandidoId(siguiente ? siguiente.id : null);
+    };
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         ...s.card,
@@ -257,10 +268,7 @@ function ListaClientes({
         gap: 4,
         marginTop: 5
       }
-    }, /*#__PURE__*/React.createElement(TagsCliente, {
-      cliente: c,
-      ventas: todasVentas || ventas
-    }), atendido && /*#__PURE__*/React.createElement("span", {
+    }, null, atendido && /*#__PURE__*/React.createElement("span", {
       style: s.badge("success")
     }, "✓ Listo"), est === "noesta" && !atendido && /*#__PURE__*/React.createElement("span", {
       style: s.badge("warning")
@@ -347,8 +355,35 @@ function ListaClientes({
         fontWeight: 600,
         flex: 2
       },
-      onClick: () => (onEntregar || onSeleccionar)(c)
-    }, "Entregar →")), (est === "noesta2" || est === "noquiso") && !atendido && /*#__PURE__*/React.createElement("div", {
+      onClick: () => setClienteExpandidoId(c.id)
+    }, "Entregar →")), puedeEntregar && expandido && onGuardarVenta && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 10,
+        paddingTop: 10,
+        borderTop: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        width: "100%",
+        marginBottom: 10,
+        fontSize: 13,
+        fontWeight: 500
+      },
+      onClick: () => setClienteExpandidoId(null)
+    }, "▲ Cerrar"), /*#__PURE__*/React.createElement(NuevaVenta, {
+      key: `${c.id}-${(todasVentas || ventas).filter(v => v.clienteId === c.id).length}`,
+      compacto: true,
+      cliente: c,
+      productos: productos,
+      fecha: fecha,
+      ventasCliente: (todasVentas || ventas).filter(v => v.clienteId === c.id),
+      onGuardar: (...args) => {
+        onGuardarVenta(c.id, ...args);
+        irAlSiguientePendiente();
+      },
+      onCambiarDispenser: delta => onCambiarDispenserCliente && onCambiarDispenserCliente(c.id, delta)
+    })), (est === "noesta2" || est === "noquiso") && !atendido && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         justifyContent: "flex-end",
@@ -361,11 +396,7 @@ function ListaClientes({
         padding: "4px 10px"
       },
       onClick: () => onQuitarNoVisita(c.id)
-    }, "Desmarcar")), onEditarCliente && /*#__PURE__*/React.createElement(PieEnvases, {
-      c: c,
-      ventas: todasVentas || ventas,
-      onEditar: onEditarCliente
-    })), fotoOpen && /*#__PURE__*/React.createElement("div", {
+    }, "Desmarcar")), null), fotoOpen && /*#__PURE__*/React.createElement("div", {
       style: {
         position: "fixed",
         top: 0,

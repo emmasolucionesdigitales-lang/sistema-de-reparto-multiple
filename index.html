@@ -291,7 +291,7 @@ self.addEventListener('notificationclick',e=>{
       var porReparto = {};
       function bucket(rid) {
         var k = rid || "_sinreparto";
-        if(!porReparto[k]) porReparto[k] = {clientes:[],ventas:[],noVisitas:[],recordatorios:[],prospectos:[],planillas:{},cargasDia:null,stockCamion:null};
+        if(!porReparto[k]) porReparto[k] = {clientes:[],ventas:[],noVisitas:[],recordatorios:[],planillas:{},cargasDia:null,stockCamion:null};
         return porReparto[k];
       }
 
@@ -305,7 +305,6 @@ self.addEventListener('notificationclick',e=>{
         var cli = clientesPorId[v.clienteId];
         bucket(cli && cli.repartoId).noVisitas.push(v);
       });
-      (data.prospectos||[]).forEach(function(p){ bucket(p.repartoId).prospectos.push(p); });
       (data.recordatorios||[]).forEach(function(r){
         var rid = r.paraRepartidor ? repartoPorNombre[r.paraRepartidor] : null;
         bucket(rid || "_dueno").recordatorios.push(r);
@@ -330,7 +329,7 @@ self.addEventListener('notificationclick',e=>{
         var b = porReparto[rid];
         var payload = {
           clientes: b.clientes, ventas: b.ventas, noVisitas: b.noVisitas,
-          recordatorios: b.recordatorios, prospectos: b.prospectos
+          recordatorios: b.recordatorios
         };
         if(Object.keys(b.planillas).length) payload.planillas = b.planillas;
         if(b.cargasDia) payload.cargasDia = b.cargasDia;
@@ -368,7 +367,7 @@ self.addEventListener('notificationclick',e=>{
 
         return Promise.all(idsAConsultar.map(function(rid){ return pathReparto(negocioId, rid).get(); }))
           .then(function(snaps){
-            var clientes=[], ventas=[], noVisitas=[], recordatorios=[], prospectos=[];
+            var clientes=[], ventas=[], noVisitas=[], recordatorios=[];
             var planillas={}, cargasDia={}, stockCamiones={};
             snaps.forEach(function(snap, idx){
               if(!snap.exists) return;
@@ -378,7 +377,6 @@ self.addEventListener('notificationclick',e=>{
               ventas = ventas.concat(d.ventas||[]);
               noVisitas = noVisitas.concat(d.noVisitas||[]);
               recordatorios = recordatorios.concat(d.recordatorios||[]);
-              prospectos = prospectos.concat(d.prospectos||[]);
               Object.assign(planillas, d.planillas||{});
               if(d.cargasDia) cargasDia[rid] = d.cargasDia;
               if(d.stockCamion) stockCamiones[rid] = d.stockCamion;
@@ -398,11 +396,10 @@ self.addEventListener('notificationclick',e=>{
             ventas = dedupePorId(ventas);
             clientes = dedupePorId(clientes);
             recordatorios = dedupePorId(recordatorios);
-            prospectos = dedupePorId(prospectos);
             var stockGen = comp.stockGeneral || {};
             return {
               clientes: clientes, ventas: ventas, noVisitas: noVisitas,
-              recordatorios: recordatorios, prospectos: prospectos,
+              recordatorios: recordatorios,
               planillas: planillas, cargasDia: cargasDia,
               stock: { soderia: stockGen.soderia||{}, soderia_vacios: stockGen.soderia_vacios||{}, casa: stockGen.casa||{}, camiones: stockCamiones },
               productos: comp.productos || [],
