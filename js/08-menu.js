@@ -2323,6 +2323,7 @@ function PlanillaDelDia({
 }) {
   // Separar ventas del día propio vs ventas de clientes de otro día
   const [enviosInforme, setEnviosInforme] = React.useState(() => Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || 0));
+  const [enviandoCierre, setEnviandoCierre] = React.useState(false);
   const clientesDia = new Set((clientes || []).filter(c => c.dia === dia).map(c => c.id));
   const ventasPropias = ventas.filter(v => clientesDia.has(v.clienteId));
   const ventasExtraDia = ventas.filter(v => !clientesDia.has(v.clienteId) && (!v.dia || v.dia === dia) && v.fechaKey === fecha);
@@ -2568,7 +2569,8 @@ function PlanillaDelDia({
     paraLlenarCalc[pk] = Math.min(falta, vaciosHoy);
     vaciosRestoCalc[pk] = Math.max(0, vaciosHoy - paraLlenarCalc[pk]);
   });
-  const confirmarCierre = () => {
+  const confirmarCierre = async () => {
+    if (enviandoCierre) return;
     const realesL = {
       soda: realesLlenos.soda !== "" ? Number(realesLlenos.soda) * CAJON_SODA : sobrantes.soda,
       b10: realesLlenos.b10 !== "" ? Number(realesLlenos.b10) : sobrantes.b10,
@@ -2637,8 +2639,45 @@ function PlanillaDelDia({
         _cierreDiffs: diffs
       } : {})
     });
-    setMostrarCierre(false);
-    if (onCerrarDia) setTimeout(() => onCerrarDia(), 800);
+    // Capturar la planilla como imagen y mandar el informe en el MISMO paso
+    // que se cierra el día — antes eran dos acciones separadas (cerrar
+    // stock por un lado, mandar informe por otro) y era fácil quedarse a
+    // mitad de camino sin darse cuenta.
+    if (onCerrarDia) {
+      setEnviandoCierre(true);
+      let imgData = null;
+      try {
+        const el = document.getElementById("planilla-capture");
+        if (el && window.html2canvas) {
+          const canvas = await window.html2canvas(el, {
+            scale: 1.5,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--color-background-primary").trim() || "#0f1923",
+            scrollY: 0,
+            scrollX: 0,
+            width: el.offsetWidth,
+            height: el.scrollHeight,
+            windowWidth: el.offsetWidth,
+            windowHeight: el.scrollHeight
+          });
+          imgData = canvas.toDataURL("image/jpeg", 0.78);
+        }
+      } catch (e) {
+        console.warn("Captura falló:", e);
+      }
+      const ok = await onCerrarDia(imgData);
+      setEnviandoCierre(false);
+      setMostrarCierre(false);
+      if (ok) {
+        setEnviosInforme(Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || 1));
+        alert("✅ Día cerrado, stock actualizado e informe enviado a tu email.");
+      } else {
+        alert("✅ Día cerrado y stock actualizado.\n❌ No se pudo enviar el informe por email — podés reintentarlo con el botón \"Reenviar informe\" de abajo.");
+      }
+    } else {
+      setMostrarCierre(false);
+    }
   };
 
   // ── Early return: pantalla de cierre ─────────────────────────────
@@ -2885,10 +2924,12 @@ function PlanillaDelDia({
         color: "#f5b942",
         fontSize: 15,
         fontWeight: 700,
-        cursor: "pointer"
+        cursor: enviandoCierre ? "default" : "pointer",
+        opacity: enviandoCierre ? 0.7 : 1
       },
+      disabled: enviandoCierre,
       onClick: confirmarCierre
-    }, "✓ Cerrar día y actualizar stock")));
+    }, enviandoCierre ? "⏳ Cerrando día y enviando informe..." : "✓ Cerrar día, actualizar stock y enviar informe")));
   }
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
@@ -3843,19 +3884,48 @@ function PlanillaDelDia({
   }, fmt(ganancia))))), /*#__PURE__*/React.createElement("button", {
     style: s.btnPrimary,
     onClick: () => onGuardar(datos)
-  }, "Guardar planilla"), onCerrarDia && ventas.length > 0 && (() => {
+  }, "Guardar planilla"), !yaCerrado ? /*#__PURE__*/React.createElement("button", {
+    style: {
+      width: "100%",
+      padding: "14px",
+      borderRadius: 10,
+      border: "2px solid #f5b942",
+      background: "#2e1f06",
+      color: "#f5b942",
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: "pointer",
+      marginTop: 10
+    },
+    onClick: () => setMostrarCierre(true)
+  }, "🔒 Cerrar el día, actualizar stock y enviar informe") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "12px",
+      borderRadius: 10,
+      background: "rgba(29,158,117,0.15)",
+      color: "#4dd9a0",
+      fontSize: 13,
+      fontWeight: 500,
+      marginTop: 10
+    }
+  }, "✅ Día cerrado — stock actualizado"), onCerrarDia && ventas.length > 0 && (() => {
     const MAX_ENVIOS = 3;
     const envios = enviosInforme;
     const quedan = MAX_ENVIOS - envios;
     const agotado = quedan <= 0;
     return /*#__PURE__*/React.createElement("button", {
       style: {
-        ...s.btnPrimary,
-        background: agotado ? "#555" : envios > 0 ? "#0F6E56" : "#8B2FC9",
+        ...s.btn,
+        background: agotado ? undefined : "#0F6E56",
+        color: agotado ? undefined : "#fff",
+        border: agotado ? undefined : "none",
         marginTop: 8,
         width: "100%",
+        fontSize: 12,
+        padding: "8px",
         cursor: agotado ? "default" : "pointer",
-        opacity: agotado ? 0.7 : 1
+        opacity: agotado ? 0.6 : 1
       },
       onClick: async () => {
         if (agotado) {
@@ -3891,33 +3961,8 @@ function PlanillaDelDia({
           alert("❌ No se pudo enviar el informe. Verificá tu conexión e intentá de nuevo.");
         }
       }
-    }, agotado ? "✓ Informe enviado (máximo alcanzado)" : envios > 0 ? `🔄 Reenviar informe (${quedan} ${quedan === 1 ? "envío" : "envíos"} restante${quedan === 1 ? "" : "s"})` : "📧 Cerrar día y enviar informe");
-  })(), !yaCerrado ? /*#__PURE__*/React.createElement("button", {
-    style: {
-      width: "100%",
-      padding: "14px",
-      borderRadius: 10,
-      border: "2px solid #f5b942",
-      background: "#2e1f06",
-      color: "#f5b942",
-      fontSize: 15,
-      fontWeight: 600,
-      cursor: "pointer",
-      marginTop: 10
-    },
-    onClick: () => setMostrarCierre(true)
-  }, "🔒 Cerrar el día y actualizar stock") : /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: "12px",
-      borderRadius: 10,
-      background: "rgba(29,158,117,0.15)",
-      color: "#4dd9a0",
-      fontSize: 13,
-      fontWeight: 500,
-      marginTop: 10
-    }
-  }, "✅ Día cerrado — stock actualizado")));
+    }, agotado ? "✓ Informe enviado (máximo alcanzado)" : `🔄 Reenviar informe (${quedan} ${quedan === 1 ? "envío" : "envíos"} restante${quedan === 1 ? "" : "s"})`);
+  })())));
 }
 function InicioReparto({
   dia,
