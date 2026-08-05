@@ -228,7 +228,8 @@ function AppPrincipal({
         clienteNombre: clienteNombre || null,
         sifon: items.sifon || 0,
         bidon10: items.bidon10 || 0,
-        bidon20: items.bidon20 || 0
+        bidon20: items.bidon20 || 0,
+        _upd: Date.now()
       }];
       syncData({
         perdidas: next
@@ -590,6 +591,43 @@ function AppPrincipal({
           console.log("Merge: " + cambiosLocalesProd + " productos locales más nuevos, sincronizando");
           setTimeout(() => syncData({
             productos: mergedProd
+          }), 2000);
+        }
+      }
+      if (data.perdidas?.length) {
+        // ── Perdidas: MERGEAR por id + _upd (antes no se sincronizaba) ────
+        const perdidasLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_perdidas_v1") || "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const porIdPerd = {};
+        (data.perdidas || []).forEach(p => {
+          porIdPerd[p.id] = p;
+        });
+        let cambiosLocalesPerd = 0;
+        perdidasLocales.forEach(p => {
+          const enNube = porIdPerd[p.id];
+          if (!enNube) {
+            porIdPerd[p.id] = p;
+            cambiosLocalesPerd++;
+            return;
+          }
+          const uL = Number(p._upd) || 0,
+            uN = Number(enNube._upd) || 0;
+          if (uL > uN) {
+            porIdPerd[p.id] = p;
+            cambiosLocalesPerd++;
+          }
+        });
+        const mergedPerd = Object.values(porIdPerd);
+        setPerdidas(mergedPerd);
+        if (cambiosLocalesPerd > 0) {
+          console.log("Merge: " + cambiosLocalesPerd + " pérdidas locales más nuevas, sincronizando");
+          setTimeout(() => syncData({
+            perdidas: mergedPerd
           }), 2000);
         }
       }
@@ -1102,6 +1140,9 @@ function AppPrincipal({
         }
         if (overrides.productos !== undefined) {
           merged.productos = mergeArrayPorClave(prevData.productos, data.productos, fresh.productos, p => p.id);
+        }
+        if (overrides.perdidas !== undefined) {
+          merged.perdidas = mergeArrayPorClave(prevData.perdidas, data.perdidas, fresh.perdidas, p => p.id);
         }
         if (overrides.recordatorios !== undefined) {
           merged.recordatorios = mergeArrayPorClave(prevData.recordatorios, data.recordatorios, fresh.recordatorios, r => r.id);

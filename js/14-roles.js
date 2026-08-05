@@ -680,6 +680,15 @@ function AppRepartidor({
   const [diaClienteActual, setDiaClienteActual] = React.useState(diaDeHoy);
   const [origenDetalle, setOrigenDetalle] = React.useState("clientes");
   const [datos, setDatos] = React.useState(null);
+  // Espejo siempre-actualizado de "datos" — evita reenviar una foto vieja
+  // (capturada por closure) cuando se reintenta un guardado que falló por
+  // falta de señal. Mismo patrón que estadoRef en la app del dueño.
+  const datosRef = React.useRef(null);
+  React.useEffect(() => {
+    datosRef.current = datos;
+  });
+  const [pendingOfflineSync, setPendingOfflineSync] = React.useState(() => !!localStorage.getItem("rm_rep_offline_pending"));
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
   const [diaTemporal, setDiaTemporal] = React.useState(null); // día elegido en "elegirDia", pendiente de fecha
   const [scaleIdx, setScaleIdx] = useLS("rm_scale_v1", 1); // 0=S 1=M 2=L 3=XL
   const SCALES = [0.82, 1.0, 1.18, 1.36];
@@ -785,9 +794,37 @@ function AppRepartidor({
       //    abrir la app) → un repartidor guardando su venta podía revertir
       //    el stock o el cierre de caja que otro repartidor acababa de
       //    guardar segundos antes.
+      // Sin señal: ni siquiera intentar — guardar en cola y avisar. Antes
+      // acá, sin conexión, cloudLoad/cloudSave quedaban colgados o fallaban
+      // en silencio y la venta se perdía sin ningún aviso ni reintento.
+      if (!navigator.onLine) {
+        try {
+          localStorage.setItem("rm_rep_offline_pending", JSON.stringify(localBase));
+        } catch {}
+        setPendingOfflineSync(true);
+        return localBase;
+      }
+      const guardarConCola = toSave => {
+        cloudSave(toSave, uid, perfil.negocioId, perfil.codigo).then(function (ok) {
+          if (ok) {
+            localStorage.removeItem("rm_rep_offline_pending");
+            setPendingOfflineSync(false);
+          } else {
+            try {
+              localStorage.setItem("rm_rep_offline_pending", JSON.stringify(toSave));
+            } catch {}
+            setPendingOfflineSync(true);
+          }
+        }).catch(function () {
+          try {
+            localStorage.setItem("rm_rep_offline_pending", JSON.stringify(toSave));
+          } catch {}
+          setPendingOfflineSync(true);
+        });
+      };
       cloudLoad(uid, perfil.negocioId, perfil.codigo).then(function (fresh) {
         if (!fresh) {
-          cloudSave(localBase, uid, perfil.negocioId, perfil.codigo);
+          guardarConCola(localBase);
           return;
         }
         const merged = {
@@ -821,13 +858,50 @@ function AppRepartidor({
         // no los edita desde acá — se dejan tal cual estén en "fresh" en
         // vez de pisarlos con la copia local desactualizada.
 
-        cloudSave(merged, uid, perfil.negocioId, perfil.codigo);
+        guardarConCola(merged);
       }).catch(function () {
-        cloudSave(localBase, uid, perfil.negocioId, perfil.codigo);
+        guardarConCola(localBase);
       });
       return localBase;
     });
   };
+
+  // ── MODO OFFLINE (repartidor) ────────────────────────────────────
+  // Antes esta pantalla no tenía NINGÚN mecanismo de reintento: si el
+  // repartidor se quedaba sin señal a mitad del reparto (muy común yendo
+  // de casa en casa), la venta se perdía sin aviso y sin forma de
+  // reintentarla sola. Ahora, al volver la señal, se reintenta con
+  // datosRef.current (el estado más nuevo en memoria) — nunca con una
+  // foto vieja guardada en localStorage.
+  React.useEffect(() => {
+    const goOnline = () => {
+      setIsOnline(true);
+      const pending = localStorage.getItem("rm_rep_offline_pending");
+      if (!pending) return;
+      const data = datosRef.current;
+      if (!data) return;
+      cloudSave(data, uid, perfil.negocioId, perfil.codigo).then(ok => {
+        if (ok) {
+          localStorage.removeItem("rm_rep_offline_pending");
+          setPendingOfflineSync(false);
+        }
+      }).catch(() => {});
+    };
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    // Reintento periódico: cubre el caso de un guardado que falló ESTANDO
+    // online (permisos, cuota momentánea) — sin esto, sólo se reintentaba
+    // al pasar de sin señal a con señal.
+    const reintentoPeriodico = setInterval(() => {
+      if (navigator.onLine && localStorage.getItem("rm_rep_offline_pending")) goOnline();
+    }, 45000);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+      clearInterval(reintentoPeriodico);
+    };
+  }, [perfil?.negocioId, perfil?.codigo]);
   const saveVentas = nv => sync({
     ventas: nv
   });
@@ -1014,7 +1088,16 @@ function AppRepartidor({
       justifyContent: "center"
     },
     title: "Tamaño de texto"
-  }, SCALE_LABELS[scaleIdx])), /*#__PURE__*/React.createElement("div", {
+  }, SCALE_LABELS[scaleIdx])), (!isOnline || pendingOfflineSync) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "6px 10px",
+      fontSize: 12,
+      fontWeight: 600,
+      color: !isOnline ? "#f5b942" : "#5daaff",
+      background: !isOnline ? "#2e1f06" : "#1e3a5f"
+    }
+  }, !isOnline ? "🔌 Sin conexión — se va a guardar solo al volver la señal" : "🔄 Enviando cambios pendientes..."), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.app,
       zoom: SCALES[scaleIdx]

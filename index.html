@@ -262,6 +262,7 @@ self.addEventListener('notificationclick',e=>{
       var stockObj = data.stock || {};
       var compartido = {
         productos: data.productos || [],
+        perdidas: data.perdidas || [],
         zonasReparto: data.zonasReparto || {},
         repartos: data.repartos || [],
         mantVeh: data.mantVeh || [],
@@ -389,7 +390,7 @@ self.addEventListener('notificationclick',e=>{
               var porId = {};
               (lista||[]).forEach(function(x){
                 var actual = porId[x.id];
-                if(!actual || (Number(x._upd)||0) >= (Number(actual._upd)||0)) porId[x.id] = x;
+                if(!actual || (Number(x._upd)||0) > (Number(actual._upd)||0)) porId[x.id] = x;
               });
               return Object.values(porId);
             }
@@ -403,6 +404,7 @@ self.addEventListener('notificationclick',e=>{
               planillas: planillas, cargasDia: cargasDia,
               stock: { soderia: stockGen.soderia||{}, soderia_vacios: stockGen.soderia_vacios||{}, casa: stockGen.casa||{}, camiones: stockCamiones },
               productos: comp.productos || [],
+              perdidas: comp.perdidas || [],
               zonasReparto: comp.zonasReparto || {},
               repartos: repartosLista,
               mantVeh: comp.mantVeh || [],
