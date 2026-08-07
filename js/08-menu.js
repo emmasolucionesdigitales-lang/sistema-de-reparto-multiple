@@ -2180,7 +2180,13 @@ function DetalleVentasDia({
         color: pagoBadge.color,
         fontWeight: 600
       }
-    }, pagoBadge.txt), v.repartidor && /*#__PURE__*/React.createElement("span", {
+    }, pagoBadge.txt), v.hora && /*#__PURE__*/React.createElement("span", {
+      style: {
+        marginLeft: 6,
+        fontSize: 10,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "🕐 ", v.hora), v.repartidor && /*#__PURE__*/React.createElement("span", {
       style: {
         marginLeft: 6,
         fontSize: 10,
