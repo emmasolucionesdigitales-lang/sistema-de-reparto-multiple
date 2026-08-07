@@ -239,9 +239,37 @@ function AppPrincipal({
   };
   const [recordatorios, setRecordatorios] = useLS("rm_recordatorios_v1", []);
   // recordatorio: {id, clienteId, clienteNombre, fecha, hora, motivo, dia, confirmado}
+  // BUG: clientes (y productos/recordatorios) borrados podían volver a
+  // aparecer solos después de unos días. Causa: el patrón de guardado le
+  // ponía un _upd (marca de "última modificación") NUEVO a TODOS los
+  // registros en CADA guardado, hubieran cambiado o no. Como el borrado usa
+  // un "tombstone" (fecha del borrado) que solo gana si es más nuevo que el
+  // _upd que tenga la nube, bastaba con que OTRO dispositivo (uno que
+  // todavía no se había enterado del borrado, ej. un celular con una
+  // pestaña vieja abierta) guardara CUALQUIER cosa — aunque fuera un
+  // cambio totalmente distinto — para que ese guardado le pisara la fecha
+  // al registro ya borrado con la hora actual, "ganándole" al tombstone y
+  // resucitándolo para todos. Esta función solo renueva el _upd de los
+  // registros que realmente cambiaron.
+  const _soloUpdCambiados = (prevArr, baseArr, _t) => {
+    const porId = {};
+    (prevArr || []).forEach(x => {
+      if (x && x.id != null) porId[x.id] = x;
+    });
+    return (baseArr || []).map(x => {
+      if (!x || x.id == null) return { ...x, _upd: _t }; // sin id: no se puede comparar, se estampa
+      const antes = porId[x.id];
+      if (!antes) return { ...x, _upd: _t }; // nuevo
+      const sinUpdAntes = JSON.stringify({ ...antes, _upd: undefined });
+      const sinUpdAhora = JSON.stringify({ ...x, _upd: undefined });
+      return sinUpdAntes !== sinUpdAhora ? { ...x, _upd: _t } : x; // solo si cambió algo más que _upd
+    });
+  };
   const saveRecordatorios = r => {
     setRecordatorios(prev => {
-      const next = typeof r === "function" ? r(prev) : r;
+      const base = typeof r === "function" ? r(prev) : r;
+      const _t = Date.now();
+      const next = _soloUpdCambiados(prev, base, _t);
       syncData({
         recordatorios: next
       });
@@ -249,6 +277,24 @@ function AppPrincipal({
     });
   };
   const recordatoriosActivos = (recordatorios || []).filter(r => !r.confirmado); // [{clienteId,dia,fecha,motivo}]
+  // ── Prospectos: gente visitada en una promoción que todavía no es
+  // cliente. Es info del negocio (no de un reparto puntual), así que viaja
+  // en el documento compartido (ver index.html: cloudSave/cloudLoad).
+  const [prospectos, setProspectos] = useLS("rm_prospectos_v1", []);
+  const saveProspectos = r => {
+    setProspectos(prev => {
+      const base = typeof r === "function" ? r(prev) : r;
+      const _t = Date.now();
+      const next = _soloUpdCambiados(prev, base, _t);
+      syncData({
+        prospectos: next
+      });
+      return next;
+    });
+  };
+  // Cuando se toca "Convertir en cliente" en un prospecto, se guarda acá
+  // para precargar el formulario de Nuevo Cliente con nombre/teléfono/dirección.
+  const [prospectoAConvertir, setProspectoAConvertir] = useState(null);
   const [clientes, setClientes] = useLS("rm_clientes_v3", CLIENTES_INICIALES);
   const [ventasRaw, setVentasRaw] = useLS("rm_ventas_v3", []);
   const normalizarFechaKey = v => {
@@ -671,6 +717,7 @@ function AppPrincipal({
         }
       }
       if (data.recordatorios?.length) setRecordatorios(data.recordatorios);
+      if (data.prospectos?.length) setProspectos(data.prospectos);
       if (data.mantVeh?.length) localStorage.setItem("rm_mant_vehiculo_v1", JSON.stringify(data.mantVeh));
       if (data.histPrecios?.length) localStorage.setItem("rm_lc_hist_precios", JSON.stringify(data.histPrecios));
       if (data.horaAvisoCierre) localStorage.setItem("rm_hora_notif_cierre", data.horaAvisoCierre);
@@ -795,7 +842,8 @@ function AppPrincipal({
     stock: stockNorm,
     productos,
     noVisitas,
-    recordatorios
+    recordatorios,
+    prospectos
   });
   // Guards anti doble-tap: evitan sumar/restar el saldo dos veces si el
   // cartel de confirmación tarda en desaparecer y se vuelve a tocar el botón.
@@ -829,7 +877,8 @@ function AppPrincipal({
       zonasReparto,
       repartos,
       cargasDia: cargasDiaRaw,
-      perdidas
+      perdidas,
+      prospectos
     };
   });
 
@@ -1147,6 +1196,9 @@ function AppPrincipal({
         if (overrides.recordatorios !== undefined) {
           merged.recordatorios = mergeArrayPorClave(prevData.recordatorios, data.recordatorios, fresh.recordatorios, r => r.id);
         }
+        if (overrides.prospectos !== undefined) {
+          merged.prospectos = mergeArrayPorClave(prevData.prospectos, data.prospectos, fresh.prospectos, p => p.id);
+        }
         if (overrides.noVisitas !== undefined) {
           merged.noVisitas = mergeArrayPorClave(prevData.noVisitas, data.noVisitas, fresh.noVisitas, v => `${v.clienteId}|${v.dia}|${v.fecha}`);
         }
@@ -1165,10 +1217,7 @@ function AppPrincipal({
     setClientes(prev => {
       const base = typeof v === "function" ? v(prev) : v;
       const _t = Date.now();
-      const vv = base.map(c => ({
-        ...c,
-        _upd: _t
-      }));
+      const vv = _soloUpdCambiados(prev, base, _t);
       syncData({
         clientes: vv
       });
@@ -1319,14 +1368,11 @@ function AppPrincipal({
   const saveProductos = v => {
     setProductos(prev => {
       const base = typeof v === "function" ? v(prev) : v;
-      // Estampar _upd en cada producto — sin esto el merge por id+_upd
-      // (carga inicial y guardado) no puede saber cuál versión es más
-      // nueva.
+      // Estampar _upd solo en los productos que cambiaron de verdad (ver
+      // _soloUpdCambiados más arriba) — estampar TODOS pisaba tombstones de
+      // borrado en otros dispositivos y resucitaba productos eliminados.
       const _t = Date.now();
-      const next = base.map(p => ({
-        ...p,
-        _upd: _t
-      }));
+      const next = _soloUpdCambiados(prev, base, _t);
       // Registrar cambio de precio en historial
       const hoy = (() => {
         const d = new Date();
@@ -1857,7 +1903,14 @@ function AppPrincipal({
     onTabChange: setTabMenu,
     scaleIdx: scaleIdx,
     onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
-    scaleLabel: SCALE_LABELS[scaleIdx]
+    scaleLabel: SCALE_LABELS[scaleIdx],
+    prospectos: prospectos,
+    onGuardarProspecto: p => saveProspectos(prev => [...(prev || []), p]),
+    onEliminarProspecto: id => saveProspectos(prev => (prev || []).filter(p => p.id !== id)),
+    onConvertirProspecto: p => {
+      setProspectoAConvertir(p);
+      irA("nuevoCliente");
+    }
   }), pantalla === "diasReparto" && !repartoActual && (() => {
     setTimeout(() => irA("menu"), 0);
     return null;
@@ -2353,6 +2406,12 @@ function AppPrincipal({
   }), pantalla === "nuevoCliente" && /*#__PURE__*/React.createElement(NuevoCliente, {
     diaActual: diaActual,
     repartoActual: repartoActual,
+    prefill: prospectoAConvertir ? {
+      nombre: prospectoAConvertir.nombre,
+      telefono: prospectoAConvertir.telefono,
+      calle: prospectoAConvertir.calle,
+      barrio: prospectoAConvertir.barrio
+    } : null,
     onGuardar: datos => {
       const orden = datos.orden;
       saveClientes(prevC => {
@@ -2371,9 +2430,26 @@ function AppPrincipal({
           repartoId: repartoActual?.id || null
         }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
       });
-      irA("clientes");
+      if (prospectoAConvertir) {
+        const pid = prospectoAConvertir.id;
+        saveProspectos(prev => prev.map(p => p.id === pid ? { ...p, estado: "convertido" } : p));
+        setProspectoAConvertir(null);
+        setTabMenu("promociones");
+        irA("menu");
+      } else {
+        irA("clientes");
+      }
     },
-    onVolver: () => irA("clientes")
+    onVolver: () => {
+      const veniaDeProspecto = !!prospectoAConvertir;
+      setProspectoAConvertir(null);
+      if (veniaDeProspecto) {
+        setTabMenu("promociones");
+        irA("menu");
+      } else {
+        irA("clientes");
+      }
+    }
   }), null, pantalla === "gestionClientes" && /*#__PURE__*/React.createElement(GestionClientes, {
     clientes: clientes,
     repartos: repartos,

@@ -730,6 +730,41 @@ function AppRepartidor({
       });
     });
   }, []);
+  // Antes esta pantalla no tenía NINGÚN mecanismo de reintento: si el
+  // repartidor se quedaba sin señal a mitad del reparto (muy común yendo
+  // de casa en casa), la venta se perdía sin aviso y sin forma de
+  // reintentarla sola. Ahora, al volver la señal, se reintenta con
+  // datosRef.current (el estado más nuevo en memoria) — nunca con una
+  // foto vieja guardada en localStorage.
+  React.useEffect(() => {
+    const goOnline = () => {
+      setIsOnline(true);
+      const pending = localStorage.getItem("rm_rep_offline_pending");
+      if (!pending) return;
+      const data = datosRef.current;
+      if (!data) return;
+      cloudSave(data, uid, perfil.negocioId, perfil.codigo).then(ok => {
+        if (ok) {
+          localStorage.removeItem("rm_rep_offline_pending");
+          setPendingOfflineSync(false);
+        }
+      }).catch(() => {});
+    };
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    // Reintento periódico: cubre el caso de un guardado que falló ESTANDO
+    // online (permisos, cuota momentánea) — sin esto, sólo se reintentaba
+    // al pasar de sin señal a con señal.
+    const reintentoPeriodico = setInterval(() => {
+      if (navigator.onLine && localStorage.getItem("rm_rep_offline_pending")) goOnline();
+    }, 45000);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+      clearInterval(reintentoPeriodico);
+    };
+  }, [perfil?.negocioId, perfil?.codigo]);
   if (!datos) return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -867,41 +902,6 @@ function AppRepartidor({
   };
 
   // ── MODO OFFLINE (repartidor) ────────────────────────────────────
-  // Antes esta pantalla no tenía NINGÚN mecanismo de reintento: si el
-  // repartidor se quedaba sin señal a mitad del reparto (muy común yendo
-  // de casa en casa), la venta se perdía sin aviso y sin forma de
-  // reintentarla sola. Ahora, al volver la señal, se reintenta con
-  // datosRef.current (el estado más nuevo en memoria) — nunca con una
-  // foto vieja guardada en localStorage.
-  React.useEffect(() => {
-    const goOnline = () => {
-      setIsOnline(true);
-      const pending = localStorage.getItem("rm_rep_offline_pending");
-      if (!pending) return;
-      const data = datosRef.current;
-      if (!data) return;
-      cloudSave(data, uid, perfil.negocioId, perfil.codigo).then(ok => {
-        if (ok) {
-          localStorage.removeItem("rm_rep_offline_pending");
-          setPendingOfflineSync(false);
-        }
-      }).catch(() => {});
-    };
-    const goOffline = () => setIsOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    // Reintento periódico: cubre el caso de un guardado que falló ESTANDO
-    // online (permisos, cuota momentánea) — sin esto, sólo se reintentaba
-    // al pasar de sin señal a con señal.
-    const reintentoPeriodico = setInterval(() => {
-      if (navigator.onLine && localStorage.getItem("rm_rep_offline_pending")) goOnline();
-    }, 45000);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-      clearInterval(reintentoPeriodico);
-    };
-  }, [perfil?.negocioId, perfil?.codigo]);
   const saveVentas = nv => sync({
     ventas: nv
   });
@@ -1347,7 +1347,7 @@ function AppRepartidor({
         clientes: clientesActualizados
       });
     },
-    onNuevoCliente: null,
+    onNuevoCliente: () => irA("nuevoCliente"),
     onVolver: () => irA("inicio"),
     onEditarCliente: (id, cambios) => {
       const clientesActualizados = todosClientes.map(x => x.id === id ? {
@@ -1388,7 +1388,7 @@ function AppRepartidor({
       background: "#1a8a4a"
     },
     onClick: () => irA("planilla")
-  }, "\u2705 Recorrido terminado \u2014 Ir a planilla del d\u00eda")), pantalla === "nuevoCliente" && false && /*#__PURE__*/React.createElement(NuevoClienteForm, {
+  }, "\u2705 Recorrido terminado \u2014 Ir a planilla del d\u00eda")), pantalla === "nuevoCliente" && /*#__PURE__*/React.createElement(NuevoClienteForm, {
     sectores: sectores,
     diaActual: diaActual,
     onGuardar: datosNuevo => {

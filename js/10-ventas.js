@@ -62,9 +62,12 @@ function NuevaVenta({
     return m;
   });
   const [repetido, setRepetido] = useState(!!ultimaConProd);
+  // Si el usuario ya tocó las cantidades a mano, nunca más las pisamos con
+  // datos que lleguen después de Firebase (bug: "se borraba la carga").
+  const cantidadesTocadas = React.useRef(false);
   const ventasClienteRef = React.useRef(ventasCliente);
   React.useEffect(() => {
-    if (ventasClienteRef.current === ventasCliente || repetido) return;
+    if (ventasClienteRef.current === ventasCliente || repetido || cantidadesTocadas.current) return;
     ventasClienteRef.current = ventasCliente;
     const nombres = (productos || []).filter(p => !p.esDispenser).map(p => p.nombre);
     const conProd = (ventasCliente || []).filter(v => {
@@ -279,10 +282,10 @@ function NuevaVenta({
           fontSize: 15,
           lineHeight: 1
         },
-        onClick: () => setCantidades(q => ({
+        onClick: () => (cantidadesTocadas.current = true, setCantidades(q => ({
           ...q,
           [p.nombre]: Math.max(0, (q[p.nombre] || 0) - 1)
-        }))
+        })))
       }, "−"), /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 15,
@@ -300,10 +303,10 @@ function NuevaVenta({
           fontSize: 15,
           lineHeight: 1
         },
-        onClick: () => setCantidades(q => ({
+        onClick: () => (cantidadesTocadas.current = true, setCantidades(q => ({
           ...q,
           [p.nombre]: (q[p.nombre] || 0) + 1
-        }))
+        })))
       }, "+")), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
@@ -1030,6 +1033,7 @@ function NuevaVenta({
       fontSize: 12
     },
     onClick: () => {
+      cantidadesTocadas.current = true;
       setCantidades(q => {
         const m = {};
         Object.keys(q).forEach(k => m[k] = 0);
@@ -1070,10 +1074,10 @@ function NuevaVenta({
       fontSize: 20,
       lineHeight: 1
     },
-    onClick: () => setCantidades(q => ({
+    onClick: () => (cantidadesTocadas.current = true, setCantidades(q => ({
       ...q,
       [p.nombre]: Math.max(0, (q[p.nombre] || 0) - 1)
-    }))
+    })))
   }, "−"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 22,
@@ -1089,10 +1093,10 @@ function NuevaVenta({
       fontSize: 20,
       lineHeight: 1
     },
-    onClick: () => setCantidades(q => ({
+    onClick: () => (cantidadesTocadas.current = true, setCantidades(q => ({
       ...q,
       [p.nombre]: (q[p.nombre] || 0) + 1
-    }))
+    })))
   }, "+")))), /*#__PURE__*/React.createElement("div", {
     style: s.divider
   }), /*#__PURE__*/React.createElement("label", {
@@ -1742,7 +1746,8 @@ function NuevoCliente({
   diaActual,
   repartoActual,
   onGuardar,
-  onVolver
+  onVolver,
+  prefill
 }) {
   const [datos, setDatos] = useState({
     nombre: "",
@@ -1763,7 +1768,8 @@ function NuevoCliente({
     bidon10: 0,
     bidon20: 0,
     orden: "",
-    saldo: 0
+    saldo: 0,
+    ...(prefill || {})
   });
   const set = (k, v) => setDatos(d => ({
     ...d,
@@ -1772,7 +1778,7 @@ function NuevoCliente({
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
-    titulo: "Nuevo cliente",
+    titulo: prefill ? "Nuevo cliente (desde prospecto)" : "Nuevo cliente",
     onVolver: onVolver
   }), /*#__PURE__*/React.createElement("div", {
     style: {

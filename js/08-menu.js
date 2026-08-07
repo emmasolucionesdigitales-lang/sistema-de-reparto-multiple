@@ -23,7 +23,11 @@ function MenuRepartos({
   onTabChange,
   scaleIdx,
   onToggleScale,
-  scaleLabel
+  scaleLabel,
+  prospectos,
+  onGuardarProspecto,
+  onEliminarProspecto,
+  onConvertirProspecto
 }) {
   const [tab, setTab] = React.useState(tabInicial || "repartos");
   const cambiarTab = t => {
@@ -193,7 +197,7 @@ function MenuRepartos({
       display: "flex",
       borderBottom: "2px solid var(--color-border-secondary)"
     }
-  }, [["repartos", "🚚  Repartos"], ["resumenGeneral", "📊  Resumen"], ["herramientas", "🛠  Herramientas"]].map(([id, lbl]) => /*#__PURE__*/React.createElement("button", {
+  }, [["repartos", "🚚  Repartos"], ["resumenGeneral", "📊  Resumen"], ["herramientas", "🛠  Herramientas"], ["promociones", "📣  Promo"]].map(([id, lbl]) => /*#__PURE__*/React.createElement("button", {
     key: id,
     onClick: () => cambiarTab(id),
     style: {
@@ -911,7 +915,13 @@ function MenuRepartos({
       fontWeight: 600,
       textDecoration: "none"
     }
-  }, "💬 Soporte por WhatsApp"))), qrReparto && (() => {
+  }, "💬 Soporte por WhatsApp"))), tab === "promociones" && /*#__PURE__*/React.createElement(Prospectos, {
+    prospectos: prospectos,
+    onGuardar: onGuardarProspecto,
+    onEliminar: onEliminarProspecto,
+    onConvertir: onConvertirProspecto,
+    sinHeader: true
+  }), qrReparto && (() => {
     const link = generarLinkInvitacionRepartidor(qrReparto.codigo);
     const mensajeWsp = `Hola ${qrReparto.repartidorNombre}! Para entrar a la app de reparto, escaneá este link desde tu celular: ${link}\n\nO ingresá manualmente el código: ${qrReparto.codigo}`;
     return /*#__PURE__*/React.createElement("div", {
@@ -2462,6 +2472,38 @@ function PlanillaDelDia({
 
   // ── Cierre del día: estados y cálculos ───────────────────────────
   const [mostrarCierre, setMostrarCierre] = useState(!!(initCierre && !planilla._diaCerrado));
+  // BUG: el botón "Confirmar — stock e informe" (adentro de la pantalla de
+  // Cierre) intentaba sacarle una foto a #planilla-capture recién ahí — pero
+  // ese elemento vive en la vista NORMAL de la planilla, que ya no está
+  // montada (React cambió de rama de render en cuanto se tocó "Cerrar el
+  // día..."). document.getElementById devolvía null, no tiraba error, y el
+  // mail salía sin la foto y sin ningún aviso. Ahora la foto se saca ANTES
+  // de cambiar a la pantalla de cierre (mientras el elemento todavía está
+  // visible) y se guarda acá para usarla al confirmar.
+  const [capturaPreCierre, setCapturaPreCierre] = useState(null);
+  const [capturandoParaCierre, setCapturandoParaCierre] = useState(false);
+  const capturarPlanillaImg = async () => {
+    try {
+      const el = document.getElementById("planilla-capture");
+      if (!el || !window.html2canvas) return null;
+      const canvas = await window.html2canvas(el, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--color-background-primary").trim() || "#0f1923",
+        scrollY: 0,
+        scrollX: 0,
+        width: el.offsetWidth,
+        height: el.scrollHeight,
+        windowWidth: el.offsetWidth,
+        windowHeight: el.scrollHeight
+      });
+      return canvas.toDataURL("image/jpeg", 0.78);
+    } catch (e) {
+      console.warn("Captura falló:", e);
+      return null;
+    }
+  };
   const [realesLlenos, setRealesLlenos] = useState({
     soda: "",
     b10: "",
@@ -2641,27 +2683,12 @@ function PlanillaDelDia({
     });
     if (onCerrarDia) {
       setEnviandoCierre(true);
-      let imgData = null;
-      try {
-        const el = document.getElementById("planilla-capture");
-        if (el && window.html2canvas) {
-          const canvas = await window.html2canvas(el, {
-            scale: 1.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--color-background-primary").trim() || "#0f1923",
-            scrollY: 0,
-            scrollX: 0,
-            width: el.offsetWidth,
-            height: el.scrollHeight,
-            windowWidth: el.offsetWidth,
-            windowHeight: el.scrollHeight
-          });
-          imgData = canvas.toDataURL("image/jpeg", 0.78);
-        }
-      } catch (e) {
-        console.warn("Captura falló:", e);
-      }
+      // La foto YA se sacó antes de entrar a esta pantalla (ver
+      // capturarPlanillaImg / capturaPreCierre) porque acá #planilla-capture
+      // ya no existe en el DOM. Si por algún motivo no se guardó (ej.
+      // volvieron para atrás sin pasar por el botón), la intentamos sacar
+      // igual como respaldo, aunque lo más probable es que dé null.
+      const imgData = capturaPreCierre || await capturarPlanillaImg();
       const ok = await onCerrarDia(imgData);
       setEnviandoCierre(false);
       setMostrarCierre(false);
@@ -3890,11 +3917,23 @@ function PlanillaDelDia({
       color: "#e9d5ff",
       fontSize: 15,
       fontWeight: 600,
-      cursor: "pointer",
-      marginTop: 10
+      cursor: capturandoParaCierre ? "default" : "pointer",
+      marginTop: 10,
+      opacity: capturandoParaCierre ? 0.7 : 1
     },
-    onClick: () => setMostrarCierre(true)
-  }, "🔒 Cerrar el día, actualizar stock y enviar informe") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    disabled: capturandoParaCierre,
+    onClick: async () => {
+      if (capturandoParaCierre) return;
+      // Sacamos la foto de la planilla ACÁ, mientras todavía está en
+      // pantalla — si esperamos a que se abra "Cierre del día" ya es tarde,
+      // el elemento no existe más.
+      setCapturandoParaCierre(true);
+      const img = await capturarPlanillaImg();
+      setCapturaPreCierre(img);
+      setCapturandoParaCierre(false);
+      setMostrarCierre(true);
+    }
+  }, capturandoParaCierre ? "Preparando informe…" : "🔒 Cerrar el día, actualizar stock y enviar informe") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "12px",
