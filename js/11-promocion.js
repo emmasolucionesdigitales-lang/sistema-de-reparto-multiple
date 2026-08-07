@@ -1,4 +1,3 @@
-
 // ════════════════════════════════════════════════════════════════════
 // ◆  Prospectos — lista de gente visitada durante una promoción que
 //    todavía no es cliente (no la encontraron en casa, se mudó, etc).
@@ -45,7 +44,7 @@ function Prospectos({ prospectos, onGuardar, onEliminar, onConvertir, onVolver, 
 
   const lista = (prospectos || [])
     .filter(p => verConvertidos || p.estado !== "convertido")
-    .sort((a, b) => (b.id || "").localeCompare(a.id || ""));
+    .sort((a, b) => String(b.id || "").localeCompare(String(a.id || "")));
 
   const renderForm = () => {
     if (!mostrarForm) return null;
