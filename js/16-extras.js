@@ -582,9 +582,9 @@ function InicioRepartidor({
   onIrTodosClientes,
   onIrAgenda,
   onIrTransfers,
+  onNuevoCliente,
   onCambiarDia,
   onSalir,
-  onEnviarInforme,
   scaleIdx,
   onToggleScale,
   scaleLabel
@@ -865,7 +865,33 @@ function InicioRepartidor({
     }
   }, "Cobrado"))), /*#__PURE__*/React.createElement("div", {
     style: s.divider
-  }), /*#__PURE__*/React.createElement("button", {
+  }), [{
+    ico: "\u{1F465}",
+    titulo: "Todos los clientes",
+    sub: "Ventas y cobros de cualquier dia",
+    fn: onIrTodosClientes
+  }, {
+    ico: "\u2795",
+    titulo: "Nuevo cliente",
+    sub: "Agregar un cliente nuevo",
+    fn: onNuevoCliente
+  }, {
+    ico: "\u{1F4CA}",
+    titulo: "Planilla del dia",
+    sub: "Gastos, transferencias y cierre",
+    fn: onIrPlanilla
+  }, {
+    ico: "\u{1F514}",
+    titulo: "Agenda",
+    sub: "Recordatorios y seguimiento",
+    fn: onIrAgenda
+  }].map(({
+    ico,
+    titulo,
+    sub,
+    fn
+  }) => /*#__PURE__*/React.createElement("button", {
+    key: titulo,
     style: {
       ...s.card,
       margin: 0,
@@ -875,12 +901,12 @@ function InicioRepartidor({
       gap: 10,
       padding: "13px 14px"
     },
-    onClick: onIrPlanilla
+    onClick: fn
   }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 20
     }
-  }, "\u{1F4CA}"), /*#__PURE__*/React.createElement("div", {
+  }, ico), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
@@ -890,84 +916,16 @@ function InicioRepartidor({
       fontWeight: 500,
       color: "var(--color-text-primary)"
     }
-  }, "Planilla del dia"), /*#__PURE__*/React.createElement("div", {
+  }, titulo), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--color-text-secondary)"
     }
-  }, "Gastos, transferencias y cierre")), /*#__PURE__*/React.createElement("span", {
+  }, sub)), /*#__PURE__*/React.createElement("span", {
     style: {
       color: "var(--color-text-tertiary)"
     }
-  }, "\u2192")), onEnviarInforme && /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.card,
-      margin: 0,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      padding: "13px 14px"
-    },
-    onClick: onEnviarInforme
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20
-    }
-  }, "\u{1F4E4}"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, "Enviar informe al dueño"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Manda el resumen del día por email")), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--color-text-tertiary)"
-    }
-  }, "\u2192")), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.card,
-      margin: 0,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      padding: "13px 14px"
-    },
-    onClick: onIrTodosClientes
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20
-    }
-  }, "\u{1F465}"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, "Todos los clientes"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Ventas y cobros de cualquier dia")), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--color-text-tertiary)"
-    }
-  }, "\u2192")), (() => {
+  }, "\u2192"))), (() => {
     const pendTrans = ventasHoy.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada);
     const pendTransAll = ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada);
     const total = pendTransAll.length;

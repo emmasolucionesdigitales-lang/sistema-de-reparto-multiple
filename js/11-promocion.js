@@ -1,3 +1,4 @@
+
 // ════════════════════════════════════════════════════════════════════
 // ◆  Prospectos — lista de gente visitada durante una promoción que
 //    todavía no es cliente (no la encontraron en casa, se mudó, etc).

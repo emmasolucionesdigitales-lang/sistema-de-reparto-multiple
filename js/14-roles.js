@@ -1149,52 +1149,13 @@ function AppRepartidor({
     onIrTodosClientes: () => irA("todosClientes"),
     onIrAgenda: () => irA("agendaRep"),
     onIrTransfers: () => irA("confirmTransferRep"),
+    // "Enviar informe al dueño" se sacó como botón aparte: "Cerrar el día"
+    // (adentro de Planilla del día → onCerrarDia, más abajo) ya manda el
+    // mismo informe al dueño, con la foto de la planilla incluida — tener
+    // los dos botones era redundante (uno mandaba sin foto y confundía).
+    onNuevoCliente: () => irA("nuevoCliente"),
     onCambiarDia: () => irA("elegirDia"),
-    onSalir: onSalirProp || (() => window.auth.signOut()),
-    onEnviarInforme: async () => {
-      if (typeof usarInformes !== "function") {
-        alert("Función de informe no disponible.");
-        return;
-      }
-      try {
-        // Buscar email del dueño desde Firestore
-        let emailDueno = "";
-        if (window.db && perfil.negocioId) {
-          const negSnap = await window.db.collection("negocios").doc(perfil.negocioId).get();
-          if (negSnap.exists) emailDueno = negSnap.data().ownerEmail || negSnap.data().email || "";
-          // Si no está en negocios, buscar en licencias
-          if (!emailDueno) {
-            const licSnap = await window.dbLicencias.collection("licencias").where("negocioId", "==", perfil.negocioId).limit(1).get();
-            if (!licSnap.empty) emailDueno = licSnap.docs[0].data().email || "";
-          }
-        }
-        if (!emailDueno) {
-          alert("No se encontró el email del dueño. Contactá al soporte.");
-          return;
-        }
-        // Guardar email temporalmente en rm_licencia para que usarInformes lo encuentre
-        const licTemp = {
-          email: emailDueno,
-          negocio: perfil.nombre || "Reparto"
-        };
-        const prevLic = localStorage.getItem("rm_licencia");
-        localStorage.setItem("rm_licencia", JSON.stringify(licTemp));
-        const inf = usarInformes({
-          ventas,
-          clientes,
-          planillas,
-          noVisitas,
-          productos,
-          repartoId: miReparto?.id
-        });
-        const ok = await inf.enviarDiario(fechaActual, diaActual);
-        // Restaurar licencia original
-        if (prevLic) localStorage.setItem("rm_licencia", prevLic);else localStorage.removeItem("rm_licencia");
-        if (ok) alert("\u2705 Informe enviado al dueño (" + emailDueno + ") correctamente.");else alert("\u26A0\uFE0F Error al enviar. Verificá la conexión.");
-      } catch (e) {
-        alert("Error: " + e.message);
-      }
-    }
+    onSalir: onSalirProp || (() => window.auth.signOut())
   }), pantalla === "elegirDia" && /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
@@ -1545,7 +1506,7 @@ function AppRepartidor({
       setOrigenDetalle("todosClientes");
       irA("detalleCliente");
     },
-    onNuevoCliente: null,
+    onNuevoCliente: () => irA("nuevoCliente"),
     onVolver: () => irA("inicio")
   }), pantalla === "agendaRep" && /*#__PURE__*/React.createElement(AgendaRepartidor, {
     recordatorios: (datos.recordatorios || []).filter(r => r.paraRepartidor === perfil.nombre),
