@@ -939,50 +939,12 @@ function InicioRepartidor({
         color: "var(--color-text-tertiary)"
       }
     }, "\u2192"));
-  })(), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.card,
-      margin: 0,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      padding: "13px 14px"
-    },
-    onClick: onIrAgenda
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20
-    }
-  }, "\u{1F4C5}"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, "Agenda", recActivos.length > 0 && /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...s.badge("info"),
-      fontSize: 10,
-      marginLeft: 6
-    }
-  }, recActivos.length)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Recordatorios y visitas programadas")), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--color-text-tertiary)"
-    }
-  }, "\u2192"))));
+  })()));
 }
 
 // ── GastosRepartidor ─────────────────────────────────────────────────────────
+
+
 function GastosRepartidor({
   plan,
   onSave

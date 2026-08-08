@@ -2414,7 +2414,14 @@ function AppPrincipal({
       nombre: prospectoAConvertir.nombre,
       telefono: prospectoAConvertir.telefono,
       calle: prospectoAConvertir.calle,
-      barrio: prospectoAConvertir.barrio
+      nro: prospectoAConvertir.nro,
+      barrio: prospectoAConvertir.barrio,
+      sector: prospectoAConvertir.sector,
+      manzana: prospectoAConvertir.manzana,
+      lote: prospectoAConvertir.lote,
+      aclaracion: prospectoAConvertir.aclaracion,
+      maps: prospectoAConvertir.maps,
+      notas: prospectoAConvertir.notas
     } : null,
     onGuardar: datos => {
       const orden = datos.orden;

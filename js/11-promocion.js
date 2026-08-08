@@ -12,7 +12,13 @@ function Prospectos({ prospectos, onGuardar, onEliminar, onConvertir, onVolver, 
   const [nombre, setNombre] = React.useState("");
   const [telefono, setTelefono] = React.useState("");
   const [calle, setCalle] = React.useState("");
+  const [nro, setNro] = React.useState("");
   const [barrio, setBarrio] = React.useState("");
+  const [sector, setSector] = React.useState("");
+  const [manzana, setManzana] = React.useState("");
+  const [lote, setLote] = React.useState("");
+  const [aclaracion, setAclaracion] = React.useState("");
+  const [maps, setMaps] = React.useState("");
   const [notas, setNotas] = React.useState("");
   const [verConvertidos, setVerConvertidos] = React.useState(false);
 
@@ -20,7 +26,13 @@ function Prospectos({ prospectos, onGuardar, onEliminar, onConvertir, onVolver, 
     setNombre("");
     setTelefono("");
     setCalle("");
+    setNro("");
     setBarrio("");
+    setSector("");
+    setManzana("");
+    setLote("");
+    setAclaracion("");
+    setMaps("");
     setNotas("");
     setMostrarForm(false);
   };
@@ -35,7 +47,13 @@ function Prospectos({ prospectos, onGuardar, onEliminar, onConvertir, onVolver, 
       nombre: nombre.trim(),
       telefono: telefono.trim(),
       calle: calle.trim(),
+      nro: nro.trim(),
       barrio: barrio.trim(),
+      sector: sector.trim(),
+      manzana: manzana.trim(),
+      lote: lote.trim(),
+      aclaracion: aclaracion.trim(),
+      maps: maps.trim(),
       notas: notas.trim(),
       estado: "pendiente",
       fecha: new Date().toLocaleDateString("es-AR")
@@ -66,19 +84,65 @@ function Prospectos({ prospectos, onGuardar, onEliminar, onConvertir, onVolver, 
       ),
       React.createElement("div", { style: { ...s.grid2, marginBottom: 8 } },
         React.createElement("div", null,
-          React.createElement("label", { style: s.label }, "Calle / altura"),
+          React.createElement("label", { style: s.label }, "Calle"),
           React.createElement("input", {
-            style: s.input, placeholder: "Calle 123",
+            style: s.input, placeholder: "Calle",
             value: calle, onChange: e => setCalle(e.target.value)
           })
         ),
+        React.createElement("div", null,
+          React.createElement("label", { style: s.label }, "Número"),
+          React.createElement("input", {
+            style: s.input, placeholder: "Nro",
+            value: nro, onChange: e => setNro(e.target.value)
+          })
+        )
+      ),
+      React.createElement("div", { style: { ...s.grid2, marginBottom: 8 } },
         React.createElement("div", null,
           React.createElement("label", { style: s.label }, "Barrio"),
           React.createElement("input", {
             style: s.input, placeholder: "Barrio",
             value: barrio, onChange: e => setBarrio(e.target.value)
           })
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style: s.label }, "Sector"),
+          React.createElement("input", {
+            style: s.input, placeholder: "Sector",
+            value: sector, onChange: e => setSector(e.target.value)
+          })
         )
+      ),
+      React.createElement("div", { style: { ...s.grid3, marginBottom: 8 } },
+        React.createElement("div", null,
+          React.createElement("label", { style: s.label }, "Manzana"),
+          React.createElement("input", {
+            style: s.input, placeholder: "Mz",
+            value: manzana, onChange: e => setManzana(e.target.value)
+          })
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style: s.label }, "Lote"),
+          React.createElement("input", {
+            style: s.input, placeholder: "Lote",
+            value: lote, onChange: e => setLote(e.target.value)
+          })
+        ),
+        React.createElement("div", null,
+          React.createElement("label", { style: s.label }, "Casa/Dpto"),
+          React.createElement("input", {
+            style: s.input, placeholder: "Casa",
+            value: aclaracion, onChange: e => setAclaracion(e.target.value)
+          })
+        )
+      ),
+      React.createElement("div", { style: { marginBottom: 8 } },
+        React.createElement("label", { style: s.label }, "Link Google Maps"),
+        React.createElement("input", {
+          style: s.input, placeholder: "https://maps.app.goo.gl/...",
+          value: maps, onChange: e => setMaps(e.target.value)
+        })
       ),
       React.createElement("div", { style: { marginBottom: 10 } },
         React.createElement("label", { style: s.label }, "Notas (cuándo volver, qué le interesó, etc.)"),
@@ -104,8 +168,13 @@ function Prospectos({ prospectos, onGuardar, onEliminar, onConvertir, onVolver, 
           p.nombre,
           p.estado === "convertido" && React.createElement("span", { style: { ...s.badge("success"), marginLeft: 6 } }, "✓ Cliente")
         ),
-        (p.calle || p.barrio) && React.createElement("div", { style: { fontSize: 12, color: "var(--color-text-secondary)" } },
-          [p.calle, p.barrio].filter(Boolean).join(" · ")
+        (p.calle || p.barrio || p.sector || p.manzana || p.lote) && React.createElement("div", { style: { fontSize: 12, color: "var(--color-text-secondary)" } },
+          [
+            [p.calle, p.nro].filter(Boolean).join(" "),
+            p.barrio,
+            p.sector,
+            (p.manzana || p.lote) && `Mz ${p.manzana || "-"} Lote ${p.lote || "-"}`
+          ].filter(Boolean).join(" · ")
         )
       ),
       React.createElement("span", { style: { fontSize: 11, color: "var(--color-text-tertiary)" } }, p.fecha)
