@@ -657,45 +657,7 @@ function InicioRepartidor({
       padding: "6px 10px"
     },
     onClick: onSalir
-  }, "Salir"), /*#__PURE__*/React.createElement(HeaderBotones, null)), recHoy.length > 0 && /*#__PURE__*/React.createElement("button", {
-    style: {
-      margin: "10px 14px 0",
-      background: "var(--color-background-warning)",
-      border: "0.5px solid var(--color-border-tertiary)",
-      borderRadius: 10,
-      padding: "10px 14px",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      width: "calc(100% - 28px)",
-      cursor: "pointer",
-      textAlign: "left"
-    },
-    onClick: onIrAgenda
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 18
-    }
-  }, "\u{1F514}"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "var(--color-text-warning)"
-    }
-  }, recHoy.length, " recordatorio", recHoy.length !== 1 ? "s" : "", " para hoy"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Tocar para ver la agenda")), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--color-text-tertiary)"
-    }
-  }, "\u2192")), /*#__PURE__*/React.createElement(NotifConfigRepartidor, null), /*#__PURE__*/React.createElement("div", {
+  }, "Salir"), /*#__PURE__*/React.createElement(HeaderBotones, null)), /*#__PURE__*/React.createElement(NotifConfigRepartidor, null), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "12px 14px 0",
       display: "flex",
@@ -883,12 +845,14 @@ function InicioRepartidor({
   }, {
     ico: "\u{1F514}",
     titulo: "Agenda",
-    sub: "Recordatorios y seguimiento",
+    sub: recHoy.length > 0 ? `${recHoy.length} recordatorio${recHoy.length !== 1 ? "s" : ""} para hoy` : "Recordatorios y seguimiento",
+    aviso: recHoy.length > 0,
     fn: onIrAgenda
   }].map(({
     ico,
     titulo,
     sub,
+    aviso,
     fn
   }) => /*#__PURE__*/React.createElement("button", {
     key: titulo,
@@ -899,7 +863,9 @@ function InicioRepartidor({
       display: "flex",
       alignItems: "center",
       gap: 10,
-      padding: "13px 14px"
+      padding: "13px 14px",
+      background: aviso ? "var(--color-background-warning)" : s.card.background,
+      border: aviso ? "0.5px solid var(--color-border-warning)" : s.card.border
     },
     onClick: fn
   }, /*#__PURE__*/React.createElement("span", {
@@ -914,7 +880,7 @@ function InicioRepartidor({
     style: {
       fontSize: 14,
       fontWeight: 500,
-      color: "var(--color-text-primary)"
+      color: aviso ? "var(--color-text-warning)" : "var(--color-text-primary)"
     }
   }, titulo), /*#__PURE__*/React.createElement("div", {
     style: {

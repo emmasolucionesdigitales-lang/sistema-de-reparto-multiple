@@ -2409,6 +2409,7 @@ function AppPrincipal({
   }), pantalla === "nuevoCliente" && /*#__PURE__*/React.createElement(NuevoCliente, {
     diaActual: diaActual,
     repartoActual: repartoActual,
+    repartos: repartos,
     prefill: prospectoAConvertir ? {
       nombre: prospectoAConvertir.nombre,
       telefono: prospectoAConvertir.telefono,
@@ -2428,9 +2429,11 @@ function AppPrincipal({
         return [...base, {
           ...datos,
           id: Date.now(),
-          saldo: 0,
+          // FormCliente ya calcula el saldo inicial (a favor/debe/directo)
+          // — antes acá se pisaba siempre con 0 y se perdía lo cargado.
+          saldo: datos.saldo || 0,
           dispenser: datos.dispenser || 0,
-          repartoId: repartoActual?.id || null
+          repartoId: datos.repartoId != null ? datos.repartoId : (repartoActual?.id || null)
         }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
       });
       if (prospectoAConvertir) {

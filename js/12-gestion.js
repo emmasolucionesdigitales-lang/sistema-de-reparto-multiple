@@ -965,7 +965,8 @@ function GestionClientes({
 function FormCliente({
   inicial,
   onGuardar,
-  repartos
+  repartos,
+  textoGuardar
 }) {
   const [datos, setDatos] = useState({
     ...inicial
@@ -1059,7 +1060,7 @@ function FormCliente({
     onChange: e => set("lote", e.target.value)
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: s.label
-  }, "Casa"), /*#__PURE__*/React.createElement("input", {
+  }, "Casa/Dpto"), /*#__PURE__*/React.createElement("input", {
     style: s.input,
     placeholder: "Casa",
     value: datos.aclaracion || "",
@@ -1094,6 +1095,13 @@ function FormCliente({
     placeholder: "https://maps.app.goo.gl/...",
     value: datos.maps || "",
     onChange: e => set("maps", e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Link foto del domicilio (Google Drive, etc)"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    placeholder: "https://...",
+    value: datos.foto || "",
+    onChange: e => set("foto", e.target.value)
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: s.label
   }, "Notas rápidas"), /*#__PURE__*/React.createElement("input", {
@@ -1221,7 +1229,16 @@ function FormCliente({
     placeholder: "ej: -2500 o 1800",
     value: datos._saldoDirecto ?? "",
     onChange: e => set("_saldoDirecto", e.target.value)
-  }))), /*#__PURE__*/React.createElement("button", {
+  }))), datos.foto && /*#__PURE__*/React.createElement("img", {
+    src: datos.foto,
+    alt: "Domicilio",
+    style: {
+      width: "100%",
+      borderRadius: 8,
+      maxHeight: 160,
+      objectFit: "cover"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btnPrimary,
       marginTop: 4,
@@ -1239,7 +1256,7 @@ function FormCliente({
         saldo
       });
     }
-  }, "Guardar cliente"));
+  }, textoGuardar || "Guardar cliente"));
 }
 function Resumen({
   ventas,

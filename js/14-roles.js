@@ -1355,7 +1355,9 @@ function AppRepartidor({
     onGuardar: datosNuevo => {
       const nuevoC = Object.assign({}, datosNuevo, {
         id: Date.now(),
-        saldo: 0,
+        // FormCliente ya calcula el saldo inicial (a favor/debe/directo)
+        // — antes acá se pisaba siempre con 0 y se perdía lo cargado.
+        saldo: datosNuevo.saldo || 0,
         repartoId: miReparto ? miReparto.id : null
       });
       saveClientes(todosClientes.concat([nuevoC]));
@@ -2496,132 +2498,28 @@ function NuevoClienteForm({
   onGuardar,
   onVolver
 }) {
-  var diasOpc = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-  var init = {
-    nombre: "",
-    dia: diaActual || "Lunes",
-    barrio: sectores && sectores.length > 0 ? sectores[0] : "",
-    calle: "",
-    nro: "",
-    manzana: "",
-    lote: "",
-    telefono: "",
-    maps: "",
-    notas: "",
-    sifon: 0,
-    bidon10: 0,
-    bidon20: 0,
-    dispenser: 0,
-    orden: 9999
-  };
-  var state = React.useState(init);
-  var datos = state[0];
-  var setDatos = state[1];
-  var set = function (k, v) {
-    setDatos(function (d) {
-      var n = Object.assign({}, d);
-      n[k] = v;
-      return n;
-    });
-  };
-  var guardar = function () {
-    if (!datos.nombre || !datos.nombre.trim()) {
-      alert("Ingresá el nombre del cliente");
-      return;
-    }
-    onGuardar(datos);
-  };
-  var campos = [["barrio", "Barrio"], ["calle", "Calle"], ["nro", "Número"], ["manzana", "Manzana"], ["lote", "Lote"], ["telefono", "Teléfono (sin 0 ni 15)"], ["maps", "Link Google Maps"]];
+  // Usa el FormCliente unificado (12-gestion.js) — mismo formulario
+  // completo que usan el dueño y las demás apps (La Catalina, Comercial):
+  // día, orden, dirección completa, teléfono, maps, foto, notas, envases
+  // habituales, dispenser y saldo inicial. Antes este formulario propio
+  // del repartidor le faltaban varios de esos campos (sector, casa/dpto,
+  // foto, saldo inicial, y hasta el dispenser no tenía input aunque
+  // existía en los datos).
   return React.createElement("div", {
     style: s.screen
   }, React.createElement(HeaderApp, {
-    titulo: "Nuevo Cliente",
+    titulo: "Nuevo cliente",
     onVolver: onVolver
   }), React.createElement("div", {
     style: {
-      padding: 16,
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
+      padding: 16
     }
-  }, React.createElement("div", null, React.createElement("label", {
-    style: s.label
-  }, "Nombre y apellido *"), React.createElement("input", {
-    style: s.input,
-    value: datos.nombre,
-    placeholder: "Ej: Juan García",
-    onChange: function (e) {
-      set("nombre", e.target.value);
-    }
-  })), React.createElement("div", null, React.createElement("label", {
-    style: s.label
-  }, "Día de reparto"), React.createElement("select", {
-    style: s.select,
-    value: datos.dia,
-    onChange: function (e) {
-      set("dia", e.target.value);
-    }
-  }, diasOpc.map(function (d) {
-    return React.createElement("option", {
-      key: d,
-      value: d
-    }, d);
-  }))), campos.map(function (par) {
-    return React.createElement("div", {
-      key: par[0]
-    }, React.createElement("label", {
-      style: s.label
-    }, par[1]), React.createElement("input", {
-      style: s.input,
-      value: datos[par[0]] || "",
-      placeholder: par[1],
-      onChange: function (e) {
-        set(par[0], e.target.value);
-      }
-    }));
-  }), React.createElement("div", null, React.createElement("label", {
-    style: s.label
-  }, "Notas"), React.createElement("input", {
-    style: s.input,
-    value: datos.notas || "",
-    placeholder: "ej: timbre roto, cobrar $2000...",
-    onChange: function (e) {
-      set("notas", e.target.value);
-    }
-  })), React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10
-    }
-  }, [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(function (par) {
-    return React.createElement("div", {
-      key: par[0],
-      style: {
-        flex: 1
-      }
-    }, React.createElement("label", {
-      style: {
-        ...s.label,
-        textAlign: "center"
-      }
-    }, par[1]), React.createElement("input", {
-      style: {
-        ...s.input,
-        textAlign: "center"
-      },
-      type: "number",
-      min: 0,
-      value: datos[par[0]] || 0,
-      onChange: function (e) {
-        set(par[0], Number(e.target.value));
-      }
-    }));
-  })), React.createElement("button", {
-    style: Object.assign({}, s.btnPrimary, {
-      marginTop: 8,
-      padding: 14,
-      fontSize: 15
-    }),
-    onClick: guardar
-  }, "✓ Guardar cliente")));
+  }, React.createElement(FormCliente, {
+    inicial: {
+      dia: diaActual || "Lunes",
+      barrio: sectores && sectores.length > 0 ? sectores[0] : ""
+    },
+    textoGuardar: "Guardar cliente",
+    onGuardar: onGuardar
+  })));
 }

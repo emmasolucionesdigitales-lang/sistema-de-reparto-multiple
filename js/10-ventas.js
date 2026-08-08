@@ -1745,36 +1745,15 @@ function NuevaVenta({
 function NuevoCliente({
   diaActual,
   repartoActual,
+  repartos,
   onGuardar,
   onVolver,
   prefill
 }) {
-  const [datos, setDatos] = useState({
-    nombre: "",
-    dia: diaActual || "Martes",
-    barrio: "",
-    manzana: "",
-    lote: "",
-    sector: "",
-    repartoId: repartoActual?.id || null,
-    calle: "",
-    nro: "",
-    aclaracion: "",
-    telefono: "",
-    maps: "",
-    foto: "",
-    notas: "",
-    sifon: 0,
-    bidon10: 0,
-    bidon20: 0,
-    orden: "",
-    saldo: 0,
-    ...(prefill || {})
-  });
-  const set = (k, v) => setDatos(d => ({
-    ...d,
-    [k]: v
-  }));
+  // Usa el FormCliente unificado (12-gestion.js) — mismo formulario
+  // completo que "Editar cliente" y que las demás apps (La Catalina,
+  // Comercial): día, orden, dirección completa, teléfono, maps, foto,
+  // notas, envases habituales, dispenser y saldo inicial.
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
@@ -1782,117 +1761,18 @@ function NuevoCliente({
     onVolver: onVolver
   }), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: 16,
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
+      padding: 16
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Día de reparto"), /*#__PURE__*/React.createElement("select", {
-    style: s.select,
-    value: datos.dia,
-    onChange: e => set("dia", e.target.value)
-  }, DIAS.map(d => /*#__PURE__*/React.createElement("option", {
-    key: d,
-    value: d
-  }, d)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Número de orden en la ruta"), /*#__PURE__*/React.createElement("input", {
-    style: s.input,
-    type: "number",
-    min: 1,
-    placeholder: "ej: 5",
-    value: datos.orden || "",
-    onChange: e => set("orden", Number(e.target.value) || "")
-  })), [["nombre", "Nombre y apellido *"], ["barrio", "Barrio"], ["manzana", "Manzana"], ["lote", "Lote"], ["sector", "Sector"], ["calle", "Calle"], ["nro", "Número"], ["aclaracion", "Aclaración (piso, dpto, etc)"], ["telefono", "Teléfono (sin 0 ni 15)"], ["maps", "Link Google Maps"], ["foto", "Link foto del domicilio"], ["notas", "Notas rápidas (timbre, perro, deuda...)"]].map(([k, pl]) => /*#__PURE__*/React.createElement("div", {
-    key: k
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, pl.replace(" *", "")), /*#__PURE__*/React.createElement("input", {
-    style: s.input,
-    placeholder: pl.replace(" *", ""),
-    value: datos[k] || "",
-    onChange: e => set(k, e.target.value)
-  }))), /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...s.label,
-      fontSize: 13,
-      marginTop: 4
-    }
-  }, "Envases habituales"), /*#__PURE__*/React.createElement("div", {
-    style: s.grid3
-  }, [["sifon", "Sifón"], ["bidon10", "10L"], ["bidon20", "20L"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
-    key: k
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      ...s.label,
-      textAlign: "center"
-    }
-  }, l), /*#__PURE__*/React.createElement("input", {
-    style: {
-      ...s.input,
-      textAlign: "center"
+  }, /*#__PURE__*/React.createElement(FormCliente, {
+    inicial: {
+      dia: diaActual || "Martes",
+      repartoId: repartoActual?.id || null,
+      ...(prefill || {})
     },
-    type: "number",
-    min: 0,
-    value: datos[k],
-    onChange: e => set(k, Number(e.target.value))
-  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Dispenser en comodato"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      padding: "5px 16px",
-      fontSize: 20,
-      lineHeight: 1
-    },
-    onClick: () => set("dispenser", Math.max(0, (datos.dispenser || 0) - 1))
-  }, "−"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20,
-      fontWeight: 500,
-      minWidth: 32,
-      textAlign: "center",
-      color: "var(--color-text-primary)"
-    }
-  }, datos.dispenser || 0), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      padding: "5px 16px",
-      fontSize: 20,
-      lineHeight: 1
-    },
-    onClick: () => set("dispenser", (datos.dispenser || 0) + 1)
-  }, "+"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "unidades prestadas"))), datos.foto && /*#__PURE__*/React.createElement("img", {
-    src: datos.foto,
-    alt: "Domicilio",
-    style: {
-      width: "100%",
-      borderRadius: 8,
-      maxHeight: 160,
-      objectFit: "cover"
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btnPrimary,
-      marginTop: 8,
-      opacity: !datos.nombre ? 0.45 : 1
-    },
-    disabled: !datos.nombre,
-    onClick: () => onGuardar(datos)
-  }, "Agregar cliente")));
+    repartos: repartos,
+    textoGuardar: "Agregar cliente",
+    onGuardar: onGuardar
+  })));
 }
 
 // ─── MÓDULO PROMOCIÓN ────────────────────────────────────────────────────────
