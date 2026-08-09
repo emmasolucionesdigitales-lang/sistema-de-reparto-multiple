@@ -73,6 +73,9 @@ function ListaClientes({
   const [busqueda, setBusqueda] = useState("");
   const [clienteExpandidoId, setClienteExpandidoId] = useState(null);
   const [clienteMoviendo, setClienteMoviendo] = useState(null); // id del cliente "levantado", esperando destino
+  // Auto-scroll a la tarjeta "¡Todos visitados!" apenas se termina de
+  // registrar el último cliente pendiente.
+  const btnPlanillaRef = React.useRef(null);
   // ventas y noVisitas ya filtradas por fecha+dia desde App
   const atendidos = new Set(ventas.filter(v => !v._esCobro && !v._esAjuste).map(v => v.clienteId));
   const noVMap = {};
@@ -93,6 +96,15 @@ function ListaClientes({
   const pendientes = [...pendientesNormales, ...volverAlFinal];
   const sinEntrega = filtrados.filter(c => visitadosSinVenta.has(c.id));
   const listos = filtrados.filter(c => atendidos.has(c.id));
+  const todosListos = pendientes.length === 0 && clientes.length > 0;
+  React.useEffect(() => {
+    if (todosListos && btnPlanillaRef.current) {
+      btnPlanillaRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }
+  }, [todosListos]);
   const abrirRuta = () => {
     const cp = pendientes.filter(c => c.maps).slice(0, 9);
     if (!cp.length) {
@@ -601,59 +613,26 @@ function ListaClientes({
   }, "Sin entrega (", sinEntrega.length, ")"), sinEntrega.map(c => /*#__PURE__*/React.createElement(Card, {
     key: c.id,
     c: c
-  }))), pendientes.length === 0 && clientes.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }))), todosListos && /*#__PURE__*/React.createElement("div", {
+    ref: btnPlanillaRef,
     style: {
-      margin: "12px 14px 24px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
+      padding: "20px 14px 8px"
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onIrPlanilla || onIrMenu,
     style: {
-      background: "#0a2e1f",
-      border: "1.5px solid #4dd9a0",
-      borderRadius: 14,
-      padding: "16px 20px",
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 28,
-      marginBottom: 6
-    }
-  }, "🎉"), /*#__PURE__*/React.createElement("div", {
-    style: {
+      background: "#0F6E56",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 12,
+      padding: "16px",
       fontSize: 15,
       fontWeight: 600,
-      color: "#4dd9a0",
-      marginBottom: 4
+      cursor: "pointer",
+      width: "100%",
+      boxShadow: "0 4px 16px rgba(15,110,86,0.4)"
     }
-  }, "¡Todos visitados!"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)",
-      marginBottom: 14
-    }
-  }, "Completaste todos los clientes del día."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, onIrPlanilla && /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btnPrimary,
-      flex: 1,
-      background: "#185FA5"
-    },
-    onClick: onIrPlanilla
-  }, "📋 Ver planilla del día"), onIrMenu && /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btnPrimary,
-      flex: 1,
-      background: "#1a8a4a"
-    },
-    onClick: onIrMenu
-  }, "🏠 Menú principal")))));
+  }, "✅ Reparto completo — Ver planilla del día →")));
 }
 function DetalleCliente({
   cliente,
