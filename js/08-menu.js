@@ -4227,9 +4227,9 @@ function AtajoPlanillaSemana({
   const dias5 = [];
   const cur = new Date();
   cur.setHours(0, 0, 0, 0);
-  while (dias5.length < 5) {
+  while (dias5.length < 6) {
     const dow = cur.getDay();
-    if (dow !== 0 && dow !== 6) {
+    if (dow !== 0) {
       const fechaKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
       dias5.push({
         fecha: new Date(cur),
@@ -4239,13 +4239,14 @@ function AtajoPlanillaSemana({
     }
     cur.setDate(cur.getDate() - 1);
   }
-  // Mostrar siempre en orden Lunes -> Viernes (no por cercanía a hoy)
+  // Mostrar siempre en orden Lunes -> Sábado (no por cercanía a hoy)
   const ORDEN_DIA = {
     "Lunes": 1,
     "Martes": 2,
     "Miércoles": 3,
     "Jueves": 4,
-    "Viernes": 5
+    "Viernes": 5,
+    "Sábado": 6
   };
   dias5.sort((a, b) => ORDEN_DIA[a.dia] - ORDEN_DIA[b.dia]);
   return /*#__PURE__*/React.createElement("div", {
