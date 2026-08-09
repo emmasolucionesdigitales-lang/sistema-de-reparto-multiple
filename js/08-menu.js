@@ -1028,6 +1028,7 @@ function MenuDias({
   onGestionClientes,
   onStock,
   onAgenda,
+  onPlanillaAtajo,
   onVolver,
   scaleIdx,
   onToggleScale,
@@ -1696,14 +1697,18 @@ function MenuDias({
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "1fr 1fr 1fr",
-      gap: 8,
+      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+      gap: 6,
       padding: "4px 0 8px"
     }
   }, [{
     ico: "📅",
     lbl: "Agenda",
     fn: () => onAgenda && onAgenda()
+  }, {
+    ico: "📋",
+    lbl: "Planilla",
+    fn: () => onPlanillaAtajo && onPlanillaAtajo()
   }, {
     ico: "💰",
     lbl: "Fiados",
@@ -4207,4 +4212,132 @@ function InicioReparto({
       color: v > 0 ? "var(--color-text-primary)" : "var(--color-text-danger)"
     }
   }, v || 0))))));
+}
+
+// ── Atajo: Planilla de los últimos días (lun-vie) sin pasar por Clientes ──
+function AtajoPlanillaSemana({
+  repartoId,
+  planillas,
+  ventas,
+  clientes,
+  onSeleccionar,
+  onVolver
+}) {
+  const DIAS_NOMBRE = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const dias5 = [];
+  const cur = new Date();
+  cur.setHours(0, 0, 0, 0);
+  while (dias5.length < 5) {
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) {
+      const fechaKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+      dias5.push({
+        fecha: new Date(cur),
+        fechaKey,
+        dia: DIAS_NOMBRE[dow]
+      });
+    }
+    cur.setDate(cur.getDate() - 1);
+  }
+  // Mostrar siempre en orden Lunes -> Viernes (no por cercanía a hoy)
+  const ORDEN_DIA = {
+    "Lunes": 1,
+    "Martes": 2,
+    "Miércoles": 3,
+    "Jueves": 4,
+    "Viernes": 5
+  };
+  dias5.sort((a, b) => ORDEN_DIA[a.dia] - ORDEN_DIA[b.dia]);
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Planilla · Últimos días",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 16px 4px",
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Tocá una fecha para ir directo a su planilla."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "8px 16px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, dias5.map(({
+    fecha,
+    fechaKey,
+    dia
+  }) => {
+    const pl = (planillas || {})[claveDiaReparto(dia, fechaKey, repartoId)];
+    const cerrada = !!(pl && pl._diaCerrado);
+    const iniciada = !!(pl && pl.iniciado);
+    const totalClientes = (clientes || []).filter(c => c.dia === dia).length;
+    const entregas = (ventas || []).filter(v => v.fechaKey === fechaKey).length;
+    const label = fecha.toLocaleDateString("es-AR", {
+      weekday: "short",
+      day: "numeric",
+      month: "short"
+    });
+    return /*#__PURE__*/React.createElement("button", {
+      key: fechaKey + "_" + dia,
+      onClick: () => onSeleccionar(fechaKey, dia),
+      style: {
+        ...s.card,
+        margin: 0,
+        textAlign: "left",
+        cursor: "pointer",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "13px 14px"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, dia), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-tertiary)",
+        marginTop: 2,
+        textTransform: "capitalize"
+      }
+    }, label, totalClientes ? ` · ${entregas}/${totalClientes} entregas` : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8
+      }
+    }, cerrada ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        padding: "3px 8px",
+        borderRadius: 20,
+        background: "var(--color-background-success)",
+        color: "var(--color-text-success)"
+      }
+    }, "Cerrada ✓") : iniciada ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        padding: "3px 8px",
+        borderRadius: 20,
+        background: "var(--color-background-warning)",
+        color: "var(--color-text-warning)"
+      }
+    }, "En curso") : /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "Sin iniciar"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--color-text-tertiary)"
+      }
+    }, "→")));
+  })));
 }

@@ -1927,6 +1927,7 @@ function AppPrincipal({
     onGestionClientes: () => irA("gestionClientes"),
     onStock: () => irA("stock"),
     onAgenda: () => irA("agenda"),
+    onPlanillaAtajo: () => irA("atajoPlanillaSemana"),
     onVolver: () => irA("menu"),
     scaleIdx: scaleIdx,
     onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
@@ -1989,6 +1990,21 @@ function AppPrincipal({
       return cl?.repartoId === repartoActual.id;
     }),
     onFiados: () => irA("fiadosPendientes")
+  }), pantalla === "atajoPlanillaSemana" && repartoActual && /*#__PURE__*/React.createElement(AtajoPlanillaSemana, {
+    repartoId: repartoActual?.id,
+    planillas: planillas,
+    clientes: clientes.filter(c => c.repartoId === repartoActual.id),
+    ventas: ventas.filter(v => {
+      const cl = clientes.find(c => c.id === v.clienteId);
+      return cl?.repartoId === repartoActual.id;
+    }),
+    onSeleccionar: (fk, dia) => {
+      setDiaActual(dia);
+      setFechaActual(fk);
+      setFechaObj(new Date(fk + "T12:00:00"));
+      irA("planilla");
+    },
+    onVolver: () => irA("diasReparto")
   }), pantalla === "confirmacionesDia" && /*#__PURE__*/React.createElement(ConfirmacionesDia, {
     dia: diaActual,
     ventas: ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada),
