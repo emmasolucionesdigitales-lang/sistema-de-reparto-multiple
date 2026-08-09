@@ -2049,7 +2049,7 @@ function AppPrincipal({
     dia: diaActual,
     fecha: fechaActual,
     repartoId: repartoActual?.id,
-    ventas: ventas.filter(v => v.dia === diaActual && v.fechaKey === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+    ventas: ventas.filter(v => v.fechaKey === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
     clientes: clientes.filter(c => !repartoActual || c.repartoId === repartoActual.id),
     planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
     productos: productos,

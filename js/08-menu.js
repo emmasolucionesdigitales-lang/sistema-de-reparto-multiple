@@ -1898,23 +1898,30 @@ function DiaPrincipal({
       border: "1px solid #f5b942",
       display: "flex",
       alignItems: "center",
-      justifyContent: "space-between",
+      gap: 10,
       width: "100%",
       textAlign: "left",
       cursor: "pointer"
     },
     onClick: onVerConfirmaciones
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 14,
+      fontSize: 22
+    }
+  }, "🔴"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
       fontWeight: 500,
       color: "#f5b942"
     }
-  }, "🔴 ", ventasPendientesTransfer, " transferencia", ventasPendientesTransfer > 1 ? "s" : "", " sin confirmar"), /*#__PURE__*/React.createElement("div", {
+  }, ventasPendientesTransfer, " transferencia", ventasPendientesTransfer > 1 ? "s" : "", " sin confirmar"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "var(--color-text-secondary)",
-      marginTop: 2
+      color: "var(--color-text-secondary)"
     }
   }, "Tocá para ir a confirmar →")), /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2060,11 +2067,13 @@ function DetalleVentasDia({
   const todosMap = React.useMemo(() => {
     const m = {};
     (clientes || []).forEach(c => {
-      m[c.id] = c;
+      m[c.id] = {
+        ...c,
+        _tipo: "cliente"
+      };
     });
     return m;
   }, [clientes]);
-  const fmtEnv = arr => (arr || []).filter(e => e.prod && Number(e.cant) > 0).map(e => `${e.cant} ${e.prod}`).join(", ");
   return /*#__PURE__*/React.createElement("div", {
     style: {
       margin: "0 0 8px",
@@ -2116,11 +2125,28 @@ function DetalleVentasDia({
     }
   }, "▾")), abierto && /*#__PURE__*/React.createElement("div", {
     style: {
-      borderTop: "0.5px solid var(--color-border-tertiary)",
+      borderTop: "0.5px solid var(--color-border-info)",
       background: "var(--color-background-primary)"
     }
   }, ventas.map((v, idx) => {
-    const pagoBadge = {
+    const persona = todosMap[v.clienteId];
+    const esCobro = v._esCobro;
+    const dir = persona ? (persona.calle ? `${persona.calle} ${persona.nro || ""}` : persona.manzana ? `Mz ${persona.manzana} L ${persona.lote}` : "") + (persona.barrio ? ` · ${persona.barrio}` : "") : "";
+    const deudaPagada = Math.max(0, (v.pagadoNum || 0) - (v.neto || 0));
+    const fmtEnv = arr => (arr || []).filter(e => e.prod && Number(e.cant) > 0).map(e => `${e.cant} ${e.prod}`).join(", ");
+    const prestStr = fmtEnv(v.envPrest);
+    const devStr = fmtEnv(v.envDev);
+    const esMixto = v.pago === "mixto";
+    const esOtroDia = persona && persona.dia && persona.dia !== ventas[0]?.dia;
+    const pagoBadge = esCobro ? {
+      bg: "var(--color-background-success)",
+      color: "var(--color-text-success)",
+      txt: "Cobro deuda"
+    } : esMixto ? {
+      bg: "rgba(93,170,255,0.15)",
+      color: "#5daaff",
+      txt: "Mixto"
+    } : {
       contado: {
         bg: "var(--color-background-success)",
         color: "var(--color-text-success)",
@@ -2135,22 +2161,12 @@ function DetalleVentasDia({
         bg: "var(--color-background-warning)",
         color: "var(--color-text-warning)",
         txt: "Fiado"
-      },
-      mixto: {
-        bg: "var(--color-background-info)",
-        color: "var(--color-text-info)",
-        txt: `Mixto 💵$${v.montoEfec || 0} + 💳$${v.montoTrans || 0}`
       }
     }[v.pago] || {
       bg: "var(--color-background-tertiary)",
       color: "var(--color-text-secondary)",
       txt: v.pago
     };
-    const cli = todosMap[v.clienteId] || {};
-    const dir = direccionCliente(cli);
-    const deudaPagada = Math.max(0, (v.pagadoNum || 0) - (v.neto || 0));
-    const prestStr = fmtEnv(v.envPrest);
-    const devStr = fmtEnv(v.envDev);
     return /*#__PURE__*/React.createElement("div", {
       key: v.id,
       style: {
@@ -2162,12 +2178,15 @@ function DetalleVentasDia({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        marginBottom: 5
+        marginBottom: 4
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
-        minWidth: 0
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 4,
+        alignItems: "center"
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -2175,9 +2194,13 @@ function DetalleVentasDia({
         fontWeight: 500,
         color: "var(--color-text-primary)"
       }
-    }, v.cliente), /*#__PURE__*/React.createElement("span", {
+    }, v.cliente || persona?.nombre || "Cliente"), persona?.dia && /*#__PURE__*/React.createElement("span", {
       style: {
-        marginLeft: 6,
+        fontSize: 10,
+        color: "var(--color-text-tertiary)"
+      }
+    }, "· ", persona.dia), /*#__PURE__*/React.createElement("span", {
+      style: {
         fontSize: 10,
         padding: "1px 6px",
         borderRadius: 4,
@@ -2187,33 +2210,27 @@ function DetalleVentasDia({
       }
     }, pagoBadge.txt), v.hora && /*#__PURE__*/React.createElement("span", {
       style: {
-        marginLeft: 6,
         fontSize: 10,
         color: "var(--color-text-tertiary)"
       }
     }, "🕐 ", v.hora), v.repartidor && /*#__PURE__*/React.createElement("span", {
       style: {
-        marginLeft: 6,
         fontSize: 10,
-        padding: "1px 6px",
-        borderRadius: 4,
-        background: "var(--color-background-tertiary)",
-        color: "var(--color-text-secondary)",
-        fontWeight: 500
+        color: "var(--color-text-tertiary)"
       }
-    }, "🚐 ", v.repartidor), dir && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--color-text-tertiary)",
-        marginTop: 2
-      }
-    }, "📍 ", dir)), /*#__PURE__*/React.createElement("span", {
+    }, "🚐 ", v.repartidor)), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 14,
         fontWeight: 500,
         color: "var(--color-text-primary)"
       }
-    }, fmt(v.neto || 0))), (v.detalle || []).map((d, di) => /*#__PURE__*/React.createElement("div", {
+    }, fmt(v.neto || 0))), dir && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)",
+        padding: "0 0 3px 0"
+      }
+    }, "📍 ", dir), (v.detalle || []).filter(d => d.nombre !== "Cobro de deuda").map((d, di) => /*#__PURE__*/React.createElement("div", {
       key: di,
       style: {
         display: "flex",
@@ -2230,7 +2247,25 @@ function DetalleVentasDia({
         fontSize: 12,
         color: "var(--color-text-tertiary)"
       }
-    }, fmt(d.total)))), (v.saldoAplicado > 0 || deudaPagada > 0 || prestStr || devStr) && /*#__PURE__*/React.createElement("div", {
+    }, fmt(d.total)))), esMixto && (v.montoEfec > 0 || v.montoTrans > 0) && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 10,
+        padding: "3px 0 0 8px",
+        marginTop: 2,
+        borderTop: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, v.montoEfec > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-success)"
+      }
+    }, "Efectivo: ", fmt(v.montoEfec)), v.montoTrans > 0 && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "#5daaff"
+      }
+    }, "Transfer.: ", fmt(v.montoTrans), " ", v.transConfirmada ? "✅" : "🔴")), (v.saldoAplicado > 0 || deudaPagada > 0 || prestStr || devStr) && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -2259,7 +2294,14 @@ function DetalleVentasDia({
         fontSize: 11,
         color: "var(--color-text-info)"
       }
-    }, "↩️ Devolvió: ", devStr)));
+    }, "↩️ Devolvió: ", devStr)), v.obs && !v.obs.startsWith("[Mixto") && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)",
+        paddingLeft: 8,
+        marginTop: 2
+      }
+    }, "📝 ", v.obs));
   }), (() => {
     const ventaIds = new Set(ventas.map(v => v.clienteId));
     const noComp = (noVisitas || []).filter(n => n.fecha === fecha && !ventaIds.has(n.clienteId) && n.motivo !== "salteado");
@@ -2346,9 +2388,13 @@ function PlanillaDelDia({
   const [enviosInforme, setEnviosInforme] = React.useState(() => Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || 0));
   const [enviandoCierre, setEnviandoCierre] = React.useState(false);
   const clientesDia = new Set((clientes || []).filter(c => c.dia === dia).map(c => c.id));
-  const ventasPropias = ventas.filter(v => clientesDia.has(v.clienteId));
-  const ventasExtraDia = ventas.filter(v => !clientesDia.has(v.clienteId) && (!v.dia || v.dia === dia) && v.fechaKey === fecha);
-  // Auto-calcular desde ventas del dia
+  // Todas las ventas registradas con fechaKey === fecha (sin importar el día del cliente)
+  const todasFecha = ventas.filter(v => v.fechaKey === fecha);
+  // Propias del día = clientes cuyo día es este
+  const ventasPropias = todasFecha.filter(v => clientesDia.has(v.clienteId));
+  // Extras = cualquier venta de ese fecha que NO sea de un cliente del día
+  //   incluye: clientes de otros días, cobros de deuda de cualquier día
+  const ventasExtraDia = todasFecha.filter(v => !clientesDia.has(v.clienteId));
   const CAJON_SODA = 6;
   const getProdCosto = nombre => {
     const p = (productos || []).find(x => x.nombre === nombre);
@@ -2363,7 +2409,7 @@ function PlanillaDelDia({
     "Bidón 20L": "b20",
     "Sifón 1.5L": "soda"
   };
-  // Solo ventas de clientes propios del día
+  const todasVentasDia = [...ventasPropias, ...ventasExtraDia];
   const totalesPorProd = {
     b10: {
       vacios: 0,
@@ -2382,7 +2428,7 @@ function PlanillaDelDia({
       cajones: 0
     }
   };
-  ventasPropias.forEach(v => {
+  todasVentasDia.forEach(v => {
     v.detalle.forEach(d => {
       const k = prodKey[d.nombre];
       if (!k) return;
@@ -2390,30 +2436,32 @@ function PlanillaDelDia({
       totalesPorProd[k].plata += d.total;
     });
   });
-  const sodaCajones = Math.floor(totalesPorProd.soda.vacios / CAJON_SODA) || 0;
+  const calcCajones = sifones => {
+    const full = Math.floor(sifones / CAJON_SODA);
+    return sifones % CAJON_SODA >= 4 ? full + 1 : full;
+  };
+  const sodaCajones = calcCajones(totalesPorProd.soda.vacios);
   totalesPorProd.soda.cajones = sodaCajones;
   totalesPorProd.soda.llenar = sodaCajones * COSTO_CAJON_SODA;
   totalesPorProd.b10.llenar = totalesPorProd.b10.vacios * costB10;
   totalesPorProd.b20.llenar = totalesPorProd.b20.vacios * costB20;
   const totalVentaPlata = Object.values(totalesPorProd).reduce((a, p) => a + p.plata, 0);
   const totalVentaLlenar = Object.values(totalesPorProd).reduce((a, p) => a + p.llenar, 0);
-  // Totales ventas de otros días
   const extraEfectivo = ventasExtraDia.filter(v => v.pago === "contado").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
   const extraTrans = ventasExtraDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
   const extraFiado = ventasExtraDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
   const extraTotal = extraEfectivo + extraTrans + extraFiado;
-  // Cobranza — solo ventas propias del día
-  const cobEfectivo = ventasPropias.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0), 0);
-  const cobTransBruto = ventasPropias.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0);
+  const cobEfectivo = todasVentasDia.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0), 0);
+  const cobTransBruto = todasVentasDia.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0);
   const cobTransDesc = Math.round(cobTransBruto * 0.025);
   const cobTransNeto = cobTransBruto - cobTransDesc;
   const ventasPendTrans = ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada);
-  const cobFiado = ventasPropias.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
-  const cobSaldosEfec = ventasPropias.filter(v => v.pago === "contado").reduce((a, v) => {
+  const cobFiado = todasVentasDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
+  const cobSaldosEfec = todasVentasDia.filter(v => v.pago === "contado").reduce((a, v) => {
     const extra = (v.pagadoNum || 0) - (v.neto || 0);
     return a + (extra > 0 ? extra : 0);
   }, 0);
-  const cobSaldosTrans = ventasPropias.filter(v => v.pago === "transferencia").reduce((a, v) => {
+  const cobSaldosTrans = todasVentasDia.filter(v => v.pago === "transferencia").reduce((a, v) => {
     const extra = (v.pagadoNum || 0) - (v.neto || 0);
     return a + (extra > 0 ? extra : 0);
   }, 0);
@@ -2478,11 +2526,13 @@ function PlanillaDelDia({
     fiado = num(datos.fiado),
     retenciones = num(datos.retenciones);
   const sobrante = efectivo - (totalVentaPlata - fiado);
-  const ganancia = cobEfectivo + cobTransBruto + cobFiado + cobSaldos - totalVentaLlenar - totalGastos;
+  const ganancia = cobEfectivo - totalVentaLlenar - totalGastos + cobTransNeto;
   const totalLlenosIngresados = PRODUCTOS_CONFIG.reduce((a, p) => a + num(datos.productos[p.id]?.llenos), 0);
 
   // ── Cierre del día: estados y cálculos ───────────────────────────
-  const [mostrarCierre, setMostrarCierre] = useState(!!(initCierre && !planilla._diaCerrado));
+  const cierreKey = `cierre_${dia}_${fecha}_${repartoId || ""}`;
+  const yaConfirmado = !!localStorage.getItem(cierreKey) || !!planilla._diaCerrado;
+  const [mostrarCierre, setMostrarCierre] = useState(!!(initCierre && !yaConfirmado));
   // BUG: el botón "Confirmar — stock e informe" (adentro de la pantalla de
   // Cierre) intentaba sacarle una foto a #planilla-capture recién ahí — pero
   // ese elemento vive en la vista NORMAL de la planilla, que ya no está
@@ -2624,6 +2674,7 @@ function PlanillaDelDia({
   });
   const confirmarCierre = async () => {
     if (enviandoCierre) return;
+    localStorage.setItem(cierreKey, "1"); // marcar como confirmado
     const realesL = {
       soda: realesLlenos.soda !== "" ? Number(realesLlenos.soda) * CAJON_SODA : sobrantes.soda,
       b10: realesLlenos.b10 !== "" ? Number(realesLlenos.b10) : sobrantes.b10,
@@ -2947,23 +2998,42 @@ function PlanillaDelDia({
           }
         }, `${diff > 0 ? "+" : ""}${diff} dif.`));
       })));
-    })), /*#__PURE__*/React.createElement("button", {
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
-        width: "100%",
-        padding: "16px",
+        display: "flex",
+        gap: 8,
+        marginTop: 4
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 1,
+        padding: "14px 8px",
+        borderRadius: 10,
+        border: "1.5px solid var(--color-border-secondary)",
+        background: "var(--color-background-tertiary)",
+        color: "var(--color-text-secondary)",
+        fontSize: 13,
+        fontWeight: 500,
+        cursor: "pointer"
+      },
+      onClick: () => setMostrarCierre(false)
+    }, "📋 Ver planilla completa"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 1,
+        padding: "14px 8px",
         borderRadius: 10,
         border: "none",
         background: "var(--color-background-tertiary)",
-        borderTop: "2px solid #f5b942",
-        color: "#f5b942",
-        fontSize: 15,
+        borderTop: "2px solid #4dd9a0",
+        color: "#4dd9a0",
+        fontSize: 13,
         fontWeight: 700,
         cursor: enviandoCierre ? "default" : "pointer",
         opacity: enviandoCierre ? 0.7 : 1
       },
-      onClick: confirmarCierre,
-      disabled: enviandoCierre
-    }, enviandoCierre ? "⏳ Cerrando día y enviando informe..." : "✓ Cerrar día, actualizar stock y enviar informe")));
+      disabled: enviandoCierre,
+      onClick: confirmarCierre
+    }, enviandoCierre ? "⏳ Cerrando y enviando..." : "✓ Confirmar — stock e informe"))));
   }
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
@@ -3023,17 +3093,7 @@ function PlanillaDelDia({
     placeholder: t === "text" ? "dd/mm/aaaa" : "0",
     value: datos[k] || "",
     onChange: e => set(k, e.target.value)
-  })))), (pesoAuto > 0 || bultosAuto > 0) && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--color-text-tertiary)",
-      marginBottom: 10,
-      lineHeight: 1.7,
-      background: "var(--color-background-tertiary)",
-      borderRadius: 8,
-      padding: "6px 10px"
-    }
-  }, bultosAuto > 0 && /*#__PURE__*/React.createElement("div", null, "📦 ", /*#__PURE__*/React.createElement("b", null, "Bultos auto:"), " ", cajonesLlenos, " cajones soda + ", b10Llenos, " bid.10L + ", b20Llenos, " bid.20L = ", /*#__PURE__*/React.createElement("b", null, bultosAuto)), pesoAuto > 0 && /*#__PURE__*/React.createElement("div", null, "⚖️ ", /*#__PURE__*/React.createElement("b", null, "Peso auto:"), " ", cajonesLlenos, "×13kg + ", b10Llenos, "×10kg + ", b20Llenos, "×20kg = ", /*#__PURE__*/React.createElement("b", null, pesoAuto, " kg"))), /*#__PURE__*/React.createElement("span", {
+  })))), /*#__PURE__*/React.createElement("span", {
     style: {
       ...s.sectionTitle,
       padding: "12px 0 8px"
@@ -3445,8 +3505,8 @@ function PlanillaDelDia({
       ...s.sectionTitle,
       padding: "0 0 10px"
     }
-  }, "Resumen del día"), ventasPropias.length > 0 ? /*#__PURE__*/React.createElement(DetalleVentasDia, {
-    ventas: ventasPropias,
+  }, "Resumen del día"), todasVentasDia.length > 0 ? /*#__PURE__*/React.createElement(DetalleVentasDia, {
+    ventas: todasVentasDia,
     clientes: clientes,
     noVisitas: noVisitas,
     fecha: fecha
@@ -3501,37 +3561,41 @@ function PlanillaDelDia({
     style: {
       display: "flex",
       justifyContent: "space-between",
-      padding: "5px 0",
+      padding: "5px 0 5px 12px",
       borderBottom: "0.5px solid var(--color-border-tertiary)"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 13,
-      color: "var(--color-text-secondary)"
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      fontStyle: "italic"
     }
-  }, "+ Cobro deuda · efectivo"), /*#__PURE__*/React.createElement("span", {
+  }, "↳ incluye cobro deuda · efectivo"), /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: 500,
-      color: "var(--color-text-success)"
+      color: "var(--color-text-success)",
+      fontStyle: "italic"
     }
   }, fmt(cobSaldosEfec))), cobSaldosTrans > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
-      padding: "5px 0",
+      padding: "5px 0 5px 12px",
       borderBottom: "0.5px solid var(--color-border-tertiary)"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 13,
-      color: "var(--color-text-secondary)"
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      fontStyle: "italic"
     }
-  }, "+ Cobro deuda · transferencia"), /*#__PURE__*/React.createElement("span", {
+  }, "↳ incluye cobro deuda · transferencia"), /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: 500,
-      color: "var(--color-text-info)"
+      color: "var(--color-text-info)",
+      fontStyle: "italic"
     }
   }, fmt(cobSaldosTrans))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3815,7 +3879,7 @@ function PlanillaDelDia({
       color: "var(--color-text-info)"
     }
   }, fmt(cobTransNeto))), /*#__PURE__*/React.createElement(DetalleTransferencias, {
-    ventas: ventasPropias.filter(v => v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0),
+    ventas: todasVentasDia.filter(v => v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0),
     ventasPendTrans: ventasPendTrans
   })), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3909,7 +3973,7 @@ function PlanillaDelDia({
       color: "var(--color-text-tertiary)",
       marginTop: 2
     }
-  }, "Total cobrado − Llenado − Gastos")), /*#__PURE__*/React.createElement("span", {
+  }, "Efectivo en mano + Transferencias netas")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 22,
       fontWeight: 500,
@@ -4177,7 +4241,27 @@ function InicioReparto({
       };
       onGuardar(nuevaPlanilla, true);
     }
-  }, yaIniciado ? "Actualizar y continuar →" : "🚀 Iniciar y descontar de sodería")), stock?.soderia && /*#__PURE__*/React.createElement("div", {
+  }, yaIniciado ? "Actualizar y continuar →" : "🚀 Iniciar y descontar de sodería"), !yaIniciado && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      width: "100%",
+      padding: "12px",
+      fontSize: 13,
+      borderRadius: 10,
+      marginTop: 6
+    },
+    onClick: () => {
+      const nuevaPlanilla = {
+        ...(planilla || planillaDiaVacia()),
+        iniciado: true,
+        productos: Object.fromEntries(Object.entries(llenos).map(([k, v]) => [k, {
+          ...(planilla?.productos?.[k] || {}),
+          llenos: v
+        }]))
+      };
+      onGuardar(nuevaPlanilla, false);
+    }
+  }, "Iniciar sin descontar stock")), stock?.soderia && /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "10px 14px 0",
