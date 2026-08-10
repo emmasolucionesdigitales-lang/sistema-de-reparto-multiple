@@ -2581,6 +2581,7 @@ function PlanillaDelDia({
     b20: ""
   });
   const yaCerrado = !!planilla._diaCerrado;
+  const envasesConfirmados = !!planilla._envasesConfirmados || yaCerrado;
   const llenosCargados = {
     soda: Number(datos.productos?.soda?.llenos || 0),
     b10: Number(datos.productos?.b10?.llenos || 0),
@@ -2672,8 +2673,9 @@ function PlanillaDelDia({
     paraLlenarCalc[pk] = Math.min(falta, vaciosHoy);
     vaciosRestoCalc[pk] = Math.max(0, vaciosHoy - paraLlenarCalc[pk]);
   });
-  const confirmarCierre = async () => {
-    if (enviandoCierre) return;
+  // Paso 1: confirmar envases → actualiza stock (solo el camión de este
+  // reparto) y vuelve a la planilla. El informe se manda en el Paso 2.
+  const confirmarEnvases = () => {
     localStorage.setItem(cierreKey, "1"); // marcar como confirmado
     const realesL = {
       soda: realesLlenos.soda !== "" ? Number(realesLlenos.soda) * CAJON_SODA : sobrantes.soda,
@@ -2724,7 +2726,7 @@ function PlanillaDelDia({
     };
     ["soda", "b10", "b20"].forEach(pk => {
       const sk = conv[pk];
-      // "Para llenar" se llena antes de salir mañana — para el stock ya
+      // "Para llenar hoy" se llena antes de salir mañana — para el stock ya
       // cuenta como LLENO, no como vacío.
       s.soderia[sk] = (s.soderia[sk] || 0) + realesL[pk] + realesPL[pk];
       s.soderia_vacios[sk] = (s.soderia_vacios[sk] || 0) + realesV[pk];
@@ -2737,31 +2739,32 @@ function PlanillaDelDia({
     });
     onGuardar({
       ...datos,
-      _diaCerrado: true,
+      _envasesConfirmados: true,
       _stockActualizado: true,
       ...(Object.keys(diffs).length > 0 ? {
         _cierreDiffs: diffs
       } : {})
     });
-    if (onCerrarDia) {
-      setEnviandoCierre(true);
-      // La foto YA se sacó antes de entrar a esta pantalla (ver
-      // capturarPlanillaImg / capturaPreCierre) porque acá #planilla-capture
-      // ya no existe en el DOM. Si por algún motivo no se guardó (ej.
-      // volvieron para atrás sin pasar por el botón), la intentamos sacar
-      // igual como respaldo, aunque lo más probable es que dé null.
-      const imgData = capturaPreCierre || await capturarPlanillaImg();
-      const ok = await onCerrarDia(imgData);
-      setEnviandoCierre(false);
-      setMostrarCierre(false);
-      if (ok) {
-        setEnviosInforme(Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || 1));
-        alert("✅ Día cerrado, stock actualizado e informe enviado a tu email.");
-      } else {
-        alert("✅ Día cerrado y stock actualizado.\n❌ No se pudo enviar el informe por email — podés reintentarlo con el botón \"Reenviar informe\" de abajo.");
-      }
+    setMostrarCierre(false);
+  };
+  // Paso 2: capturar la planilla (ya con los envases confirmados) y mandar
+  // el informe por mail, desde la vista normal donde #planilla-capture SÍ
+  // está montado.
+  const enviarInformeFinal = async () => {
+    if (enviandoCierre) return;
+    setEnviandoCierre(true);
+    const imgData = capturaPreCierre || await capturarPlanillaImg();
+    const ok = onCerrarDia ? await onCerrarDia(imgData) : true;
+    setEnviandoCierre(false);
+    onGuardar({
+      ...datos,
+      _diaCerrado: true
+    });
+    if (ok) {
+      setEnviosInforme(Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || 1));
+      alert("✅ Informe enviado a tu email.");
     } else {
-      setMostrarCierre(false);
+      alert("✅ Stock actualizado.\n❌ No se pudo enviar el informe por email — podés reintentarlo con el botón \"Reenviar informe\" de abajo.");
     }
   };
 
@@ -2895,110 +2898,214 @@ function PlanillaDelDia({
       style: {
         fontSize: 12,
         color: "var(--color-text-tertiary)",
-        margin: "-4px 0 10px"
+        margin: "-4px 0 12px"
       }
-    }, "Contá lo que tenés físicamente en cada columna. Si coincide con el cálculo, dejalo así."), /*#__PURE__*/React.createElement("div", {
-      style: {
-        ...s.card,
-        margin: "0 0 16px",
-        padding: "10px 12px"
-      }
-    }, [["Soda", "soda"], ["10L", "b10"], ["20L", "b20"]].map(([label, pk]) => {
+    }, "Salió, vuelve y lo que queda. Si algo no coincide con lo cargado, corregilo vos."), [["Soda", "soda"], ["Bidón 10L", "b10"], ["Bidón 20L", "b20"]].map(([label, pk]) => {
       const cajon = pk === "soda" ? CAJON_SODA : 1;
-      const cols = [{
-        tipo: "llenos",
-        titulo: "Lleno",
-        calc: Math.floor(sobrantes[pk] / cajon),
-        stateObj: realesLlenos,
-        setFn: setRealesLlenos
-      }, {
-        tipo: "pllenar",
-        titulo: "Para llenar",
-        calc: paraLlenarCalc[pk],
-        stateObj: realesParaLlenar,
-        setFn: setRealesParaLlenar
-      }, {
-        tipo: "vacios",
-        titulo: "Vacío",
-        calc: vaciosRestoCalc[pk],
-        stateObj: realesVacios,
-        setFn: setRealesVacios
-      }];
+      const unidad = pk === "soda" ? "cajones" : "unidades";
+      const div = n => pk === "soda" ? Math.floor(n / cajon) : n;
+      const AZUL = "#5daaff",
+        AMBAR = "#f5b942",
+        VIOLETA = "#b794f6";
+      const llenReal = realesLlenos[pk] !== "" ? Number(realesLlenos[pk]) * cajon : sobrantes[pk];
+      const paraLlenarReal = realesParaLlenar[pk] !== "" ? Number(realesParaLlenar[pk]) * cajon : paraLlenarCalc[pk] * cajon;
+      const vacReal = realesVacios[pk] !== "" ? Number(realesVacios[pk]) * cajon : vaciosRestoCalc[pk] * cajon;
+      const salio = llenosCargados[pk];
+      const vuelveTotal = llenReal + paraLlenarReal + vacReal;
+      const esperado = salio + devueltosDia[pk] - prestadosDia[pk];
+      const cuadra = vuelveTotal === esperado;
+      const quedaLleno = (soderiaActual[convPk[pk]] || 0) + llenReal;
+      const quedaVacio = (soderiaVaciosActual[convPk[pk]] || 0) + vacReal;
+      const totalFlota = quedaLleno + quedaVacio + paraLlenarReal;
+      const filaCampo = (titulo, valor, color) => {
+        const etiqueta = /*#__PURE__*/React.createElement("span", {
+          style: {
+            fontSize: 12,
+            color: "var(--color-text-secondary)"
+          }
+        }, /*#__PURE__*/React.createElement("span", {
+          style: {
+            display: "inline-block",
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: color,
+            marginRight: 6
+          }
+        }), titulo);
+        const valorEl = /*#__PURE__*/React.createElement("span", {
+          style: {
+            fontSize: 14,
+            fontWeight: 600,
+            color: color || "var(--color-text-primary)"
+          }
+        }, div(valor));
+        return /*#__PURE__*/React.createElement("div", {
+          key: titulo,
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "6px 0"
+          }
+        }, etiqueta, valorEl);
+      };
       return /*#__PURE__*/React.createElement("div", {
         key: pk,
         style: {
-          borderTop: pk !== "soda" ? "0.5px solid var(--color-border-tertiary)" : "none",
-          padding: "10px 0"
+          ...s.card,
+          margin: "0 0 10px",
+          padding: "12px"
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 8,
+          paddingBottom: 8,
+          borderBottom: "0.5px solid var(--color-border-tertiary)"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
           fontSize: 13,
           fontWeight: 600,
-          color: "var(--color-text-primary)",
-          marginBottom: 6
+          color: "var(--color-text-primary)"
         }
-      }, label, pk === "soda" ? " (cajones)" : ""), /*#__PURE__*/React.createElement("div", {
+      }, label), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 20,
+          fontWeight: 700,
+          color: "var(--color-text-primary)"
+        }
+      }, div(totalFlota), " ", /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11,
+          fontWeight: 400,
+          color: "var(--color-text-tertiary)"
+        }
+      }, unidad))), filaCampo("Salió hoy", salio, "var(--color-text-tertiary)"), filaCampo("Vuelve lleno", llenReal, AZUL), filaCampo("Vuelve vacío", vacReal + paraLlenarReal, AMBAR), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "6px 0 6px 14px"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 12,
+          color: VIOLETA
+        }
+      }, "↳ ¿Cuántos llenás hoy?"), /*#__PURE__*/React.createElement("input", {
+        type: "number",
+        min: 0,
+        value: realesParaLlenar[pk],
+        placeholder: String(paraLlenarCalc[pk]),
+        style: {
+          padding: "5px 2px",
+          borderRadius: 7,
+          border: `1.5px solid ${VIOLETA}`,
+          background: "var(--color-background-tertiary)",
+          color: VIOLETA,
+          fontSize: 14,
+          fontWeight: 600,
+          textAlign: "center",
+          width: 64,
+          boxSizing: "border-box"
+        },
+        onChange: e => setRealesParaLlenar(r => ({
+          ...r,
+          [pk]: e.target.value
+        }))
+      })), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: 8
+          gridTemplateColumns: "1fr 1fr",
+          gap: 8,
+          margin: "8px 0 4px"
         }
-      }, cols.map(({
-        tipo,
-        titulo,
-        calc,
-        stateObj,
-        setFn
-      }) => {
-        const realVal = stateObj[pk] !== "" ? Number(stateObj[pk]) : calc;
-        const diff = realVal - calc;
-        return /*#__PURE__*/React.createElement("div", {
-          key: tipo
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 10,
-            color: "var(--color-text-tertiary)",
-            textAlign: "center",
-            marginBottom: 2
-          }
-        }, titulo), /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 10,
-            color: "#5daaff",
-            textAlign: "center",
-            marginBottom: 3
-          }
-        }, "calc. ", calc), /*#__PURE__*/React.createElement("input", {
-          type: "number",
-          min: 0,
-          value: stateObj[pk],
-          placeholder: String(calc),
-          style: {
-            padding: "6px 2px",
-            borderRadius: 7,
-            border: "1.5px solid var(--color-border-secondary)",
-            background: "var(--color-background-tertiary)",
-            color: "var(--color-text-primary)",
-            fontSize: 16,
-            textAlign: "center",
-            width: "100%",
-            boxSizing: "border-box"
-          },
-          onChange: e => setFn(r => ({
-            ...r,
-            [pk]: e.target.value
-          }))
-        }), diff !== 0 && /*#__PURE__*/React.createElement("div", {
-          style: {
-            textAlign: "center",
-            marginTop: 2,
-            fontSize: 10,
-            fontWeight: 600,
-            color: diff > 0 ? "var(--color-text-warning)" : "var(--color-text-danger)"
-          }
-        }, `${diff > 0 ? "+" : ""}${diff} dif.`));
-      })));
-    })), /*#__PURE__*/React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("input", {
+        type: "number",
+        min: 0,
+        value: realesLlenos[pk],
+        placeholder: String(Math.floor(sobrantes[pk] / cajon)),
+        title: "Corregir Vuelve lleno",
+        style: {
+          padding: "5px 2px",
+          borderRadius: 7,
+          border: `1px solid ${AZUL}`,
+          background: "var(--color-background-tertiary)",
+          color: AZUL,
+          fontSize: 12,
+          textAlign: "center",
+          width: "100%",
+          boxSizing: "border-box"
+        },
+        onChange: e => setRealesLlenos(r => ({
+          ...r,
+          [pk]: e.target.value
+        }))
+      }), /*#__PURE__*/React.createElement("input", {
+        type: "number",
+        min: 0,
+        value: realesVacios[pk],
+        placeholder: String(vaciosRestoCalc[pk]),
+        title: "Corregir Vuelve vacío (resto)",
+        style: {
+          padding: "5px 2px",
+          borderRadius: 7,
+          border: `1px solid ${AMBAR}`,
+          background: "var(--color-background-tertiary)",
+          color: AMBAR,
+          fontSize: 12,
+          textAlign: "center",
+          width: "100%",
+          boxSizing: "border-box"
+        },
+        onChange: e => setRealesVacios(r => ({
+          ...r,
+          [pk]: e.target.value
+        }))
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          borderTop: "0.5px solid var(--color-border-tertiary)",
+          marginTop: 8,
+          paddingTop: 8
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: "var(--color-text-tertiary)",
+          marginBottom: 4
+        }
+      }, "Queda en sodería"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 12,
+          fontSize: 12
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: AZUL
+        }
+      }, "● Lleno ", div(quedaLleno)), /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: VIOLETA
+        }
+      }, "● A llenar ", div(paraLlenarReal)), /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: AMBAR
+        }
+      }, "● Vacío ", div(quedaVacio)))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          marginTop: 8,
+          fontSize: 11,
+          fontWeight: 600,
+          color: cuadra ? "var(--color-text-success)" : "var(--color-text-danger)"
+        }
+      }, cuadra ? `✓ Cuadra: ${div(vuelveTotal)} de ${div(esperado)}` : `⚠ No cuadra: ${div(vuelveTotal)} de ${div(esperado)} esperados`));
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,
@@ -3028,12 +3135,10 @@ function PlanillaDelDia({
         color: "#4dd9a0",
         fontSize: 13,
         fontWeight: 700,
-        cursor: enviandoCierre ? "default" : "pointer",
-        opacity: enviandoCierre ? 0.7 : 1
+        cursor: "pointer"
       },
-      disabled: enviandoCierre,
-      onClick: confirmarCierre
-    }, enviandoCierre ? "⏳ Cerrando y enviando..." : "✓ Confirmar — stock e informe"))));
+      onClick: confirmarEnvases
+    }, "✓ Confirmar envases → Ir a la planilla"))));
   }
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
@@ -3982,7 +4087,7 @@ function PlanillaDelDia({
   }, fmt(ganancia))))), /*#__PURE__*/React.createElement("button", {
     style: s.btnPrimary,
     onClick: () => onGuardar(datos)
-  }, "Guardar planilla"), !yaCerrado ? /*#__PURE__*/React.createElement("button", {
+  }, "Guardar planilla"), !envasesConfirmados ? /*#__PURE__*/React.createElement("button", {
     style: {
       width: "100%",
       padding: "14px",
@@ -3992,23 +4097,38 @@ function PlanillaDelDia({
       color: "#e9d5ff",
       fontSize: 15,
       fontWeight: 600,
-      cursor: capturandoParaCierre ? "default" : "pointer",
-      marginTop: 10,
-      opacity: capturandoParaCierre ? 0.7 : 1
+      cursor: "pointer",
+      marginTop: 10
     },
-    disabled: capturandoParaCierre,
-    onClick: async () => {
-      if (capturandoParaCierre) return;
-      // Sacamos la foto de la planilla ACÁ, mientras todavía está en
-      // pantalla — si esperamos a que se abra "Cierre del día" ya es tarde,
-      // el elemento no existe más.
-      setCapturandoParaCierre(true);
-      const img = await capturarPlanillaImg();
-      setCapturaPreCierre(img);
-      setCapturandoParaCierre(false);
-      setMostrarCierre(true);
+    onClick: () => setMostrarCierre(true)
+  }, "🔒 Confirmar envases y stock") : !yaCerrado ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "12px",
+      borderRadius: 10,
+      background: "rgba(93,170,255,0.12)",
+      color: "#5daaff",
+      fontSize: 13,
+      fontWeight: 500,
+      marginTop: 10
     }
-  }, capturandoParaCierre ? "Preparando informe…" : "🔒 Cerrar el día, actualizar stock y enviar informe") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, "✓ Envases confirmados · Stock actualizado"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      width: "100%",
+      padding: "14px",
+      borderRadius: 10,
+      border: "none",
+      background: "#0F6E56",
+      color: "#d1fae5",
+      fontSize: 15,
+      fontWeight: 600,
+      cursor: enviandoCierre ? "default" : "pointer",
+      marginTop: 8,
+      opacity: enviandoCierre ? 0.7 : 1
+    },
+    disabled: enviandoCierre,
+    onClick: enviarInformeFinal
+  }, enviandoCierre ? "⏳ Enviando informe…" : "📧 Guardar y enviar informe")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "12px",
