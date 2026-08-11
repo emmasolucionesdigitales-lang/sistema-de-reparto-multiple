@@ -1807,79 +1807,17 @@ function NuevoRecordatorioForm({
   const [clienteId, setClienteId] = React.useState(null);
   const [motivo, setMotivo] = React.useState("");
   const [paraRepartidor, setParaRepartidor] = React.useState(""); // "" = yo mismo (dueño)
-  const tipoConfig = {
-    visita: {
-      ico: "🏠",
-      label: "Visita",
-      color: "#5daaff",
-      bg: "#1e3a5f"
-    },
-    cobro: {
-      ico: "💰",
-      label: "Cobro",
-      color: "#f5b942",
-      bg: "#2e1f06"
-    }
-  };
   const clientesFilt = busq.length > 1 ? clientes.filter(c => c.nombre.toLowerCase().includes(busq.toLowerCase())).slice(0, 6) : [];
   const clienteSel = clientes.find(c => c.id === clienteId);
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 12
-    }
-  }, Object.entries(tipoConfig).map(([k, tc]) => /*#__PURE__*/React.createElement("button", {
-    key: k,
-    style: {
-      flex: 1,
-      padding: "10px 8px",
-      borderRadius: 10,
-      border: `2px solid ${tipo === k ? tc.color : "var(--color-border-secondary)"}`,
-      background: tipo === k ? tc.bg : "transparent",
-      color: tipo === k ? tc.color : "var(--color-text-secondary)",
-      fontSize: 13,
-      fontWeight: 500,
-      cursor: "pointer",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: 3
-    },
-    onClick: () => setTipo(k)
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20
-    }
-  }, tc.ico), tc.label))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 2
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Fecha"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    style: s.input,
-    value: fecha,
-    onChange: e => setFecha(e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Hora"), /*#__PURE__*/React.createElement("input", {
-    type: "time",
-    style: s.input,
-    value: hora,
-    onChange: e => setHora(e.target.value)
-  }))), /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TipoRecordatorioSelector, {
+    tipo: tipo,
+    onCambiarTipo: setTipo
+  }), /*#__PURE__*/React.createElement(FechaHoraRow, {
+    fecha: fecha,
+    hora: hora,
+    onCambiarFecha: setFecha,
+    onCambiarHora: setHora
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 10
     }
@@ -2008,7 +1946,7 @@ function NuevoRecordatorioForm({
 }
 function ConfigApariencia() {
   const [temaActual, setTemaActual] = React.useState(getTemaActual);
-  const [modoVista, setModoVista] = React.useState(() => TEMAS[getTemaActual()]?.modo || "oscuro");
+  const [modoVista, setModoVista] = React.useState(() => TEMAS_LC[getTemaActual()]?.modo || "oscuro");
   const [guardado, setGuardado] = React.useState(false);
   const [logo, setLogo] = React.useState(() => getLogo());
   const [subiendoLogo, setSubiendoLogo] = React.useState(false);
@@ -2029,7 +1967,7 @@ function ConfigApariencia() {
     setGuardado(true);
     setTimeout(() => setGuardado(false), 2000);
   };
-  const temasFiltrados = Object.entries(TEMAS).filter(([, t]) => t.modo === modoVista);
+  const temasFiltrados = Object.entries(TEMAS_LC).filter(([, t]) => t.modo === modoVista);
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,

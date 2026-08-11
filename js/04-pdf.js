@@ -693,7 +693,7 @@ function PantallaElegirTema({
   React.useEffect(() => {
     aplicarTema(seleccion);
   }, [seleccion]);
-  const temasFiltrados = Object.entries(TEMAS).filter(([, t]) => t.modo === modoVista);
+  const temasFiltrados = Object.entries(TEMAS_LC).filter(([, t]) => t.modo === modoVista);
   const lic = (() => {
     try {
       return JSON.parse(localStorage.getItem("rm_licencia") || "null");

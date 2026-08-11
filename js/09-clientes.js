@@ -408,127 +408,14 @@ function ListaClientes({
         padding: "4px 10px"
       },
       onClick: () => onQuitarNoVisita(c.id)
-    }, "Desmarcar")), null), fotoOpen && /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.92)",
-        zIndex: 2000,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20
-      },
-      onClick: e => {
-        e.stopPropagation();
-        setFotoOpen(false);
-      }
-    }, c.foto ? /*#__PURE__*/React.createElement("img", {
-      src: c.foto,
-      alt: "Domicilio",
-      style: {
-        maxWidth: "100%",
-        maxHeight: "60vh",
-        borderRadius: 10,
-        objectFit: "contain",
-        marginBottom: 16
-      }
-    }) : /*#__PURE__*/React.createElement("div", {
-      style: {
-        color: "#aaa",
-        fontSize: 14,
-        marginBottom: 20
-      }
-    }, "Sin foto · ", c.nombre), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 12
-      },
-      onClick: e => e.stopPropagation()
-    }, /*#__PURE__*/React.createElement("label", {
-      style: {
-        background: "#185FA5",
-        color: "#e2eaf4",
-        padding: "10px 18px",
-        borderRadius: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        textAlign: "center"
-      }
-    }, "📷 Cámara", /*#__PURE__*/React.createElement("input", {
-      type: "file",
-      accept: "image/*",
-      capture: "environment",
-      style: {
-        display: "none"
-      },
-      onChange: async e => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const b64 = await comprimirFoto(f);
-        onReordenar(clientes.map(x => x.id === c.id ? {
-          ...x,
-          foto: b64
-        } : x));
-        setFotoOpen(false);
-      }
-    })), /*#__PURE__*/React.createElement("label", {
-      style: {
-        background: "#2a3a4a",
-        color: "#e2eaf4",
-        padding: "10px 18px",
-        borderRadius: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        textAlign: "center"
-      }
-    }, "🖼 Galería", /*#__PURE__*/React.createElement("input", {
-      type: "file",
-      accept: "image/*",
-      style: {
-        display: "none"
-      },
-      onChange: async e => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const b64 = await comprimirFoto(f);
-        onReordenar(clientes.map(x => x.id === c.id ? {
-          ...x,
-          foto: b64
-        } : x));
-        setFotoOpen(false);
-      }
-    })), c.foto && /*#__PURE__*/React.createElement("button", {
-      style: {
-        background: "#3a2020",
-        color: "#e05c5c",
-        padding: "10px 14px",
-        borderRadius: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        border: "none"
-      },
-      onClick: () => {
-        onReordenar(clientes.map(x => x.id === c.id ? {
-          ...x,
-          foto: ""
-        } : x));
-        setFotoOpen(false);
-      }
-    }, "🗑")), /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "#aaa",
-        fontSize: 11,
-        marginTop: 14
-      }
-    }, "Tocá fuera para cerrar")));
+    }, "Desmarcar")), null), fotoOpen && /*#__PURE__*/React.createElement(FotoClienteModal, {
+      cliente: c,
+      onCerrar: () => setFotoOpen(false),
+      onGuardarFoto: b64 => onReordenar(clientes.map(x => x.id === c.id ? {
+        ...x,
+        foto: b64
+      } : x))
+    }));
   };
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
@@ -664,9 +551,6 @@ function DetalleCliente({
   const [mostrarPagoSaldo, setMostrarPagoSaldo] = useState(false);
   const [mostrarFotoGrande, setMostrarFotoGrande] = useState(false);
   const [mostrarCambio, setMostrarCambio] = useState(false);
-  const [productoViejoCambio, setProductoViejoCambio] = useState("Bidón 20L");
-  const [productoNuevoCambio, setProductoNuevoCambio] = useState("Bidón 20L");
-  const [motivoCambio, setMotivoCambio] = useState("Agua en mal estado");
   const recActivos = (recordatorios || []).filter(r => r.clienteId === cliente.id && !r.confirmado);
   const historial = [...ventas].sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || "") || (b.id || 0) - (a.id || 0));
   const ventaHoy = fecha ? ventas.find(v => v.fechaKey === fecha && !v._esCobro && !v._esAjuste && !v._esCambio) : null;
@@ -1210,91 +1094,10 @@ function DetalleCliente({
       setTipoSaldoEdit("");
       setMontoSaldoEdit("");
     }
-  }, "Guardar saldo")))), mostrarCambio && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      border: "1px solid #818cf8"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)",
-      marginBottom: 8,
-      fontWeight: 500
-    }
-  }, "🔄 Cambio de envase (no se cobra)"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      ...s.label,
-      marginBottom: 4
-    }
-  }, "Se retira"), /*#__PURE__*/React.createElement("select", {
-    style: s.select,
-    value: productoViejoCambio,
-    onChange: e => setProductoViejoCambio(e.target.value)
-  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
-    key: p.id,
-    value: p.nombre
-  }, p.nombre)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      ...s.label,
-      marginBottom: 4
-    }
-  }, "Se entrega"), /*#__PURE__*/React.createElement("select", {
-    style: s.select,
-    value: productoNuevoCambio,
-    onChange: e => setProductoNuevoCambio(e.target.value)
-  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
-    key: p.id,
-    value: p.nombre
-  }, p.nombre))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      ...s.label,
-      marginBottom: 4
-    }
-  }, "Motivo"), /*#__PURE__*/React.createElement("input", {
-    style: s.input,
-    placeholder: "Ej: Agua en mal estado",
-    value: motivoCambio,
-    onChange: e => setMotivoCambio(e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      flex: 1,
-      fontSize: 12
-    },
-    onClick: () => setMostrarCambio(false)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btnPrimary,
-      flex: 2,
-      fontSize: 12,
-      padding: "8px"
-    },
-    onClick: () => {
+  }, "Guardar saldo")))), mostrarCambio && /*#__PURE__*/React.createElement(CambioEnvasePanel, {
+    productos: productos,
+    onCancelar: () => setMostrarCambio(false),
+    onConfirmar: (productoViejo, productoNuevo, motivo) => {
       const vt = {
         id: Date.now(),
         clienteId: cliente.id,
@@ -1309,7 +1112,7 @@ function DetalleCliente({
           total: 0
         }],
         pago: "cambio",
-        obs: `Cambio: ${productoViejoCambio} → ${productoNuevoCambio}${motivoCambio.trim() ? ` · ${motivoCambio.trim()}` : ""}`,
+        obs: `Cambio: ${productoViejo} → ${productoNuevo}${motivo.trim() ? ` · ${motivo.trim()}` : ""}`,
         neto: 0,
         bruto: 0,
         desc: 0,
@@ -1318,11 +1121,11 @@ function DetalleCliente({
         pagadoNum: 0,
         saldoDelta: 0,
         envDev: [{
-          prod: productoViejoCambio,
+          prod: productoViejo,
           cant: 1
         }],
         envPrest: [{
-          prod: productoNuevoCambio,
+          prod: productoNuevo,
           cant: 1
         }],
         _esCambio: true,
@@ -1330,9 +1133,8 @@ function DetalleCliente({
       };
       onGuardarCambio && onGuardarCambio(vt);
       setMostrarCambio(false);
-      setMotivoCambio("Agua en mal estado");
     }
-  }, "✓ Registrar cambio"))), ventaHoy ? /*#__PURE__*/React.createElement("div", {
+  }), ventaHoy ? /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "0 0 12px",
@@ -2545,20 +2347,6 @@ function RecordatorioModal({
   const [hora, setHora] = React.useState("10:00");
   const [tipo, setTipo] = React.useState("visita"); // visita | cobro
   const [motivo, setMotivo] = React.useState("");
-  const tipoConfig = {
-    visita: {
-      ico: "🏠",
-      label: "Visita",
-      color: "#5daaff",
-      bg: "#1e3a5f"
-    },
-    cobro: {
-      ico: "💰",
-      label: "Cobro",
-      color: "#f5b942",
-      bg: "#2e1f06"
-    }
-  };
   return /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
@@ -2595,63 +2383,15 @@ function RecordatorioModal({
       color: "var(--color-text-secondary)",
       marginBottom: 12
     }
-  }, cliente.nombre), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 12
-    }
-  }, Object.entries(tipoConfig).map(([k, tc]) => /*#__PURE__*/React.createElement("button", {
-    key: k,
-    style: {
-      flex: 1,
-      padding: "10px 8px",
-      borderRadius: 10,
-      border: `2px solid ${tipo === k ? tc.color : "var(--color-border-secondary)"}`,
-      background: tipo === k ? tc.bg : "transparent",
-      color: tipo === k ? tc.color : "var(--color-text-secondary)",
-      fontSize: 13,
-      fontWeight: 500,
-      cursor: "pointer",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: 3
-    },
-    onClick: () => setTipo(k)
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20
-    }
-  }, tc.ico), tc.label))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 2
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Fecha"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    style: s.input,
-    value: fecha,
-    onChange: e => setFecha(e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Hora"), /*#__PURE__*/React.createElement("input", {
-    type: "time",
-    style: s.input,
-    value: hora,
-    onChange: e => setHora(e.target.value)
-  }))), /*#__PURE__*/React.createElement("div", {
+  }, cliente.nombre), /*#__PURE__*/React.createElement(TipoRecordatorioSelector, {
+    tipo: tipo,
+    onCambiarTipo: setTipo
+  }), /*#__PURE__*/React.createElement(FechaHoraRow, {
+    fecha: fecha,
+    hora: hora,
+    onCambiarFecha: setFecha,
+    onCambiarHora: setHora
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 16
     }
