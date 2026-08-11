@@ -1513,7 +1513,14 @@ function DetalleCliente({
   }, (() => {
     const esMixto = (Number(v.montoTrans) || 0) > 0 && (Number(v.montoEfec) || 0) > 0;
     return esMixto ? `Mixto · ef ${fmt(v.montoEfec)} + tr ${fmt(v.montoTrans)}` : v.pago;
-  })(), v.desc > 0 ? ` · desc. ${fmt(v.desc)}` : "", v.saldoAplicado > 0 ? ` · saldo ${fmt(v.saldoAplicado)}` : "", v.obs ? ` · ${v.obs.replace(/\s*\[Mixto:[^\]]*\]/g, "")}` : ""), !soloLectura && /*#__PURE__*/React.createElement("div", {
+  })(), v.desc > 0 ? ` · desc. ${fmt(v.desc)}` : "", v.saldoAplicado > 0 ? ` · saldo ${fmt(v.saldoAplicado)}` : "", v.obs ? ` · ${v.obs.replace(/\s*\[Mixto:[^\]]*\]/g, "")}` : ""), v.pago === "fiado" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: v._pagada ? "#4dd9a0" : "var(--color-text-danger)",
+      marginBottom: 6
+    }
+  }, v._pagada ? "✓ Pagada" : v._montoPagadoAcum > 0 ? `Debe ${fmt((v.neto || 0) - (v._montoPagadoAcum || 0))} · pagó ${fmt(v._montoPagadoAcum)} parcial` : `Debe ${fmt(v.neto || 0)}`), !soloLectura && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "flex-end",

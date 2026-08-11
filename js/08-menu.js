@@ -1028,7 +1028,6 @@ function MenuDias({
   onGestionClientes,
   onStock,
   onAgenda,
-  onPlanillaAtajo,
   onVolver,
   scaleIdx,
   onToggleScale,
@@ -1045,7 +1044,8 @@ function MenuDias({
   onDiaHoy,
   onDiaResumen,
   noVisitas,
-  onFiados
+  onFiados,
+  onPlanillaAtajo
 }) {
   const [editandoZona, setEditandoZona] = React.useState(null);
   const hoyDiaNombre = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][new Date().getDay()];
@@ -1698,7 +1698,7 @@ function MenuDias({
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr 1fr 1fr",
-      gap: 6,
+      gap: 8,
       padding: "4px 0 8px"
     }
   }, [{
@@ -1706,7 +1706,7 @@ function MenuDias({
     lbl: "Agenda",
     fn: () => onAgenda && onAgenda()
   }, {
-    ico: "📋",
+    ico: "🗓",
     lbl: "Planilla",
     fn: () => onPlanillaAtajo && onPlanillaAtajo()
   }, {
@@ -1840,6 +1840,109 @@ function MenuDias({
       color: "var(--color-text-primary)"
     }
   }, "Config")))));
+}
+
+// Atajo directo: Menú → Planilla → elegís el día → entra derecho a la
+// planilla de ese día (sin pasar por la lista de clientes). Muestra los
+// 6 días de la semana (Lunes a Sábado) siempre en el mismo orden, con la
+// fecha más reciente de cada uno y su estado — scoped al reparto actual.
+function AtajoPlanillaSemana({
+  planillas,
+  repartoId,
+  onSeleccionar,
+  onVolver
+}) {
+  const DIAS_SEMANA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const DIAS_LISTA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const pad = n => String(n).padStart(2, "0");
+  const filas = DIAS_LISTA.map(diaNombre => {
+    const targetIdx = DIAS_SEMANA.indexOf(diaNombre);
+    const hoy = new Date();
+    let diff = hoy.getDay() - targetIdx;
+    if (diff < 0) diff += 7;
+    const d = new Date(hoy);
+    d.setDate(d.getDate() - diff);
+    const fechaKey = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const label = d.toLocaleDateString("es-AR", {
+      day: "numeric",
+      month: "short"
+    });
+    const p = planillas[claveDiaReparto(diaNombre, fechaKey, repartoId)];
+    const estado = !p ? "sin" : p._diaCerrado ? "cerrada" : p.iniciado ? "curso" : "sin";
+    return {
+      diaNombre,
+      fechaKey,
+      label,
+      estado
+    };
+  });
+  const ESTADO_INFO = {
+    cerrada: {
+      texto: "Cerrada",
+      color: "var(--color-text-success)",
+      bg: "rgba(29,158,117,0.12)"
+    },
+    curso: {
+      texto: "En curso",
+      color: "var(--color-text-warning)",
+      bg: "rgba(245,185,66,0.12)"
+    },
+    sin: {
+      texto: "Sin iniciar",
+      color: "var(--color-text-tertiary)",
+      bg: "var(--color-background-tertiary)"
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement(HeaderApp, {
+    titulo: "Planilla del día",
+    onVolver: onVolver
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 14
+    }
+  }, filas.map(f => {
+    const info = ESTADO_INFO[f.estado];
+    return /*#__PURE__*/React.createElement("button", {
+      key: f.diaNombre,
+      onClick: () => onSeleccionar(f.fechaKey, f.diaNombre),
+      style: {
+        width: "100%",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "14px 16px",
+        marginBottom: 8,
+        borderRadius: 12,
+        border: "none",
+        cursor: "pointer",
+        background: "var(--color-background-secondary)",
+        textAlign: "left"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 600,
+        color: "var(--color-text-primary)"
+      }
+    }, f.diaNombre), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-tertiary)",
+        marginTop: 2
+      }
+    }, f.label)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 600,
+        color: info.color,
+        background: info.bg,
+        padding: "5px 10px",
+        borderRadius: 20
+      }
+    }, info.texto));
+  })));
 }
 function DiaPrincipal({
   dia,
@@ -2216,7 +2319,11 @@ function DetalleVentasDia({
     }, "🕐 ", v.hora), v.repartidor && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 10,
-        color: "var(--color-text-tertiary)"
+        padding: "1px 6px",
+        borderRadius: 4,
+        background: "var(--color-background-tertiary)",
+        color: "var(--color-text-secondary)",
+        fontWeight: 500
       }
     }, "🚐 ", v.repartidor)), /*#__PURE__*/React.createElement("span", {
       style: {
@@ -2384,7 +2491,6 @@ function PlanillaDelDia({
   noVisitas,
   cargasDia
 }) {
-  // Separar ventas del día propio vs ventas de clientes de otro día
   const [enviosInforme, setEnviosInforme] = React.useState(() => Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || 0));
   const [enviandoCierre, setEnviandoCierre] = React.useState(false);
   const clientesDia = new Set((clientes || []).filter(c => c.dia === dia).map(c => c.id));
@@ -2530,9 +2636,17 @@ function PlanillaDelDia({
   const totalLlenosIngresados = PRODUCTOS_CONFIG.reduce((a, p) => a + num(datos.productos[p.id]?.llenos), 0);
 
   // ── Cierre del día: estados y cálculos ───────────────────────────
+  const yaCerrado = !!planilla._diaCerrado;
+  const envasesConfirmados = !!planilla._envasesConfirmados || yaCerrado;
   const cierreKey = `cierre_${dia}_${fecha}_${repartoId || ""}`;
-  const yaConfirmado = !!localStorage.getItem(cierreKey) || !!planilla._diaCerrado;
-  const [mostrarCierre, setMostrarCierre] = useState(!!(initCierre && !yaConfirmado));
+  const yaConfirmado = !!localStorage.getItem(cierreKey) || yaCerrado;
+  const [mostrarCierre, setMostrarCierre] = useState(() => {
+    // La pantalla de envases se muestra sola apenas se entra a la planilla,
+    // si todavía no se confirmaron — no hace falta un botón para llegar acá,
+    // los envases se resuelven ANTES de ver el resumen de la planilla.
+    const yaEnvasesOk = !!planilla._envasesConfirmados || !!planilla._diaCerrado;
+    return !yaEnvasesOk;
+  });
   // BUG: el botón "Confirmar — stock e informe" (adentro de la pantalla de
   // Cierre) intentaba sacarle una foto a #planilla-capture recién ahí — pero
   // ese elemento vive en la vista NORMAL de la planilla, que ya no está
@@ -2580,8 +2694,6 @@ function PlanillaDelDia({
     b10: "",
     b20: ""
   });
-  const yaCerrado = !!planilla._diaCerrado;
-  const envasesConfirmados = !!planilla._envasesConfirmados || yaCerrado;
   const llenosCargados = {
     soda: Number(datos.productos?.soda?.llenos || 0),
     b10: Number(datos.productos?.b10?.llenos || 0),
@@ -3610,7 +3722,7 @@ function PlanillaDelDia({
       ...s.sectionTitle,
       padding: "0 0 10px"
     }
-  }, "Resumen del día"), todasVentasDia.length > 0 ? /*#__PURE__*/React.createElement(DetalleVentasDia, {
+  }, "Resumen del día"), ventasPropias.length > 0 ? /*#__PURE__*/React.createElement(DetalleVentasDia, {
     ventas: todasVentasDia,
     clientes: clientes,
     noVisitas: noVisitas,
@@ -4087,21 +4199,22 @@ function PlanillaDelDia({
   }, fmt(ganancia))))), /*#__PURE__*/React.createElement("button", {
     style: s.btnPrimary,
     onClick: () => onGuardar(datos)
-  }, "Guardar planilla"), !envasesConfirmados ? /*#__PURE__*/React.createElement("button", {
+  }, "Guardar planilla"), !envasesConfirmados ? /*#__PURE__*/React.createElement("div", {
     style: {
-      width: "100%",
-      padding: "14px",
-      borderRadius: 10,
-      border: "none",
-      background: "#4c1d95",
-      color: "#e9d5ff",
-      fontSize: 15,
-      fontWeight: 600,
-      cursor: "pointer",
+      textAlign: "center",
+      padding: "10px",
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
       marginTop: 10
+    }
+  }, "Falta confirmar los envases. ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#5daaff",
+      fontWeight: 600,
+      cursor: "pointer"
     },
     onClick: () => setMostrarCierre(true)
-  }, "🔒 Confirmar envases y stock") : !yaCerrado ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, "Volver a envases →")) : !yaCerrado ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "12px",
@@ -4416,133 +4529,4 @@ function InicioReparto({
       color: v > 0 ? "var(--color-text-primary)" : "var(--color-text-danger)"
     }
   }, v || 0))))));
-}
-
-// ── Atajo: Planilla de los últimos días (lun-vie) sin pasar por Clientes ──
-function AtajoPlanillaSemana({
-  repartoId,
-  planillas,
-  ventas,
-  clientes,
-  onSeleccionar,
-  onVolver
-}) {
-  const DIAS_NOMBRE = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-  const dias5 = [];
-  const cur = new Date();
-  cur.setHours(0, 0, 0, 0);
-  while (dias5.length < 6) {
-    const dow = cur.getDay();
-    if (dow !== 0) {
-      const fechaKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
-      dias5.push({
-        fecha: new Date(cur),
-        fechaKey,
-        dia: DIAS_NOMBRE[dow]
-      });
-    }
-    cur.setDate(cur.getDate() - 1);
-  }
-  // Mostrar siempre en orden Lunes -> Sábado (no por cercanía a hoy)
-  const ORDEN_DIA = {
-    "Lunes": 1,
-    "Martes": 2,
-    "Miércoles": 3,
-    "Jueves": 4,
-    "Viernes": 5,
-    "Sábado": 6
-  };
-  dias5.sort((a, b) => ORDEN_DIA[a.dia] - ORDEN_DIA[b.dia]);
-  return /*#__PURE__*/React.createElement("div", {
-    style: s.screen
-  }, /*#__PURE__*/React.createElement(HeaderApp, {
-    titulo: "Planilla · Últimos días",
-    onVolver: onVolver
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "0 16px 4px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Tocá una fecha para ir directo a su planilla."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "8px 16px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
-    }
-  }, dias5.map(({
-    fecha,
-    fechaKey,
-    dia
-  }) => {
-    const pl = (planillas || {})[claveDiaReparto(dia, fechaKey, repartoId)];
-    const cerrada = !!(pl && pl._diaCerrado);
-    const iniciada = !!(pl && pl.iniciado);
-    const totalClientes = (clientes || []).filter(c => c.dia === dia).length;
-    const entregas = (ventas || []).filter(v => v.fechaKey === fechaKey).length;
-    const label = fecha.toLocaleDateString("es-AR", {
-      weekday: "short",
-      day: "numeric",
-      month: "short"
-    });
-    return /*#__PURE__*/React.createElement("button", {
-      key: fechaKey + "_" + dia,
-      onClick: () => onSeleccionar(fechaKey, dia),
-      style: {
-        ...s.card,
-        margin: 0,
-        textAlign: "left",
-        cursor: "pointer",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "13px 14px"
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 15,
-        fontWeight: 500,
-        color: "var(--color-text-primary)"
-      }
-    }, dia), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--color-text-tertiary)",
-        marginTop: 2,
-        textTransform: "capitalize"
-      }
-    }, label, totalClientes ? ` · ${entregas}/${totalClientes} entregas` : "")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, cerrada ? /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        padding: "3px 8px",
-        borderRadius: 20,
-        background: "var(--color-background-success)",
-        color: "var(--color-text-success)"
-      }
-    }, "Cerrada ✓") : iniciada ? /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        padding: "3px 8px",
-        borderRadius: 20,
-        background: "var(--color-background-warning)",
-        color: "var(--color-text-warning)"
-      }
-    }, "En curso") : /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: "var(--color-text-tertiary)"
-      }
-    }, "Sin iniciar"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--color-text-tertiary)"
-      }
-    }, "→")));
-  })));
 }

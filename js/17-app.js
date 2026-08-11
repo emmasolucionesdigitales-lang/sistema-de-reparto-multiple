@@ -2,6 +2,46 @@
 // ◆  16-app.js — App (auth) · AppPrincipal (estado global)
 // ════════════════════════════════════════════════════════════════════
 
+// Al cobrar una deuda, marca las ventas fiado más viejas del cliente como
+// pagadas (o parcialmente pagadas) en orden FIFO, hasta agotar el monto
+// cobrado. No toca ventas que no sean fiado, ni cobros/ajustes/cambios.
+function aplicarCobroAVentasFiado(ventasPrev, clienteId, monto) {
+  let restante = Number(monto) || 0;
+  const idsAfectados = [];
+  const cambios = {};
+  const pendientes = ventasPrev.filter(v => v.clienteId === clienteId && v.pago === "fiado" && !v._esCobro && !v._esAjuste && !v._esCambio && !v._pagada).sort((a, b) => (a.id || 0) - (b.id || 0));
+  for (const v of pendientes) {
+    if (restante <= 0) break;
+    const yaPagado = Number(v._montoPagadoAcum) || 0;
+    const debe = (Number(v.neto) || 0) - yaPagado;
+    if (debe <= 0) continue;
+    if (restante >= debe) {
+      cambios[v.id] = {
+        _pagada: true,
+        _montoPagadoAcum: Number(v.neto) || 0,
+        _upd: Date.now()
+      };
+      restante -= debe;
+    } else {
+      cambios[v.id] = {
+        _pagada: false,
+        _montoPagadoAcum: yaPagado + restante,
+        _upd: Date.now()
+      };
+      restante = 0;
+    }
+    idsAfectados.push(v.id);
+  }
+  const ventasActualizadas = ventasPrev.map(v => cambios[v.id] ? {
+    ...v,
+    ...cambios[v.id]
+  } : v);
+  return {
+    ventasActualizadas,
+    idsAfectados
+  };
+}
+
 function App() {
   // ── Todos los hooks primero (regla de React: nunca hooks después de un return) ──
   const [perfilRecuperado, setPerfilRecuperado] = React.useState(null);
@@ -1927,7 +1967,6 @@ function AppPrincipal({
     onGestionClientes: () => irA("gestionClientes"),
     onStock: () => irA("stock"),
     onAgenda: () => irA("agenda"),
-    onPlanillaAtajo: () => irA("atajoPlanillaSemana"),
     onVolver: () => irA("menu"),
     scaleIdx: scaleIdx,
     onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
@@ -1989,19 +2028,16 @@ function AppPrincipal({
       const cl = clientes.find(c => c.id === v.clienteId);
       return cl?.repartoId === repartoActual.id;
     }),
-    onFiados: () => irA("fiadosPendientes")
+    onFiados: () => irA("fiadosPendientes"),
+    onPlanillaAtajo: () => irA("atajoPlanillaSemana")
   }), pantalla === "atajoPlanillaSemana" && repartoActual && /*#__PURE__*/React.createElement(AtajoPlanillaSemana, {
-    repartoId: repartoActual?.id,
     planillas: planillas,
-    clientes: clientes.filter(c => c.repartoId === repartoActual.id),
-    ventas: ventas.filter(v => {
-      const cl = clientes.find(c => c.id === v.clienteId);
-      return cl?.repartoId === repartoActual.id;
-    }),
-    onSeleccionar: (fk, dia) => {
-      setDiaActual(dia);
+    repartoId: repartoActual.id,
+    onSeleccionar: (fk, diaSel) => {
+      setDiaActual(diaSel);
       setFechaActual(fk);
       setFechaObj(new Date(fk + "T12:00:00"));
+      setInitCierre(!planillas[claveDiaReparto(diaSel, fk, repartoActual.id)]?._diaCerrado);
       irA("planilla");
     },
     onVolver: () => irA("diasReparto")
@@ -2279,7 +2315,10 @@ function AppPrincipal({
         _esCobro: true,
         _upd: Date.now()
       };
-      saveVentas(prev => [...prev, vt]);
+      saveVentas(prev => {
+        const { ventasActualizadas, idsAfectados } = aplicarCobroAVentasFiado(prev, c.id, monto);
+        return [...ventasActualizadas, { ...vt, _ventasSaldadas: idsAfectados }];
+      });
       saveClientes(prev => prev.map(x => x.id === c.id ? {
         ...x,
         saldo: (Number(x.saldo) || 0) + monto
@@ -2624,7 +2663,10 @@ function AppPrincipal({
           _esCobro: true,
           _upd: Date.now()
         };
-        saveVentas(prev => [...prev, vt]);
+        saveVentas(prev => {
+          const { ventasActualizadas, idsAfectados } = aplicarCobroAVentasFiado(prev, cliente.id, monto);
+          return [...ventasActualizadas, { ...vt, _ventasSaldadas: idsAfectados }];
+        });
         saveClientes(prev => prev.map(x => x.id === cliente.id ? {
           ...x,
           saldo: (Number(x.saldo) || 0) + monto
@@ -2753,7 +2795,10 @@ function AppPrincipal({
         _esCobro: true,
         _upd: Date.now()
       };
-      saveVentas(prev => [...prev, vt]);
+      saveVentas(prev => {
+        const { ventasActualizadas, idsAfectados } = aplicarCobroAVentasFiado(prev, cId, monto);
+        return [...ventasActualizadas, { ...vt, _ventasSaldadas: idsAfectados }];
+      });
       saveClientes(prev => prev.map(c => c.id === cId ? {
         ...c,
         saldo: (Number(c.saldo) || 0) + monto
