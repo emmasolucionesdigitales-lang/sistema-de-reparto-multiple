@@ -691,7 +691,7 @@ function PantallaElegirTema({
   const [seleccion, setSeleccion] = React.useState("oscuro-azul");
   const [modoVista, setModoVista] = React.useState("oscuro");
   React.useEffect(() => {
-    aplicarTema(seleccion);
+    aplicarTemaLC(seleccion);
   }, [seleccion]);
   const temasFiltrados = Object.entries(TEMAS_LC).filter(([, t]) => t.modo === modoVista);
   const lic = (() => {

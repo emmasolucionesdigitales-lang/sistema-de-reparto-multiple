@@ -644,7 +644,7 @@ function AppRepartidorWrapper({
   // Aplicar tema guardado (igual que el dueño)
   React.useEffect(() => {
     try {
-      aplicarTema(getTemaActual());
+      aplicarTemaLC(getTemaLC());
     } catch {}
   }, []);
   const [desbloqueado, setDesbloqueado] = React.useState(false);

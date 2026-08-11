@@ -197,7 +197,7 @@ function App() {
   if (!temaElegido) return /*#__PURE__*/React.createElement(PantallaElegirTema, {
     onElegido: id => {
       localStorage.setItem("rm_tema", JSON.stringify(id));
-      aplicarTema(id);
+      aplicarTemaLC(id);
       setTemaElegido(true);
     }
   });

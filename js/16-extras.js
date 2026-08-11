@@ -1946,7 +1946,7 @@ function NuevoRecordatorioForm({
 }
 function ConfigApariencia() {
   const [temaActual, setTemaActual] = React.useState(getTemaActual);
-  const [modoVista, setModoVista] = React.useState(() => TEMAS_LC[getTemaActual()]?.modo || "oscuro");
+  const [modoVista, setModoVista] = React.useState(() => TEMAS_LC[getTemaLC()]?.modo || "oscuro");
   const [guardado, setGuardado] = React.useState(false);
   const [logo, setLogo] = React.useState(() => getLogo());
   const [subiendoLogo, setSubiendoLogo] = React.useState(false);
@@ -1962,7 +1962,7 @@ function ConfigApariencia() {
   const [nombreGuardado, setNombreGuardado] = React.useState(false);
   const aplicar = id => {
     setTemaActual(id);
-    aplicarTema(id);
+    aplicarTemaLC(id);
     localStorage.setItem("sr_tema", JSON.stringify(id));
     setGuardado(true);
     setTimeout(() => setGuardado(false), 2000);
