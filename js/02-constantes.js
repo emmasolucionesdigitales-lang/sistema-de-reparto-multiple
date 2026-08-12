@@ -36,6 +36,14 @@ const planillaDiaVacia = () => ({
 const fmt = (n) => "$" + Math.round(Number(n)||0).toLocaleString("es-AR");
 const num = (v) => Number(v)||0;
 
+// Clave de planilla por día — en la app Multiple cada reparto (camión) tiene
+// su propia planilla para el mismo día/fecha, así que el reparto se suma a
+// la clave. Si no hay repartoId (casos legacy/sin repartos) cae al formato
+// simple dia_fecha para no romper compatibilidad con datos viejos.
+function claveDiaReparto(dia, fecha, repartoId) {
+  return repartoId ? `${dia}_${fecha}_${repartoId}` : `${dia}_${fecha}`;
+}
+
 // ─── Cloud Storage (Firebase Firestore) ─────────────────────────────────────
 // cloudSave and cloudLoad are defined in the <script> tag above via Firebase SDK
 

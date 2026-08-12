@@ -1809,6 +1809,7 @@ function AtajoPlanillaSemana({
   planillas,
   ventas,
   clientes,
+  repartoId,
   onSeleccionar,
   onVolver
 }) {
@@ -1859,7 +1860,7 @@ function AtajoPlanillaSemana({
     fechaKey,
     dia
   }) => {
-    const pl = (planillas || {})[`${dia}_${fechaKey}`];
+    const pl = (planillas || {})[claveDiaReparto(dia, fechaKey, repartoId)];
     const cerrada = !!(pl && pl._diaCerrado);
     const iniciada = !!(pl && pl.iniciado);
     const totalClientes = (clientes || []).filter(c => c.dia === dia).length;

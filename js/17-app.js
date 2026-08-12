@@ -2074,6 +2074,7 @@ function AppPrincipal({
       return cl?.repartoId === repartoActual.id;
     }),
     clientes: clientes.filter(c => c.repartoId === repartoActual.id),
+    repartoId: repartoActual.id,
     onSeleccionar: (fk, dia) => {
       setDiaActual(dia);
       setFechaActual(fk);
