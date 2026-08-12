@@ -1566,6 +1566,7 @@ function AppRepartidor({
     planilla: planillas[claveDiaReparto(diaActual, fechaActual, miReparto?.id)] || planillaDiaVacia(),
     productos: productos,
     stock: datos.stock || {},
+    soloCamion: true,
     cargasDia: datos.cargasDia && miReparto && datos.cargasDia[miReparto.id] || CARGA_DIA_DEFAULT,
     setStock: ns => sync({
       stock: ns

@@ -44,6 +44,13 @@ function claveDiaReparto(dia, fecha, repartoId) {
   return repartoId ? `${dia}_${fecha}_${repartoId}` : `${dia}_${fecha}`;
 }
 
+// Stock vacío para el camión de un reparto — mismo shape que soderia /
+// soderia_vacios / casa. Se usa para inicializar un camión nuevo y para
+// vaciarlo al cerrar el día (su contenido ya se volcó a sodería/depósito).
+function stockCamionVacio() {
+  return { sifon: 0, bidon10: 0, bidon20: 0, dispenser: 0 };
+}
+
 // ─── Cloud Storage (Firebase Firestore) ─────────────────────────────────────
 // cloudSave and cloudLoad are defined in the <script> tag above via Firebase SDK
 

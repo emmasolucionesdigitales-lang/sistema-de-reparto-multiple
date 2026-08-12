@@ -1414,9 +1414,9 @@ function HeaderApp({
 }) {
   const negocio = (() => {
     try {
-      return JSON.parse(localStorage.getItem("lc_negocio_nombre") || '"La Catalina"');
+      return JSON.parse(localStorage.getItem("lc_negocio_nombre") || '"Poca Soda"');
     } catch {
-      return "La Catalina";
+      return "Poca Soda";
     }
   })();
   return /*#__PURE__*/React.createElement("div", {

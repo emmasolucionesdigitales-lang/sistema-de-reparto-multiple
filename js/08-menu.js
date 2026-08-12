@@ -2430,7 +2430,8 @@ function PlanillaDelDia({
   onCerrarDia,
   initCierre,
   noVisitas,
-  cargasDia
+  cargasDia,
+  soloCamion
 }) {
   // Separar ventas del día propio vs ventas de clientes de otro día
   const [enviosInforme, setEnviosInforme] = React.useState(() => Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || 0));
@@ -3131,8 +3132,8 @@ const guardarCapacidadFija = (pk, valorStr) => {
   }, /*#__PURE__*/React.createElement("span", {
     style: { fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)" }
   }, label), /*#__PURE__*/React.createElement("span", {
-    style: { fontSize: 18, fontWeight: 700, color: cuadraFijo ? "var(--color-text-primary)" : "var(--color-text-danger)" }
-  }, div(totalFlota), " ", /*#__PURE__*/React.createElement("span", {
+    style: { fontSize: 18, fontWeight: 700, color: (soloCamion ? cuadra : cuadraFijo) ? "var(--color-text-primary)" : "var(--color-text-danger)" }
+  }, div(soloCamion ? vuelveTotal : totalFlota), " ", /*#__PURE__*/React.createElement("span", {
     style: { fontSize: 11, fontWeight: 400, color: "var(--color-text-tertiary)" }
   }, unidad))), /*#__PURE__*/React.createElement("div", {
     style: { display: "flex", gap: 12, fontSize: 12, marginBottom: 2 }
@@ -3142,7 +3143,7 @@ const guardarCapacidadFija = (pk, valorStr) => {
     style: { color: VIOLETA }
   }, "● A llenar ", div(paraLlenarReal)), /*#__PURE__*/React.createElement("span", {
     style: { color: AMBAR }
-  }, "● Vacío ", div(quedaVacio))), /*#__PURE__*/React.createElement("div", {
+  }, "● Vacío ", div(quedaVacio))), !soloCamion && /*#__PURE__*/React.createElement("div", {
     style: { display: "flex", gap: 12, fontSize: 12, marginBottom: 6 }
   }, /*#__PURE__*/React.createElement("span", {
     style: { color: "var(--color-text-secondary)" }
@@ -3150,9 +3151,9 @@ const guardarCapacidadFija = (pk, valorStr) => {
     style: { color: "var(--color-text-secondary)" }
   }, "● Clientes ", div(totClientesFijos[pk] + enClientesActual[pk]))), /*#__PURE__*/React.createElement("div", {
     style: { textAlign: "center", fontSize: 11, fontWeight: 600, color: cuadra ? "var(--color-text-success)" : "var(--color-text-danger)" }
-  }, cuadra ? `✓ Cuadra: ${div(vuelveTotal)} de ${div(esperado)}` : `⚠ No cuadra: ${div(vuelveTotal)} de ${div(esperado)} esperados`), /*#__PURE__*/React.createElement("div", {
+  }, cuadra ? `✓ Cuadra: ${div(vuelveTotal)} de ${div(esperado)}` : `⚠ No cuadra: ${div(vuelveTotal)} de ${div(esperado)} esperados`), !soloCamion && /*#__PURE__*/React.createElement("div", {
     style: { textAlign: "center", marginTop: 4, fontSize: 11, fontWeight: 600, color: cuadraFijo ? "var(--color-text-success)" : "var(--color-text-warning)" }
-  }, cuadraFijo ? `✓ Cuadra con el fijo: ${div(totalFlota)} de ${div(CAPACIDAD_FIJA[pk])}` : `⚠ No cuadra con el fijo: ${div(totalFlota)} de ${div(CAPACIDAD_FIJA[pk])} (${totalFlota > CAPACIDAD_FIJA[pk] ? "sobran " + div(totalFlota - CAPACIDAD_FIJA[pk]) : "faltan " + div(CAPACIDAD_FIJA[pk] - totalFlota)})`), /*#__PURE__*/React.createElement("div", {
+  }, cuadraFijo ? `✓ Cuadra con el fijo: ${div(totalFlota)} de ${div(CAPACIDAD_FIJA[pk])}` : `⚠ No cuadra con el fijo: ${div(totalFlota)} de ${div(CAPACIDAD_FIJA[pk])} (${totalFlota > CAPACIDAD_FIJA[pk] ? "sobran " + div(totalFlota - CAPACIDAD_FIJA[pk]) : "faltan " + div(CAPACIDAD_FIJA[pk] - totalFlota)})`), !soloCamion && /*#__PURE__*/React.createElement("div", {
     style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 6 }
   }, /*#__PURE__*/React.createElement("span", {
     style: { fontSize: 10, color: "var(--color-text-tertiary)" }
