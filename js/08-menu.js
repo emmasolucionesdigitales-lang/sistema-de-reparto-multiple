@@ -3118,11 +3118,13 @@ const guardarCapacidadFija = (pk, valorStr) => {
   const vacReal = realesVacios[pk] !== "" ? Number(realesVacios[pk]) * cajon : vaciosRestoCalc[pk] * cajon;
   const esperado = llenosCargados[pk] + devueltosDia[pk] - prestadosDia[pk];
   const vuelveTotal = llenReal + paraLlenarReal + vacReal;
-  const cuadra = vuelveTotal === esperado;
+  // Comparar en la misma unidad que se muestra (cajones para soda, unidades
+  // para bidones) — así el ✓/⚠ nunca contradice al número que ve el usuario.
+  const cuadra = div(vuelveTotal) === div(esperado);
   const quedaLleno = (soderiaActual[sk] || 0) + llenReal;
   const quedaVacio = (soderiaVaciosActual[sk] || 0) + vacReal;
   const totalFlota = quedaLleno + quedaVacio + paraLlenarReal + enDeposito[pk] + totClientesFijos[pk] + enClientesActual[pk];
-  const cuadraFijo = totalFlota === CAPACIDAD_FIJA[pk];
+  const cuadraFijo = div(totalFlota) === div(CAPACIDAD_FIJA[pk]);
   const estaEditando = editandoCapFija === pk;
   return /*#__PURE__*/React.createElement("div", {
     key: pk,
