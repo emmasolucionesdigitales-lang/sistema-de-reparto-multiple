@@ -2431,6 +2431,7 @@ function PlanillaDelDia({
   initCierre,
   noVisitas,
   cargasDia,
+  setCargasDia,
   soloCamion
 }) {
   // Separar ventas del día propio vs ventas de clientes de otro día
@@ -2621,18 +2622,6 @@ function PlanillaDelDia({
     b10: "",
     b20: ""
   });
-  const [editandoCapFija, setEditandoCapFija] = useState(null);
-const guardarCapacidadFija = (pk, valorStr) => {
-  const cajon = pk === "soda" ? CAJON_SODA : 1;
-  const s2 = JSON.parse(JSON.stringify(stock || {}));
-  if (!s2.capacidadFijaPorReparto) s2.capacidadFijaPorReparto = {};
-  if (!s2.capacidadFijaPorReparto[repartoId]) s2.capacidadFijaPorReparto[repartoId] = { soda: 0, b10: 0, b20: 0 };
-  const num = Number(valorStr);
-  s2.capacidadFijaPorReparto[repartoId][pk] = valorStr !== "" && !isNaN(num) ? Math.round(num * cajon) : CAPACIDAD_FIJA[pk];
-  setStock(s2);
-  syncData({ stock: s2 });
-  setEditandoCapFija(null);
-};
   const yaCerrado = !!planilla._diaCerrado;
   const llenosCargados = {
     soda: Number(datos.productos?.soda?.llenos || 0),
@@ -2693,6 +2682,40 @@ const guardarCapacidadFija = (pk, valorStr) => {
   const soderiaActual = stock?.soderia || {};
   const soderiaVaciosActual = stock?.soderia_vacios || {};
 
+  // Sodería tiene un número fijo de envases (lleno + vacío + a llenar,
+  // camión incluido porque es el medio para hacer el reparto). Cuando se le
+  // presta a un cliente, ese envase sigue "contando" para el fijo hasta que
+  // vuelve — por eso lo prestado pendiente (sin devolver) suma acá. Lo que
+  // ya es fijo permanente de cada cliente y el depósito NO forman parte de
+  // este número: son otra cosa.
+  const enClientesPrestado = { soda: 0, b10: 0, b20: 0 };
+  (clientes || []).forEach(c => {
+    ["soda", "b10", "b20"].forEach(pk => {
+      const sk = convPk[pk];
+      enClientesPrestado[pk] += prestadoClienteDe(c, sk, ventas);
+    });
+  });
+  const capFijaGuardada = (stock?.capacidadFijaPorReparto || {})[repartoId];
+  const CAPACIDAD_FIJA = capFijaGuardada && (capFijaGuardada.soda || capFijaGuardada.b10 || capFijaGuardada.b20) ? capFijaGuardada : {
+    soda: (stock?.soderia?.sifon || 0) + (stock?.soderia_vacios?.sifon || 0) + enClientesPrestado.soda,
+    b10: (stock?.soderia?.bidon10 || 0) + (stock?.soderia_vacios?.bidon10 || 0) + enClientesPrestado.b10,
+    b20: (stock?.soderia?.bidon20 || 0) + (stock?.soderia_vacios?.bidon20 || 0) + enClientesPrestado.b20
+  };
+  const [editandoCapFija, setEditandoCapFija] = useState(null);
+  const guardarCapacidadFija = (pk, valorStr) => {
+    const cajon = pk === "soda" ? CAJON_SODA : 1;
+    const num = Number(valorStr);
+    setStock(prev => {
+      const s2 = JSON.parse(JSON.stringify(prev || {}));
+      if (!s2.capacidadFijaPorReparto) s2.capacidadFijaPorReparto = {};
+      if (!s2.capacidadFijaPorReparto[repartoId]) s2.capacidadFijaPorReparto[repartoId] = { soda: 0, b10: 0, b20: 0 };
+      s2.capacidadFijaPorReparto[repartoId][pk] = valorStr !== "" && !isNaN(num) ? Math.round(num * cajon) : CAPACIDAD_FIJA[pk];
+      syncData({ stock: s2 });
+      return s2;
+    });
+    setEditandoCapFija(null);
+  };
+
   // Cuánto necesitás para la salida del PRÓXIMO día de este mismo reparto
   const DIAS_ORDEN = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
   const diaSiguiente = DIAS_ORDEN[(DIAS_ORDEN.indexOf(dia) + 1) % DIAS_ORDEN.length];
@@ -2725,37 +2748,6 @@ const guardarCapacidadFija = (pk, valorStr) => {
     paraLlenarCalc[pk] = Math.min(falta, vaciosHoy);
     vaciosRestoCalc[pk] = Math.max(0, vaciosHoy - paraLlenarCalc[pk]);
   });
-  // ── Checksum "cuadra con el fijo" (por reparto): sodería + depósito son
-  //    compartidos entre repartos, pero el camión y los clientes fijos son
-  //    de ESTE reparto. La capacidad fija se siembra UNA sola vez por
-  //    reparto (con el total actual) y de ahí en más queda fija — se puede
-  //    corregir a mano tocando el número.
-  const clientesReales = clientes || [];
-  const totClientesFijos = { soda: 0, b10: 0, b20: 0 };
-  clientesReales.forEach(c => {
-    totClientesFijos.soda += Number(c.sifon) || 0;
-    totClientesFijos.b10 += Number(c.bidon10) || 0;
-    totClientesFijos.b20 += Number(c.bidon20) || 0;
-  });
-  const enDeposito = {
-    soda: stock?.casa?.sifon || 0,
-    b10: stock?.casa?.bidon10 || 0,
-    b20: stock?.casa?.bidon20 || 0
-  };
-  const enClientesActual = { soda: 0, b10: 0, b20: 0 };
-  clientesReales.forEach(c => {
-    ["soda", "b10", "b20"].forEach(pk => {
-      const sk = convPk[pk];
-      enClientesActual[pk] += prestadoClienteDe(c, sk, ventas);
-    });
-  });
-  const enCamion = (stock?.camiones && stock.camiones[repartoId]) || { sifon: 0, bidon10: 0, bidon20: 0 };
-  const capFijaGuardada = (stock?.capacidadFijaPorReparto || {})[repartoId];
-  const CAPACIDAD_FIJA = capFijaGuardada && (capFijaGuardada.soda || capFijaGuardada.b10 || capFijaGuardada.b20) ? capFijaGuardada : {
-    soda: (stock?.soderia?.sifon || 0) + (stock?.soderia_vacios?.sifon || 0) + (enCamion.sifon || 0) + enDeposito.soda + totClientesFijos.soda + enClientesActual.soda,
-    b10: (stock?.soderia?.bidon10 || 0) + (stock?.soderia_vacios?.bidon10 || 0) + (enCamion.bidon10 || 0) + enDeposito.b10 + totClientesFijos.b10 + enClientesActual.b10,
-    b20: (stock?.soderia?.bidon20 || 0) + (stock?.soderia_vacios?.bidon20 || 0) + (enCamion.bidon20 || 0) + enDeposito.b20 + totClientesFijos.b20 + enClientesActual.b20
-  };
   const confirmarCierre = async () => {
     if (enviandoCierre) return;
     const realesL = {
@@ -2816,21 +2808,16 @@ const guardarCapacidadFija = (pk, valorStr) => {
       // cuenta como LLENO, no como vacío.
       s.soderia[sk] = (s.soderia[sk] || 0) + realesL[pk] + realesPL[pk];
       s.soderia_vacios[sk] = (s.soderia_vacios[sk] || 0) + realesV[pk];
-      // Sobra o falta del día vs lo esperado (según lo que salió, se prestó y
-      // se devolvió) se ajusta contra el depósito: si sobra, se suma al
-      // depósito; si falta, se resta.
-      const esperadoPk = llenosCargados[pk] + devueltosDia[pk] - prestadosDia[pk];
+      // Sodería solo controla que vuelva TODO lo que salió cargado — los
+      // préstamos y devoluciones son un asunto exclusivo del depósito (un
+      // préstamo hoy hace que vuelva menos de lo que salió; el depósito
+      // repone esa diferencia para que sodería se mantenga siempre en su
+      // número fijo). Si sobra, se suma al depósito; si falta, se resta.
+      const esperadoPk = llenosCargados[pk];
       const vuelveTotalPk = realesL[pk] + realesPL[pk] + realesV[pk];
       const diffDepositoPk = vuelveTotalPk - esperadoPk;
       s.casa[sk] = (s.casa[sk] || 0) + diffDepositoPk;
     });
-    // Sembrar la capacidad fija de este reparto (si todavía no está
-    // guardada) para que el checksum "cuadra con el fijo" tenga una
-    // referencia estable de acá en más.
-    if (!s.capacidadFijaPorReparto) s.capacidadFijaPorReparto = {};
-    if (repartoId && (!s.capacidadFijaPorReparto[repartoId] || !(s.capacidadFijaPorReparto[repartoId].soda || s.capacidadFijaPorReparto[repartoId].b10 || s.capacidadFijaPorReparto[repartoId].b20))) {
-      s.capacidadFijaPorReparto[repartoId] = CAPACIDAD_FIJA;
-    }
     // Vaciar SOLO el camión de este reparto — el del otro reparto no se toca
     if (repartoId) s.camiones[repartoId] = stockCamionVacio();
     setStock(s);
@@ -3007,6 +2994,9 @@ const guardarCapacidadFija = (pk, valorStr) => {
       }
     }, [["Soda", "soda"], ["10L", "b10"], ["20L", "b20"]].map(([label, pk]) => {
       const cajon = pk === "soda" ? CAJON_SODA : 1;
+      const unidad = pk === "soda" ? "cajones" : "unidades";
+      const div = n => pk === "soda" ? Math.floor(n / cajon) : n;
+      const sk = convPk[pk];
       const cols = [{
         tipo: "llenos",
         titulo: "Lleno",
@@ -3026,6 +3016,29 @@ const guardarCapacidadFija = (pk, valorStr) => {
         stateObj: realesVacios,
         setFn: setRealesVacios
       }];
+      const llenReal = realesLlenos[pk] !== "" ? Number(realesLlenos[pk]) * cajon : sobrantes[pk];
+      const paraLlenarReal = realesParaLlenar[pk] !== "" ? Number(realesParaLlenar[pk]) * cajon : paraLlenarCalc[pk] * cajon;
+      const vacReal = realesVacios[pk] !== "" ? Number(realesVacios[pk]) * cajon : vaciosRestoCalc[pk] * cajon;
+      // Sodería solo controla que vuelva todo lo que salió cargado — los
+      // préstamos/devoluciones son un asunto del depósito, no de acá.
+      const esperado = llenosCargados[pk];
+      const vuelveTotal = llenReal + paraLlenarReal + vacReal;
+      // Diferencia entre lo que volvió y lo que salió. Si sobra, ese
+      // excedente se guarda en el depósito; si falta (por ejemplo por un
+      // préstamo), se descuenta de ahí. Comparado en la misma unidad que se
+      // muestra (cajones para soda, unidades para bidones).
+      const diffDeposito = div(vuelveTotal) - div(esperado);
+      const quedaLleno = (soderiaActual[sk] || 0) + llenReal;
+      const quedaVacio = (soderiaVaciosActual[sk] || 0) + vacReal;
+      const totalActivo = quedaLleno + quedaVacio + paraLlenarReal + enClientesPrestado[pk];
+      const cuadraFijo = div(totalActivo) === div(CAPACIDAD_FIJA[pk]);
+      const estaEditandoFija = editandoCapFija === pk;
+      // La sodería no tiene una capacidad fija propia — este aviso es aparte
+      // de los checksums de arriba: ¿lo que queda disponible alcanza para la
+      // salida de MAÑANA (según lo que realmente se cargó ese día la última vez)?
+      const disponibleManana = quedaLleno + paraLlenarReal;
+      const necesarioMananaPk = necesarioManana[pk] || 0;
+      const alcanzaManana = disponibleManana >= necesarioMananaPk;
       return /*#__PURE__*/React.createElement("div", {
         key: pk,
         style: {
@@ -3034,12 +3047,31 @@ const guardarCapacidadFija = (pk, valorStr) => {
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--color-text-primary)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
           marginBottom: 6
         }
-      }, label, pk === "soda" ? " (cajones)" : ""), /*#__PURE__*/React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 13,
+          fontWeight: 600,
+          color: "var(--color-text-primary)"
+        }
+      }, label, pk === "soda" ? " (cajones)" : ""), !soloCamion && (estaEditandoFija ? /*#__PURE__*/React.createElement("input", {
+        type: "number",
+        min: 0,
+        autoFocus: true,
+        defaultValue: div(CAPACIDAD_FIJA[pk]),
+        style: { width: 56, padding: "2px 2px", borderRadius: 6, border: "1px solid var(--color-border-secondary)", background: "var(--color-background-tertiary)", color: "var(--color-text-primary)", fontSize: 11, textAlign: "center" },
+        onBlur: e => guardarCapacidadFija(pk, e.target.value),
+        onKeyDown: e => {
+          if (e.key === "Enter") e.target.blur();
+        }
+      }) : /*#__PURE__*/React.createElement("button", {
+        style: { border: "none", background: "none", color: "var(--color-text-tertiary)", fontSize: 11, cursor: "pointer", padding: 0 },
+        onClick: () => setEditandoCapFija(pk)
+      }, `Fijo: ${div(CAPACIDAD_FIJA[pk])} ✎`))), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
@@ -3099,81 +3131,34 @@ const guardarCapacidadFija = (pk, valorStr) => {
             color: diff > 0 ? "var(--color-text-warning)" : "var(--color-text-danger)"
           }
         }, `${diff > 0 ? "+" : ""}${diff} dif.`));
-      })));
-    })), /*#__PURE__*/React.createElement("div", {
-  style: {
-    marginTop: 4
-  }
-}, /*#__PURE__*/React.createElement("span", {
-  style: { ...s.sectionTitle, padding: "0 0 8px" }
-}, "CONTROL DE ENVASES (checksum)"), ["soda", "b10", "b20"].map((pk, i) => {
-  const label = ["Soda", "Bidón 10L", "Bidón 20L"][i];
-  const cajon = pk === "soda" ? CAJON_SODA : 1;
-  const unidad = pk === "soda" ? "cajones" : "unidades";
-  const div = n => pk === "soda" ? Math.floor(n / cajon) : n;
-  const sk = convPk[pk];
-  const AZUL = "#5daaff", AMBAR = "#f5b942", VIOLETA = "#b794f6";
-  const llenReal = realesLlenos[pk] !== "" ? Number(realesLlenos[pk]) * cajon : sobrantes[pk];
-  const paraLlenarReal = realesParaLlenar[pk] !== "" ? Number(realesParaLlenar[pk]) * cajon : paraLlenarCalc[pk] * cajon;
-  const vacReal = realesVacios[pk] !== "" ? Number(realesVacios[pk]) * cajon : vaciosRestoCalc[pk] * cajon;
-  const esperado = llenosCargados[pk] + devueltosDia[pk] - prestadosDia[pk];
-  const vuelveTotal = llenReal + paraLlenarReal + vacReal;
-  // Comparar en la misma unidad que se muestra (cajones para soda, unidades
-  // para bidones) — así el ✓/⚠ nunca contradice al número que ve el usuario.
-  const cuadra = div(vuelveTotal) === div(esperado);
-  const quedaLleno = (soderiaActual[sk] || 0) + llenReal;
-  const quedaVacio = (soderiaVaciosActual[sk] || 0) + vacReal;
-  const totalFlota = quedaLleno + quedaVacio + paraLlenarReal + enDeposito[pk] + totClientesFijos[pk] + enClientesActual[pk];
-  const cuadraFijo = div(totalFlota) === div(CAPACIDAD_FIJA[pk]);
-  const estaEditando = editandoCapFija === pk;
-  return /*#__PURE__*/React.createElement("div", {
-    key: pk,
-    style: { ...s.card, margin: "0 0 8px", padding: "10px 12px" }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: { fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)" }
-  }, label), /*#__PURE__*/React.createElement("span", {
-    style: { fontSize: 18, fontWeight: 700, color: (soloCamion ? cuadra : cuadraFijo) ? "var(--color-text-primary)" : "var(--color-text-danger)" }
-  }, div(soloCamion ? vuelveTotal : totalFlota), " ", /*#__PURE__*/React.createElement("span", {
-    style: { fontSize: 11, fontWeight: 400, color: "var(--color-text-tertiary)" }
-  }, unidad))), /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", gap: 12, fontSize: 12, marginBottom: 2 }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: { color: AZUL }
-  }, "● Lleno ", div(quedaLleno)), /*#__PURE__*/React.createElement("span", {
-    style: { color: VIOLETA }
-  }, "● A llenar ", div(paraLlenarReal)), /*#__PURE__*/React.createElement("span", {
-    style: { color: AMBAR }
-  }, "● Vacío ", div(quedaVacio))), !soloCamion && /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", gap: 12, fontSize: 12, marginBottom: 6 }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: { color: "var(--color-text-secondary)" }
-  }, "● Depósito ", div(enDeposito[pk])), /*#__PURE__*/React.createElement("span", {
-    style: { color: "var(--color-text-secondary)" }
-  }, "● Clientes ", div(totClientesFijos[pk] + enClientesActual[pk]))), /*#__PURE__*/React.createElement("div", {
-    style: { textAlign: "center", fontSize: 11, fontWeight: 600, color: cuadra ? "var(--color-text-success)" : "var(--color-text-danger)" }
-  }, cuadra ? `✓ Cuadra: ${div(vuelveTotal)} de ${div(esperado)}` : `⚠ No cuadra: ${div(vuelveTotal)} de ${div(esperado)} esperados`), !soloCamion && /*#__PURE__*/React.createElement("div", {
-    style: { textAlign: "center", marginTop: 4, fontSize: 11, fontWeight: 600, color: cuadraFijo ? "var(--color-text-success)" : "var(--color-text-warning)" }
-  }, cuadraFijo ? `✓ Cuadra con el fijo: ${div(totalFlota)} de ${div(CAPACIDAD_FIJA[pk])}` : `⚠ No cuadra con el fijo: ${div(totalFlota)} de ${div(CAPACIDAD_FIJA[pk])} (${totalFlota > CAPACIDAD_FIJA[pk] ? "sobran " + div(totalFlota - CAPACIDAD_FIJA[pk]) : "faltan " + div(CAPACIDAD_FIJA[pk] - totalFlota)})`), !soloCamion && /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 6 }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: { fontSize: 10, color: "var(--color-text-tertiary)" }
-  }, "Capacidad fija:"), estaEditando ? /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    min: 0,
-    autoFocus: true,
-    defaultValue: div(CAPACIDAD_FIJA[pk]),
-    style: { width: 60, padding: "3px 2px", borderRadius: 6, border: "1px solid var(--color-border-secondary)", background: "var(--color-background-tertiary)", color: "var(--color-text-primary)", fontSize: 11, textAlign: "center" },
-    onBlur: e => guardarCapacidadFija(pk, e.target.value),
-    onKeyDown: e => {
-      if (e.key === "Enter") e.target.blur();
-    }
-  }) : /*#__PURE__*/React.createElement("button", {
-    style: { border: "none", background: "none", color: "var(--color-text-info)", fontSize: 10, textDecoration: "underline", cursor: "pointer", padding: 0 },
-    onClick: () => setEditandoCapFija(pk)
-  }, `${div(CAPACIDAD_FIJA[pk])} ${unidad} (editar)`)));
-})), /*#__PURE__*/React.createElement("button", {
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          borderTop: "0.5px solid var(--color-border-tertiary)",
+          marginTop: 10,
+          paddingTop: 8,
+          textAlign: "center",
+          fontSize: 12,
+          fontWeight: 600,
+          color: diffDeposito === 0 ? "var(--color-text-success)" : "var(--color-text-warning)"
+        }
+      }, diffDeposito === 0 ? "✓ Cuadra" : diffDeposito > 0 ? `⚠ Sobran ${diffDeposito} ${unidad} → depósito` : `⚠ Faltan ${-diffDeposito} ${unidad} → depósito`), !soloCamion && /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          marginTop: 4,
+          fontSize: 11,
+          fontWeight: 600,
+          color: cuadraFijo ? "var(--color-text-success)" : "var(--color-text-warning)"
+        }
+      }, cuadraFijo ? `✓ Con el fijo: ${div(totalActivo)} de ${div(CAPACIDAD_FIJA[pk])}` : `⚠ Con el fijo: ${div(totalActivo)} de ${div(CAPACIDAD_FIJA[pk])} (${totalActivo > CAPACIDAD_FIJA[pk] ? "sobran " + div(totalActivo - CAPACIDAD_FIJA[pk]) : "faltan " + div(CAPACIDAD_FIJA[pk] - totalActivo)})`), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "center",
+          marginTop: 4,
+          fontSize: 11,
+          fontWeight: 600,
+          color: alcanzaManana ? "var(--color-text-success)" : "var(--color-text-danger)"
+        }
+      }, alcanzaManana ? `✓ Alcanza para mañana: ${div(disponibleManana)} de ${div(necesarioMananaPk)} ${unidad}` : `⚠ Faltan ${div(necesarioMananaPk - disponibleManana)} ${unidad} para mañana`));
+    })), /*#__PURE__*/React.createElement("button", {
       style: {
         width: "100%",
         padding: "16px",

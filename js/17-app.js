@@ -2143,7 +2143,8 @@ function AppPrincipal({
       const cl = clientes.find(c => c.id === v.clienteId);
       return !repartoActual || cl?.repartoId === repartoActual.id;
     }),
-    cargasDia: cargasDiaDe(repartoActual?.id)
+    cargasDia: cargasDiaDe(repartoActual?.id),
+    setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v)
   }), pantalla === "selectorFechaClientes" && /*#__PURE__*/React.createElement(SelectorFecha, {
     dia: diaActual,
     repartoId: repartoActual?.id,
