@@ -2750,8 +2750,13 @@ function PlanillaDelDia({
   });
   const confirmarCierre = async () => {
     if (enviandoCierre) return;
+    // Si el cajón de soda quedó a medio vender, los sifones sueltos que le
+    // quedan siguen llenos — no se pierden solo porque no llenan un cajón
+    // entero. Se suman siempre, tanto si el usuario dejó el cálculo como si
+    // tipeó la cantidad de cajones a mano.
+    const sueltosSodaLL = sobrantes.soda % CAJON_SODA;
     const realesL = {
-      soda: realesLlenos.soda !== "" ? Number(realesLlenos.soda) * CAJON_SODA : sobrantes.soda,
+      soda: realesLlenos.soda !== "" ? Number(realesLlenos.soda) * CAJON_SODA + sueltosSodaLL : sobrantes.soda,
       b10: realesLlenos.b10 !== "" ? Number(realesLlenos.b10) : sobrantes.b10,
       b20: realesLlenos.b20 !== "" ? Number(realesLlenos.b20) : sobrantes.b20
     };
@@ -3016,7 +3021,8 @@ function PlanillaDelDia({
         stateObj: realesVacios,
         setFn: setRealesVacios
       }];
-      const llenReal = realesLlenos[pk] !== "" ? Number(realesLlenos[pk]) * cajon : sobrantes[pk];
+      const sueltosLL = pk === "soda" ? sobrantes[pk] % CAJON_SODA : 0;
+      const llenReal = realesLlenos[pk] !== "" ? Number(realesLlenos[pk]) * cajon + sueltosLL : sobrantes[pk];
       const paraLlenarReal = realesParaLlenar[pk] !== "" ? Number(realesParaLlenar[pk]) * cajon : paraLlenarCalc[pk] * cajon;
       const vacReal = realesVacios[pk] !== "" ? Number(realesVacios[pk]) * cajon : vaciosRestoCalc[pk] * cajon;
       // Sodería solo controla que vuelva todo lo que salió cargado — los
@@ -3102,7 +3108,7 @@ function PlanillaDelDia({
             textAlign: "center",
             marginBottom: 3
           }
-        }, "calc. ", calc), /*#__PURE__*/React.createElement("input", {
+        }, "calc. ", calc, tipo === "llenos" && pk === "soda" && sobrantes[pk] % CAJON_SODA > 0 ? ` (+${sobrantes[pk] % CAJON_SODA} suelto lleno)` : ""), /*#__PURE__*/React.createElement("input", {
           type: "number",
           min: 0,
           value: stateObj[pk],
