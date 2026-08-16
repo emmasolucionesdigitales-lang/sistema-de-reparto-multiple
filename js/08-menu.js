@@ -2814,9 +2814,11 @@ function PlanillaDelDia({
     // solo se cierra el día y se actualiza el stock. El informe (con la
     // copia/foto de la planilla) se manda aparte, cuando el dueño toque el
     // botón "Enviar informe" — así no se dispara un mail cada vez que se
-    // verifica el cierre.
+    // verifica el cierre. Tampoco hay alert() acá: vuelve derecho a la
+    // planilla (sin popup que interrumpa) para que el dueño revise el
+    // arqueo del día y recién ahí, con el botón "Enviar informe" ya
+    // habilitado, decida mandarlo.
     setMostrarCierre(false);
-    alert("✅ Día cerrado y stock actualizado.\n\nCuando quieras, mandá el informe por email con el botón \"Enviar informe\" de la planilla.");
   };
 
   // ── Early return: pantalla de cierre ─────────────────────────────
