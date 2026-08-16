@@ -1352,6 +1352,7 @@ function AppRepartidor({
   }, "\u2705 Recorrido terminado \u2014 Ir a planilla del d\u00eda")), pantalla === "nuevoCliente" && /*#__PURE__*/React.createElement(NuevoClienteForm, {
     sectores: sectores,
     diaActual: diaActual,
+    productos: productos,
     onGuardar: datosNuevo => {
       const nuevoC = Object.assign({}, datosNuevo, {
         id: Date.now(),
@@ -2497,7 +2498,8 @@ function NuevoClienteForm({
   sectores,
   diaActual,
   onGuardar,
-  onVolver
+  onVolver,
+  productos
 }) {
   // Usa el FormCliente unificado (12-gestion.js) — mismo formulario
   // completo que usan el dueño y las demás apps (La Catalina, Comercial):
@@ -2521,6 +2523,7 @@ function NuevoClienteForm({
       barrio: sectores && sectores.length > 0 ? sectores[0] : ""
     },
     textoGuardar: "Guardar cliente",
+    productos: productos,
     onGuardar: onGuardar
   })));
 }

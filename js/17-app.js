@@ -1083,6 +1083,90 @@ function AppPrincipal({
     }
   }, []); // solo al arrancar
 
+  // ── Cobro automático de consumo mínimo mensual (dispenser) ──────────
+  // Al abrir la app, si ya cruzamos a un mes nuevo, revisa los clientes
+  // con `minimoMensual.activo` y, si el mes recién terminado no llegó al
+  // mínimo pactado, genera un cargo (ajuste) por la diferencia. Corre una
+  // sola vez por mes (checkpoint en localStorage) y NO cobra retroactivo
+  // la primera vez que se activa la función (evita sorpresas).
+  React.useEffect(() => {
+    if (!clientes || !clientes.length || !productos || !productos.length) return;
+    const CHECKPOINT_KEY = "rm_minimo_mensual_facturado_hasta";
+    const pad2 = n => String(n).padStart(2, "0");
+    const mesKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+    const hoy = new Date();
+    const mesAnteriorDate = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+    const mesAnteriorKey = mesKey(mesAnteriorDate);
+    const facturadoHasta = localStorage.getItem(CHECKPOINT_KEY);
+    if (!facturadoHasta) {
+      // Primera vez que corre: no facturar nada retroactivo, solo fijar el punto de partida.
+      localStorage.setItem(CHECKPOINT_KEY, mesAnteriorKey);
+      return;
+    }
+    if (facturadoHasta >= mesAnteriorKey) return; // ya está al día
+
+    const desde = `${mesAnteriorKey}-01`;
+    const ultimoDia = new Date(mesAnteriorDate.getFullYear(), mesAnteriorDate.getMonth() + 1, 0).getDate();
+    const hasta = `${mesAnteriorKey}-${pad2(ultimoDia)}`;
+    const cargos = [];
+    let n = 0;
+    clientes.forEach(c => {
+      const mm = c.minimoMensual;
+      if (!mm || !mm.activo || !mm.producto || !(Number(mm.cantidad) > 0)) return;
+      const prod = productos.find(p => p.nombre === mm.producto);
+      const precioActual = prod ? Number(prod.precio) || 0 : 0;
+      const minimoValor = (Number(mm.cantidad) || 0) * precioActual;
+      if (minimoValor <= 0) return;
+      const ventasMes = (ventas || []).filter(v => v.clienteId === c.id && !v._esCobro && !v._esAjuste && !v._esCambio && v.fechaKey >= desde && v.fechaKey <= hasta);
+      const consumido = ventasMes.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === mm.producto).reduce((b, d) => b + (Number(d.total) || 0), 0), 0);
+      const diferencia = Math.round(minimoValor - consumido);
+      if (diferencia <= 0) return;
+      n++;
+      cargos.push({
+        id: Date.now() + n,
+        clienteId: c.id,
+        cliente: c.nombre,
+        dia: c.dia || "",
+        fechaKey: new Date().toLocaleDateString("en-CA"),
+        fecha: new Date().toLocaleString("es-AR"),
+        hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+        detalle: [{
+          nombre: `Cargo por consumo mínimo (${mesAnteriorKey})`,
+          cantidad: 1,
+          precio: 0,
+          total: 0
+        }],
+        pago: "-",
+        obs: `Mínimo mensual: ${mm.cantidad} × "${mm.producto}" (${fmt(minimoValor)}) − consumido ${fmt(consumido)} = cargo ${fmt(diferencia)}`,
+        saldoAplicado: 0,
+        neto: 0,
+        bruto: 0,
+        desc: 0,
+        costo: 0,
+        ganancia: 0,
+        pagadoNum: 0,
+        saldoDelta: -diferencia,
+        envPrest: [],
+        envDev: [],
+        saldoAntes: c.saldo || 0,
+        saldoDespues: (Number(c.saldo) || 0) - diferencia,
+        _esAjuste: true,
+        _esCargoMinimo: true,
+        _periodoMinimo: mesAnteriorKey,
+        _upd: Date.now()
+      });
+    });
+    if (cargos.length) {
+      saveVentas(prev => [...prev, ...cargos]);
+      saveClientes(prev => prev.map(cl => {
+        const cargo = cargos.find(cg => cg.clienteId === cl.id);
+        return cargo ? { ...cl, saldo: (Number(cl.saldo) || 0) + cargo.saldoDelta } : cl;
+      }));
+      console.log(`Cobro automático de mínimo mensual (${mesAnteriorKey}): ${cargos.length} cargo(s) generado(s).`);
+    }
+    localStorage.setItem(CHECKPOINT_KEY, mesAnteriorKey);
+  }, [clientes, ventas, productos]);
+
   // Respaldo COMPLETO descargable + restaurar (solo dueño)
   React.useEffect(() => {
     window._descargarRespaldo = () => {
@@ -2598,6 +2682,7 @@ function AppPrincipal({
     diaActual: diaActual,
     repartoActual: repartoActual,
     repartos: repartos,
+    productos: productos,
     prefill: prospectoAConvertir ? {
       nombre: prospectoAConvertir.nombre,
       telefono: prospectoAConvertir.telefono,

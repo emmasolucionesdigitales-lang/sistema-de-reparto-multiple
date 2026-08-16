@@ -224,7 +224,8 @@ function GestionClientes({
       onNuevo(datos);
       setModoNuevo(false);
     },
-    repartos: repartos
+    repartos: repartos,
+    productos: productos
   })), filtrados.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     style: {
@@ -256,7 +257,8 @@ function GestionClientes({
       onEditar(c.id, datos);
       setEditandoId(null);
     },
-    repartos: repartos
+    repartos: repartos,
+    productos: productos
   }), (() => {
     // total actual prestado: se lee directo de c.prestado (se mantiene solo,
     // ver aplicarMovimientoEnvases en 17-app.js). El usuario edita el TOTAL

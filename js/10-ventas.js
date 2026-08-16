@@ -1604,7 +1604,8 @@ function NuevoCliente({
   repartos,
   onGuardar,
   onVolver,
-  prefill
+  prefill,
+  productos
 }) {
   // Usa el FormCliente unificado (12-gestion.js) — mismo formulario
   // completo que "Editar cliente" y que las demás apps (La Catalina,
@@ -1626,6 +1627,7 @@ function NuevoCliente({
       ...(prefill || {})
     },
     repartos: repartos,
+    productos: productos,
     textoGuardar: "Agregar cliente",
     onGuardar: onGuardar
   })));

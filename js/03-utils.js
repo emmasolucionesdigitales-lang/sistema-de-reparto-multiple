@@ -1157,7 +1157,8 @@ function FormCliente({
   inicial,
   onGuardar,
   onEliminarCliente,
-  textoGuardar
+  textoGuardar,
+  productos
 }) {
   const [datos, setDatos] = React.useState({
     ...(inicial || {})
@@ -1348,6 +1349,72 @@ function FormCliente({
       color: "var(--color-text-tertiary)"
     }
   }, "💡 Los envases prestados (extra) se ajustan con el botón ♻️ Envases."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "4px 0",
+      background: "var(--color-background-tertiary)",
+      padding: "10px 12px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: (datos.minimoMensual && datos.minimoMensual.activo) ? 8 : 0
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 500,
+      color: "var(--color-text-secondary)"
+    }
+  }, "💧 Consumo mínimo mensual (dispenser)"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      fontSize: 11,
+      padding: "4px 10px",
+      borderRadius: 8,
+      border: "0.5px solid var(--color-border-secondary)",
+      cursor: "pointer",
+      background: (datos.minimoMensual && datos.minimoMensual.activo) ? "#185FA5" : "var(--color-background-secondary)",
+      color: (datos.minimoMensual && datos.minimoMensual.activo) ? "#e2eaf4" : "var(--color-text-secondary)"
+    },
+    onClick: () => set("minimoMensual", {
+      ...(datos.minimoMensual || {}),
+      activo: !(datos.minimoMensual && datos.minimoMensual.activo),
+      producto: (datos.minimoMensual && datos.minimoMensual.producto) || (productos && productos[0] ? productos[0].nombre : ""),
+      cantidad: (datos.minimoMensual && datos.minimoMensual.cantidad) || 5
+    })
+  }, (datos.minimoMensual && datos.minimoMensual.activo) ? "Activado" : "Desactivado")), datos.minimoMensual && datos.minimoMensual.activo && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: s.grid2
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Producto de referencia"), /*#__PURE__*/React.createElement("select", {
+    style: s.select,
+    value: (datos.minimoMensual && datos.minimoMensual.producto) || "",
+    onChange: e => set("minimoMensual", { ...(datos.minimoMensual || {}), producto: e.target.value })
+  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.nombre
+  }, p.nombre)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Cantidad mínima / mes"), /*#__PURE__*/React.createElement("input", {
+    style: s.input,
+    type: "number",
+    min: 0,
+    value: (datos.minimoMensual && datos.minimoMensual.cantidad) ?? "",
+    onChange: e => set("minimoMensual", { ...(datos.minimoMensual || {}), cantidad: Number(e.target.value) || 0 })
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      marginTop: 6
+    }
+  }, (() => {
+    const prod = (productos || []).find(p => p.nombre === (datos.minimoMensual && datos.minimoMensual.producto));
+    const cant = (datos.minimoMensual && datos.minimoMensual.cantidad) || 0;
+    const valor = prod ? cant * (Number(prod.precio) || 0) : 0;
+    return `Si el cliente no llega a comprar ${cant} de "${(datos.minimoMensual && datos.minimoMensual.producto) || "—"}" en el mes (≈ ${fmt(valor)} a precio actual), se le cobra la diferencia de forma automática el día 1 del mes siguiente.`;
+  })()))), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "4px 0",
