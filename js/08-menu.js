@@ -2576,7 +2576,9 @@ function PlanillaDelDia({
   const totalLlenosIngresados = PRODUCTOS_CONFIG.reduce((a, p) => a + num(datos.productos[p.id]?.llenos), 0);
 
   // ── Cierre del día: estados y cálculos ───────────────────────────
-  const [mostrarCierre, setMostrarCierre] = useState(!!(initCierre && !planilla._diaCerrado));
+  const cierreKey = `cierre_${dia}_${fecha}_${repartoId || ""}`;
+  const yaConfirmado = !!planilla._diaCerrado || !!localStorage.getItem(cierreKey);
+  const [mostrarCierre, setMostrarCierre] = useState(!!(initCierre && !yaConfirmado));
   // El envío del informe está desacoplado de confirmar el cierre (ver
   // confirmarCierre): ya no hace falta pre-capturar la foto de la planilla
   // antes de entrar a la pantalla de Cierre, porque el botón "Enviar
@@ -2597,7 +2599,11 @@ function PlanillaDelDia({
     b10: "",
     b20: ""
   });
-  const yaCerrado = !!planilla._diaCerrado;
+  // Si ya se confirmó el cierre alguna vez para este día (localStorage se
+  // marca de inmediato en confirmarCierre, antes incluso de que la planilla
+  // sincronizada vuelva a bajar como prop), no hay que volver a pedir la
+  // verificación de envases — se pasa directo al botón de enviar informe.
+  const yaCerrado = !!planilla._diaCerrado || !!localStorage.getItem(cierreKey);
   const llenosCargados = {
     soda: Number(datos.productos?.soda?.llenos || 0),
     b10: Number(datos.productos?.b10?.llenos || 0),
@@ -2725,6 +2731,7 @@ function PlanillaDelDia({
   });
   const confirmarCierre = async () => {
     if (enviandoCierre) return;
+    localStorage.setItem(cierreKey, "1"); // marcar como confirmado
     // Si el cajón de soda quedó a medio vender, los sifones sueltos que le
     // quedan siguen llenos — no se pierden solo porque no llenan un cajón
     // entero. Se suman siempre, tanto si el usuario dejó el cálculo como si
