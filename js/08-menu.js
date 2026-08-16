@@ -2731,6 +2731,12 @@ function PlanillaDelDia({
   });
   const confirmarCierre = async () => {
     if (enviandoCierre) return;
+    // IMPORTANTE: bloquear el botón de inmediato. Sin este flag, un
+    // doble-toque (muy común cuando el guardado tarda un instante) podía
+    // disparar confirmarCierre() dos veces seguidas y sumar los mismos
+    // envases a sodería dos veces — una causa real de la acumulación de
+    // envases reportada.
+    setEnviandoCierre(true);
     localStorage.setItem(cierreKey, "1"); // marcar como confirmado
     // Si el cajón de soda quedó a medio vender, los sifones sueltos que le
     // quedan siguen llenos — no se pierden solo porque no llenan un cajón
