@@ -2,7 +2,7 @@
 // ◆  02-constantes.js — Constantes globales
 // ════════════════════════════════════════════════════════════════════
 
-const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+const DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
 // Cargas de salida precargadas por día (soda en unidades: 1 cajón = 6 sifones)
 const CARGA_DIA_DEFAULT = {
@@ -11,6 +11,7 @@ const CARGA_DIA_DEFAULT = {
   "Miércoles": { soda: 60,  b10: 30, b20: 9  },
   "Jueves":    { soda: 120, b10: 45, b20: 14 },
   "Viernes":   { soda: 90,  b10: 30, b20: 7  },
+  "Sábado":    { soda: 0,   b10: 0,  b20: 0  },
 };
 const PRODUCTOS_CONFIG = [
   { id: "b10",  nombre: "Bidón 10L",       costoUnit: 800 },
