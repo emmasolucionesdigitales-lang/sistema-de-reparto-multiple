@@ -33,15 +33,15 @@ const KEY_PROD_ENV = {
   "Dispenser": "dispenser"
 };
 // ── Cuánto tiene PRESTADO un cliente de un producto ("sifon"|"bidon10"|
-//    "bidon20"|"dispenser"). Para sifón/bidón10/bidón20 se lee directo de
-//    c.prestado (campo que se mantiene solo, sumando/restando en cada venta
-//    — ver aplicarMovimientoEnvases en 14-app.js). Si el cliente todavía no
-//    tiene ese campo, o es dispenser (que no tiene campo directo), se
-//    calcula del historial de ventas de ese cliente + el ajuste manual
-//    (c.envAjuste). Usar SIEMPRE esta función en vez de recalcular a mano
-//    — así todas las pantallas muestran el mismo número.
+//    "bidon20"|"dispenser"). Se lee directo de c.prestado (campo que se
+//    mantiene solo, sumando/restando en cada venta — ver
+//    aplicarMovimientoEnvases en 17-app.js). Si el cliente todavía no tiene
+//    ese campo (no tuvo ventas con envases desde que se agregó este modelo),
+//    se calcula del historial de ventas de ese cliente + el ajuste manual
+//    (c.envAjuste) como referencia inicial. Usar SIEMPRE esta función en vez
+//    de recalcular a mano — así todas las pantallas muestran el mismo número.
 function prestadoClienteDe(c, k, ventasHistoricas) {
-  if (k !== "dispenser" && c.prestado && c.prestado[k] !== undefined) return c.prestado[k];
+  if (c.prestado && c.prestado[k] !== undefined) return c.prestado[k];
   let n = 0;
   (ventasHistoricas || []).forEach(v => {
     if (v.clienteId !== c.id) return;
@@ -54,6 +54,150 @@ function prestadoClienteDe(c, k, ventasHistoricas) {
   });
   return Math.max(0, n + (Number(c.envAjuste?.[k]) || 0));
 }
+
+// ════════════════════════════════════════════════════════════════════
+// ◆  Helpers de guardado seguro — evitan que un guardado pise cambios
+//    que llegaron de otro dispositivo (dueño/repartidor) segundos antes.
+//    IMPORTANTE: estas 4 funciones (mergeArrayPorClave, mergeClientesPorUpd,
+//    mergeNumericoConDeltas, mergePorClavesCambiadas) faltaban por completo
+//    en este archivo aunque syncData (17-app.js) y el guardado por rol
+//    (14-roles.js) las llaman en TODOS los guardados a la nube — cada save
+//    tiraba "ReferenceError: mergeClientesPorUpd is not defined" adentro
+//    del .then(), lo que el .catch() de al lado convertía en un guardado
+//    SIN mergear (guardarFinal(data) a secas). O sea: la protección contra
+//    pisar cambios de otro dispositivo estaba rota en silencio desde que
+//    se armó este guardado seguro. Se agregan acá con la misma lógica ya
+//    probada en el Sistema de Reparto Individual.
+// ════════════════════════════════════════════════════════════════════
+
+// Arrays con "id" (ventas, recordatorios, noVisitas...): conserva altas,
+// ediciones Y borrados hechos en ESTE guardado; para lo que no se tocó,
+// respeta lo que ya estaba en la nube (por si otro dispositivo lo cambió).
+function mergeArrayPorClave(prevLocal, nuevoLocal, cloudArr, claveFn) {
+  const prevMap = {};
+  (prevLocal || []).forEach(x => {
+    try {
+      prevMap[claveFn(x)] = x;
+    } catch {}
+  });
+  const localMap = {};
+  (nuevoLocal || []).forEach(x => {
+    try {
+      localMap[claveFn(x)] = x;
+    } catch {}
+  });
+  const freshMap = {};
+  (cloudArr || []).forEach(x => {
+    try {
+      freshMap[claveFn(x)] = x;
+    } catch {}
+  });
+  const keys = new Set([...Object.keys(prevMap), ...Object.keys(localMap), ...Object.keys(freshMap)]);
+  const out = [];
+  keys.forEach(k => {
+    const inLocal = Object.prototype.hasOwnProperty.call(localMap, k);
+    const inFresh = Object.prototype.hasOwnProperty.call(freshMap, k);
+    const inPrev = Object.prototype.hasOwnProperty.call(prevMap, k);
+    if (inLocal && inFresh) {
+      const uL = Number(localMap[k]._upd) || 0,
+        uF = Number(freshMap[k]._upd) || 0;
+      out.push(uF > uL ? freshMap[k] : localMap[k]);
+    } else if (inLocal && !inFresh) {
+      out.push(localMap[k]);
+    } else if (!inLocal && inFresh) {
+      if (!inPrev) out.push(freshMap[k]); // lo agregó otro dispositivo -> conservar
+      // si estaba en prev y ya no en local -> se borró acá a propósito, no se restaura
+    }
+  });
+  return out;
+}
+
+// Clientes: merge por id + _upd (gana el más nuevo, nunca se pisa un
+// cambio ajeno más reciente con uno local viejo).
+function mergeClientesPorUpd(prevLocal, nuevoLocal, cloudArr) {
+  // Mismo criterio de borrado que mergeArrayPorClave: si un id estaba
+  // ANTES de este guardado puntual (prevLocal) y ya no está en lo que se
+  // está guardando ahora (nuevoLocal), es que se borró a propósito acá —
+  // no revivirlo solo porque la nube todavía lo tenga.
+  const prevIds = new Set((prevLocal || []).map(c => c.id));
+  const nuevoIds = new Set((nuevoLocal || []).map(c => c.id));
+  const borrados = new Set([...prevIds].filter(id => !nuevoIds.has(id)));
+  const porId = {};
+  (cloudArr || []).forEach(c => {
+    if (!borrados.has(c.id)) porId[c.id] = c;
+  });
+  (nuevoLocal || []).forEach(c => {
+    const enNube = porId[c.id];
+    if (!enNube) {
+      porId[c.id] = c;
+      return;
+    }
+    const uL = Number(c._upd) || 0,
+      uN = Number(enNube._upd) || 0;
+    if (uL >= uN) porId[c.id] = c;
+  });
+  return Object.values(porId);
+}
+
+// Objetos numéricos simples (stock, cargasDia): aplica el DELTA que hizo
+// este guardado sobre la copia local anterior, en vez de reemplazar todo
+// el objeto — así una carga de stock hecha en otro dispositivo no se pierde.
+function mergeNumericoConDeltas(prevLocal, nuevoLocal, cloudObj) {
+  const flat = (obj, prefix = "") => {
+    let out = {};
+    Object.keys(obj || {}).forEach(k => {
+      const v = obj[k];
+      const key = prefix ? `${prefix}.${k}` : k;
+      if (v && typeof v === "object" && !Array.isArray(v)) out = {
+        ...out,
+        ...flat(v, key)
+      };else out[key] = v;
+    });
+    return out;
+  };
+  const unflat = flatObj => {
+    const out = {};
+    Object.keys(flatObj).forEach(key => {
+      const parts = key.split(".");
+      let cur = out;
+      parts.forEach((p, i) => {
+        if (i === parts.length - 1) cur[p] = flatObj[key];else {
+          cur[p] = cur[p] || {};
+          cur = cur[p];
+        }
+      });
+    });
+    return out;
+  };
+  const fPrev = flat(prevLocal || {}),
+    fNuevo = flat(nuevoLocal || {}),
+    fCloud = flat(cloudObj || {});
+  const resultado = {
+    ...fCloud
+  };
+  new Set([...Object.keys(fPrev), ...Object.keys(fNuevo)]).forEach(key => {
+    const antes = Number(fPrev[key]) || 0,
+      ahora = Number(fNuevo[key]) || 0;
+    if (antes !== ahora) resultado[key] = (Number(fCloud[key]) || 0) + (ahora - antes);
+  });
+  return unflat(resultado);
+}
+
+// Objetos por clave (planillas por día): conserva las claves cambiadas en
+// este guardado, respeta el resto tal cual está en la nube.
+function mergePorClavesCambiadas(prevLocal, nuevoLocal, cloudObj) {
+  const resultado = {
+    ...(cloudObj || {})
+  };
+  const claves = new Set([...Object.keys(prevLocal || {}), ...Object.keys(nuevoLocal || {})]);
+  claves.forEach(k => {
+    const antes = JSON.stringify((prevLocal || {})[k]);
+    const ahora = JSON.stringify((nuevoLocal || {})[k]);
+    if (antes !== ahora) resultado[k] = (nuevoLocal || {})[k];
+  });
+  return resultado;
+}
+
 // ════════════════════════════════════════════════════════════════════
 // ◆  CambioEnvasePanel — panel "🔄 Cambio de envase" UNIFICADO (venta,
 //    detalle de cliente, gestión). Solo maneja la UI y el estado local
@@ -701,7 +845,7 @@ function extraerCoordsDeURL(url) {
 // ════════════════════════════════════════════════════════════════════
 // ◆  PieEnvases — pie de tarjeta de cliente UNIFICADO (todas las listas)
 //    Botón ♻️ Envases + botones propios de cada pantalla + panel con Confirmar.
-//    Guarda en c.prestado (sifón/bidón10/bidón20) y c.envAjuste (dispenser, sin campo directo).
+//    Guarda los 4 productos (incluido dispenser) directo en c.prestado.
 //    Uso: <PieEnvases c={c} ventas={ventas} onEditar={(id,cambios)=>...}
 //           izquierda={<botón opcional/>}> {botones derecha opcionales} </PieEnvases>
 // ════════════════════════════════════════════════════════════════════
@@ -710,6 +854,7 @@ function PieEnvases({
   ventas,
   onEditar,
   onPerdida,
+  onPerdidaCliente,
   izquierda,
   children
 }) {
@@ -727,34 +872,24 @@ function PieEnvases({
   const confirmarPerdidaCliente = () => {
     const cant = Math.round(Number(cantPerdida) || 0);
     if (cant <= 0) return;
-    const nuevoValor = Math.max(0, (Number(c[prodPerdida]) || 0) - cant);
-    onEditar(c.id, {
-      [prodPerdida]: nuevoValor
-    });
-    onPerdida && onPerdida({
-      [prodPerdida]: cant
-    }, "Roto/perdido en lo del cliente", c.nombre);
+    // OJO: acá NO se usa onEditar (ese asume que lo que baja del fijo del
+    // cliente volvió al depósito). Un envase roto/perdido nunca volvió a
+    // ningún lado — se da de baja directo con onPerdidaCliente, que reduce
+    // el fijo/prestado del cliente sin acreditarle nada a Casa.
+    if (onPerdidaCliente) {
+      onPerdidaCliente(c.id, prodPerdida, cant);
+    } else if (onEditar) {
+      // Fallback por si algún lugar todavía no pasa el prop nuevo.
+      const nuevoValor = Math.max(0, (Number(c[prodPerdida]) || 0) - cant);
+      onEditar(c.id, {
+        [prodPerdida]: nuevoValor
+      });
+      onPerdida && onPerdida({
+        [prodPerdida]: cant
+      }, "Roto/perdido en lo del cliente", c.nombre);
+    }
     setMostrarPerdida(false);
     setCantPerdida("");
-  };
-  const calcExtra = () => {
-    const ex = {
-      sifon: 0,
-      bidon10: 0,
-      bidon20: 0,
-      dispenser: 0
-    };
-    (ventas || []).filter(v => v.clienteId === c.id).forEach(v => {
-      (v.envPrest || []).forEach(e => {
-        const k = KP[e.prod];
-        if (k) ex[k] += Number(e.cant) || 0;
-      });
-      (v.envDev || []).forEach(e => {
-        const k = KP[e.prod];
-        if (k) ex[k] -= Number(e.cant) || 0;
-      });
-    });
-    return ex;
   };
   const abrir = () => {
     setDraft({
@@ -763,18 +898,14 @@ function PieEnvases({
     });
   };
   const confirmar = () => {
-    // Sifón/bidón10/bidón20 se guardan directo en c.prestado. Dispenser no
-    // tiene campo directo, sigue calculándose como ajuste sobre el historial.
-    const ex = calcExtra();
+    // Los 4 productos (incluido dispenser) se guardan directo en c.prestado
+    // — campo estable que se mantiene solo, sumando/restando en cada venta
+    // (ver aplicarMovimientoEnvases en 17-app.js).
     onEditar(c.id, {
       ...Object.fromEntries(KEYS.map(k => [k, Math.max(0, draft.fijos[k])])),
       prestado: {
         ...(c.prestado || {}),
-        ...Object.fromEntries(KEYS.filter(k => k !== "dispenser").map(k => [k, Math.max(0, draft.prest[k])]))
-      },
-      envAjuste: {
-        ...(c.envAjuste || {}),
-        dispenser: draft.prest.dispenser - (ex.dispenser || 0)
+        ...Object.fromEntries(KEYS.map(k => [k, Math.max(0, draft.prest[k])]))
       }
     });
     setDraft(null);
@@ -1326,15 +1457,21 @@ function FormCliente({
 // ◆  buscarCliente — búsqueda UNIFICADA priorizando el DOMICILIO
 //    Devuelve: 2 = coincide el domicilio · 1 = coincide nombre/tel/notas · 0 = no
 //    Entiende: "juramento 59", "mz f l 28", "policial 3", barrios, sectores...
+//    Ignora tildes/ñ tanto en lo buscado como en lo guardado: antes
+//    buscar "maria" NO encontraba a "María" — muy común al tipear rápido
+//    desde el celular, sin tildes.
 // ════════════════════════════════════════════════════════════════════
+function _normalizarBusqueda(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
 function buscarCliente(c, q) {
-  const t = (q || "").trim().toLowerCase();
+  const t = _normalizarBusqueda(q).trim();
   if (!t) return 1; // sin búsqueda: todos pasan
-  const domicilio = [c.calle, c.nro, c.calle && c.nro ? `${c.calle} ${c.nro}` : "", c.barrio, c.sector, c.aclaracion, c.manzana, c.lote, c.manzana ? `mz ${c.manzana}` : "", c.lote ? `l ${c.lote}` : "", c.manzana && c.lote ? `mz ${c.manzana} l ${c.lote}` : "", c.manzana && c.lote ? `manzana ${c.manzana} lote ${c.lote}` : ""].filter(Boolean).join(" · ").toLowerCase();
+  const domicilio = _normalizarBusqueda([c.calle, c.nro, c.calle && c.nro ? `${c.calle} ${c.nro}` : "", c.barrio, c.sector, c.aclaracion, c.manzana, c.lote, c.manzana ? `mz ${c.manzana}` : "", c.lote ? `l ${c.lote}` : "", c.manzana && c.lote ? `mz ${c.manzana} l ${c.lote}` : "", c.manzana && c.lote ? `manzana ${c.manzana} lote ${c.lote}` : ""].filter(Boolean).join(" · "));
   if (domicilio.includes(t)) return 2;
-  if ((c.nombre || "").toLowerCase().includes(t)) return 1;
+  if (_normalizarBusqueda(c.nombre).includes(t)) return 1;
   if (String(c.telefono || "").includes(t)) return 1;
-  if ((c.notas || "").toLowerCase().includes(t)) return 1;
+  if (_normalizarBusqueda(c.notas).includes(t)) return 1;
   return 0;
 }
 

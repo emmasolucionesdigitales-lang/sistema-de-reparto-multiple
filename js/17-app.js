@@ -32,7 +32,8 @@ function aplicarMovimientoEnvases(clientesPrev, ventasPrev, clienteId, envPrest,
     const prestado = {
       sifon: c.prestado?.sifon,
       bidon10: c.prestado?.bidon10,
-      bidon20: c.prestado?.bidon20
+      bidon20: c.prestado?.bidon20,
+      dispenser: c.prestado?.dispenser
     };
     const fijo = {
       sifon: Number(c.sifon) || 0,
@@ -59,7 +60,7 @@ function aplicarMovimientoEnvases(clientesPrev, ventasPrev, clienteId, envPrest,
       cant -= deLoPrestado;
       if (cant > 0) fijo[k] = Math.max(0, fijo[k] - cant);
     });
-    ["sifon", "bidon10", "bidon20"].forEach(k => {
+    ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
       if (prestado[k] === undefined) prestado[k] = c.prestado?.[k] || 0;
     });
     return {
@@ -299,6 +300,7 @@ function AppPrincipal({
         sifon: items.sifon || 0,
         bidon10: items.bidon10 || 0,
         bidon20: items.bidon20 || 0,
+        dispenser: items.dispenser || 0,
         _upd: Date.now()
       }];
       syncData({
@@ -552,10 +554,27 @@ function AppPrincipal({
         (data.clientes || []).forEach(c => {
           porIdCli[c.id] = c;
         });
+        // "Vistos en la nube alguna vez": para distinguir un cliente
+        // GENUINAMENTE nuevo (creado en este aparato, todavía no llegó a
+        // subirse) de un cliente que se borró en OTRO aparato. Antes, si
+        // faltaba de la nube se asumía siempre "solo local → lo agrego", lo
+        // que resucitaba clientes borrados desde otro celular/PC cada vez
+        // que este aparato sincronizaba (y encima los volvía a subir,
+        // deshaciendo el borrado para todos).
+        let vistosNubeCli = [];
+        try {
+          vistosNubeCli = JSON.parse(localStorage.getItem("rm_clientes_vistos_nube_v1") || "[]");
+        } catch {}
+        const vistosNubeSet = new Set(vistosNubeCli);
         let cambiosLocalesCli = 0;
+        let resucitadosEvitados = 0;
         clientesLocales.forEach(c => {
           const enNube = porIdCli[c.id];
           if (!enNube) {
+            if (vistosNubeSet.has(c.id)) {
+              resucitadosEvitados++;
+              return;
+            }
             porIdCli[c.id] = c;
             cambiosLocalesCli++;
             return;
@@ -567,6 +586,12 @@ function AppPrincipal({
             cambiosLocalesCli++;
           }
         });
+        try {
+          localStorage.setItem("rm_clientes_vistos_nube_v1", JSON.stringify((data.clientes || []).map(c => c.id)));
+        } catch {}
+        if (resucitadosEvitados > 0) {
+          console.log("Merge: " + resucitadosEvitados + " clientes borrados en otro aparato, no se resucitan.");
+        }
         const mergedCli = Object.values(porIdCli);
         setClientes(mergedCli);
         if (cambiosLocalesCli > 0) {
@@ -1537,11 +1562,42 @@ function AppPrincipal({
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
   }, []);
+  // ── Ajusta stock.casa (depósito) cuando se crea o edita el fijo de
+  // envases/dispenser de un cliente. Antes esto NO pasaba en ningún lado:
+  // al dar de alta un cliente con envases fijos (o un dispenser), esos
+  // envases nunca se descontaban del depósito — el stock quedaba mal desde
+  // el primer día. "antes" = valores previos (null si es alta nueva),
+  // "despues" = valores nuevos.
+  const ajustarStockFijoCliente = (antes, despues) => {
+    const a = antes || {};
+    const d = despues || {};
+    const delta = {
+      sifon: (Number(d.sifon) || 0) - (Number(a.sifon) || 0),
+      bidon10: (Number(d.bidon10) || 0) - (Number(a.bidon10) || 0),
+      bidon20: (Number(d.bidon20) || 0) - (Number(a.bidon20) || 0),
+      dispenser: (Number(d.dispenser) || 0) - (Number(a.dispenser) || 0)
+    };
+    if (!delta.sifon && !delta.bidon10 && !delta.bidon20 && !delta.dispenser) return;
+    setStock(prev => {
+      const s = JSON.parse(JSON.stringify(normStock(prev)));
+      if (!s.casa) s.casa = { sifon: 0, bidon10: 0, bidon20: 0, dispenser: 0 };
+      s.casa.sifon = Math.max(0, (s.casa.sifon || 0) - delta.sifon);
+      s.casa.bidon10 = Math.max(0, (s.casa.bidon10 || 0) - delta.bidon10);
+      s.casa.bidon20 = Math.max(0, (s.casa.bidon20 || 0) - delta.bidon20);
+      s.casa.dispenser = Math.max(0, (s.casa.dispenser || 0) - delta.dispenser);
+      syncData({
+        stock: s
+      });
+      return s;
+    });
+  };
   const updateCliente = (id, cambios) => {
+    const antes = clientes.find(c => c.id === id);
     saveClientes(prev => prev.map(c => c.id === id ? {
       ...c,
       ...cambios
     } : c));
+    if (antes) ajustarStockFijoCliente(antes, { ...antes, ...cambios });
   };
   const savePlanilla = (dia, datos) => {
     savePlanillasCloud(prev => ({
@@ -1742,14 +1798,18 @@ function AppPrincipal({
     };
     const eliminado = clientes.find(c => c.id === clienteId);
     if (eliminado) {
+      // Incluye lo FIJO + lo PRESTADO de cada producto (antes solo se
+      // contaba el fijo — un cliente con envases prestados de más los
+      // perdía sin dejar rastro al eliminarlo).
       const env = {
-        sifon: Number(eliminado.sifon) || 0,
-        bidon10: Number(eliminado.bidon10) || 0,
-        bidon20: Number(eliminado.bidon20) || 0
+        sifon: (Number(eliminado.sifon) || 0) + (Number(eliminado.prestado?.sifon) || 0),
+        bidon10: (Number(eliminado.bidon10) || 0) + (Number(eliminado.prestado?.bidon10) || 0),
+        bidon20: (Number(eliminado.bidon20) || 0) + (Number(eliminado.prestado?.bidon20) || 0),
+        dispenser: (Number(eliminado.dispenser) || 0) + (Number(eliminado.prestado?.dispenser) || 0)
       };
-      const totalEnv = env.sifon + env.bidon10 + env.bidon20;
+      const totalEnv = env.sifon + env.bidon10 + env.bidon20 + env.dispenser;
       if (totalEnv > 0) {
-        const det = [env.sifon && `${env.sifon} Sifón 1.5L`, env.bidon10 && `${env.bidon10} Bidón 10L`, env.bidon20 && `${env.bidon20} Bidón 20L`].filter(Boolean).join(" · ");
+        const det = [env.sifon && `${env.sifon} Sifón 1.5L`, env.bidon10 && `${env.bidon10} Bidón 10L`, env.bidon20 && `${env.bidon20} Bidón 20L`, env.dispenser && `${env.dispenser} Dispenser`].filter(Boolean).join(" · ");
         const devolvio = window.confirm(`Borrando a "${eliminado.nombre}"...\n\nTenía estos envases:\n${det}\n\n¿Los devolvió?\n\n• Aceptar = SÍ, sumarlos al stock (Depósito)\n• Cancelar = NO, se dan por perdidos\n\n(Cualquiera de las dos opciones borra al cliente igual)`);
         if (devolvio) {
           setStock(prev => {
@@ -1763,6 +1823,7 @@ function AppPrincipal({
             s.casa.sifon = (s.casa.sifon || 0) + env.sifon;
             s.casa.bidon10 = (s.casa.bidon10 || 0) + env.bidon10;
             s.casa.bidon20 = (s.casa.bidon20 || 0) + env.bidon20;
+            s.casa.dispenser = (s.casa.dispenser || 0) + env.dispenser;
             syncData({
               stock: s
             });
@@ -1781,6 +1842,37 @@ function AppPrincipal({
     saveVentas(prev => prev.filter(v => v.clienteId !== clienteId));
     irA("clientes");
   };
+
+  // ── Registrar un envase roto/perdido EN CASA DE UN CLIENTE (sin borrarlo) ──
+  // Usado por el panel de "romper/perder" en la ficha del cliente. A
+  // diferencia de un editar cliente común, acá el envase NO volvió al
+  // depósito — se rompió o se perdió estando afuera. Por eso reduce el
+  // fijo/prestado del cliente directamente (sin acreditar nada a Casa) y
+  // lo deja anotado en el historial de pérdidas para poder revisarlo.
+  const registrarPerdidaCliente = (clienteId, producto, cantidad) => {
+    let cant = Math.round(Number(cantidad) || 0);
+    if (cant <= 0) return;
+    const cli = clientes.find(c => c.id === clienteId);
+    if (!cli) return;
+    // Descuenta primero de lo PRESTADO (el envase roto puede ser uno
+    // prestado, no necesariamente uno de los fijos) y, si sobra cantidad,
+    // recién ahí del fijo — mismo criterio que aplicarMovimientoEnvases.
+    const prestadoActual = prestadoClienteDe(cli, producto, ventas);
+    const deLoPrestado = Math.min(prestadoActual, cant);
+    const nuevoPrestado = prestadoActual - deLoPrestado;
+    cant -= deLoPrestado;
+    const nuevoValor = Math.max(0, (Number(cli[producto]) || 0) - cant);
+    saveClientes(prev => prev.map(c => c.id === clienteId ? {
+      ...c,
+      [producto]: nuevoValor,
+      prestado: {
+        ...(c.prestado || {}),
+        [producto]: nuevoPrestado
+      }
+    } : c));
+    registrarPerdida({ [producto]: Math.round(Number(cantidad) || 0) }, "Roto/perdido en lo del cliente", cli.nombre);
+  };
+
   const eliminarVenta = ventaId => {
     // Guard anti doble-tap: ignora un segundo borrado del MISMO id dentro
     // de 2s (el cartel de confirmación puede tardar en cerrarse).
@@ -2267,6 +2359,8 @@ function AppPrincipal({
     onVenta: () => irA("venta"),
     onVolver: () => irA("clientes"),
     onEditar: cambios => updateCliente(cliente.id, cambios),
+    onPerdida: registrarPerdida,
+    onPerdidaCliente: registrarPerdidaCliente,
     onEliminarVenta: eliminarVenta,
     onEditarVenta: editarVenta,
     onEliminarCliente: () => eliminarCliente(cliente.id),
@@ -2537,6 +2631,7 @@ function AppPrincipal({
           repartoId: datos.repartoId != null ? datos.repartoId : (repartoActual?.id || null)
         }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
       });
+      ajustarStockFijoCliente(null, datos);
       if (prospectoAConvertir) {
         const pid = prospectoAConvertir.id;
         saveProspectos(prev => prev.map(p => p.id === pid ? { ...p, estado: "convertido" } : p));
@@ -2564,19 +2659,23 @@ function AppPrincipal({
     onIrTab: irA,
     onReordenarTodo: lista => saveClientes(lista),
     onEditar: (id, cambios) => {
+      const antes = clientes.find(c => c.id === id);
       saveClientes(prev => prev.map(c => c.id === id ? {
         ...c,
         ...cambios
       } : c));
+      if (antes) ajustarStockFijoCliente(antes, { ...antes, ...cambios });
     },
+    onPerdida: registrarPerdida,
+    onPerdidaCliente: registrarPerdidaCliente,
     onEliminar: id => {
-      if (window.confirm("¿Eliminar cliente?")) {
-        saveClientes(prev => {
-          const eliminado = prev.find(c => c.id === id);
-          let nc = prev.filter(c => c.id !== id);
-          if (eliminado) nc = renumerarTrasEliminar(nc, eliminado);
-          return nc;
-        });
+      // Antes esto borraba directo sin pasar por eliminarCliente — se
+      // saltaba TODA la pregunta de "¿devolvió los envases?" y el registro
+      // de pérdida, así que un cliente con envases fijos o prestados los
+      // perdía sin dejar rastro en el stock. Ahora usa el mismo flujo que
+      // borrar desde la ficha del cliente.
+      if (window.confirm("¿Eliminar cliente? Se quitará de todas las listas.")) {
+        eliminarCliente(id);
       }
     },
     onNuevo: datos => {
@@ -2599,6 +2698,7 @@ function AppPrincipal({
           dispenser: datos.dispenser || 0
         }].sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (a.orden || 9999) - (b.orden || 9999));
       });
+      ajustarStockFijoCliente(null, datos);
     },
     onVolver: () => irA("menu"),
     onRegistrarVenta: c => {
@@ -2632,13 +2732,16 @@ function AppPrincipal({
       irA("detalleDesdeGestion");
     },
     onEditarCliente: (id, cambios) => {
+      const antes = clientes.find(c => c.id === id);
       saveClientes(prev => prev.map(c => c.id === id ? {
         ...c,
         ...cambios
       } : c));
+      if (antes) ajustarStockFijoCliente(antes, { ...antes, ...cambios });
     },
     onEliminar: eliminarCliente,
-    onPerdida: registrarPerdida
+    onPerdida: registrarPerdida,
+    onPerdidaCliente: registrarPerdidaCliente
   })), pantalla === "detalleDesdeGestion" && cliente && /*#__PURE__*/React.createElement(DetalleCliente, {
     cliente: cliente,
     ventas: ventas.filter(v => v.clienteId === cliente.id),
@@ -2653,6 +2756,8 @@ function AppPrincipal({
     },
     onVolver: () => irA("gestionClientes"),
     onEditar: cambios => updateCliente(cliente.id, cambios),
+    onPerdida: registrarPerdida,
+    onPerdidaCliente: registrarPerdidaCliente,
     onEliminarVenta: eliminarVenta,
     onEditarVenta: editarVenta,
     onEliminarCliente: () => {
@@ -2798,6 +2903,8 @@ function AppPrincipal({
     clientes: clientes,
     ventas: ventas,
     onEditarCliente: (id, cambios) => updateCliente(id, cambios),
+    onPerdida: registrarPerdida,
+    onPerdidaCliente: registrarPerdidaCliente,
     onCobrar: (cId, monto, pago) => {
       const cl = clientes.find(c => c.id === cId);
       if (!cl) return;

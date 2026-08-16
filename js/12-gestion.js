@@ -15,7 +15,9 @@ function GestionClientes({
   repartos,
   productos,
   onGuardarCambio,
-  onIrTab
+  onIrTab,
+  onPerdida,
+  onPerdidaCliente
 }) {
   const [fotoClienteId, setFotoClienteId] = React.useState(null);
   const [reasignandoId, setReasignandoId] = useState(null);
@@ -489,6 +491,8 @@ function GestionClientes({
     c: c,
     ventas: ventas,
     onEditar: onEditar,
+    onPerdida: onPerdida,
+    onPerdidaCliente: onPerdidaCliente,
     izquierda: /*#__PURE__*/React.createElement("button", {
       style: {
         width: 28,

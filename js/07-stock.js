@@ -175,12 +175,14 @@ function StockGeneral({
   const totalPerdidas = {
     sifon: 0,
     bidon10: 0,
-    bidon20: 0
+    bidon20: 0,
+    dispenser: 0
   };
   (perdidas || []).forEach(p => {
     totalPerdidas.sifon += p.sifon || 0;
     totalPerdidas.bidon10 += p.bidon10 || 0;
     totalPerdidas.bidon20 += p.bidon20 || 0;
+    totalPerdidas.dispenser += p.dispenser || 0;
   });
   const inNum = {
     ...s.inputNum,
@@ -880,7 +882,19 @@ function StockGeneral({
     style: {
       color: "var(--color-text-danger)"
     }
-  }, totalPerdidas.bidon20))), /*#__PURE__*/React.createElement("div", {
+  }, totalPerdidas.bidon20)), /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "var(--color-background-tertiary)",
+      borderRadius: 6,
+      padding: "3px 8px",
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, "Dispenser ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: "var(--color-text-danger)"
+    }
+  }, totalPerdidas.dispenser))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--color-background-tertiary)",
       borderRadius: 8,

@@ -540,7 +540,9 @@ function DetalleCliente({
   onConfirmarRecordatorio,
   onCobrarSaldo,
   soloLectura = false,
-  onGuardarCambio
+  onGuardarCambio,
+  onPerdida,
+  onPerdidaCliente
 }) {
   const [editandoCliente, setEditandoCliente] = useState(false);
   const [editandoVentaId, setEditandoVentaId] = useState(null);
@@ -1378,6 +1380,8 @@ function DetalleCliente({
     c: cliente,
     ventas: ventas,
     onEditar: (id, cambios) => onEditar(cambios),
+    onPerdida: onPerdida,
+    onPerdidaCliente: onPerdidaCliente,
     izquierda: /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
@@ -2627,7 +2631,9 @@ function FiadosPendientes({
   ventas,
   onCobrar,
   onVolver,
-  onEditarCliente
+  onEditarCliente,
+  onPerdida,
+  onPerdidaCliente
 }) {
   const [pagando, setPagando] = React.useState(null);
   const [monto, setMonto] = React.useState('');
@@ -2770,7 +2776,9 @@ function FiadosPendientes({
   }, "💰 Cobrar deuda"), onEditarCliente && /*#__PURE__*/React.createElement(PieEnvases, {
     c: c,
     ventas: ventas,
-    onEditar: onEditarCliente
+    onEditar: onEditarCliente,
+    onPerdida: onPerdida,
+    onPerdidaCliente: onPerdidaCliente
   }))));
 }
 function ClientesDormidos({
@@ -2781,7 +2789,8 @@ function ClientesDormidos({
   onSeleccionar,
   onEditarCliente,
   onEliminar,
-  onPerdida
+  onPerdida,
+  onPerdidaCliente
 }) {
   const [semanas, setSemanas] = React.useState(4);
   const hoy = new Date();
@@ -2958,6 +2967,7 @@ function ClientesDormidos({
     ventas: ventas,
     onEditar: onEditarCliente,
     onPerdida: onPerdida,
+    onPerdidaCliente: onPerdidaCliente,
     izquierda: onEliminar && /*#__PURE__*/React.createElement("button", {
       style: {
         fontSize: 11,
