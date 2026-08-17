@@ -1046,9 +1046,16 @@ function MenuDias({
   onDiaHoy,
   onDiaResumen,
   noVisitas,
-  onFiados
+  onFiados,
+  onIrPlanillaDia,
+  onIrClientesDia
 }) {
   const [editandoZona, setEditandoZona] = React.useState(null);
+  // Antes, tocar un día llevaba a una pantalla intermedia ("Día Principal")
+  // que solo mostraba 2 botones sin datos ("Planilla del día" / "Clientes
+  // del día") antes de recién ahí elegir la fecha. Se saca esa pantalla de
+  // en medio: tocar el día expande estos 2 botones ACÁ MISMO, en la fila.
+  const [diaExpandido, setDiaExpandido] = React.useState(null);
   const hoyDiaNombre = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][new Date().getDay()];
   const hoyFechaKey = (() => {
     const d = new Date();
@@ -1307,7 +1314,7 @@ function MenuDias({
         alignItems: "center",
         padding: "14px 16px"
       },
-      onClick: () => onDia(d)
+      onClick: () => setDiaExpandido(diaExpandido === d ? null : d)
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
@@ -1546,7 +1553,48 @@ function MenuDias({
         e.stopPropagation();
         setEditandoZona(d);
       }
-    }, "editar zona")), idx === dias.length - 1 && stock && (() => {
+    }, "editar zona")), diaExpandido === d && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginTop: 2
+      },
+      onClick: e => e.stopPropagation()
+    }, /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.card,
+        margin: 0,
+        flex: 1,
+        cursor: "pointer",
+        textAlign: "center",
+        padding: "12px 8px",
+        background: "var(--color-background-tertiary)"
+      },
+      onClick: () => onIrPlanillaDia(d)
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, "📋 Planilla")), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.card,
+        margin: 0,
+        flex: 1,
+        cursor: "pointer",
+        textAlign: "center",
+        padding: "12px 8px",
+        background: "var(--color-background-tertiary)"
+      },
+      onClick: () => onIrClientesDia(d)
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, "👥 Clientes"))), idx === dias.length - 1 && stock && (() => {
       const CAJON = 6;
       const sCaj = Math.floor((stock.soderia?.sifon || 0) / CAJON);
       const cCaj = Math.floor((stock.casa?.sifon || 0) / CAJON);

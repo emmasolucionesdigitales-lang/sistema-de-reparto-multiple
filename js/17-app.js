@@ -2242,7 +2242,21 @@ function AppPrincipal({
     }),
     onFiados: () => irA("fiadosPendientes"),
     onPlanillaAtajo: () => irA("atajoPlanillaSemana"),
-    planillas: planillas
+    planillas: planillas,
+    // Reemplazan a "diaPrincipal" (pantalla intermedia sin datos que solo
+    // preguntaba Planilla-o-Clientes): ahora esa elección se hace en el
+    // propio menú de días, tocando el día, y estos dos props van directo al
+    // mismo destino al que iba diaPrincipal — mismo criterio de "saltar
+    // Inicio del reparto si el camión ya salió hoy" que ya usaba onIrClientes.
+    onIrPlanillaDia: d => {
+      setDiaActual(d);
+      irA("selectorFechaPlanilla");
+    },
+    onIrClientesDia: d => {
+      setDiaActual(d);
+      const yaIniciado = fechaActual && planillas[claveDiaReparto(d, fechaActual, repartoActual?.id)]?.iniciado;
+      irA(yaIniciado ? "clientes" : "selectorFechaClientes");
+    }
   }), pantalla === "atajoPlanillaSemana" && repartoActual && /*#__PURE__*/React.createElement(AtajoPlanillaSemana, {
     planillas: planillas,
     ventas: ventas.filter(v => {
