@@ -4167,7 +4167,11 @@ function PlanillaDelDia({
           const el = document.getElementById("planilla-capture");
           if (el && window.html2canvas) {
             const canvas = await window.html2canvas(el, {
-              scale: 1.5,
+              // Escala reducida (antes 1.5): una planilla con muchos clientes
+              // generaba una imagen muy alta que, en base64 dentro del HTML
+              // del mail, podía superar el límite de tamaño de la API de
+              // envío y hacer fallar el envío ENTERO (texto incluido).
+              scale: 1,
               useCORS: true,
               allowTaint: true,
               backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--color-background-primary").trim() || "#0f1923",
@@ -4178,15 +4182,29 @@ function PlanillaDelDia({
               windowWidth: el.offsetWidth,
               windowHeight: el.scrollHeight
             });
-            imgData = canvas.toDataURL("image/jpeg", 0.78);
+            let data = canvas.toDataURL("image/jpeg", 0.6);
+            // Si aun así queda pesada (planillas muy largas), comprimir más
+            // antes de intentar mandarla — mejor una foto algo más chica que
+            // arriesgar que el mail entero no se mande.
+            if (data.length > 700000) data = canvas.toDataURL("image/jpeg", 0.35);
+            imgData = data;
           }
         } catch (e) {
           console.warn("Captura falló:", e);
         }
-        const ok = await onCerrarDia(imgData);
+        let ok = await onCerrarDia(imgData);
+        // Si falló CON foto adjunta, reintentar una vez sin la imagen — así
+        // el dueño recibe al menos el resumen en texto en vez de nada, y
+        // sabemos que el problema fue el tamaño/formato de la foto y no la
+        // conexión o el email en sí.
+        let sinFoto = false;
+        if (!ok && imgData) {
+          ok = await onCerrarDia(null);
+          sinFoto = ok;
+        }
         if (ok) {
           setEnviosInforme(Number(localStorage.getItem(`sr_informe_${fecha}_${dia}`) || envios + 1));
-          alert(`✅ Informe enviado a tu email, con copia de la planilla del día.${quedan - 1 > 0 ? `\n\nSi hace falta, podés reenviarlo ${quedan - 1} ${quedan - 1 === 1 ? "vez" : "veces"} más.` : ""}`);
+          alert(sinFoto ? "✅ Informe enviado a tu email (sin la foto de la planilla — era muy pesada). Los datos del día están igual, completos." : `✅ Informe enviado a tu email, con copia de la planilla del día.${quedan - 1 > 0 ? `\n\nSi hace falta, podés reenviarlo ${quedan - 1} ${quedan - 1 === 1 ? "vez" : "veces"} más.` : ""}`);
         } else {
           alert("❌ No se pudo enviar el informe. Verificá tu conexión e intentá de nuevo.");
         }
