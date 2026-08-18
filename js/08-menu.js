@@ -2845,18 +2845,29 @@ function PlanillaDelDia({
     };
     ["soda", "b10", "b20"].forEach(pk => {
       const sk = conv[pk];
-      // "Para llenar" se llena antes de salir mañana — para el stock ya
-      // cuenta como LLENO, no como vacío.
-      s.soderia[sk] = (s.soderia[sk] || 0) + realesL[pk] + realesPL[pk];
-      s.soderia_vacios[sk] = (s.soderia_vacios[sk] || 0) + realesV[pk];
       // Sodería solo controla que vuelva TODO lo que salió cargado — los
       // préstamos y devoluciones son un asunto exclusivo del depósito (un
       // préstamo hoy hace que vuelva menos de lo que salió; el depósito
       // repone esa diferencia para que sodería se mantenga siempre en su
       // número fijo). Si sobra, se suma al depósito; si falta, se resta.
+      // BUG REAL (causa de la acumulación "sin sentido" en sodería): antes
+      // acá se sumaba TODO lo que volvió (realesL+realesPL+realesV) a
+      // sodería Y, por separado, la diferencia contra "esperado" se sumaba
+      // también al depósito — contando esa diferencia dos veces cada vez
+      // que el usuario corrige un número a mano (todos los días).
+      // Resultado: sodería nunca volvía a su número fijo, solo crecía.
+      // Ahora sodería recibe SOLO lo esperado (mantiene su número fijo) y
+      // el depósito se lleva toda la diferencia — no ambos.
       const esperadoPk = llenosCargados[pk];
       const vuelveTotalPk = realesL[pk] + realesPL[pk] + realesV[pk];
       const diffDepositoPk = vuelveTotalPk - esperadoPk;
+      const factorFijo = vuelveTotalPk > 0 ? esperadoPk / vuelveTotalPk : 1;
+      // "Para llenar" se llena antes de salir mañana — para el stock ya
+      // cuenta como LLENO, no como vacío.
+      const llenFijo = Math.max(0, Math.round((realesL[pk] + realesPL[pk]) * factorFijo));
+      const vacFijo = Math.max(0, Math.round(realesV[pk] * factorFijo));
+      s.soderia[sk] = (s.soderia[sk] || 0) + llenFijo;
+      s.soderia_vacios[sk] = (s.soderia_vacios[sk] || 0) + vacFijo;
       s.casa[sk] = (s.casa[sk] || 0) + diffDepositoPk;
     });
     // Vaciar SOLO el camión de este reparto — el del otro reparto no se toca
