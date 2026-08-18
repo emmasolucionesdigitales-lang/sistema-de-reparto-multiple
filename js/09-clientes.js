@@ -280,7 +280,29 @@ function ListaClientes({
         gap: 4,
         marginTop: 5
       }
-    }, null, atendido && /*#__PURE__*/React.createElement("span", {
+    }, (() => {
+      // BUG REPORTADO: a diferencia de Individual, acá faltaba por completo
+      // este bloque — la lista de clientes no mostraba cuántos envases
+      // (sifones/bidones/dispenser) tiene cada uno, solo el estado
+      // "✓ Listo". Se agrega el mismo cálculo y badges que usa Individual.
+      const real = {
+        sifon: Math.max(0, (Number(c.sifon) || 0) + prestadoClienteDe(c, "sifon", todasVentas || ventas)),
+        bidon10: Math.max(0, (Number(c.bidon10) || 0) + prestadoClienteDe(c, "bidon10", todasVentas || ventas)),
+        bidon20: Math.max(0, (Number(c.bidon20) || 0) + prestadoClienteDe(c, "bidon20", todasVentas || ventas))
+      };
+      return /*#__PURE__*/React.createElement(React.Fragment, null, real.sifon > 0 && /*#__PURE__*/React.createElement("span", {
+        style: s.tag
+      }, "Sifón×", real.sifon), real.bidon10 > 0 && /*#__PURE__*/React.createElement("span", {
+        style: s.tag
+      }, "10L×", real.bidon10), real.bidon20 > 0 && /*#__PURE__*/React.createElement("span", {
+        style: s.tag
+      }, "20L×", real.bidon20), c.dispenser > 0 && /*#__PURE__*/React.createElement("span", {
+        style: {
+          ...s.tag,
+          color: "#5daaff"
+        }
+      }, "Disp×", c.dispenser));
+    })(), atendido && /*#__PURE__*/React.createElement("span", {
       style: s.badge("success")
     }, "✓ Listo"), est === "noesta" && !atendido && /*#__PURE__*/React.createElement("span", {
       style: s.badge("warning")
