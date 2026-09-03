@@ -284,6 +284,16 @@ function AppPrincipal({
   }, []);
   const [fechaActual, setFechaActual] = useLS("rm_fecha_actual", ""); // ISO date key YYYY-MM-DD
   const [fechaObj, setFechaObj] = useState(null);
+  // Recuerda si se entró a "clientes" por un atajo directo del menú (con el
+  // camión ya iniciado) o por el camino normal (selectorFechaClientes →
+  // inicioReparto/clientes). "Volver" usa esto para no obligar a pasar por
+  // pantallas intermedias que ni siquiera se pisaron para entrar.
+  const [origenClientes, setOrigenClientes] = useState(null);
+  // Mismo criterio que origenClientes, pero para la pantalla "planilla":
+  // de dónde vino la selección de fecha ("planilla" normal, "atajo" desde
+  // atajoPlanillaSemana, o "menu" desde el atajo directo de diasReparto) —
+  // así "Volver" deshace el mismo camino que se usó para entrar.
+  const [origenFecha, setOrigenFecha] = useState("planilla");
   const [clienteId, setClienteId] = useState(null);
   const [initCierre, setInitCierre] = useState(false);
   const [noVisitas, setNoVisitas] = useLS("rm_novisitas_v1", []);
@@ -305,6 +315,27 @@ function AppPrincipal({
       }];
       syncData({
         perdidas: next
+      });
+      return next;
+    });
+  };
+  // Registro de movimientos de dispenser (comodato) — préstamo/retiro directo
+  // al cliente, por día. Se guarda para poder informar cuánto se prestó/
+  // retiró en el Cierre del día, junto con sifón/bidones.
+  const [dispMovs, setDispMovs] = useLS("rm_dispmovs_v1", []);
+  const registrarDispMov = (clienteId, clienteNombre, delta) => {
+    if (!delta) return;
+    setDispMovs(prev => {
+      const next = [...prev, {
+        id: Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        fechaKey: new Date().toLocaleDateString("en-CA"),
+        clienteId,
+        clienteNombre: clienteNombre || null,
+        delta,
+        _upd: Date.now()
+      }];
+      syncData({
+        dispMovs: next
       });
       return next;
     });
@@ -388,6 +419,32 @@ function AppPrincipal({
   };
   const ventas = React.useMemo(() => (ventasRaw || []).map(normalizarFechaKey), [ventasRaw]);
   const setVentas = arg => setVentasRaw(typeof arg === 'function' ? prev => arg(prev) : arg);
+  // Migración única: corrige cobros de deuda cuyo campo "dia" quedó mal por
+  // el bug reportado (onCobrarSaldo guardaba diaActual en vez del día real
+  // del cliente — un pago de un cliente de los martes podía archivarse bajo
+  // otro día si esa era la última ruta activa cuando se cargó el pago).
+  // Solo toca el campo "dia" de ventas _esCobro; no toca saldo, fecha ni el
+  // enganche con ventas fiadas que haya saldado. Es idempotente. Portado de
+  // La Catalina.
+  React.useEffect(() => {
+    if (localStorage.getItem("rm_cobros_dia_migrados_v1")) return;
+    if (!ventas.length || !clientes.length) return;
+    const clientesPorId = {};
+    clientes.forEach(c => {
+      clientesPorId[c.id] = c;
+    });
+    const aCorregir = ventas.filter(v => v._esCobro && v.dia && clientesPorId[v.clienteId] && clientesPorId[v.clienteId].dia && v.dia !== clientesPorId[v.clienteId].dia);
+    if (aCorregir.length > 0) {
+      const idsCorregir = new Set(aCorregir.map(v => v.id));
+      saveVentas(prev => prev.map(v => idsCorregir.has(v.id) ? {
+        ...v,
+        dia: clientesPorId[v.clienteId].dia,
+        _upd: Date.now()
+      } : v));
+      console.log(`✓ Corregidos ${aCorregir.length} cobro(s) de deuda con el día equivocado.`);
+    }
+    localStorage.setItem("rm_cobros_dia_migrados_v1", "1");
+  }, [ventas, clientes]);
   const [productos, setProductos] = useLS("rm_productos_v3", PRODUCTOS_INICIALES);
   const normStock = s => {
     const e = () => ({
@@ -2227,6 +2284,7 @@ function AppPrincipal({
       setFechaActual(fechaKey);
       setFechaObj(new Date(fechaKey + "T12:00:00"));
       const yaIniciado = planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?.iniciado;
+      setOrigenClientes(yaIniciado ? "menu" : null);
       irA(yaIniciado ? "clientes" : "inicioReparto");
     },
     onDiaResumen: (dia, fechaKey) => {
@@ -2234,6 +2292,7 @@ function AppPrincipal({
       setFechaActual(fechaKey);
       setFechaObj(new Date(fechaKey + "T12:00:00"));
       setInitCierre(!planillas[claveDiaReparto(dia, fechaKey, repartoActual?.id)]?._diaCerrado);
+      setOrigenFecha("menu");
       irA("planilla");
     },
     noVisitas: (noVisitas || []).filter(v => {
@@ -2255,6 +2314,7 @@ function AppPrincipal({
     onIrClientesDia: d => {
       setDiaActual(d);
       const yaIniciado = fechaActual && planillas[claveDiaReparto(d, fechaActual, repartoActual?.id)]?.iniciado;
+      setOrigenClientes(yaIniciado ? "menu" : null);
       irA(yaIniciado ? "clientes" : "selectorFechaClientes");
     }
   }), pantalla === "atajoPlanillaSemana" && repartoActual && /*#__PURE__*/React.createElement(AtajoPlanillaSemana, {
@@ -2268,6 +2328,7 @@ function AppPrincipal({
     onSeleccionar: (fk, dia) => {
       setDiaActual(dia);
       setFechaActual(fk);
+      setOrigenFecha("atajo");
       irA("planilla");
     },
     onVolver: () => irA("diasReparto")
@@ -2308,6 +2369,7 @@ function AppPrincipal({
     onSeleccionar: (fk, fo) => {
       setFechaActual(fk);
       setFechaObj(fo);
+      setOrigenFecha("planilla");
       irA("planilla");
     },
     onVolver: () => irA("diaPrincipal")
@@ -2316,6 +2378,8 @@ function AppPrincipal({
     fecha: fechaActual,
     repartoId: repartoActual?.id,
     ventas: ventas.filter(v => v.dia === diaActual && v.fechaKey === fechaActual && (!repartoActual || clientes.find(c => c.id === v.clienteId)?.repartoId === repartoActual.id)),
+    todasLasVentas: ventas,
+    dispMovs: dispMovs.filter(m => m.fechaKey === fechaActual && (!repartoActual || clientes.find(c => c.id === m.clienteId)?.repartoId === repartoActual.id)),
     clientes: clientes.filter(c => !repartoActual || c.repartoId === repartoActual.id),
     planilla: planillas[claveDiaReparto(diaActual, fechaActual, repartoActual?.id)] || planillaDiaVacia(),
     productos: productos,
@@ -2326,7 +2390,10 @@ function AppPrincipal({
       savePlanilla(claveDiaReparto(diaActual, fechaActual, repartoActual?.id), d);
       irA("planilla");
     },
-    onVolver: () => irA("selectorFechaPlanilla"),
+    // Deshace el mismo camino que se usó para entrar (atajo semanal, atajo
+    // directo del menú, o selectorFechaPlanilla normal) — mismo criterio
+    // que origenClientes para la pantalla "clientes".
+    onVolver: () => irA(origenFecha === "atajo" ? "atajoPlanillaSemana" : origenFecha === "menu" ? "menu" : "selectorFechaPlanilla"),
     onCerrarDia: img => cerrarDia(fechaActual, diaActual, img),
     initCierre: initCierre,
     noVisitas: (noVisitas || []).filter(v => {
@@ -2334,7 +2401,22 @@ function AppPrincipal({
       return !repartoActual || cl?.repartoId === repartoActual.id;
     }),
     cargasDia: cargasDiaDe(repartoActual?.id),
-    setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v)
+    setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
+    // Editar/eliminar venta y registrar envases prestados/devueltos directo
+    // desde la Planilla del día (antes solo se podía desde el perfil del
+    // cliente) — mismas funciones ya usadas en el resto de la app. Portado
+    // de La Catalina.
+    onEditarVenta: editarVenta,
+    onEliminarVenta: eliminarVenta,
+    onEditarCliente: (id, cambios) => {
+      const antes = clientes.find(c => c.id === id);
+      saveClientes(prev => prev.map(c => c.id === id ? {
+        ...c,
+        ...cambios
+      } : c));
+      if (antes) ajustarStockFijoCliente(antes, { ...antes, ...cambios });
+    },
+    onPerdidaCliente: registrarPerdidaCliente
   }), pantalla === "selectorFechaClientes" && /*#__PURE__*/React.createElement(SelectorFecha, {
     dia: diaActual,
     repartoId: repartoActual?.id,
@@ -2350,6 +2432,9 @@ function AppPrincipal({
     onSeleccionar: (fk, fo) => {
       setFechaActual(fk);
       setFechaObj(fo);
+      // Se pasó por selectorFechaClientes (camino normal, no el atajo desde
+      // el menú): "Volver" desde clientes debe seguir el camino normal.
+      setOrigenClientes(null);
       const yaIniciado = planillas[claveDiaReparto(diaActual, fk, repartoActual?.id)]?.iniciado;
       irA(yaIniciado ? "clientes" : "inicioReparto");
     },
@@ -2421,6 +2506,7 @@ function AppPrincipal({
       if (cd) updateCliente(id, {
         dispenser: Math.max(0, (Number(cd.dispenser) || 0) + delta)
       });
+      registrarDispMov(id, cd?.nombre, delta);
     },
     onEditarCliente: (id, cambios) => updateCliente(id, cambios),
     onSeleccionar: c => {
@@ -2432,7 +2518,11 @@ function AppPrincipal({
       irA("venta");
     },
     onNuevoCliente: () => irA("nuevoCliente"),
-    onVolver: () => irA("selectorFechaClientes"),
+    // Si se entró por atajo directo del menú (camión ya iniciado), "Volver"
+    // vuelve directo al menú en vez de forzar el camino largo
+    // (selectorFechaClientes → inicioReparto/diaPrincipal → menú) que ni
+    // siquiera se pisó para entrar acá.
+    onVolver: () => irA(origenClientes === "menu" ? "menu" : "selectorFechaClientes"),
     onReordenar: lista => {
       saveClientes(prev => [...prev.filter(c => c.dia !== diaActual), ...lista]);
     },
@@ -2538,12 +2628,16 @@ function AppPrincipal({
         precio: 0,
         total: 0
       }];
+      // BUG REPORTADO: un cobro de deuda quedaba archivado bajo el día/fecha
+      // que la app tenía activos en ese momento (diaActual/fechaActual, que
+      // pueden venir de una sesión vieja o de otro cliente) en vez del día
+      // real del cliente y la fecha real de hoy. Portado de La Catalina.
       const vt = {
         id: Date.now(),
         clienteId: c.id,
         cliente: c.nombre,
-        dia: diaActual,
-        fechaKey: fechaActual,
+        dia: c.dia,
+        fechaKey: new Date().toLocaleDateString("en-CA"),
         fecha: new Date().toLocaleString("es-AR"),
       hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
         detalle: det,
@@ -2893,12 +2987,16 @@ function AppPrincipal({
           precio: 0,
           total: 0
         }];
-        const fk = fechaActual || new Date().toLocaleDateString("en-CA");
+        // BUG REPORTADO: mismo problema que en el perfil normal — Gestión
+        // permite ver cualquier cliente sin importar el día activo, así que
+        // ni diaActual ni fechaActual (que pueden venir de una sesión vieja)
+        // sirven acá. Portado de La Catalina.
+        const fk = new Date().toLocaleDateString("en-CA");
         const vt = {
           id: Date.now(),
           clienteId: cliente.id,
           cliente: cliente.nombre,
-          dia: diaActual || cliente.dia,
+          dia: cliente.dia,
           fechaKey: fk,
           fecha: new Date().toLocaleString("es-AR"),
       hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
@@ -2958,6 +3056,7 @@ function AppPrincipal({
     recordatorios: recordatorios || [],
     clientes: clientes,
     repartidores: repartidoresUnicos,
+    onReordenar: nuevaLista => saveRecordatorios(nuevaLista),
     onConfirmar: id => saveRecordatorios(prev => (prev || []).map(r => r.id === id ? {
       ...r,
       confirmado: true

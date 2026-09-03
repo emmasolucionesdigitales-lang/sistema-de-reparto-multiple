@@ -396,16 +396,47 @@ function ListaClientes({
         paddingTop: 10,
         borderTop: "0.5px solid var(--color-border-tertiary)"
       }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        marginBottom: 10
+      }
     }, /*#__PURE__*/React.createElement("button", {
       style: {
+        flex: 1,
+        background: "var(--color-background-warning)",
+        color: "var(--color-text-warning)",
+        border: "1px solid var(--color-border-warning)",
+        borderRadius: 10,
+        padding: "10px 0",
+        fontSize: 13,
+        cursor: "pointer",
+        fontWeight: 500
+      },
+      onClick: () => marcarNoVisita(c.id, est === "noesta" ? "noesta2" : "noesta")
+    }, est === "noesta" ? "2ª vez" : "🔄 No está"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 1,
+        background: "var(--color-background-danger)",
+        color: "var(--color-text-danger)",
+        border: "1px solid var(--color-border-danger)",
+        borderRadius: 10,
+        padding: "10px 0",
+        fontSize: 13,
+        cursor: "pointer",
+        fontWeight: 500
+      },
+      onClick: () => marcarNoVisita(c.id, "noquiso")
+    }, "No quiere"), /*#__PURE__*/React.createElement("button", {
+      style: {
         ...s.btn,
-        width: "100%",
-        marginBottom: 10,
+        flex: 1.3,
         fontSize: 13,
         fontWeight: 500
       },
       onClick: () => setClienteExpandidoId(null)
-    }, "▲ Cerrar"), /*#__PURE__*/React.createElement(NuevaVenta, {
+    }, "▲ Cerrar")), /*#__PURE__*/React.createElement(NuevaVenta, {
       key: `${c.id}-${(todasVentas || ventas).filter(v => v.clienteId === c.id).length}`,
       compacto: true,
       cliente: c,

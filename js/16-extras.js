@@ -1454,12 +1454,17 @@ function AgendaScreen({
   onNuevo,
   onIrCliente,
   onVolver,
+  onReordenar,
   repartidores
 }) {
   const [mostrarNuevo, setMostrarNuevo] = React.useState(false);
   const [clienteBusq, setClienteBusq] = React.useState("");
   const [clienteSel, setClienteSel] = React.useState(null);
   const [filtro, setFiltro] = React.useState("pendiente"); // pendiente | todos
+  // Tocá el recordatorio para "levantarlo" y tocá otro para soltarlo ahí —
+  // mismo gesto de "tocar y mover" que ya existe en Clientes del día, para
+  // poder fijar en qué orden pensás visitarlos (independiente de la fecha).
+  const [moviendo, setMoviendo] = React.useState(null);
   const hoy = (() => {
     const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
     return d.toISOString().slice(0, 10);
@@ -1476,11 +1481,32 @@ function AgendaScreen({
     visita: "var(--color-background-info)",
     cobro: "var(--color-background-warning)"
   };
-  const lista = [...(recordatorios || [])].sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const lista = [...(recordatorios || [])].sort((a, b) => (a.orden || 9999) - (b.orden || 9999) || a.fecha.localeCompare(b.fecha));
   const pendientes = lista.filter(r => !r.confirmado);
   const confirmados = lista.filter(r => r.confirmado);
   const mostrar = filtro === "pendiente" ? pendientes : lista;
-  const clientesFiltrados = clienteBusq ? clientes.filter(c => c.nombre.toLowerCase().includes(clienteBusq.toLowerCase())).slice(0, 5) : [];
+  // Reordena SOLO entre los pendientes (los ya hechos no necesitan orden de
+  // visita) — igual que moverCliente en Clientes del día: se numera todo en
+  // secuencia según la posición nueva.
+  const moverRecordatorio = (idOrigen, idDestino) => {
+    if (idOrigen === idDestino) return;
+    const ordenActual = pendientes.map(r => r.id);
+    const idxOrigen = ordenActual.indexOf(idOrigen);
+    const idxDestino = ordenActual.indexOf(idDestino);
+    if (idxOrigen === -1 || idxDestino === -1) return;
+    const nuevoOrden = [...ordenActual];
+    const [item] = nuevoOrden.splice(idxOrigen, 1);
+    nuevoOrden.splice(idxDestino, 0, item);
+    const posMap = {};
+    nuevoOrden.forEach((id, i) => {
+      posMap[id] = i + 1;
+    });
+    onReordenar && onReordenar((recordatorios || []).map(r => posMap[r.id] !== undefined ? {
+      ...r,
+      orden: posMap[r.id]
+    } : r));
+  };
+  const clientesFiltrados = clienteBusq ? clientes.filter(c => buscarCliente(c, clienteBusq) > 0).slice(0, 5) : [];
   const hoyPend = pendientes.filter(r => r.fecha === hoy).length;
   const vencidos = pendientes.filter(r => r.fecha < hoy).length;
   return /*#__PURE__*/React.createElement("div", {
@@ -1633,7 +1659,33 @@ function AgendaScreen({
         alignItems: "flex-start",
         gap: 10
       }
+    }, !r.confirmado && /*#__PURE__*/React.createElement("div", {
+      style: {
+        flexShrink: 0,
+        paddingTop: 2,
+        cursor: "pointer"
+      },
+      onClick: () => {
+        if (moviendo === null) setMoviendo(r.id);else if (moviendo === r.id) setMoviendo(null);else {
+          moverRecordatorio(moviendo, r.id);
+          setMoviendo(null);
+        }
+      }
     }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        background: moviendo === r.id ? "#185FA5" : moviendo ? "var(--color-background-warning)" : "var(--color-background-secondary)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 12,
+        fontWeight: 600,
+        color: moviendo === r.id ? "#fff" : moviendo ? "var(--color-text-warning)" : "var(--color-text-secondary)",
+        border: moviendo === r.id ? "1.5px solid #5daaff" : "0.5px solid var(--color-border-tertiary)"
+      }
+    }, moviendo === r.id ? "✓" : r.orden || "≡")), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
         minWidth: 0
@@ -1675,7 +1727,7 @@ function AgendaScreen({
         color: "var(--color-text-secondary)",
         marginBottom: 4
       }
-    }, c.dia, " · ", c.barrio || ""), /*#__PURE__*/React.createElement("div", {
+    }, c.dia, direccionCliente(c) && " · ", direccionCliente(c)), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--color-text-primary)",
@@ -1807,7 +1859,7 @@ function NuevoRecordatorioForm({
   const [clienteId, setClienteId] = React.useState(null);
   const [motivo, setMotivo] = React.useState("");
   const [paraRepartidor, setParaRepartidor] = React.useState(""); // "" = yo mismo (dueño)
-  const clientesFilt = busq.length > 1 ? clientes.filter(c => c.nombre.toLowerCase().includes(busq.toLowerCase())).slice(0, 6) : [];
+  const clientesFilt = busq.length > 1 ? clientes.filter(c => buscarCliente(c, busq) > 0).slice(0, 6) : [];
   const clienteSel = clientes.find(c => c.id === clienteId);
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TipoRecordatorioSelector, {
     tipo: tipo,
@@ -1883,7 +1935,7 @@ function NuevoRecordatorioForm({
       fontSize: 11,
       color: "var(--color-text-secondary)"
     }
-  }, c.dia, " · ", c.barrio || ""))))), repartidores && repartidores.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, c.dia, direccionCliente(c) && " · ", direccionCliente(c)))))), repartidores && repartidores.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 10
     }
