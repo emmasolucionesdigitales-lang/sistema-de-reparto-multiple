@@ -14,9 +14,16 @@ function NuevaVenta({
   ventasCliente,
   progressData,
   compacto,
-  onCambiarDispenser
+  onCambiarDispenser,
+  ventaEditar,
+  onCancelar
 }) {
-  const [transConfirmada, setTransConfirmada] = React.useState(false);
+  // Modo edición: la tarjeta compacta se reutiliza para editar una venta ya
+  // guardada (antes era el componente aparte EditVenta). esMixtaOrigEdit
+  // detecta si esa venta se guardó como pago mixto (mismo criterio que usaba
+  // EditVenta: pago === "mixto" o montoTrans > 0).
+  const esMixtaOrigEdit = ventaEditar && (ventaEditar.pago === "mixto" || (Number(ventaEditar.montoTrans) || 0) > 0);
+  const [transConfirmada, setTransConfirmada] = React.useState(() => ventaEditar && ventaEditar.pago === "transferencia" ? !!ventaEditar.transConfirmada : false);
   const [dispDelta, setDispDelta] = React.useState(0);
   const [masOpcionesCompacto, setMasOpcionesCompacto] = React.useState(false);
   const [mostrarRotoCompacto, setMostrarRotoCompacto] = React.useState(false);
@@ -50,6 +57,13 @@ function NuevaVenta({
     (productos || []).forEach(p => {
       m[p.nombre] = 0;
     });
+    if (ventaEditar) {
+      const det = Array.isArray(ventaEditar.detalle) ? ventaEditar.detalle : Object.values(ventaEditar.detalle || {});
+      det.forEach(d => {
+        if (!d._esDispRoto && nombresEntrega.includes(d.nombre)) m[d.nombre] = d.cantidad || 0;
+      });
+      return m;
+    }
     if (ultimaConProd) {
       const det = Array.isArray(ultimaConProd.detalle) ? ultimaConProd.detalle : Object.values(ultimaConProd.detalle || {});
       det.forEach(d => {
@@ -58,12 +72,13 @@ function NuevaVenta({
     }
     return m;
   });
-  const [repetido, setRepetido] = useState(!!ultimaConProd);
+  const [repetido, setRepetido] = useState(() => ventaEditar ? true : !!ultimaConProd);
   // Si el usuario ya tocó las cantidades a mano, nunca más las pisamos con
   // datos que lleguen después de Firebase (bug: "se borraba la carga").
   const cantidadesTocadas = React.useRef(false);
   const ventasClienteRef = React.useRef(ventasCliente);
   React.useEffect(() => {
+    if (ventaEditar) return;
     if (ventasClienteRef.current === ventasCliente || repetido || cantidadesTocadas.current) return;
     ventasClienteRef.current = ventasCliente;
     const nombres = (productos || []).filter(p => !p.esDispenser).map(p => p.nombre);
@@ -84,11 +99,11 @@ function NuevaVenta({
     setCantidades(m);
     setRepetido(true);
   }, [ventasCliente]);
-  const [pago, setPago] = useState("contado");
-  const [monto, setMonto] = useState("");
-  const [montoEfec, setMontoEfec] = useState(""); // pago mixto: parte efectivo
-  const [montoTrans, setMontoTrans] = useState(""); // pago mixto: parte transferencia
-  const [transConfMixto, setTransConfMixto] = useState(false);
+  const [pago, setPago] = useState(() => ventaEditar ? (esMixtaOrigEdit ? "mixto" : ventaEditar.pago || "contado") : "contado");
+  const [monto, setMonto] = useState(() => ventaEditar ? String(ventaEditar.pagadoNum || ventaEditar.neto || "") : "");
+  const [montoEfec, setMontoEfec] = useState(() => ventaEditar && esMixtaOrigEdit ? String(ventaEditar.montoEfec || "") : ""); // pago mixto: parte efectivo
+  const [montoTrans, setMontoTrans] = useState(() => ventaEditar && esMixtaOrigEdit ? String(ventaEditar.montoTrans || "") : ""); // pago mixto: parte transferencia
+  const [transConfMixto, setTransConfMixto] = useState(() => ventaEditar && esMixtaOrigEdit ? !!ventaEditar.transConfirmada : false);
   const [usarSaldo, setUsarSaldo] = useState(false);
   const [opcionSaldo, setOpcionSaldo] = useState("compra"); // compra | todo | parcial
   const [envPrest, setEnvPrest] = useState([{
@@ -128,7 +143,7 @@ function NuevaVenta({
     return n;
   });
   const getEnvCnt = (list, prod) => list.filter(e => e.prod === prod).reduce((a, e) => a + (Number(e.cant) || 0), 0);
-  const [obs, setObs] = useState("");
+  const [obs, setObs] = useState(() => ventaEditar ? (ventaEditar.obs || "").replace(/\s*\[Mixto:[^\]]*\]/g, "") : "");
   const [dispRotoPrecio, setDispRotoPrecio] = React.useState("");
   const dispenser = productos.find(p => p.esDispenser);
   const prodEntrega = productos.filter(p => !p.esDispenser);
@@ -149,7 +164,10 @@ function NuevaVenta({
   const desc = 0; // retención informativa solo en planilla
   const neto = bruto - desc;
   const saldoDisp = cliente.saldo > 0 ? cliente.saldo : 0;
-  const saldoApl = usarSaldo && pago !== "fiado" ? Math.min(saldoDisp, neto) : 0;
+  // En edición mantenemos el saldoAplicado original de la venta (igual que
+  // hacía EditVenta) — no lo recalculamos por el toggle "usar saldo" para no
+  // duplicar/perder aplicaciones de saldo ya hechas al registrar la venta.
+  const saldoApl = ventaEditar ? Number(ventaEditar.saldoAplicado) || 0 : usarSaldo && pago !== "fiado" ? Math.min(saldoDisp, neto) : 0;
   const aPagar = neto - saldoApl;
   const deudaPendiente = cliente.saldo < 0 ? Math.abs(cliente.saldo) : 0;
   const totalACobrar = opcionSaldo === "todo" ? Math.round(deudaPendiente + aPagar) : aPagar;
@@ -234,8 +252,13 @@ function NuevaVenta({
     }
     if (dispDelta !== 0 && onCambiarDispenser) onCambiarDispenser(dispDelta);
   };
-  if (compacto) {
-    return /*#__PURE__*/React.createElement(React.Fragment, null, prodEntrega.map(p => {
+  // cuerpoCompacto: el cuerpo de la tarjeta (productos, envases, dispenser,
+  // pago, más opciones, botón final) es UNA sola definición — se usa tanto
+  // embebido (compacto=true) como dentro de la pantalla completa de abajo
+  // (con header, info del cliente y botones No está/No quiere/Saltar
+  // alrededor). Antes la pantalla completa tenía su propio JSX distinto;
+  // ahora comparten exactamente el mismo cuerpo.
+  const cuerpoCompacto = /*#__PURE__*/React.createElement(React.Fragment, null, prodEntrega.map(p => {
       const netoEnv = getEnvCnt(envPrest, p.nombre) - getEnvCnt(envDev, p.nombre);
       const incrementarEnv = () => {
         if (netoEnv < 0) subEnv(setEnvDev, p.nombre);else addEnv(setEnvPrest, p.nombre);
@@ -324,7 +347,8 @@ function NuevaVenta({
           cursor: "pointer",
           padding: 0
         },
-        onClick: decrementarEnv,
+        onClick: ventaEditar ? undefined : decrementarEnv,
+        disabled: !!ventaEditar,
         title: "Devolvió uno"
       }, "−"), /*#__PURE__*/React.createElement("span", {
         style: {
@@ -347,10 +371,11 @@ function NuevaVenta({
           cursor: "pointer",
           padding: 0
         },
-        onClick: incrementarEnv,
+        onClick: ventaEditar ? undefined : incrementarEnv,
+        disabled: !!ventaEditar,
         title: "Prestó uno"
       }, "+")));
-    }), dispenser && /*#__PURE__*/React.createElement("div", {
+    }), dispenser && !ventaEditar && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr auto 70px",
@@ -413,7 +438,7 @@ function NuevaVenta({
         textAlign: "center",
         color: dispDelta > 0 ? "var(--color-text-info)" : dispDelta < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
       }
-    }, dispDelta > 0 ? `presté ${dispDelta}` : dispDelta < 0 ? `retiré ${-dispDelta}` : "sin cambio")), /*#__PURE__*/React.createElement("div", {
+    }, dispDelta > 0 ? `presté ${dispDelta}` : dispDelta < 0 ? `retiré ${-dispDelta}` : "sin cambio")), !ventaEditar && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 6,
@@ -441,7 +466,7 @@ function NuevaVenta({
         border: mostrarCambio ? "none" : undefined
       },
       onClick: () => setMostrarCambio(m => !m)
-    }, "🔄 Cambio de envase")), mostrarRotoCompacto && dispenser && /*#__PURE__*/React.createElement("div", {
+    }, "🔄 Cambio de envase")), !ventaEditar && mostrarRotoCompacto && dispenser && /*#__PURE__*/React.createElement("div", {
       style: {
         ...s.card,
         margin: "0 0 8px",
@@ -468,7 +493,7 @@ function NuevaVenta({
         setDispRotoPrecio("");
         setMostrarRotoCompacto(false);
       }
-    }, "Cancelar")), mostrarCambio && /*#__PURE__*/React.createElement(CambioEnvasePanel, {
+    }, "Cancelar")), !ventaEditar && mostrarCambio && /*#__PURE__*/React.createElement(CambioEnvasePanel, {
       productos: productos,
       onCancelar: () => setMostrarCambio(false),
       onConfirmar: (productoViejo, productoNuevo, motivo) => {
@@ -609,7 +634,7 @@ function NuevaVenta({
       placeholder: `Monto cobrado (vacío = ${fmt(aPagar)})`,
       value: monto,
       onChange: e => setMonto(e.target.value)
-    }), (saldoDisp > 0 || cliente.saldo < 0) && /*#__PURE__*/React.createElement("div", {
+    }), (ventaEditar || saldoDisp > 0 || cliente.saldo < 0) && /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 8
       }
@@ -620,11 +645,11 @@ function NuevaVenta({
         cursor: "pointer"
       },
       onClick: () => setMasOpcionesCompacto(m => !m)
-    }, masOpcionesCompacto ? "▲ Menos opciones" : "▼ Más opciones (saldo, deuda, notas)"), masOpcionesCompacto && /*#__PURE__*/React.createElement("div", {
+    }, ventaEditar ? masOpcionesCompacto ? "▲ Ocultar notas" : "▼ Notas" : masOpcionesCompacto ? "▲ Menos opciones" : "▼ Más opciones (saldo, deuda, notas)"), masOpcionesCompacto && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 8
       }
-    }, saldoDisp > 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
+    }, !ventaEditar && saldoDisp > 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
       style: {
         ...s.card,
         margin: "0 0 8px",
@@ -657,7 +682,7 @@ function NuevaVenta({
         cursor: "pointer",
         fontWeight: 500
       }
-    }, "Usar saldo a favor — ", fmt(saldoDisp)))), cliente.saldo < 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
+    }, "Usar saldo a favor — ", fmt(saldoDisp)))), !ventaEditar && cliente.saldo < 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
       style: {
         ...s.card,
         margin: "0 0 8px",
@@ -692,7 +717,7 @@ function NuevaVenta({
         fontWeight: opcionSaldo === op ? 500 : 400
       },
       onClick: () => setOpcionSaldo(op)
-    }, opcionSaldo === op ? "✓ " : "", label, total ? ` — ${fmt(total)}` : "")))), cliente.saldo < 0 && /*#__PURE__*/React.createElement(CobroDeudaPanel, {
+    }, opcionSaldo === op ? "✓ " : "", label, total ? ` — ${fmt(total)}` : "")))), !ventaEditar && cliente.saldo < 0 && /*#__PURE__*/React.createElement(CobroDeudaPanel, {
       saldo: cliente.saldo,
       onCobrar: (mCobro, pCobro) => {
         onGuardar([{
@@ -730,18 +755,32 @@ function NuevaVenta({
         fontWeight: 500,
         color: "var(--color-text-primary)"
       }
-    }, fmt(totalACobrar))), /*#__PURE__*/React.createElement("button", {
+    }, fmt(totalACobrar))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        marginBottom: 6
+      }
+    }, ventaEditar && onCancelar && /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        flex: 1,
+        padding: "9px",
+        fontSize: 13
+      },
+      onClick: onCancelar
+    }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
       style: {
         ...s.btnPrimary,
-        marginBottom: 6,
+        flex: ventaEditar ? 2 : 1,
         padding: "9px",
         fontSize: 13,
         opacity: detalle.length === 0 ? 0.45 : 1
       },
       disabled: detalle.length === 0,
       onClick: confirmarRegistro
-    }, "✓ Registrar entrega"));
-  }
+    }, ventaEditar ? "💾 Guardar cambios" : "✓ Registrar entrega")));
+  if (compacto) return cuerpoCompacto;
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement("div", {
@@ -941,446 +980,13 @@ function NuevaVenta({
     style: {
       padding: 16
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      ...s.sectionTitle,
-      padding: "0 0 10px"
-    }
-  }, "Cantidades entregadas"), repetido && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 8,
-      background: "var(--color-background-info)",
-      border: "0.5px solid var(--color-border-tertiary)",
-      borderRadius: 8,
-      padding: "8px 12px",
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-info)",
-      fontWeight: 500
-    }
-  }, "🔁 Repetido de la última venta"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      padding: "4px 12px",
-      fontSize: 12
-    },
-    onClick: () => {
-      cantidadesTocadas.current = true;
-      setCantidades(q => {
-        const m = {};
-        Object.keys(q).forEach(k => m[k] = 0);
-        return m;
-      });
-      setRepetido(false);
-    }
-  }, "Vaciar")), prodEntrega.map(p => /*#__PURE__*/React.createElement("div", {
-    key: p.id,
-    style: {
-      ...s.card,
-      margin: "0 0 8px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, p.nombre), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, fmt(p.precio), " c/u")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      padding: "5px 16px",
-      fontSize: 20,
-      lineHeight: 1
-    },
-    onClick: () => (cantidadesTocadas.current = true, setCantidades(q => ({
-      ...q,
-      [p.nombre]: Math.max(0, (q[p.nombre] || 0) - 1)
-    })))
-  }, "−"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 22,
-      fontWeight: 500,
-      minWidth: 32,
-      textAlign: "center",
-      color: "var(--color-text-primary)"
-    }
-  }, cantidades[p.nombre] || 0), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      padding: "5px 16px",
-      fontSize: 20,
-      lineHeight: 1
-    },
-    onClick: () => (cantidadesTocadas.current = true, setCantidades(q => ({
-      ...q,
-      [p.nombre]: (q[p.nombre] || 0) + 1
-    })))
-  }, "+")))), /*#__PURE__*/React.createElement("div", {
-    style: s.divider
-  }), /*#__PURE__*/React.createElement("label", {
-    style: {
-      ...s.label,
-      fontSize: 13,
-      marginBottom: 8
-    }
-  }, "Forma de pago"), /*#__PURE__*/React.createElement("div", {
+  }, (onNoEsta || onNoQuiere || onSaltar) && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
-      marginBottom: 12
+      marginBottom: 14
     }
-  }, [["contado", "Contado"], ["transferencia", "Transfer."], ["fiado", "Fiado"], ["mixto", "Mixto"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    style: {
-      ...s.btn,
-      flex: 1,
-      background: pago === v ? "#185FA5" : undefined,
-      color: pago === v ? "#fff" : undefined,
-      border: pago === v ? "none" : undefined,
-      padding: "9px 4px",
-      fontSize: 13
-    },
-    onClick: () => setPago(v)
-  }, l))), pago === "transferencia" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      background: transConfirmada ? "#0a2e1f" : "#1e3a5f",
-      border: transConfirmada ? "0.5px solid #4dd9a0" : "0.5px solid #5daaff"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: transConfirmada ? "#4dd9a0" : "#5daaff"
-    }
-  }, transConfirmada ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      background: transConfirmada ? "#4dd9a0" : "#185FA5",
-      color: transConfirmada ? "#0a2e1f" : "#fff",
-      border: "none",
-      borderRadius: 6,
-      padding: "5px 10px",
-      fontSize: 11,
-      cursor: "pointer"
-    },
-    onClick: () => {
-      setTransConfirmada(!transConfirmada);
-      if (!transConfirmada) sonarTransferencia();
-    }
-  }, transConfirmada ? "✓ OK" : "Confirmar"))), pago === "mixto" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      background: "var(--color-background-tertiary)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "var(--color-text-primary)",
-      marginBottom: 8
-    }
-  }, "Desglose del pago mixto"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 6
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Efectivo $"), /*#__PURE__*/React.createElement("input", {
-    style: s.input,
-    type: "number",
-    placeholder: "0",
-    value: montoEfec,
-    onChange: e => {
-      const ef = e.target.value;
-      setMontoEfec(ef);
-      // Total real = compra + deuda si elige pagar todo
-      const totalReal = opcionSaldo === "todo" ? Math.round(Math.abs(cliente.saldo || 0) + aPagar) : aPagar;
-      const resto = totalReal - Number(ef || 0);
-      setMontoTrans(resto > 0 ? String(Math.round(resto)) : "0");
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Transferencia $"), /*#__PURE__*/React.createElement("input", {
-    style: s.input,
-    type: "number",
-    placeholder: "0",
-    value: montoTrans,
-    onChange: e => setMontoTrans(e.target.value)
-  }))), Number(montoEfec || 0) + Number(montoTrans || 0) > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, (() => {
-    const totalReal = opcionSaldo === "todo" ? Math.round(Math.abs(cliente.saldo || 0) + aPagar) : aPagar;
-    const totalPag = Number(montoEfec || 0) + Number(montoTrans || 0);
-    return /*#__PURE__*/React.createElement(React.Fragment, null, "Total pagado: ", fmt(totalPag), " de ", fmt(totalReal), totalPag < totalReal && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--color-text-warning)"
-      }
-    }, " · Queda ", fmt(totalReal - totalPag)));
-  })()), Number(montoTrans || 0) > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "8px 0 0",
-      background: transConfMixto ? "#0a2e1f" : "#1e3a5f",
-      border: transConfMixto ? "0.5px solid #4dd9a0" : "0.5px solid #5daaff"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: transConfMixto ? "#4dd9a0" : "#5daaff"
-    }
-  }, transConfMixto ? "✓ Transfer. confirmada" : "⏳ Confirmar transferencia"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      background: transConfMixto ? "#4dd9a0" : "#185FA5",
-      color: transConfMixto ? "#0a2e1f" : "#fff",
-      border: "none",
-      borderRadius: 6,
-      padding: "5px 10px",
-      fontSize: 11,
-      cursor: "pointer"
-    },
-    onClick: () => {
-      setTransConfMixto(!transConfMixto);
-      if (!transConfMixto) sonarTransferencia();
-    }
-  }, transConfMixto ? "✓ OK" : "Confirmar")))), saldoDisp > 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      background: "var(--color-background-success)",
-      border: "0.5px solid var(--color-border-success)",
-      cursor: "pointer"
-    },
-    onClick: () => setUsarSaldo(!usarSaldo)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    type: "checkbox",
-    checked: usarSaldo,
-    onChange: e => setUsarSaldo(e.target.checked),
-    style: {
-      width: 18,
-      height: 18,
-      cursor: "pointer",
-      accentColor: "#0F6E56"
-    }
-  }), /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 14,
-      color: "var(--color-text-success)",
-      cursor: "pointer",
-      fontWeight: 500
-    }
-  }, "Usar saldo a favor — ", fmt(saldoDisp))), usarSaldo && saldoApl > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-success)",
-      marginTop: 4,
-      paddingLeft: 28
-    }
-  }, "Se descuentan ", fmt(saldoApl), " del total")), cliente.saldo < 0 && pago !== "fiado" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      background: "var(--color-background-danger)",
-      border: "0.5px solid var(--color-border-danger)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "var(--color-text-danger)",
-      marginBottom: 8
-    }
-  }, "Deuda pendiente: ", fmt(Math.abs(cliente.saldo))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 6
-    }
-  }, [["todo", "Paga deuda + compra de hoy", Math.abs(cliente.saldo) + aPagar], ["compra", "Solo la compra de hoy", null], ["parcial", "Pago parcial (ingresá el monto)", null]].map(([op, label, total]) => /*#__PURE__*/React.createElement("button", {
-    key: op,
-    style: {
-      textAlign: "left",
-      padding: "8px 12px",
-      borderRadius: 8,
-      border: "0.5px solid var(--color-border-danger)",
-      background: opcionSaldo === op ? "#7f1d1d" : "transparent",
-      color: "var(--color-text-danger)",
-      fontSize: 12,
-      cursor: "pointer",
-      fontWeight: opcionSaldo === op ? 500 : 400
-    },
-    onClick: () => setOpcionSaldo(op)
-  }, opcionSaldo === op ? "✓ " : "", label, total ? ` — ${fmt(total)}` : "")))), pago !== "fiado" && pago !== "mixto" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, opcionSaldo === "parcial" ? "Monto que paga (parcial)" : opcionSaldo === "todo" ? "Total a cobrar (deuda + compra):" : `Monto cobrado (vacío = ${fmt(aPagar)} exacto)`), /*#__PURE__*/React.createElement("input", {
-    style: s.input,
-    type: "number",
-    placeholder: opcionSaldo === "todo" ? String(Math.round(Math.abs(cliente.saldo) + aPagar)) : String(Math.round(aPagar)),
-    value: monto,
-    onChange: e => setMonto(e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: s.divider
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 12px",
-      background: "var(--color-background-secondary)"
-    }
-  }, bruto > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Subtotal"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-primary)"
-    }
-  }, fmt(bruto))), desc > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Descuento 2.5%"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-danger)"
-    }
-  }, "−", fmt(desc))), saldoApl > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Saldo a favor"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-success)"
-    }
-  }, "−", fmt(saldoApl))), pagaTodo && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-danger)"
-    }
-  }, "Deuda anterior"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--color-text-danger)"
-    }
-  }, "+", fmt(deudaPendiente))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderTop: "0.5px solid var(--color-border-tertiary)",
-      paddingTop: 10,
-      marginTop: 6,
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "baseline"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 16,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, "A cobrar"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 26,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, fmt(totalACobrar)))), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btnPrimary,
-      marginBottom: 10,
-      opacity: detalle.length === 0 ? 0.45 : 1
-    },
-    disabled: detalle.length === 0,
-    onClick: confirmarRegistro
-  }, "✓ Registrar entrega"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("button", {
+  }, onNoEsta && /*#__PURE__*/React.createElement("button", {
     style: {
       flex: 1,
       background: "var(--color-background-warning)",
@@ -1393,7 +999,7 @@ function NuevaVenta({
       cursor: "pointer"
     },
     onClick: onNoEsta
-  }, "🔄 No está"), /*#__PURE__*/React.createElement("button", {
+  }, "🔄 No está"), onNoQuiere && /*#__PURE__*/React.createElement("button", {
     style: {
       flex: 1,
       background: "var(--color-background-danger)",
@@ -1419,184 +1025,7 @@ function NuevaVenta({
       cursor: "pointer"
     },
     onClick: onSaltar
-  }, "⏭ Saltar")), cliente.saldo < 0 && /*#__PURE__*/React.createElement(CobroDeudaPanel, {
-    saldo: cliente.saldo,
-    onCobrar: (mCobro, pCobro) => {
-      onGuardar([{
-        nombre: "Cobro de deuda",
-        cantidad: 1,
-        precio: 0,
-        total: 0
-      }], pCobro, String(mCobro), 0, [], [], `Cobro de deuda $${mCobro.toLocaleString("es-AR")} (${pCobro})`, "cobro_deuda");
-    }
-  }), !mostrarCambio ? /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      width: "100%",
-      marginBottom: 10,
-      fontSize: 12,
-      padding: "8px"
-    },
-    onClick: () => setMostrarCambio(true)
-  }, "🔄 Cambio de envase (sin cobrar)") : /*#__PURE__*/React.createElement(CambioEnvasePanel, {
-    productos: productos,
-    onCancelar: () => setMostrarCambio(false),
-    onConfirmar: (productoViejo, productoNuevo, motivo) => {
-      const obsTxt = `Cambio: ${productoViejo} → ${productoNuevo}${motivo.trim() ? ` · ${motivo.trim()}` : ""}`;
-      onGuardar([{
-        nombre: "Cambio de envase",
-        cantidad: 1,
-        precio: 0,
-        total: 0
-      }], "cambio", "0", 0, [{
-        prod: productoNuevo,
-        cant: 1
-      }], [{
-        prod: productoViejo,
-        cant: 1
-      }], obsTxt, "cambio_envase");
-      setMostrarCambio(false);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: s.divider
-  }), dispenser && (cliente.dispenser || 0) > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      padding: "10px 14px",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, "🧊 Dispenser"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "En el cliente: ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-primary)"
-    }
-  }, cliente.dispenser))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      padding: 0,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    style: {
-      width: "100%",
-      padding: "10px 14px",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      background: "none",
-      border: "none",
-      cursor: "pointer"
-    },
-    onClick: () => setEnvOpen(o => !o)
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, "📦 Envases", getEnvCnt(envPrest, "Sifón 1.5L") + getEnvCnt(envPrest, "Bidón 10L") + getEnvCnt(envPrest, "Bidón 20L") + getEnvCnt(envDev, "Sifón 1.5L") + getEnvCnt(envDev, "Bidón 10L") + getEnvCnt(envDev, "Bidón 20L") > 0 ? " · hay movimientos" : ""), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--color-text-tertiary)",
-      fontSize: 16,
-      transform: envOpen ? "rotate(180deg)" : "rotate(0deg)",
-      transition: "transform 0.2s"
-    }
-  }, "⌃")), envOpen && prodEntrega.map(p => {
-  const neto = getEnvCnt(envPrest, p.nombre) - getEnvCnt(envDev, p.nombre);
-  const incrementar = () => {
-    if (neto < 0) subEnv(setEnvDev, p.nombre);else addEnv(setEnvPrest, p.nombre);
-  };
-  const decrementar = () => {
-    if (neto > 0) subEnv(setEnvPrest, p.nombre);else addEnv(setEnvDev, p.nombre);
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    key: p.nombre,
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "10px 14px",
-      borderTop: "0.5px solid var(--color-border-tertiary)"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "var(--color-text-primary)"
-    }
-  }, p.nombre), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    style: {
-      width: 34,
-      height: 34,
-      borderRadius: 8,
-      border: "0.5px solid var(--color-border-secondary)",
-      background: "var(--color-background-success)",
-      color: "var(--color-text-success)",
-      fontSize: 17,
-      fontWeight: 600,
-      cursor: "pointer"
-    },
-    onClick: decrementar,
-    title: "Devolvió uno"
-  }, "−"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      minWidth: 74,
-      textAlign: "center",
-      fontSize: 12,
-      fontWeight: 600,
-      color: neto > 0 ? "var(--color-text-info)" : neto < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
-    }
-  }, neto > 0 ? `Presté ${neto}` : neto < 0 ? `Devolvió ${-neto}` : "sin cambio"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      width: 34,
-      height: 34,
-      borderRadius: 8,
-      border: "0.5px solid var(--color-border-secondary)",
-      background: "var(--color-background-info)",
-      color: "var(--color-text-info)",
-      fontSize: 17,
-      fontWeight: 600,
-      cursor: "pointer"
-    },
-    onClick: incrementar,
-    title: "Presté uno"
-  }, "+")));
-})), 
-/*#__PURE__*/React.createElement("div", {
-    style: s.divider
-  }), /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Observaciones"), /*#__PURE__*/React.createElement("textarea", {
-    style: {
-      ...s.input,
-      minHeight: 60,
-      resize: "vertical",
-      marginBottom: 14
-    },
-    value: obs,
-    onChange: e => setObs(e.target.value),
-    placeholder: "Notas opcionales..."
-  })));
+  }, "⏭ Saltar")), cuerpoCompacto));
 }
 function NuevoCliente({
   diaActual,

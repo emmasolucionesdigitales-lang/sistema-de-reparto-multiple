@@ -515,9 +515,9 @@ function Config({
       padding: "14px 8px",
       borderRadius: 14,
       cursor: "pointer",
-      border: `2px solid ${tab === id ? "var(--color-accent)" : "var(--color-border-tertiary)"}`,
+      border: `2px solid ${tab === id ? "var(--color-accent-solid)" : "var(--color-border-tertiary)"}`,
       background: tab === id ? "var(--color-background-info)" : "var(--color-background-tertiary)",
-      boxShadow: tab === id ? "0 0 0 1px var(--color-accent), 0 4px 16px rgba(24,95,165,0.25)" : "0 2px 6px rgba(0,0,0,0.25)",
+      boxShadow: tab === id ? "0 0 0 1px var(--color-accent-solid), 0 4px 16px rgba(24,95,165,0.25)" : "0 2px 6px rgba(0,0,0,0.25)",
       color: tab === id ? "var(--color-text-info)" : "var(--color-text-secondary)",
       transition: "all 0.18s"
     }

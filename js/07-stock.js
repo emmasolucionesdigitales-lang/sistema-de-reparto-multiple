@@ -1410,7 +1410,7 @@ function ConfirmacionesDia({
       marginTop: 2
     }
   }, c?.calle ? `${c.calle} ${c.nro || ""}` : c?.manzana ? `Mz ${c.manzana} L ${c.lote}` : "", c?.barrio ? ` · ${c.barrio}` : "")), c?.telefono && /*#__PURE__*/React.createElement("a", {
-    href: `https://wa.me/54${c.telefono}`,
+    href: `https://wa.me/54${c.telefono}?text=${armarMsjTransferWA(vts)}`,
     target: "_blank",
     rel: "noreferrer",
     style: {

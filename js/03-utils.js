@@ -1764,6 +1764,29 @@ function buscarCliente(c, q) {
   if (_normalizarBusqueda(c.notas).includes(t)) return 1;
   return 0;
 }
+// ════════════════════════════════════════════════════════════════════
+// ◆  Mensaje de WhatsApp para transferencias pendientes de confirmar —
+//    UN SOLO lugar para el texto, usado desde cualquier pantalla donde
+//    aparezca una transferencia sin confirmar. Portado de La Catalina.
+//    Recibe una o varias ventas del MISMO cliente (agrupa cantidades de
+//    un mismo producto si viene repartido en más de una venta) y devuelve
+//    el texto ya codificado, listo para el href de wa.me.
+// ════════════════════════════════════════════════════════════════════
+function armarMsjTransferWA(ventas) {
+  const lista = ventas || [];
+  const porNombre = {};
+  lista.forEach(v => {
+    (v.detalle || []).forEach(d => {
+      if (!d || !(d.cantidad > 0) || /^Pago mixto/.test(d.nombre || "")) return;
+      porNombre[d.nombre] = (porNombre[d.nombre] || 0) + d.cantidad;
+    });
+  });
+  const items = Object.keys(porNombre).map(nombre => `${porNombre[nombre]} ${nombre}`);
+  const itemsTxt = items.length ? items.reduce((acc, txt, i) => i === 0 ? txt : i === items.length - 1 ? `${acc} y ${txt}` : `${acc}, ${txt}`, "") : "";
+  const total = lista.reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+  const texto = itemsTxt ? `Buen día, estimado cliente! Hoy le dejé ${itemsTxt}, lo que da un total de ${fmt(total)}. Muchas gracias!` : `Buen día, estimado cliente! Le escribo por la transferencia de hoy, de ${fmt(total)}. Muchas gracias!`;
+  return encodeURIComponent(texto);
+}
 
 // ════════════════════════════════════════════════════════════════════
 // ◆  HeaderBotones / HeaderApp — encabezado estándar: "Empresa · Pantalla"
@@ -1835,6 +1858,61 @@ function HeaderBotones() {
     title: "Tamaño de texto"
   }, SCALE_LABELS_LC[scaleIdx]));
 }
+// ── Reloj del encabezado (portado de La Catalina) ────────────────────────────
+const _LC_DIAS_LARGO = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const _LC_MESES_LARGO = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+function RelojHeaderLC() {
+  const [ahora, setAhora] = React.useState(() => new Date());
+  React.useEffect(() => {
+    let tid = null;
+    const programar = () => {
+      const d = new Date();
+      setAhora(d);
+      const falta = 60000 - (d.getSeconds() * 1000 + d.getMilliseconds());
+      tid = setTimeout(programar, falta + 50);
+    };
+    programar();
+    const alVolver = () => {
+      if (document.visibilityState === "visible") {
+        if (tid) clearTimeout(tid);
+        programar();
+      }
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      if (tid) clearTimeout(tid);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
+  }, []);
+  const hh = String(ahora.getHours()).padStart(2, "0");
+  const mm = String(ahora.getMinutes()).padStart(2, "0");
+  const fecha = `${_LC_DIAS_LARGO[ahora.getDay()]} ${ahora.getDate()} de ${_LC_MESES_LARGO[ahora.getMonth()]}`;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "baseline",
+      gap: 10,
+      padding: "0 14px 7px",
+      fontSize: 11.5,
+      color: "var(--color-text-tertiary)"
+    },
+    title: "Fecha y hora del dispositivo"
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, fecha), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--color-text-secondary)",
+      fontWeight: 500,
+      flexShrink: 0,
+      fontVariantNumeric: "tabular-nums"
+    }
+  }, hh, ":", mm));
+}
 function HeaderApp({
   titulo,
   onVolver
@@ -1847,7 +1925,21 @@ function HeaderApp({
     }
   })();
   return /*#__PURE__*/React.createElement("div", {
-    style: s.header
+    style: {
+      position: "sticky",
+      top: 0,
+      zIndex: 10,
+      background: "var(--color-background-secondary)",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.header,
+      position: "static",
+      background: "none",
+      borderBottom: "none",
+      paddingBottom: 4
+    }
   }, /*#__PURE__*/React.createElement("button", {
     style: s.backBtn,
     onClick: onVolver
@@ -1861,5 +1953,5 @@ function HeaderApp({
     },
     onClick: () => window._lcIrInicio && window._lcIrInicio(),
     title: "Ir al inicio"
-  }, titulo ? `${negocio} · ${titulo}` : negocio), /*#__PURE__*/React.createElement(HeaderBotones, null));
+  }, titulo ? `${negocio} · ${titulo}` : negocio), /*#__PURE__*/React.createElement(HeaderBotones, null)), /*#__PURE__*/React.createElement(RelojHeaderLC, null));
 }

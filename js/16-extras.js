@@ -2067,7 +2067,7 @@ function ConfigApariencia() {
       borderRadius: 10,
       cursor: "pointer",
       textAlign: "center",
-      border: `2px solid ${temaActual === id ? "var(--color-accent)" : "var(--color-border-secondary)"}`,
+      border: `2px solid ${temaActual === id ? "var(--color-accent-solid)" : "var(--color-border-secondary)"}`,
       background: temaActual === id ? "var(--color-background-secondary)" : "var(--color-background-tertiary)"
     }
   }, /*#__PURE__*/React.createElement("div", {

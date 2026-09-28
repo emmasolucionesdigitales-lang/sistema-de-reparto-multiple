@@ -9,7 +9,8 @@ function Resumen({
   planillas,
   noVisitas,
   repartos,
-  onVolver
+  onVolver,
+  onSeleccionarCliente
 }) {
   const [filtro, setFiltro] = React.useState("mes"); // mes | anio | todo | dia
   const [mesSel, setMesSel] = React.useState(() => new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -105,6 +106,107 @@ function Resumen({
   });
   const mesesOrdenados = Object.values(porMes).sort((a, b) => a.mes.localeCompare(b.mes));
   const ultimosMeses = mesesOrdenados.slice(-12);
+
+  // ── Día por día (para vista mensual) ───────────────────────────────────────
+  const porDia = React.useMemo(() => {
+    if (filtro !== "mes") return [];
+    const delMes = ventasR.filter(v => (v.fechaKey || v.fecha || "").slice(0, 7) === mesSel);
+    const mapa = {};
+    delMes.forEach(v => {
+      const fk = v.fechaKey || (v.fecha || "").slice(0, 10);
+      if (!fk) return;
+      if (!mapa[fk]) mapa[fk] = { fecha: fk, total: 0, contado: 0, fiado: 0, transferencia: 0, cobros: 0 };
+      const d = mapa[fk];
+      if (v._esCobro) {
+        d.cobros += Number(v.pagadoNum) || Number(v.neto) || 0;
+        return;
+      }
+      if (v._esAjuste || v._esCambio) return; // movimientos internos, no son venta ni cobro
+      d.total += v.neto || 0;
+      if (v.pago === "mixto") {
+        d.contado += Number(v.montoEfec) || 0;
+        d.transferencia += Number(v.montoTrans) || 0;
+      } else if (v.pago === "contado") d.contado += v.neto || 0;else if (v.pago === "transferencia") d.transferencia += v.neto || 0;else if (v.pago === "fiado") d.fiado += v.neto || 0;
+    });
+    return Object.values(mapa).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  }, [ventasR, mesSel, filtro]);
+
+  // ── Clientes para revisar/eliminar: sin ninguna venta real hace 45+ días
+  // (o nunca compraron) — pensado para limpiar la lista, no para borrar
+  // solo. Ordenados de más a menos tiempo sin comprar. ─────────────────────
+  const inactivos = React.useMemo(() => {
+    const hoyMs = Date.now();
+    return clientesR.map(c => {
+      let ultima = "";
+      ventasR.forEach(v => {
+        if (v.clienteId !== c.id || v._esCobro || v._esAjuste || v._esCambio) return;
+        const fk = v.fechaKey || v.fecha || "";
+        if (fk > ultima) ultima = fk;
+      });
+      const diasSinComprar = ultima ? Math.floor((hoyMs - new Date(ultima).getTime()) / 86400000) : null;
+      return {
+        id: c.id,
+        nombre: c.nombre,
+        dia: c.dia,
+        ultima,
+        diasSinComprar
+      };
+    }).filter(c => c.diasSinComprar === null || c.diasSinComprar >= 45).sort((a, b) => (b.diasSinComprar ?? 99999) - (a.diasSinComprar ?? 99999)).slice(0, 30);
+  }, [clientesR, ventasR]);
+
+  // ── JSX de las 2 secciones de arriba, precalculado ANTES del return ──────
+  // (evita tener que tocar/recontar los paréntesis del árbol JSX gigante de
+  // más abajo — acá solo se referencia como una variable más).
+  const seccionPorDia = porDia.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "Día por día · ", mesSel.slice(5), "/", mesSel.slice(0, 4)), /*#__PURE__*/React.createElement("div", {
+    style: { ...s.card, margin: "0 14px 8px", padding: 0, overflow: "hidden" }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr 1fr", padding: "6px 8px", background: "var(--color-background-tertiary)", borderBottom: "0.5px solid var(--color-border-tertiary)" }
+  }, ["Fecha", "Total", "Contado", "Fiado", "Transf.", "Cobros"].map(h => /*#__PURE__*/React.createElement("div", {
+    key: h,
+    style: { fontSize: 9, color: "var(--color-text-secondary)", fontWeight: 500, textAlign: h === "Fecha" ? "left" : "right" }
+  }, h))), porDia.map(d => /*#__PURE__*/React.createElement("div", {
+    key: d.fecha,
+    style: { display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr 1fr", padding: "6px 8px", borderBottom: "0.5px solid var(--color-border-tertiary)", alignItems: "center" }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 11, color: "var(--color-text-primary)", fontWeight: 500 }
+  }, d.fecha.slice(8, 10), "/", d.fecha.slice(5, 7)), /*#__PURE__*/React.createElement("div", {
+    style: { textAlign: "right", fontSize: 11, color: "var(--color-text-primary)" }
+  }, fmt(d.total)), /*#__PURE__*/React.createElement("div", {
+    style: { textAlign: "right", fontSize: 11, color: "#5daaff" }
+  }, fmt(d.contado)), /*#__PURE__*/React.createElement("div", {
+    style: { textAlign: "right", fontSize: 11, color: "#f5b942" }
+  }, fmt(d.fiado)), /*#__PURE__*/React.createElement("div", {
+    style: { textAlign: "right", fontSize: 11, color: "#3a7fd4" }
+  }, fmt(d.transferencia)), /*#__PURE__*/React.createElement("div", {
+    style: { textAlign: "right", fontSize: 11, color: "#4dd9a0" }
+  }, fmt(d.cobros)))), /*#__PURE__*/React.createElement("div", {
+    style: { display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 1fr 1fr 1fr", padding: "7px 8px", background: "var(--color-background-tertiary)" }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: "var(--color-text-secondary)", fontWeight: 500 }
+  }, "Total"), ["total", "contado", "fiado", "transferencia", "cobros"].map(k => /*#__PURE__*/React.createElement("div", {
+    key: k,
+    style: { textAlign: "right", fontSize: 11, fontWeight: 500, color: "var(--color-text-primary)" }
+  }, fmt(porDia.reduce((a, d) => a + d[k], 0)))))));
+
+  const seccionInactivos = inactivos.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: s.sectionTitle
+  }, "🔍 Clientes para revisar (45+ días sin comprar)"), /*#__PURE__*/React.createElement("div", {
+    style: { ...s.card, margin: "0 14px 8px", padding: 0, overflow: "hidden" }
+  }, inactivos.map((c, idx) => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderBottom: idx < inactivos.length - 1 ? "0.5px solid var(--color-border-tertiary)" : "none", gap: 8, cursor: onSeleccionarCliente ? "pointer" : "default" },
+    onClick: () => onSeleccionarCliente && onSeleccionarCliente(c)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { minWidth: 0 }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 13, color: "var(--color-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+  }, c.nombre), /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 11, color: "var(--color-text-tertiary)" }
+  }, c.dia)), /*#__PURE__*/React.createElement("span", {
+    style: s.badge(c.diasSinComprar === null ? "danger" : "warning")
+  }, c.diasSinComprar === null ? "Nunca compró" : `Hace ${c.diasSinComprar} días`)))));
 
   // ── Chart.js ──────────────────────────────────────────────────────────────
   const CC = {
@@ -581,7 +683,7 @@ function Resumen({
       fontWeight: 500,
       color: "#4dd9a0"
     }
-  }, fmt(mesesOrdenados.reduce((a, m) => a + m.ganancia, 0)))))), /*#__PURE__*/React.createElement("span", {
+  }, fmt(mesesOrdenados.reduce((a, m) => a + m.ganancia, 0)))))), filtro === "mes" && seccionPorDia, /*#__PURE__*/React.createElement("span", {
     style: s.sectionTitle
   }, "Unidades entregadas · ", tituloFiltro), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -697,7 +799,7 @@ function Resumen({
     }
   }, c.nombre), /*#__PURE__*/React.createElement("span", {
     style: s.badge("success")
-  }, fmt(c.saldo), " a favor"))))));
+  }, fmt(c.saldo), " a favor"))))), seccionInactivos);
 }
 function exportarExcel(clientes, ventas, productos, planillas, repartos, filtroReparto) {
   const wb = XLSX.utils.book_new();

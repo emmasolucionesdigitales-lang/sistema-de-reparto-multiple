@@ -107,9 +107,9 @@ function PantallaElegirTema({
       borderRadius: 12,
       cursor: "pointer",
       textAlign: "center",
-      border: `2px solid ${seleccion === id ? "var(--color-accent)" : "var(--color-border-secondary)"}`,
+      border: `2px solid ${seleccion === id ? "var(--color-accent-solid)" : "var(--color-border-secondary)"}`,
       background: seleccion === id ? "var(--color-background-secondary)" : "var(--color-background-tertiary)",
-      boxShadow: seleccion === id ? "0 0 0 1px var(--color-accent)" : "none"
+      boxShadow: seleccion === id ? "0 0 0 1px var(--color-accent-solid)" : "none"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
