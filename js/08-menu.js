@@ -2305,7 +2305,7 @@ function DetalleTransferencias({
     }
   }, ventas.map(v => {
     const confirmada = !!v.transConfirmada;
-    const monto = v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0;
+    const monto = v.pago === "mixto" ? Number(v.montoTrans) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0;
     const cli = clientePorId[v.clienteId];
     const tel = cli && cli.telefono;
     const msjWA = armarMsjTransferWA([v]);
@@ -2826,16 +2826,19 @@ function PlanillaDelDia({
   const totalVentaPlata = Object.values(totalesPorProd).reduce((a, p) => a + p.plata, 0);
   const totalVentaLlenar = Object.values(totalesPorProd).reduce((a, p) => a + p.llenar, 0);
   // Totales ventas de otros días
-  const extraEfectivo = ventasExtraDia.filter(v => v.pago === "contado").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
-  const extraTrans = ventasExtraDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+  const extraEfectivo = ventasExtraDia.filter(v => v.pago === "contado").reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
+  const extraTrans = ventasExtraDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
   const extraFiado = ventasExtraDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
   const extraTotal = extraEfectivo + extraTrans + extraFiado;
   // Cobranza — solo ventas propias del día
-  const cobEfectivo = ventasPropias.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0), 0);
-  const cobTransBruto = ventasPropias.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0);
+  const cobEfectivo = ventasPropias.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
+  const cobTransBruto = ventasPropias.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
   const cobTransDesc = Math.round(cobTransBruto * 0.025);
   const cobTransNeto = cobTransBruto - cobTransDesc;
   const ventasPendTrans = ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada);
+  // Plata del día cubierta con saldo a favor (crédito de una planilla
+  // anterior) — no es efectivo ni transferencia nueva, se muestra aparte.
+  const cobSaldoUsado = ventasPropias.filter(v => v.pago === "contado" || v.pago === "transferencia").reduce((a, v) => a + (Number(v.saldoAplicado) || 0), 0);
   const cobFiado = ventasPropias.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
   const cobSaldosEfec = ventasPropias.filter(v => v.pago === "contado").reduce((a, v) => {
     const extra = (v.pagadoNum || 0) - (v.neto || 0);
@@ -2907,7 +2910,10 @@ function PlanillaDelDia({
     retenciones = num(datos.retenciones);
   const sobrante = efectivo - (totalVentaPlata - fiado);
   const ganancia = cobEfectivo + cobTransBruto + cobFiado + cobSaldos - totalVentaLlenar - totalGastos;
-  const totalLlenosIngresados = PRODUCTOS_CONFIG.reduce((a, p) => a + num(datos.productos[p.id]?.llenos), 0);
+  // Antes sumaba unidades sueltas (bidones + sifones) mezcladas en un
+  // número que no representa nada real. Acá se usa el mismo criterio que
+  // "Bultos auto" más abajo: sifones a cajón, bidones 1 bulto cada uno.
+  const totalBultosIngresados = Math.floor(num(datos.productos?.soda?.llenos) / CAJON_SODA) + num(datos.productos?.b10?.llenos) + num(datos.productos?.b20?.llenos);
 
   // ── Cierre del día: estados y cálculos ───────────────────────────
   const cierreKey = `cierre_${dia}_${fecha}_${repartoId || ""}`;
@@ -3202,6 +3208,19 @@ function PlanillaDelDia({
     syncData({
       stock: s
     });
+    if (window._rmRegistrarMovimientoStock) {
+      const detalleCierre = {};
+      ["soda", "b10", "b20"].forEach(pk => {
+        const sk = conv[pk];
+        const soderiaVuelta = (llenFijo[pk] || 0) + (vacFijo[pk] || 0);
+        const deposito = diffDeposito[pk] || 0;
+        if (soderiaVuelta || deposito) detalleCierre[sk] = {
+          soderia: soderiaVuelta,
+          deposito
+        };
+      });
+      window._rmRegistrarMovimientoStock("cierre", detalleCierre, `Cierre del día ${dia} (${fecha})`);
+    }
     onGuardar({
       ...datos,
       _diaCerrado: true,
@@ -3820,14 +3839,14 @@ function PlanillaDelDia({
       fontWeight: 500,
       color: "var(--color-text-primary)"
     }
-  }, totalLlenosIngresados || "—"), /*#__PURE__*/React.createElement("div", {
+  }, totalBultosIngresados || "—"), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "right",
       fontSize: 12,
       fontWeight: 500,
       color: "var(--color-text-primary)"
     }
-  }, Object.values(totalesPorProd).reduce((a, p) => a + p.vacios, 0) || "—"), /*#__PURE__*/React.createElement("div", {
+  }, Object.values(totalesPorProd).reduce((a, p) => a + (p.cajones != null ? p.cajones : p.vacios), 0) || "—"), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "right",
       fontSize: 12,
@@ -4222,7 +4241,25 @@ function PlanillaDelDia({
       fontWeight: 500,
       color: "var(--color-text-info)"
     }
-  }, fmt(cobSaldosTrans))), /*#__PURE__*/React.createElement("div", {
+  }, fmt(cobSaldosTrans))), cobSaldoUsado > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      padding: "5px 0",
+      borderBottom: "0.5px solid var(--color-border-tertiary)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)"
+    }
+  }, "💳 Pagado con saldo a favor"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "#b794f6"
+    }
+  }, fmt(cobSaldoUsado))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -4282,7 +4319,7 @@ function PlanillaDelDia({
         fontWeight: 500,
         color: "var(--color-text-info)"
       }
-    }, fmt(v.pagadoNum || v.neto || 0)));
+    }, fmt((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0)));
   }), extraEfectivo > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",

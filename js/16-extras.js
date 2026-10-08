@@ -603,8 +603,8 @@ function InicioRepartidor({
   })();
   const recHoy = recActivos.filter(r => r.fecha === hoy || r.fecha === fechaActual);
   const fmtP = n => "$" + Math.round(Number(n) || 0).toLocaleString("es-AR");
-  const totalEfectivo = ventasHoy.filter(v => v.pago === "contado").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
-  const totalTransfer = ventasHoy.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+  const totalEfectivo = ventasHoy.filter(v => v.pago === "contado").reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
+  const totalTransfer = ventasHoy.filter(v => v.pago === "transferencia").reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
   const totalNeto = totalEfectivo + totalTransfer + ventasHoy.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
   const estadoReparto = !cargaHecha ? "pendiente" : recorrido ? "terminado" : "activo";
   return /*#__PURE__*/React.createElement("div", {
@@ -3587,8 +3587,8 @@ function usarInformes({
       const planEf = plan.efectivo !== "" && plan.efectivo !== undefined ? Number(plan.efectivo || 0) : null;
       const planRet = plan.retenciones !== "" && plan.retenciones !== undefined ? Number(plan.retenciones || 0) : null;
       const planFi = plan.fiado !== "" && plan.fiado !== undefined ? Number(plan.fiado || 0) : null;
-      const calcEf = todasVentasDia.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0), 0);
-      const calcTr = todasVentasDia.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0);
+      const calcEf = todasVentasDia.filter(v => v.pago === "contado" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoEfec) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
+      const calcTr = todasVentasDia.filter(v => v.pago === "transferencia" || v.pago === "mixto").reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
       const calcFi = todasVentasDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
       const ef = planEf !== null ? planEf : Math.round(calcEf);
       const ret = planRet !== null ? planRet : Math.round(calcTr * 0.025);

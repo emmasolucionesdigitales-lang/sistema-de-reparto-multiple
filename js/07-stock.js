@@ -16,6 +16,7 @@ function StockGeneral({
   repartos,
   perdidas,
   registrarPerdida,
+  movStock,
   onVolver,
   onResumen
 }) {
@@ -27,6 +28,7 @@ function StockGeneral({
   const [abiertoProductos, setAbiertoProductos] = React.useState(false);
   const [abiertoCarga, setAbiertoCarga] = React.useState(false);
   const [abiertoPerdidas, setAbiertoPerdidas] = React.useState(false);
+  const [abiertoMovStock, setAbiertoMovStock] = React.useState(false);
   const [formPerdida, setFormPerdida] = React.useState({
     producto: "sifon",
     cantidad: "",
@@ -184,6 +186,44 @@ function StockGeneral({
     totalPerdidas.bidon20 += p.bidon20 || 0;
     totalPerdidas.dispenser += p.dispenser || 0;
   });
+  const chipResumen = (lbl, val, color) => /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "var(--color-background-tertiary)",
+      borderRadius: 6,
+      padding: "3px 8px",
+      fontSize: 12,
+      color: "var(--color-text-secondary)"
+    }
+  }, lbl, " ", /*#__PURE__*/React.createElement("b", {
+    style: {
+      color
+    }
+  }, val));
+  const MOV_LBL = {
+    sifon: "Sifón",
+    bidon10: "10L",
+    bidon20: "20L",
+    dispenser: "Dispenser"
+  };
+  const MOV_TIPO_LBL = {
+    cierre: "🔁 Cierre del día"
+  };
+  const renderMovDetalle = m => {
+    if (m.tipo === "cierre") {
+      const partes = [];
+      ["sifon", "bidon10", "bidon20"].forEach(k => {
+        const d = m.detalle?.[k];
+        if (!d) return;
+        const bits = [];
+        if (d.soderia) bits.push(`Soder. +${d.soderia}`);
+        if (d.deposito) bits.push(`Depós. ${d.deposito > 0 ? "+" : ""}${d.deposito}`);
+        if (bits.length) partes.push(`${MOV_LBL[k]}: ${bits.join(" / ")}`);
+      });
+      return partes.length ? partes.join(" · ") : "Sin cambios";
+    }
+    return "";
+  };
+  const movStockOrdenado = [...(movStock || [])].reverse().slice(0, 30);
   const inNum = {
     ...s.inputNum,
     padding: "5px 2px",
@@ -716,6 +756,48 @@ function StockGeneral({
     }
   }, "El número real que existe en total, sea cual sea la ubicación."), /*#__PURE__*/React.createElement("div", {
     style: {
+      marginBottom: 10
+    }
+  }, PRODS.map(([k, lbl]) => {
+    const enSoderia = (stock.soderia?.[k] || 0) + (stock.soderia_vacios?.[k] || 0);
+    const enCamiones = totCamiones[k] || 0;
+    const enDeposito = stock.casa?.[k] || 0;
+    const enClientes = (totClientes[k] || 0) + (totPrestados[k] || 0);
+    const perdido = totalPerdidas[k] || 0;
+    const total = enSoderia + enCamiones + enDeposito + enClientes;
+    return /*#__PURE__*/React.createElement("div", {
+      key: `res-${k}`,
+      style: {
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "baseline",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: "var(--color-text-primary)"
+      }
+    }, lbl.replace(" 1.5L", "")), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 20,
+        fontWeight: 700,
+        color: "var(--color-text-success)"
+      }
+    }, total)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        flexWrap: "wrap",
+        marginTop: 3
+      }
+    }, chipResumen("🏭 Sodería", enSoderia, "var(--color-text-info)"), chipResumen("🚚 Camiones", enCamiones, "var(--color-text-info)"), chipResumen("📦 Depósito", enDeposito, "var(--color-text-secondary)"), chipResumen("👥 Clientes", enClientes, "var(--color-text-secondary)"), perdido > 0 && chipResumen("💔 Perdidos", perdido, "var(--color-text-danger)")));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
       display: "grid",
       gridTemplateColumns: "1fr 60px 60px 60px 60px",
       gap: 6,
@@ -1039,6 +1121,80 @@ function StockGeneral({
       border: "none",
       borderRadius: 10,
       padding: "14px 16px",
+      marginBottom: abiertoMovStock ? 10 : 0,
+      display: "flex",
+      alignItems: "center",
+      cursor: "pointer",
+      textAlign: "left"
+    },
+    onClick: () => setAbiertoMovStock(!abiertoMovStock)
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 15,
+      fontWeight: 600,
+      color: "var(--color-text-info)",
+      flex: 1
+    }
+  }, "📜 Movimiento interno ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400,
+      color: "var(--color-text-tertiary)",
+      fontSize: 12
+    }
+  }, "· traspasos automáticos Sodería ⇄ Depósito")), /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 26,
+      height: 26,
+      borderRadius: "50%",
+      background: "var(--color-background-primary)",
+      color: "var(--color-text-info)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 13,
+      flexShrink: 0
+    }
+  }, abiertoMovStock ? "▲" : "▼")), abiertoMovStock && /*#__PURE__*/React.createElement(React.Fragment, null, movStockOrdenado.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-tertiary)"
+    }
+  }, "Todavía no hay movimientos registrados — se anotan solos en cada cierre de día.") : movStockOrdenado.map(m => {
+    return /*#__PURE__*/React.createElement("div", {
+      key: m.id,
+      style: {
+        padding: "6px 0",
+        borderTop: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 500,
+        color: "var(--color-text-primary)"
+      }
+    }, MOV_TIPO_LBL[m.tipo] || m.tipo), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)"
+      }
+    }, renderMovDetalle(m)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)"
+      }
+    }, m.fecha, m.nota ? ` · ${m.nota}` : ""));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
+      margin: "0 0 10px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      width: "100%",
+      background: "var(--color-background-tertiary)",
+      border: "none",
+      borderRadius: 10,
+      padding: "14px 16px",
       marginBottom: abiertoProductos ? 10 : 0,
       display: "flex",
       alignItems: "center",
@@ -1282,7 +1438,7 @@ function ConfirmacionesDia({
   }));
   // Cuánto entró REALMENTE por transferencia en esta venta:
   // si fue pago mixto, solo la parte transferida; si fue transferencia pura, el total.
-  const montoT = v => v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0;
+  const montoT = v => v.pago === "mixto" ? Number(v.montoTrans) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0;
   const pendientes = ventas.filter(v => !v.transConfirmada);
   const confirmadas = ventas.filter(v => v.transConfirmada);
   const porCliente = {};

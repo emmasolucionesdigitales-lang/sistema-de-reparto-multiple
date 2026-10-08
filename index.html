@@ -10,6 +10,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Reparto Multi" />
   <title>Reparto Multi 2026</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     if('serviceWorker' in navigator){
       const CACHE = 'sr2026-v23-fix';
@@ -550,6 +552,12 @@ self.addEventListener('notificationclick',e=>{
   window.activarNotif = activarNotif;
   window.desactivarNotif = desactivarNotif;
   window.estadoNotif = estadoNotif;
+  // Confirm helper para correcciones manuales de envases (PieEnvases,
+  // 03-utils.js) — queda como función global para poder cambiarlo más
+  // adelante por un modal propio sin tocar los componentes que lo usan.
+  window.rmConfirm = function (msg) {
+    return Promise.resolve(confirm(msg));
+  };
   </script>
 <div id="root"></div>
 

@@ -353,6 +353,59 @@ function AppPrincipal({
       return next;
     });
   };
+  // Registro de correcciones manuales de envases (♻️ Envases, en
+  // PieEnvases — 03-utils.js) — deja constancia de qué cliente, qué cambió
+  // (Fijos o Prestados, por producto) y los valores antes/después.
+  const [ajustesEnvases, setAjustesEnvases] = useLS("rm_ajustesenvases_v1", []);
+  const registrarAjusteEnvases = (clienteId, clienteNombre, cambios) => {
+    if (!cambios || !cambios.length) return;
+    setAjustesEnvases(prev => {
+      const next = [...prev, {
+        id: Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        fecha: new Date().toLocaleString("es-AR"),
+        fechaKey: new Date().toLocaleDateString("en-CA"),
+        clienteId,
+        clienteNombre: clienteNombre || null,
+        cambios,
+        _upd: Date.now()
+      }];
+      syncData({
+        ajustesEnvases: next
+      });
+      return next;
+    });
+  };
+  // Registro de movimientos internos de stock entre Sodería y Depósito —
+  // el cierre del día (confirmarCierre, 08-menu.js) mueve stock
+  // automáticamente; queda anotado acá cuánto se movió y cuándo. No toca
+  // "camiones" (eso es stock real por repartidor, no se auto-registra acá).
+  const [movStock, setMovStock] = useLS("rm_movstock_v1", []);
+  const registrarMovimientoStock = (tipo, detalle, nota) => {
+    if (!detalle || !Object.keys(detalle).length) return;
+    setMovStock(prev => {
+      const next = [...prev, {
+        id: Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        fecha: new Date().toLocaleString("es-AR"),
+        fechaKey: new Date().toLocaleDateString("en-CA"),
+        tipo,
+        detalle,
+        nota: nota || null,
+        _upd: Date.now()
+      }];
+      syncData({
+        movStock: next
+      });
+      return next;
+    });
+  };
+  React.useEffect(() => {
+    window._rmRegistrarAjusteEnvases = registrarAjusteEnvases;
+    window._rmRegistrarMovimientoStock = registrarMovimientoStock;
+    return () => {
+      if (window._rmRegistrarAjusteEnvases === registrarAjusteEnvases) delete window._rmRegistrarAjusteEnvases;
+      if (window._rmRegistrarMovimientoStock === registrarMovimientoStock) delete window._rmRegistrarMovimientoStock;
+    };
+  });
   const [recordatorios, setRecordatorios] = useLS("rm_recordatorios_v1", []);
   // recordatorio: {id, clienteId, clienteNombre, fecha, hora, motivo, dia, confirmado}
   // BUG: clientes (y productos/recordatorios) borrados podían volver a
@@ -842,6 +895,78 @@ function AppPrincipal({
           }), 2000);
         }
       }
+      if (data.ajustesEnvases?.length) {
+        const ajustesLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_ajustesenvases_v1") || "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const porIdAj = {};
+        (data.ajustesEnvases || []).forEach(a => {
+          porIdAj[a.id] = a;
+        });
+        let cambiosLocalesAj = 0;
+        ajustesLocales.forEach(a => {
+          const enNube = porIdAj[a.id];
+          if (!enNube) {
+            porIdAj[a.id] = a;
+            cambiosLocalesAj++;
+            return;
+          }
+          const uL = Number(a._upd) || 0,
+            uN = Number(enNube._upd) || 0;
+          if (uL > uN) {
+            porIdAj[a.id] = a;
+            cambiosLocalesAj++;
+          }
+        });
+        const mergedAj = Object.values(porIdAj);
+        setAjustesEnvases(mergedAj);
+        if (cambiosLocalesAj > 0) {
+          console.log("Merge: " + cambiosLocalesAj + " ajustes de envases locales más nuevos, sincronizando");
+          setTimeout(() => syncData({
+            ajustesEnvases: mergedAj
+          }), 2000);
+        }
+      }
+      if (data.movStock?.length) {
+        const movLocales = (() => {
+          try {
+            return JSON.parse(localStorage.getItem("rm_movstock_v1") || "[]");
+          } catch {
+            return [];
+          }
+        })();
+        const porIdMov = {};
+        (data.movStock || []).forEach(m => {
+          porIdMov[m.id] = m;
+        });
+        let cambiosLocalesMov = 0;
+        movLocales.forEach(m => {
+          const enNube = porIdMov[m.id];
+          if (!enNube) {
+            porIdMov[m.id] = m;
+            cambiosLocalesMov++;
+            return;
+          }
+          const uL = Number(m._upd) || 0,
+            uN = Number(enNube._upd) || 0;
+          if (uL > uN) {
+            porIdMov[m.id] = m;
+            cambiosLocalesMov++;
+          }
+        });
+        const mergedMov = Object.values(porIdMov);
+        setMovStock(mergedMov);
+        if (cambiosLocalesMov > 0) {
+          console.log("Merge: " + cambiosLocalesMov + " movimientos de stock locales más nuevos, sincronizando");
+          setTimeout(() => syncData({
+            movStock: mergedMov
+          }), 2000);
+        }
+      }
       if (data.noVisitas?.length) {
         // ── noVisitas: MERGEAR por clave (cliente+día+fecha) ──────────────
         const noVisitasLocales = (() => {
@@ -1008,6 +1133,8 @@ function AppPrincipal({
     productos,
     noVisitas,
     recordatorios,
+    ajustesEnvases,
+    movStock,
     prospectos
   });
   // Guards anti doble-tap: evitan sumar/restar el saldo dos veces si el
@@ -1043,6 +1170,8 @@ function AppPrincipal({
       repartos,
       cargasDia: cargasDiaRaw,
       perdidas,
+      ajustesEnvases,
+      movStock,
       prospectos
     };
   });
@@ -1335,6 +1464,8 @@ function AppPrincipal({
           if (data.productos !== undefined) setProductos(data.productos || []);
           if (noVisitasM !== undefined) setNoVisitas(noVisitasM);
           if (data.perdidas !== undefined) setPerdidas(data.perdidas || []);
+          if (data.ajustesEnvases !== undefined) setAjustesEnvases(data.ajustesEnvases || []);
+          if (data.movStock !== undefined) setMovStock(data.movStock || []);
           if (recordatoriosM !== undefined) setRecordatorios(recordatoriosM);
           if (data.mantVeh !== undefined) {
             try {
@@ -1504,6 +1635,12 @@ function AppPrincipal({
         }
         if (overrides.perdidas !== undefined) {
           merged.perdidas = mergeArrayPorClave(prevData.perdidas, data.perdidas, fresh.perdidas, p => p.id);
+        }
+        if (overrides.ajustesEnvases !== undefined) {
+          merged.ajustesEnvases = mergeArrayPorClave(prevData.ajustesEnvases, data.ajustesEnvases, fresh.ajustesEnvases, a => a.id);
+        }
+        if (overrides.movStock !== undefined) {
+          merged.movStock = mergeArrayPorClave(prevData.movStock, data.movStock, fresh.movStock, m => m.id);
         }
         if (overrides.recordatorios !== undefined) {
           merged.recordatorios = mergeArrayPorClave(prevData.recordatorios, data.recordatorios, fresh.recordatorios, r => r.id);
@@ -1934,11 +2071,11 @@ function AppPrincipal({
     // Pago mixto: venta principal pago="contado" con montoEfec+montoTrans
     const cobEfectivo = ventasDia.filter(v => v.pago === "contado" && !v._esMixtoTrans).reduce((a, v) => {
       const esMixto = (Number(v.montoTrans) || 0) > 0;
-      return a + (esMixto ? Number(v.montoEfec) || 0 : v.pagadoNum || v.neto || 0);
+      return a + (esMixto ? Number(v.montoEfec) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0);
     }, 0);
     const cobFiado = ventasDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
     const cobTransBruto = ventasDia.filter(v => !v._esMixtoTrans).reduce((a, v) => {
-      if (v.pago === "transferencia") return a + (v.pagadoNum || v.neto || 0);
+      if (v.pago === "transferencia") return a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0);
       if (v.pago === "contado" && (Number(v.montoTrans) || 0) > 0) return a + (Number(v.montoTrans) || 0);
       return a;
     }, 0);
@@ -1986,18 +2123,39 @@ function AppPrincipal({
       firma: firmaReg,
       ts: ahoraReg
     };
-    // Auto-detectar envases prestados (solo si no es cobro de deuda)
+    // Auto-detectar envases prestados (solo si no es cobro de deuda).
+    // Si el cliente no tiene Fijos asignados (asignado === 0) puede ser
+    // simplemente que nunca se le configuraron — no necesariamente que
+    // TODO lo que lleva hoy sea prestado. Para no inflar "prestados" de
+    // más con clientes nuevos o mal configurados, se auto-calibra el Fijo
+    // (en vez de marcarlo como préstamo) cuando es la primera venta de ese
+    // producto para el cliente, o cuando las últimas 2 cantidades vendidas
+    // de ese producto coinciden (patrón estable → es su Fijo real).
     const envAutoDetect = [];
+    const fijosAutoAjuste = {};
     if (opcionSaldo !== "cobro_deuda" && opcionSaldo !== "cambio_envase") {
-      const mapa = {
-        sifon: "Sifón 1.5L",
-        bidon10: "Bidón 10L",
-        bidon20: "Bidón 20L"
+      const campoFijo = {
+        "Sifón 1.5L": "sifon",
+        "Bidón 10L": "bidon10",
+        "Bidón 20L": "bidon20"
       };
       detalle.forEach(d => {
-        const asignado = d.nombre === "Sifón 1.5L" ? c.sifon || 0 : d.nombre === "Bidón 10L" ? c.bidon10 || 0 : d.nombre === "Bidón 20L" ? c.bidon20 || 0 : 0;
+        const k = campoFijo[d.nombre];
+        if (!k) return;
+        const asignado = Number(c[k]) || 0;
         const extra = d.cantidad - asignado;
-        if (extra > 0) envAutoDetect.push({
+        if (extra <= 0) return;
+        if ((envPrest || []).some(ep => ep.prod === d.nombre)) return;
+        if (asignado === 0) {
+          const cantsPrevias = ventas.filter(v => v.clienteId === c.id && !v._esCobro && !v._esCambio).map(v => (v.detalle || []).find(x => x.nombre === d.nombre)?.cantidad).filter(cant => cant !== undefined);
+          const esPrimeraVez = cantsPrevias.length === 0;
+          const ultimasDosIguales = cantsPrevias.length >= 2 && cantsPrevias.slice(-2).every(cant => cant === d.cantidad);
+          if (esPrimeraVez || ultimasDosIguales) {
+            fijosAutoAjuste[k] = d.cantidad;
+            return;
+          }
+        }
+        envAutoDetect.push({
           prod: d.nombre,
           cant: String(extra)
         });
@@ -2048,6 +2206,7 @@ function AppPrincipal({
     saveVentas(prev => [...prev, nuevaVenta]);
     saveClientes(prev => aplicarMovimientoEnvases(prev, ventas, c.id, nuevaVenta.envPrest, nuevaVenta.envDev).map(c2 => c2.id === c.id ? {
       ...c2,
+      ...fijosAutoAjuste,
       saldo: (Number(c2.saldo) || 0) + calc.saldoDelta
     } : c2));
     // Si el cliente tenía recordatorios pendientes en Agenda, se resuelven
@@ -2415,7 +2574,7 @@ function AppPrincipal({
         dia,
         fecha: fechas[0] || "",
         count: vts.length,
-        monto: vts.reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : v.pagadoNum || v.neto || 0), 0),
+        monto: vts.reduce((a, v) => a + (v.pago === "mixto" ? Number(v.montoTrans) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0),
         ventas: vts
       };
     }).filter(Boolean),
@@ -3266,6 +3425,7 @@ function AppPrincipal({
     repartos: repartos,
     perdidas: perdidas,
     registrarPerdida: registrarPerdida,
+    movStock: movStock,
     onVolver: () => irA("menu"),
     onResumen: () => irA("resumen")
   }), pantalla === "fiadosPendientes" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ClientesTabs, {
@@ -3362,9 +3522,9 @@ function AppPrincipal({
       fechaKey
     } = modalResumenDia;
     const vDia = ventas.filter(v => v.fechaKey === fechaKey && v.dia === dia && !v._esCobro && !v._esAjuste);
-    const ef = vDia.filter(v => v.pago === "contado").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
-    const tr = vDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
-    const trP = tr - vDia.filter(v => v.pago === "transferencia" && v.transConfirmada).reduce((a, v) => a + (v.pagadoNum || v.neto || 0), 0);
+    const ef = vDia.filter(v => v.pago === "contado").reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
+    const tr = vDia.filter(v => v.pago === "transferencia").reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
+    const trP = tr - vDia.filter(v => v.pago === "transferencia" && v.transConfirmada).reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
     const fi = vDia.filter(v => v.pago === "fiado").reduce((a, v) => a + (v.neto || 0), 0);
     return /*#__PURE__*/React.createElement("div", {
       style: {

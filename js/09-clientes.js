@@ -122,8 +122,8 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontWeight: 500,
-        fontSize: 15,
+        fontWeight: 700,
+        fontSize: 17,
         color: "var(--color-text-primary)",
         overflow: "hidden",
         textOverflow: "ellipsis",
@@ -149,7 +149,7 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
       const vt = ventas.find(v => v.clienteId === c.id && v.fechaKey === fecha && (v.pago === "transferencia" || v.pago === "mixto"));
       if (!vt) return null;
       // Para mixto mostrar solo la parte de transferencia, no el total
-      const montoTransfer = vt.pago === "mixto" ? vt.montoTrans || 0 : vt.pagadoNum || vt.neto || 0;
+      const montoTransfer = vt.pago === "mixto" ? vt.montoTrans || 0 : (vt.pagadoNum != null ? vt.pagadoNum : vt.neto) || 0;
       if (montoTransfer === 0) return null;
       return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
         style: {
@@ -194,8 +194,9 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
     })()), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 17,
-        color: "var(--color-text-secondary)",
-        marginTop: 2
+        color: "var(--color-text-primary)",
+        fontWeight: 600,
+        marginTop: 3
       }
     }, direccionCliente(c)), c.notas && /*#__PURE__*/React.createElement("div", {
       style: {
@@ -207,31 +208,26 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
       style: {
         display: "flex",
         flexWrap: "wrap",
-        gap: 4,
-        marginTop: 5
+        gap: 5,
+        marginTop: 7
       }
     }, (() => {
-      // BUG REPORTADO: a diferencia de Individual, acá faltaba por completo
-      // este bloque — la lista de clientes no mostraba cuántos envases
-      // (sifones/bidones/dispenser) tiene cada uno, solo el estado
-      // "✓ Listo". Se agrega el mismo cálculo y badges que usa Individual.
       const real = {
         sifon: Math.max(0, (Number(c.sifon) || 0) + prestadoClienteDe(c, "sifon", todasVentas || ventas)),
         bidon10: Math.max(0, (Number(c.bidon10) || 0) + prestadoClienteDe(c, "bidon10", todasVentas || ventas)),
         bidon20: Math.max(0, (Number(c.bidon20) || 0) + prestadoClienteDe(c, "bidon20", todasVentas || ventas))
       };
-      return /*#__PURE__*/React.createElement(React.Fragment, null, real.sifon > 0 && /*#__PURE__*/React.createElement("span", {
-        style: s.tag
-      }, "Sifón×", real.sifon), real.bidon10 > 0 && /*#__PURE__*/React.createElement("span", {
-        style: s.tag
-      }, "10L×", real.bidon10), real.bidon20 > 0 && /*#__PURE__*/React.createElement("span", {
-        style: s.tag
-      }, "20L×", real.bidon20), c.dispenser > 0 && /*#__PURE__*/React.createElement("span", {
+      const pill = txt => /*#__PURE__*/React.createElement("span", {
         style: {
-          ...s.tag,
-          color: "#5daaff"
+          fontSize: 12,
+          fontWeight: 600,
+          padding: "4px 10px",
+          borderRadius: 20,
+          background: "var(--color-background-info)",
+          color: "var(--color-text-primary)"
         }
-      }, "Disp×", c.dispenser));
+      }, txt);
+      return /*#__PURE__*/React.createElement(React.Fragment, null, real.sifon > 0 && pill(`Sifón×${real.sifon}`), real.bidon10 > 0 && pill(`10L×${real.bidon10}`), real.bidon20 > 0 && pill(`20L×${real.bidon20}`), c.dispenser > 0 && pill(`Disp×${c.dispenser}`));
     })(), atendido && /*#__PURE__*/React.createElement("span", {
       style: s.badge("success")
     }, "✓ Listo"), est === "noesta" && !atendido && /*#__PURE__*/React.createElement("span", {
