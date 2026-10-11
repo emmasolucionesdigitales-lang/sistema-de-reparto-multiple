@@ -1086,6 +1086,8 @@ function MenuDias({
   const recClientesCount = new Set((recordatoriosActivos || []).map(r => r.clienteId)).size;
   const transDiasCount = (transferenciasPendientes || []).length;
   const transClientesCount = new Set((transferenciasPendientes || []).flatMap(t => (t.ventas || []).map(v => v.clienteId))).size;
+  const transMontoBruto = (transferenciasPendientes || []).reduce((a, t) => a + (t.monto || 0), 0);
+  const transMontoNeto = transMontoBruto - Math.round(transMontoBruto * 0.025);
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
@@ -1223,7 +1225,13 @@ function MenuDias({
       padding: "8px 10px"
     },
     onClick: () => setMostrarTransferencias(v => !v)
-  }, mostrarTransferencias ? "▼" : "▶", " 🔴 Transferencias sin confirmar (D:", transDiasCount, ") ; (C:", transClientesCount, ")"), mostrarTransferencias && transferenciasPendientes.map(({
+  }, mostrarTransferencias ? "▼" : "▶", " 🔴 Transf. pendientes (D:", transDiasCount, " · C:", transClientesCount, ") · ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      letterSpacing: 0
+    }
+  }, fmt(transMontoNeto))), mostrarTransferencias && transferenciasPendientes.map(({
     dia,
     fecha,
     count,
