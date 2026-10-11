@@ -2387,7 +2387,7 @@ function AppPrincipal({
     });
     setDeshacerVenta(null);
   };
-  const editarVenta = (ventaId, detalle, pago, montoPagado, saldoAplicado, obs, montoTrans2) => {
+  const editarVenta = (ventaId, detalle, pago, montoPagado, saldoAplicado, obs, montoTrans2, transConfirmadaNueva) => {
     // Guard anti doble-tap: ignora una segunda edición IDÉNTICA de la
     // MISMA venta dentro de 2s.
     const firmaEdit = JSON.stringify({
@@ -2396,7 +2396,8 @@ function AppPrincipal({
       pago,
       montoPagado,
       saldoAplicado,
-      montoTrans2
+      montoTrans2,
+      transConfirmadaNueva
     });
     const ahoraEdit = Date.now();
     if (ultimoEditadoRef.current.firma === firmaEdit && ahoraEdit - ultimoEditadoRef.current.ts < 2000) {
@@ -2431,7 +2432,7 @@ function AppPrincipal({
         ...calc,
         montoEfec: esMixto ? ef : 0,
         montoTrans: esMixto ? tr : 0,
-        transConfirmada: esMixto ? vV.transConfirmada || false : vV.transConfirmada,
+        transConfirmada: (esMixto ? tr > 0 : pago === "transferencia") ? !!transConfirmadaNueva : false,
         _upd: Date.now()
       } : v);
       return nev;

@@ -1394,13 +1394,13 @@ function DetalleCliente({
     cliente: cliente,
     productos: productos,
     ventasCliente: [],
-    onGuardar: (detalle, pagoArg, montoArg, saldoApl, envPrest, envDev, obs, opcionSaldo, otroLeg) => {
+    onGuardar: (detalle, pagoArg, montoArg, saldoApl, envPrest, envDev, obs, opcionSaldo, otroLeg, _saldoDelta, transConfirmadaArg) => {
       if (opcionSaldo === "mixto_ef") {
-        onEditarVenta(v.id, detalle, "mixto", montoArg, saldoApl, obs, otroLeg);
+        onEditarVenta(v.id, detalle, "mixto", montoArg, saldoApl, obs, otroLeg, transConfirmadaArg);
       } else if (opcionSaldo === "mixto_tr") {
-        onEditarVenta(v.id, detalle, "mixto", otroLeg, saldoApl, obs, montoArg);
+        onEditarVenta(v.id, detalle, "mixto", otroLeg, saldoApl, obs, montoArg, transConfirmadaArg);
       } else {
-        onEditarVenta(v.id, detalle, pagoArg, montoArg, saldoApl, obs);
+        onEditarVenta(v.id, detalle, pagoArg, montoArg, saldoApl, obs, undefined, transConfirmadaArg);
       }
       setEditandoVentaId(null);
     },
