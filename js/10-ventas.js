@@ -779,7 +779,7 @@ function NuevaVenta({
       },
       disabled: detalle.length === 0,
       onClick: confirmarRegistro
-    }, ventaEditar ? "💾 Guardar cambios" : "✓ Registrar entrega")));
+    }, ventaEditar ? "💾 Guardar cambios" : "✓ Registrar venta")));
   if (compacto) return cuerpoCompacto;
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen

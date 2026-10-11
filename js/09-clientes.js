@@ -1288,47 +1288,13 @@ function DetalleCliente({
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: {
-      background: "var(--color-background-warning)",
-      color: "var(--color-text-warning)",
-      border: "1px solid var(--color-border-warning)",
-      borderRadius: 10,
-      padding: "12px 0",
-      fontSize: 13,
-      cursor: "pointer",
-      fontWeight: 500,
-      flex: 1,
-      minWidth: 90
-    },
-    onClick: () => {
-      onNoEstaCliente && onNoEstaCliente();
-    }
-  }, "🔄 No está"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      background: "var(--color-background-danger)",
-      color: "var(--color-text-danger)",
-      border: "1px solid var(--color-border-danger)",
-      borderRadius: 10,
-      padding: "12px 0",
-      fontSize: 13,
-      cursor: "pointer",
-      fontWeight: 500,
-      flex: 1,
-      minWidth: 90
-    },
-    onClick: () => {
-      onNoQuiereCliente && onNoQuiereCliente();
-    }
-  }, "🚫 No quiere"), /*#__PURE__*/React.createElement("button", {
-    style: {
       ...s.btnPrimary,
       padding: "12px 0",
       fontSize: 15,
-      borderRadius: 10,
-      flex: 2,
-      minWidth: 120
+      borderRadius: 10
     },
     onClick: onVenta
-  }, "📦 Registrar entrega")), cliente.saldo < 0 && !ventaHoy && /*#__PURE__*/React.createElement("button", {
+  }, "📦 Registrar venta")), cliente.saldo < 0 && !ventaHoy && /*#__PURE__*/React.createElement("button", {
     style: {
       width: "100%",
       background: "#0a2e1f",
