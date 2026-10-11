@@ -1,5 +1,5 @@
 // v5 — bump de cache para descartar entradas viejas con bug (03-utils.js corrupto)
-const CACHE = 'reparto-multi-v12';
+const CACHE = 'reparto-multi-v13';
 const ASSETS = [
   'https://unpkg.com/react@18/umd/react.production.min.js',
   'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',

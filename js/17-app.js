@@ -248,6 +248,15 @@ function AppPrincipal({
     if (needsDia.includes(h) && !savedDia) return "portada";
     return h;
   });
+  // Base del historial: así el primer "Volver" (window.history.back())
+  // aterriza en esta pantalla inicial en vez de salir de la app.
+  React.useEffect(() => {
+    try {
+      window.history.replaceState({
+        pantalla
+      }, '', `#${pantalla}`);
+    } catch (e) {}
+  }, []);
   const [diaActual, setDiaActual] = useLS("rm_dia_actual", "");
   const [repartos, setRepartos] = useLS("rm_repartos_v1", []);
   const [repartoActual, setRepartoActual] = useLS("rm_reparto_actual_v1", null);
@@ -2508,7 +2517,7 @@ function AppPrincipal({
     onResumen: () => irA("resumen"),
     onStock: () => irA("stock"),
     onAgenda: () => irA("agenda"),
-    onVolver: () => irA("portada"),
+    onVolver: () => window.history.back(),
     saveRepartos: saveRepartos,
     onOperarReparto: rep => setOperandoReparto(rep),
     onTodosClientes: () => irA("gestionClientes"),
@@ -2547,7 +2556,7 @@ function AppPrincipal({
       setOrigenDetalle("diasReparto");
       irA("detalleCliente");
     },
-    onVolver: () => irA("menu"),
+    onVolver: () => window.history.back(),
     scaleIdx: scaleIdx,
     onToggleScale: () => setScaleIdx(i => (i + 1) % 4),
     scaleLabel: SCALE_LABELS[scaleIdx],
@@ -2643,7 +2652,7 @@ function AppPrincipal({
       setOrigenFecha("atajo");
       irA("planilla");
     },
-    onVolver: () => irA("diasReparto")
+    onVolver: () => window.history.back()
   }), pantalla === "confirmacionesDia" && /*#__PURE__*/React.createElement(ConfirmacionesDia, {
     dia: diaActual,
     ventas: ventas.filter(v => (v.pago === "transferencia" || v.pago === "mixto") && !v.transConfirmada),
@@ -2655,7 +2664,7 @@ function AppPrincipal({
         _upd: Date.now()
       } : v));
     },
-    onVolver: () => irA("menu")
+    onVolver: () => window.history.back()
   }), pantalla === "diaPrincipal" && /*#__PURE__*/React.createElement(DiaPrincipal, {
     dia: diaActual,
     onIrClientes: () => {
@@ -2663,7 +2672,7 @@ function AppPrincipal({
       irA(yaIniciado ? "clientes" : "selectorFechaClientes");
     },
     onIrPlanilla: () => irA("selectorFechaPlanilla"),
-    onVolver: () => irA("menu"),
+    onVolver: () => window.history.back(),
     onVerConfirmaciones: () => irA("confirmacionesDia"),
     ventasPendientesTransfer: ventas.filter(v => v.dia === diaActual && (v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0) && !v.transConfirmada).length
   }), pantalla === "selectorFechaPlanilla" && /*#__PURE__*/React.createElement(SelectorFecha, {
@@ -2684,7 +2693,7 @@ function AppPrincipal({
       setOrigenFecha("planilla");
       irA("planilla");
     },
-    onVolver: () => irA("diaPrincipal")
+    onVolver: () => window.history.back()
   }), pantalla === "planilla" && /*#__PURE__*/React.createElement(PlanillaDelDia, {
     dia: diaActual,
     fecha: fechaActual,
@@ -2705,7 +2714,7 @@ function AppPrincipal({
     // Deshace el mismo camino que se usó para entrar (atajo semanal, atajo
     // directo del menú, o selectorFechaPlanilla normal) — mismo criterio
     // que origenClientes para la pantalla "clientes".
-    onVolver: () => irA(origenFecha === "atajo" ? "atajoPlanillaSemana" : origenFecha === "menu" ? "menu" : "selectorFechaPlanilla"),
+    onVolver: () => window.history.back(),
     onCerrarDia: img => cerrarDia(fechaActual, diaActual, img),
     initCierre: initCierre,
     noVisitas: (noVisitas || []).filter(v => {
@@ -2760,7 +2769,7 @@ function AppPrincipal({
       const yaIniciado = planillas[claveDiaReparto(diaActual, fk, repartoActual?.id)]?.iniciado;
       irA(yaIniciado ? "clientes" : "inicioReparto");
     },
-    onVolver: () => irA("diaPrincipal")
+    onVolver: () => window.history.back()
   }), pantalla === "inicioReparto" && /*#__PURE__*/React.createElement(InicioReparto, {
     dia: diaActual,
     fecha: fechaActual,
@@ -2813,7 +2822,7 @@ function AppPrincipal({
       }
       irA("clientes");
     },
-    onVolver: () => irA("selectorFechaClientes")
+    onVolver: () => window.history.back()
   }), pantalla === "clientes" && /*#__PURE__*/React.createElement(ListaClientes, {
     clientes: clientes.filter(c => c.dia === diaActual && (!repartoActual || c.repartoId === repartoActual.id)),
     dia: diaActual,
@@ -2847,7 +2856,7 @@ function AppPrincipal({
     // vuelve directo al menú en vez de forzar el camino largo
     // (selectorFechaClientes → inicioReparto/diaPrincipal → menú) que ni
     // siquiera se pisó para entrar acá.
-    onVolver: () => irA(origenClientes === "menu" ? "menu" : "selectorFechaClientes"),
+    onVolver: () => window.history.back(),
     onReordenar: lista => {
       saveClientes(prev => [...prev.filter(c => c.dia !== diaActual), ...lista]);
     },
@@ -2903,7 +2912,7 @@ function AppPrincipal({
       }
       irA("venta");
     },
-    onVolver: () => irA(pantallaOrigenDetalle()),
+    onVolver: () => window.history.back(),
     onEditar: cambios => updateCliente(cliente.id, cambios),
     onPerdida: registrarPerdida,
     onPerdidaCliente: registrarPerdidaCliente,
@@ -3190,7 +3199,7 @@ function AppPrincipal({
         irA("venta");
       } else irA("clientes");
     },
-    onVolver: () => irA(volverVentaA || "detalleCliente")
+    onVolver: () => window.history.back()
   }), pantalla === "nuevoCliente" && /*#__PURE__*/React.createElement(NuevoCliente, {
     diaActual: diaActual,
     repartoActual: repartoActual,
@@ -3241,14 +3250,9 @@ function AppPrincipal({
       }
     },
     onVolver: () => {
-      const veniaDeProspecto = !!prospectoAConvertir;
+      if (prospectoAConvertir) setTabMenu("promociones");
       setProspectoAConvertir(null);
-      if (veniaDeProspecto) {
-        setTabMenu("promociones");
-        irA("menu");
-      } else {
-        irA("clientes");
-      }
+      window.history.back();
     }
   }), null, pantalla === "gestionClientes" && /*#__PURE__*/React.createElement(GestionClientes, {
     clientes: clientes,
@@ -3298,7 +3302,7 @@ function AppPrincipal({
       });
       ajustarStockFijoCliente(null, datos);
     },
-    onVolver: () => irA("menu"),
+    onVolver: () => window.history.back(),
     onRegistrarVenta: c => {
       setClienteId(c.id);
       // Asegurar que fechaActual esté seteado a hoy
@@ -3329,7 +3333,7 @@ function AppPrincipal({
     clientes: clientes,
     ventas: ventas,
     repartos: repartos,
-    onVolver: () => irA("gestionClientes"),
+    onVolver: () => window.history.back(),
     onSeleccionar: c => {
       setClienteId(c.id);
       setOrigenDetalle("dormidos");
@@ -3354,7 +3358,7 @@ function AppPrincipal({
       saveClientes(prev => [...prev, ...nuevos]);
       irA("menu");
     },
-    onVolver: () => irA("menu")
+    onVolver: () => window.history.back()
   }), pantalla === "mapaClientes" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ClientesTabs, {
     activo: "mapa",
     onIr: irA
@@ -3370,7 +3374,7 @@ function AppPrincipal({
       irA("detalleCliente");
     },
     onActualizar: nuevosClientes => saveClientes(nuevosClientes),
-    onVolver: () => irA("menu")
+    onVolver: () => window.history.back()
   })), pantalla === "agenda" && /*#__PURE__*/React.createElement(AgendaScreen, {
     recordatorios: recordatorios || [],
     clientes: clientes,
@@ -3406,7 +3410,7 @@ function AppPrincipal({
         irA("detalleCliente");
       }
     },
-    onVolver: () => irA("menu")
+    onVolver: () => window.history.back()
   }), pantalla === "stock" && /*#__PURE__*/React.createElement(StockGeneral, {
     stock: stockNorm,
     setStock: ns => {
@@ -3427,7 +3431,7 @@ function AppPrincipal({
     perdidas: perdidas,
     registrarPerdida: registrarPerdida,
     movStock: movStock,
-    onVolver: () => irA("menu"),
+    onVolver: () => window.history.back(),
     onResumen: () => irA("resumen")
   }), pantalla === "fiadosPendientes" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ClientesTabs, {
     activo: "fiados",
@@ -3477,7 +3481,7 @@ function AppPrincipal({
         saldo: (Number(c.saldo) || 0) + monto
       } : c));
     },
-    onVolver: () => irA("menu")
+    onVolver: () => window.history.back()
   })), pantalla === "resumen" && /*#__PURE__*/React.createElement(Resumen, {
     ventas: ventas,
     clientes: clientes,
@@ -3491,7 +3495,7 @@ function AppPrincipal({
       setOrigenDetalle("resumen");
       irA("detalleCliente");
     },
-    onVolver: () => irA("menu")
+    onVolver: () => window.history.back()
   }), pantalla === "config" && /*#__PURE__*/React.createElement(Config, {
     productos: productos,
     setProductos: saveProductos,
@@ -3512,7 +3516,7 @@ function AppPrincipal({
     cargasDia: cargasDiaDe(repartoActual?.id),
     setCargasDia: v => saveCargasDiaDe(repartoActual?.id, v),
     syncData: syncData,
-    onVolver: () => irA("menu"),
+    onVolver: () => window.history.back(),
     negocioId: negocioId,
     tabInicial: tabConfig,
     repartos: repartos,
