@@ -991,9 +991,9 @@ function NuevaVenta({
       flex: 1,
       background: "var(--color-background-warning)",
       color: "var(--color-text-warning)",
-      border: "0.5px solid var(--color-border-warning)",
-      borderRadius: 8,
-      padding: "11px 8px",
+      border: "1px solid var(--color-border-warning)",
+      borderRadius: 10,
+      padding: "10px 0",
       fontSize: 13,
       fontWeight: 500,
       cursor: "pointer"
@@ -1004,9 +1004,9 @@ function NuevaVenta({
       flex: 1,
       background: "var(--color-background-danger)",
       color: "var(--color-text-danger)",
-      border: "0.5px solid var(--color-border-danger)",
-      borderRadius: 8,
-      padding: "11px 8px",
+      border: "1px solid var(--color-border-danger)",
+      borderRadius: 10,
+      padding: "10px 0",
       fontSize: 13,
       fontWeight: 500,
       cursor: "pointer"
@@ -1014,18 +1014,15 @@ function NuevaVenta({
     onClick: () => onNoQuiere(envPrest, envDev)
   }, "🚫 No quiere"), onSaltar && /*#__PURE__*/React.createElement("button", {
     style: {
-      flex: 1,
-      background: "var(--color-background-tertiary)",
-      color: "var(--color-text-secondary)",
-      border: "0.5px solid var(--color-border-secondary)",
-      borderRadius: 8,
-      padding: "11px 8px",
-      fontSize: 13,
-      fontWeight: 500,
-      cursor: "pointer"
+      ...s.btn,
+      flex: "0 0 38px",
+      width: 38,
+      fontSize: 15,
+      padding: 0
     },
+    title: "Saltar",
     onClick: onSaltar
-  }, "⏭ Saltar")), cuerpoCompacto));
+  }, "⏭")), cuerpoCompacto));
 }
 function NuevoCliente({
   diaActual,
