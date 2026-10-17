@@ -2662,7 +2662,7 @@ function FiadosPendientes({
       color: 'var(--color-text-success)',
       fontSize: 15
     }
-  }, "✅ Sin fiados pendientes"), conDeuda.map(c => /*#__PURE__*/React.createElement("div", {
+  }, "✅ ¡Sin fiados pendientes!"), conDeuda.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     style: {
       ...s.card,
@@ -2850,7 +2850,7 @@ function ClientesDormidos({
       fontSize: 12,
       color: "var(--color-text-secondary)"
     }
-  }, "Sin comprar hace:"), [2, 3, 4, 8].map(n => /*#__PURE__*/React.createElement("button", {
+  }, "Mostrar sin comprar hace:"), [2, 3, 4, 8].map(n => /*#__PURE__*/React.createElement("button", {
     key: n,
     onClick: () => setSemanas(n),
     style: {
