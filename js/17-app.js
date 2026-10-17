@@ -2551,7 +2551,11 @@ function AppPrincipal({
     onStock: () => irA("stock"),
     onAgenda: () => irA("agenda"),
     onVerDeudor: (c, d) => {
-      setDiaActual(d);
+      // RAÍZ DEL BUG (ver La Catalina, mismo arreglo 2026-10-17): diaActual
+      // es una sola variable global compartida por toda la app. Mirar un
+      // deudor es una acción de todos los días — antes pisaba diaActual con
+      // el día del cliente aunque ya hubiera una ruta real en curso.
+      if (!diaActual) setDiaActual(d);
       setClienteId(c.id);
       setOrigenDetalle("diasReparto");
       irA("detalleCliente");
@@ -2572,7 +2576,7 @@ function AppPrincipal({
       confirmado: true
     } : r)),
     onVerConfirmaciones: dia => {
-      setDiaActual(dia);
+      if (dia && !diaActual) setDiaActual(dia);
       irA("confirmacionesDia");
     },
     transferenciasPendientes: DIAS.map(dia => {
@@ -2907,7 +2911,7 @@ function AppPrincipal({
       if (esRutaDiaria) {
         if (fechaActual !== hoyKey) setFechaActual(hoyKey);
       } else {
-        setDiaActual(cliente.dia);
+        if (!diaActual) setDiaActual(cliente.dia);
         if (!fechaActual) setFechaActual(hoyKey);
       }
       irA("venta");
@@ -3405,7 +3409,7 @@ function AppPrincipal({
       const c = clientes.find(x => x.id === cId);
       if (c) {
         setClienteId(cId);
-        setDiaActual(c.dia);
+        if (!diaActual) setDiaActual(c.dia);
         setOrigenDetalle("agenda");
         irA("detalleCliente");
       }
