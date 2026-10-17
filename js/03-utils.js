@@ -215,6 +215,12 @@ function CambioEnvasePanel({
   const [productoViejo, setProductoViejo] = React.useState("Bidón 20L");
   const [productoNuevo, setProductoNuevo] = React.useState("Bidón 20L");
   const [motivo, setMotivo] = React.useState("Agua en mal estado");
+  // "Ninguno" (sentinel __NINGUNO__) = devolución pura: se retira el envase
+  // y no se entrega nada a cambio. Reusa todo el mismo circuito de "Cambio
+  // de envase" (queda en el historial, mueve c.prestado al toque y entra al
+  // cierre del día como cualquier devolución), solo que no genera el
+  // envPrest del producto nuevo.
+  const esSoloDevolucion = productoNuevo === "__NINGUNO__";
   return /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
@@ -228,7 +234,7 @@ function CambioEnvasePanel({
       marginBottom: 8,
       fontWeight: 500
     }
-  }, "🔄 Cambio de envase (no se cobra)"), /*#__PURE__*/React.createElement("div", {
+  }, esSoloDevolucion ? "↩️ Devolución de envase (no se cobra, no se entrega nada)" : "🔄 Cambio de envase (no se cobra)"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
@@ -263,10 +269,13 @@ function CambioEnvasePanel({
     style: s.select,
     value: productoNuevo,
     onChange: e => setProductoNuevo(e.target.value)
-  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
+  }, [/*#__PURE__*/React.createElement("option", {
+    key: "__NINGUNO__",
+    value: "__NINGUNO__"
+  }, "↩️ Ninguno (solo devolución)")].concat((productos || []).map(p => /*#__PURE__*/React.createElement("option", {
     key: p.id,
     value: p.nombre
-  }, p.nombre))))), /*#__PURE__*/React.createElement("div", {
+  }, p.nombre)))))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 8
     }
@@ -300,10 +309,10 @@ function CambioEnvasePanel({
       padding: "8px"
     },
     onClick: () => {
-      onConfirmar(productoViejo, productoNuevo, motivo);
+      onConfirmar(productoViejo, esSoloDevolucion ? null : productoNuevo, motivo);
       setMotivo("Agua en mal estado");
     }
-  }, "✓ Registrar cambio")));
+  }, esSoloDevolucion ? "✓ Registrar devolución" : "✓ Registrar cambio")));
 }
 // ════════════════════════════════════════════════════════════════════
 // ◆  FotoClienteModal — visor/editor de foto de cliente a pantalla

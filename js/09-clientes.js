@@ -57,6 +57,8 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
   c, atendidos, noVMap, visitados, clienteExpandidoId, setClienteExpandidoId, pendientes, clienteMoviendo, setClienteMoviendo, moverCliente, onSeleccionar, recordatorios, ventas, fecha, onConfirmarTransfer, todasVentas, productos, marcarNoVisita, onGuardarVenta, onCambiarDispenserCliente, onQuitarNoVisita, clientes, onReordenar
 }) {
     const [fotoOpen, setFotoOpen] = React.useState(false);
+    const [mostrarMas, setMostrarMas] = React.useState(false);
+    const [mostrarDeuda, setMostrarDeuda] = React.useState(false);
     const atendido = atendidos.has(c.id);
     const est = noVMap[c.id];
     const bc = atendido ? "#1D9E75" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
@@ -71,6 +73,7 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         ...s.card,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.35)",
         borderLeft: `3px solid ${bc}`,
         opacity: visitados.has(c.id) ? 0.65 : est === "noesta" ? 0.85 : 1
       }
@@ -191,7 +194,25 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
           flexShrink: 0
         }
       }, "💬"));
-    })()), /*#__PURE__*/React.createElement("div", {
+    })(), c.saldo < 0 && /*#__PURE__*/React.createElement("button", {
+      style: {
+        fontSize: 12.5,
+        fontWeight: 800,
+        padding: "5px 11px",
+        borderRadius: 20,
+        background: "var(--color-background-danger)",
+        color: "var(--color-text-danger)",
+        border: "1px solid var(--color-border-danger)",
+        cursor: "pointer",
+        flexShrink: 0,
+        marginLeft: "auto"
+      },
+      onClick: e => {
+        e.stopPropagation();
+        if (!expandido) setClienteExpandidoId(c.id);
+        setMostrarDeuda(m => !m);
+      }
+    }, "Debe ", fmt(Math.abs(c.saldo)), " ›")), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 17,
         color: "var(--color-text-primary)",
@@ -240,7 +261,7 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
       style: {
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: 6,
         flexShrink: 0,
         alignItems: "center"
       }
@@ -249,29 +270,52 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
       target: "_blank",
       rel: "noreferrer",
       style: {
-        fontSize: 20,
-        textDecoration: "none"
+        fontSize: 17,
+        textDecoration: "none",
+        width: 34,
+        height: 34,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 9,
+        background: "var(--color-background-tertiary)",
+        border: "0.5px solid var(--color-border-secondary)"
       }
     }, "📍"), c.telefono && /*#__PURE__*/React.createElement("a", {
       href: `https://wa.me/54${c.telefono}`,
       target: "_blank",
       rel: "noreferrer",
       style: {
-        fontSize: 20,
-        textDecoration: "none"
+        fontSize: 17,
+        textDecoration: "none",
+        width: 34,
+        height: 34,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 9,
+        background: "var(--color-background-tertiary)",
+        border: "0.5px solid var(--color-border-secondary)"
       }
     }, "💬"), /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 20,
+        fontSize: 17,
         cursor: "pointer",
-        lineHeight: 1
+        width: 34,
+        height: 34,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 9,
+        background: "var(--color-background-tertiary)",
+        border: "0.5px solid var(--color-border-secondary)"
       },
       title: "Foto domicilio",
       onClick: e => {
         e.stopPropagation();
         setFotoOpen(true);
       }
-    }, "📷"))), (!visitados.has(c.id) || est === "noesta") && !atendido && /*#__PURE__*/React.createElement("div", {
+    }, "📷"))), puedeEntregar && !expandido && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,
@@ -369,12 +413,26 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
     }, "No quiere"), /*#__PURE__*/React.createElement("button", {
       style: {
         ...s.btn,
-        flex: 1.3,
-        fontSize: 13,
-        fontWeight: 500
+        flex: "0 0 38px",
+        width: 38,
+        fontSize: 15,
+        padding: 0,
+        background: mostrarMas ? "var(--color-background-info)" : undefined,
+        color: mostrarMas ? "var(--color-text-info)" : undefined
       },
+      title: "Más opciones",
+      onClick: () => setMostrarMas(m => !m)
+    }, "⋮"), /*#__PURE__*/React.createElement("button", {
+      style: {
+        ...s.btn,
+        flex: "0 0 38px",
+        width: 38,
+        fontSize: 15,
+        padding: 0
+      },
+      title: "Cerrar",
       onClick: () => setClienteExpandidoId(null)
-    }, "▲ Cerrar")), /*#__PURE__*/React.createElement(NuevaVenta, {
+    }, "✕")), /*#__PURE__*/React.createElement(NuevaVenta, {
       key: `${c.id}-${(todasVentas || ventas).filter(v => v.clienteId === c.id).length}`,
       compacto: true,
       cliente: c,
@@ -385,7 +443,9 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
         onGuardarVenta(c.id, ...args);
         irAlSiguientePendiente();
       },
-      onCambiarDispenser: delta => onCambiarDispenserCliente && onCambiarDispenserCliente(c.id, delta)
+      onCambiarDispenser: delta => onCambiarDispenserCliente && onCambiarDispenserCliente(c.id, delta),
+      mostrarMas: mostrarMas,
+      mostrarDeuda: mostrarDeuda
     })), (est === "noesta2" || est === "noquiso") && !atendido && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -511,6 +571,41 @@ function ListaClientes({
     const wps = cp.slice(0, -1).map(c => encodeURIComponent(c.maps)).join("|");
     window.open(`https://www.google.com/maps/dir/?api=1${wps ? `&waypoints=${wps}` : ""}&destination=${dest}&travelmode=driving`, "_blank");
   };
+
+  // Ruta óptima: ordena los pendientes por cercanía (vecino más cercano) y abre Google Maps
+  const abrirRutaOptima = () => {
+    const conMaps = pendientes.filter(c => c.maps);
+    const conCoords = conMaps.map(c => ({
+      c,
+      co: extraerCoordsDeURL(c.maps)
+    })).filter(x => x.co);
+    if (conCoords.length < 2) {
+      alert("Para la ruta óptima necesito al menos 2 clientes pendientes cuyo link de Maps tenga las coordenadas adentro. Si tus links no las tienen, usá la ruta normal (🗺).");
+      return;
+    }
+    const rest = [...conCoords];
+    const orden = [rest.shift()];
+    while (rest.length) {
+      const last = orden[orden.length - 1].co;
+      let bi = 0,
+        bd = Infinity;
+      rest.forEach((x, i) => {
+        const d = (x.co.lat - last.lat) ** 2 + (x.co.lng - last.lng) ** 2;
+        if (d < bd) {
+          bd = d;
+          bi = i;
+        }
+      });
+      orden.push(rest.splice(bi, 1)[0]);
+    }
+    const pts = orden.slice(0, 10).map(x => `${x.co.lat},${x.co.lng}`);
+    const origin = pts[0],
+      dest = pts[pts.length - 1];
+    const wps = pts.slice(1, -1).join("|");
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}${wps ? `&waypoints=${encodeURIComponent(wps)}` : ""}&destination=${dest}&travelmode=driving`, "_blank");
+    const afuera = conMaps.length - conCoords.length;
+    if (afuera > 0) setTimeout(() => alert(`Nota: ${afuera} cliente(s) quedaron afuera de la ruta óptima porque su link de Maps no trae coordenadas.`), 400);
+  };
   const moverCliente = (idOrigen, idDestino) => {
     if (idOrigen === idDestino) return;
     const ordenActual = clientesOrdenados.map(c => c.id);
@@ -573,6 +668,13 @@ function ListaClientes({
     },
     onClick: onNuevoCliente
   }, "+ Nuevo"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px"
+    },
+    onClick: abrirRutaOptima
+  }, "🧭 Ruta óptima"), /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btn,
       fontSize: 11,
