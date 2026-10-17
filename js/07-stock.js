@@ -21,6 +21,9 @@ function StockGeneral({
   onResumen
 }) {
   const [clientesAbierto, setClientesAbierto] = React.useState(false);
+  const [modoArqueo, setModoArqueo] = React.useState("fijos"); // fijos | prestados
+  const [buscaArqueo, setBuscaArqueo] = React.useState("");
+  const [diaArqueo, setDiaArqueo] = React.useState("todos");
   const [abiertoSoderia, setAbiertoSoderia] = React.useState(false);
   const [abiertoCamiones, setAbiertoCamiones] = React.useState(false);
   const [abiertoDeposito, setAbiertoDeposito] = React.useState(false);
@@ -53,8 +56,18 @@ function StockGeneral({
       bidon20: 0,
       dispenser: 0
     };
-    ns[loc][key] = Math.max(0, Math.round(Number(val) || 0));
+    const antes = Number(ns[loc][key] || 0);
+    const despues = Math.max(0, Math.round(Number(val) || 0));
+    ns[loc][key] = despues;
     setStock(ns);
+    // Rastro de correcciones manuales en Stock → Sodería, visible en
+    // "Movimientos" junto con carga y cierre (portado de La Catalina).
+    const delta = despues - antes;
+    if (delta !== 0 && (loc === "soderia" || loc === "soderia_vacios") && window._rmRegistrarMovimientoStock) {
+      window._rmRegistrarMovimientoStock("ajuste", {
+        [key]: delta
+      }, `Edición manual en Stock · Sodería ${loc === "soderia" ? "llenos" : "vacíos"}`);
+    }
   };
   const setCamion = (repartoId, key, val) => {
     const ns = JSON.parse(JSON.stringify(stock));
@@ -69,6 +82,13 @@ function StockGeneral({
       [key]: Math.max(0, Math.round(Number(val) || 0))
     } : c));
   };
+  const setClientePrestado = (id, k, val) => {
+    const n = Math.max(0, Math.round(Number(val) || 0));
+    setClientes((clientes || []).map(c => c.id === id ? {
+      ...c,
+      prestado: { ...(c.prestado || {}), [k]: n }
+    } : c));
+  };
   const setProdPrecio = (id, campo, val) => {
     setProductos((productos || []).map(p => p.id === id ? {
       ...p,
@@ -81,6 +101,29 @@ function StockGeneral({
       nombre: val
     } : p));
   };
+  const [draftProductos, setDraftProductos] = React.useState(() => JSON.parse(JSON.stringify(productos || [])));
+  React.useEffect(() => {
+    setDraftProductos(JSON.parse(JSON.stringify(productos || [])));
+  }, [productos]);
+  const [hayCambiosProd, setHayCambiosProd] = React.useState(false);
+  const setDraftPrecio = (id, campo, val) => {
+    setDraftProductos(dp => dp.map(p => p.id === id ? {
+      ...p,
+      [campo]: Math.max(0, Number(val) || 0)
+    } : p));
+    setHayCambiosProd(true);
+  };
+  const setDraftNombre = (id, val) => {
+    setDraftProductos(dp => dp.map(p => p.id === id ? {
+      ...p,
+      nombre: val
+    } : p));
+    setHayCambiosProd(true);
+  };
+  const [mostrarNuevoProd, setMostrarNuevoProd] = React.useState(false);
+  const [nuevoProdNombre, setNuevoProdNombre] = React.useState("");
+  const [nuevoProdCosto, setNuevoProdCosto] = React.useState("");
+  const [nuevoProdPrecio, setNuevoProdPrecio] = React.useState("");
   const agregarProducto = () => {
     const nombre = (window.prompt("Nombre del producto nuevo:") || "").trim();
     if (!nombre) return;
@@ -762,18 +805,72 @@ function StockGeneral({
       justifyContent: "space-between",
       alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement("span", null, "✏️ Detalle por cliente (", clientesReales.length, ")"), /*#__PURE__*/React.createElement("span", null, clientesAbierto ? "▲" : "▼")), clientesAbierto && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "📋 Arqueo por cliente (", clientesReales.length, ")"), /*#__PURE__*/React.createElement("span", null, clientesAbierto ? "▲" : "▼")), clientesAbierto && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 5
+      marginTop: 8
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 42px 42px 42px 42px",
-      gap: 3,
+      display: "flex",
+      gap: 6,
+      marginBottom: 6
+    }
+  }, [["fijos", "🏠 Fijos (habituales)"], ["prestados", "📦 Prestados (extra)"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setModoArqueo(v),
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12,
+      padding: "8px 4px",
+      background: modoArqueo === v ? "#185FA5" : "var(--color-background-tertiary)",
+      color: modoArqueo === v ? "#e2eaf4" : "var(--color-text-secondary)",
+      border: modoArqueo === v ? "none" : "0.5px solid var(--color-border-secondary)"
+    }
+  }, l))), /*#__PURE__*/React.createElement("div", {
+    style: {
       fontSize: 12,
       color: "var(--color-text-tertiary)",
-      marginBottom: 3
+      marginBottom: 8,
+      lineHeight: 1.5
+    }
+  }, modoArqueo === "fijos" ? "Envases habituales que el cliente tiene siempre en su poder. Editá directo el número." : "Envases EXTRA prestados. Editá el TOTAL que tiene hoy en su poder · 0 = devolvió todo · negativo = devolvió de más."), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      marginBottom: 6,
+      fontSize: 13
+    },
+    placeholder: "🔍 Buscar cliente...",
+    value: buscaArqueo,
+    onChange: e => setBuscaArqueo(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 4,
+      marginBottom: 8,
+      flexWrap: "wrap"
+    }
+  }, ["todos", ...DIAS].map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    onClick: () => setDiaArqueo(d),
+    style: {
+      fontSize: 12,
+      padding: "3px 9px",
+      borderRadius: 6,
+      border: "none",
+      cursor: "pointer",
+      background: diaArqueo === d ? "#185FA5" : "var(--color-background-tertiary)",
+      color: diaArqueo === d ? "#e2eaf4" : "var(--color-text-secondary)",
+      fontWeight: diaArqueo === d ? 600 : 400
+    }
+  }, d === "todos" ? "Todos" : d.slice(0, 3)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 42px 42px 42px 42px",
+      gap: 4,
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      marginBottom: 5
     }
   }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
     style: {
@@ -791,14 +888,14 @@ function StockGeneral({
     style: {
       textAlign: "center"
     }
-  }, "Disp")), clientesReales.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || "")).map(c => /*#__PURE__*/React.createElement("div", {
+  }, "Disp")), clientesReales.filter(c => diaArqueo === "todos" || c.dia === diaArqueo).filter(c => buscarCliente(c, buscaArqueo) > 0).sort((a, b) => (a.nombre || "").localeCompare(b.nombre || "")).map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 42px 42px 42px 42px",
-      gap: 3,
+      gap: 4,
       alignItems: "center",
-      marginBottom: 3
+      marginBottom: 4
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -808,42 +905,37 @@ function StockGeneral({
       textOverflow: "ellipsis",
       whiteSpace: "nowrap"
     }
-  }, c.nombre), /*#__PURE__*/React.createElement("input", {
+  }, c.nombre, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "block",
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, c.dia)), modoArqueo === "fijos" ? ["sifon", "bidon10", "bidon20", "dispenser"].map(k => /*#__PURE__*/React.createElement("input", {
+    key: k,
     type: "number",
-    value: c.sifon || 0,
-    onChange: e => setClienteEnv(c.id, "sifon", e.target.value),
+    value: c[k] || 0,
+    onChange: e => setClienteEnv(c.id, k, e.target.value),
     style: {
       ...inNum,
-      padding: "3px 2px",
+      padding: "4px 2px",
       fontSize: 12
     }
-  }), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    value: c.bidon10 || 0,
-    onChange: e => setClienteEnv(c.id, "bidon10", e.target.value),
-    style: {
-      ...inNum,
-      padding: "3px 2px",
-      fontSize: 12
-    }
-  }), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    value: c.bidon20 || 0,
-    onChange: e => setClienteEnv(c.id, "bidon20", e.target.value),
-    style: {
-      ...inNum,
-      padding: "3px 2px",
-      fontSize: 12
-    }
-  }), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    value: c.dispenser || 0,
-    onChange: e => setClienteEnv(c.id, "dispenser", e.target.value),
-    style: {
-      ...inNum,
-      padding: "3px 2px",
-      fontSize: 12
-    }
+  })) : ["sifon", "bidon10", "bidon20", "dispenser"].map(k => {
+    const val = prestadoClienteDe(c, k, ventas);
+    return /*#__PURE__*/React.createElement("input", {
+      key: k,
+      type: "number",
+      value: val,
+      onChange: e => setClientePrestado(c.id, k, e.target.value),
+      style: {
+        ...inNum,
+        padding: "4px 2px",
+        fontSize: 12,
+        fontWeight: val !== 0 ? 600 : 400,
+        color: val > 0 ? "var(--color-text-warning)" : val < 0 ? "var(--color-text-success)" : "var(--color-text-tertiary)"
+      }
+    });
   })))))), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
@@ -1203,18 +1295,18 @@ function StockGeneral({
     style: {
       fontSize: 12,
       color: "var(--color-text-tertiary)",
-      marginBottom: 6
+      marginBottom: 9
     }
   }, "De acá salen los precios de la planilla y todas las ventas"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "1fr 56px 56px 50px 20px",
-      gap: 3,
+      gridTemplateColumns: "1fr 60px 60px 60px 20px",
+      gap: 6,
       fontSize: 12,
       color: "var(--color-text-tertiary)",
-      marginBottom: 3
+      marginBottom: 5
     }
-  }, /*#__PURE__*/React.createElement("span", null, "Producto"), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
     style: {
       textAlign: "center"
     }
@@ -1227,21 +1319,21 @@ function StockGeneral({
       textAlign: "center",
       color: "var(--color-text-success)"
     }
-  }, "Stock"), /*#__PURE__*/React.createElement("span", null)), (productos || []).map(p => {
+  }, "Stock"), /*#__PURE__*/React.createElement("span", null)), draftProductos.map(p => {
     const k = keyDe(p);
     return /*#__PURE__*/React.createElement("div", {
       key: p.id,
       style: {
         display: "grid",
-        gridTemplateColumns: "1fr 56px 56px 50px 20px",
-        gap: 3,
+        gridTemplateColumns: "1fr 60px 60px 60px 20px",
+        gap: 6,
         alignItems: "center",
-        marginBottom: 3
+        marginBottom: 5
       }
     }, /*#__PURE__*/React.createElement("input", {
       type: "text",
       value: p.nombre || "",
-      onChange: e => setProdNombre(p.id, e.target.value),
+      onChange: e => setDraftNombre(p.id, e.target.value),
       style: {
         ...inNum,
         textAlign: "left",
@@ -1250,7 +1342,7 @@ function StockGeneral({
     }), /*#__PURE__*/React.createElement("input", {
       type: "number",
       value: p.costo || 0,
-      onChange: e => setProdPrecio(p.id, "costo", e.target.value),
+      onChange: e => setDraftPrecio(p.id, "costo", e.target.value),
       style: {
         ...inNum,
         fontSize: 12
@@ -1261,10 +1353,10 @@ function StockGeneral({
         fontSize: 12,
         color: "var(--color-text-warning)"
       }
-    }, "comod.") : /*#__PURE__*/React.createElement("input", {
+    }, "comodato") : /*#__PURE__*/React.createElement("input", {
       type: "number",
       value: p.precio || 0,
-      onChange: e => setProdPrecio(p.id, "precio", e.target.value),
+      onChange: e => setDraftPrecio(p.id, "precio", e.target.value),
       style: {
         ...inNum,
         fontSize: 12
@@ -1287,16 +1379,128 @@ function StockGeneral({
         color: "var(--color-text-danger)",
         padding: 0
       }
-    }, "🗑"));
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: agregarProducto,
+    }, "\uD83D\uDDD1"));
+  }), hayCambiosProd && /*#__PURE__*/React.createElement("button", {
+    style: {
+      width: "100%",
+      marginTop: 8,
+      background: "#1d9e75",
+      color: "#fff",
+      border: "none",
+      borderRadius: 8,
+      padding: "9px",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer"
+    },
+    onClick: () => {
+      setProductos(draftProductos);
+      setHayCambiosProd(false);
+    }
+  }, "✓ Confirmar cambios de precio"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "0.5px solid var(--color-border-tertiary)",
+      margin: "10px 0"
+    }
+  }), !mostrarNuevoProd ? /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btn,
       width: "100%",
-      marginTop: 4,
+      fontSize: 12,
+      padding: "8px"
+    },
+    onClick: () => setMostrarNuevoProd(true)
+  }, "+ Agregar producto") : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    placeholder: "Nombre (ej: Botellón 5L)",
+    value: nuevoProdNombre,
+    onChange: e => setNuevoProdNombre(e.target.value),
+    style: {
+      ...s.input,
       fontSize: 13
     }
-  }, "+ Agregar producto"))), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 6,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 3
+    }
+  }, "Costo llenado"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: nuevoProdCosto,
+    onChange: e => setNuevoProdCosto(e.target.value),
+    style: {
+      ...inNum,
+      fontSize: 12,
+      width: "100%"
+    }
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 3
+    }
+  }, "Precio venta"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: nuevoProdPrecio,
+    onChange: e => setNuevoProdPrecio(e.target.value),
+    style: {
+      ...inNum,
+      fontSize: 12,
+      width: "100%"
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1,
+      fontSize: 12
+    },
+    onClick: () => {
+      setMostrarNuevoProd(false);
+      setNuevoProdNombre("");
+      setNuevoProdCosto("");
+      setNuevoProdPrecio("");
+    }
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      flex: 2,
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none",
+      borderRadius: 8,
+      padding: "9px",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer"
+    },
+    disabled: !nuevoProdNombre.trim(),
+    onClick: () => {
+      const nuevo = {
+        id: Date.now(),
+        nombre: nuevoProdNombre.trim(),
+        costo: Number(nuevoProdCosto) || 0,
+        precio: Number(nuevoProdPrecio) || 0
+      };
+      setProductos([...(productos || []), nuevo]);
+      setMostrarNuevoProd(false);
+      setNuevoProdNombre("");
+      setNuevoProdCosto("");
+      setNuevoProdPrecio("");
+    }
+  }, "✓ Agregar"))))), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "0 0 6px"
