@@ -34,14 +34,14 @@ function SeguridadHuella() {
     style: {
       fontSize: 12,
       color: "var(--color-text-tertiary)",
-      margin: "4px 0 0",
+      margin: "3px 0 0",
       lineHeight: 1.5
     }
   }, "Este dispositivo no tiene lector de huella / Face ID disponible. Suele funcionar desde el celular; probá abriendo la app ahí.") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 12,
       color: "var(--color-text-tertiary)",
-      margin: "0 0 12px",
+      margin: "0 0 8px",
       lineHeight: 1.5
     }
   }, "Entrá a la app con tu huella en lugar de escribir el PIN. El PIN sigue funcionando por si lo necesitás."), enrolado ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
@@ -51,14 +51,14 @@ function SeguridadHuella() {
       color: "var(--color-text-success)",
       display: "flex",
       alignItems: "center",
-      gap: 6,
-      marginBottom: 10
+      gap: 4,
+      marginBottom: 6
     }
   }, /*#__PURE__*/React.createElement("span", null, "✓"), /*#__PURE__*/React.createElement("span", null, "Huella activada")), /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btn,
       width: "100%",
-      padding: "11px",
+      padding: "7px",
       fontSize: 13,
       background: "var(--color-background-danger)",
       color: "var(--color-text-danger)",
@@ -80,7 +80,7 @@ function SeguridadHuella() {
     style: {
       fontSize: 12,
       color: "var(--color-text-secondary)",
-      margin: "8px 0 0",
+      margin: "5px 0 0",
       lineHeight: 1.5
     }
   }, msg)));
@@ -97,7 +97,7 @@ function SeccionPlegable({
   const [abierto, setAbierto] = React.useState(false);
   return /*#__PURE__*/React.createElement("div", {
     style: {
-      marginBottom: 8,
+      marginBottom: 5,
       border: "0.5px solid var(--color-border-tertiary)",
       borderRadius: 8,
       overflow: "hidden"
@@ -107,10 +107,10 @@ function SeccionPlegable({
       width: "100%",
       background: "var(--color-background-tertiary)",
       border: "none",
-      padding: "8px 10px",
+      padding: "5px 6px",
       display: "flex",
       alignItems: "center",
-      gap: 6,
+      gap: 4,
       cursor: "pointer",
       textAlign: "left"
     },
@@ -135,11 +135,11 @@ function SeccionPlegable({
     style: {
       fontSize: 11,
       color: "var(--color-text-tertiary)",
-      marginLeft: 4
+      marginLeft: 3
     }
   }, abierto ? "▲" : "▼")), abierto && /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: "10px"
+      padding: "6px"
     }
   }, children));
 }
@@ -187,7 +187,7 @@ function NotifConfig({
     style: {
       fontSize: 12,
       color: "var(--color-text-tertiary)",
-      margin: "0 0 10px",
+      margin: "0 0 6px",
       lineHeight: 1.5
     }
   }, "Avisos de cierre, transferencias, mantenimiento y agenda — funcionan con la app cerrada."), /*#__PURE__*/React.createElement("div", {
@@ -195,7 +195,7 @@ function NotifConfig({
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 10
+      marginBottom: 6
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -209,7 +209,7 @@ function NotifConfig({
       color: "#e2eaf4",
       border: "none",
       borderRadius: 8,
-      padding: "8px 16px",
+      padding: "5px 10px",
       fontSize: 13,
       fontWeight: 500,
       cursor: "pointer"
@@ -227,11 +227,11 @@ function NotifConfig({
       color: "var(--color-text-primary)",
       border: "0.5px solid var(--color-border-secondary)",
       borderRadius: 8,
-      padding: "9px",
+      padding: "6px",
       fontSize: 13,
       fontWeight: 500,
       cursor: "pointer",
-      marginBottom: 6
+      marginBottom: 4
     },
     disabled: probando,
     onClick: probar
@@ -255,12 +255,12 @@ function NotifConfig({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 8
+      gap: 5
     }
   }, /*#__PURE__*/React.createElement("input", {
     type: "time",
     style: {
-      padding: "8px 10px",
+      padding: "5px 6px",
       border: "0.5px solid var(--color-border-secondary)",
       borderRadius: 8,
       fontSize: 14,
@@ -293,7 +293,7 @@ function NotifConfig({
   }), /*#__PURE__*/React.createElement("input", {
     type: "time",
     style: {
-      padding: "8px 10px",
+      padding: "5px 6px",
       border: "0.5px solid var(--color-border-secondary)",
       borderRadius: 8,
       fontSize: 14,
@@ -327,7 +327,7 @@ function NotifConfig({
     style: {
       fontSize: 11,
       color: "var(--color-text-tertiary)",
-      marginTop: 4
+      marginTop: 3
     }
   }, "Si a esa hora hay transferencias sin confirmar, recibís un aviso.")), /*#__PURE__*/React.createElement(SeccionPlegable, {
     icono: "🔧",
@@ -337,7 +337,7 @@ function NotifConfig({
     type: "text",
     placeholder: "ej: 3,2,1,0",
     style: {
-      padding: "8px 10px",
+      padding: "5px 6px",
       border: "0.5px solid var(--color-border-secondary)",
       borderRadius: 8,
       fontSize: 14,
@@ -359,7 +359,7 @@ function NotifConfig({
     style: {
       fontSize: 11,
       color: "var(--color-text-tertiary)",
-      marginTop: 4
+      marginTop: 3
     }
   }, "Números separados por coma. Se avisa a las 7am si faltan esos días exactos.")), /*#__PURE__*/React.createElement(SeccionPlegable, {
     icono: "⏰",
@@ -368,7 +368,7 @@ function NotifConfig({
   }, /*#__PURE__*/React.createElement("input", {
     type: "time",
     style: {
-      padding: "8px 10px",
+      padding: "5px 6px",
       border: "0.5px solid var(--color-border-secondary)",
       borderRadius: 8,
       fontSize: 14,
@@ -388,14 +388,14 @@ function NotifConfig({
     style: {
       fontSize: 11,
       color: "var(--color-text-tertiary)",
-      marginTop: 4
+      marginTop: 3
     }
   }, "Si a esa hora la planilla está vacía (y es día de reparto), recibís un aviso.")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--color-text-tertiary)",
       lineHeight: 1.7,
-      marginTop: 8
+      marginTop: 5
     }
   }, "📅 Recordatorios de agenda → a la hora exacta")));
 }
@@ -493,15 +493,15 @@ function Config({
     onVolver: onVolver
   }), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: "14px 14px 6px",
+      padding: "9px 9px 4px",
       background: "var(--color-background-secondary)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(3,1fr)",
-      gap: 10,
-      marginBottom: 8
+      gap: 6,
+      marginBottom: 5
     }
   }, [["datos", "📋", "Datos"], ["vehiculo", "🚐", "Vehículo"], ["apariencia", "🎨", "Estilo"]].map(([id, ico, lbl]) => /*#__PURE__*/React.createElement("button", {
     key: id,
@@ -511,8 +511,8 @@ function Config({
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      gap: 6,
-      padding: "14px 8px",
+      gap: 4,
+      padding: "9px 5px",
       borderRadius: 14,
       cursor: "pointer",
       border: `2px solid ${tab === id ? "var(--color-accent-solid)" : "var(--color-border-tertiary)"}`,
@@ -534,15 +534,15 @@ function Config({
     }
   }, lbl))))), tab === "stock" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: 16
+      padding: 10
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
-      margin: "0 0 14px",
+      margin: "0 0 9px",
       background: "var(--color-background-info)",
       border: "0.5px solid var(--color-border-info)",
-      padding: "10px 14px"
+      padding: "6px 9px"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -565,7 +565,7 @@ function Config({
       key: p.id,
       style: {
         ...s.card,
-        margin: "0 0 10px",
+        margin: "0 0 6px",
         borderLeft: editing ? "3px solid #185FA5" : "0.5px solid var(--color-border-tertiary)"
       }
     }, !editing ? /*#__PURE__*/React.createElement("div", {
@@ -584,7 +584,7 @@ function Config({
       style: {
         fontSize: 12,
         color: "var(--color-text-secondary)",
-        marginTop: 4
+        marginTop: 3
       }
     }, "Venta: ", /*#__PURE__*/React.createElement("b", null, fmt(p.precio)), " · Costo: ", fmt(p.costo), " ·", /*#__PURE__*/React.createElement("span", {
       style: {
@@ -593,13 +593,13 @@ function Config({
     }, " ", margen, "% margen"))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
-        gap: 6
+        gap: 4
       }
     }, /*#__PURE__*/React.createElement("button", {
       style: {
         ...s.btn,
         fontSize: 11,
-        padding: "4px 10px"
+        padding: "3px 6px"
       },
       onClick: () => setEditandoId(p.id)
     }, "Editar"), /*#__PURE__*/React.createElement("button", {
@@ -611,7 +611,7 @@ function Config({
       style: {
         display: "flex",
         justifyContent: "space-between",
-        marginBottom: 10
+        marginBottom: 6
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -623,15 +623,15 @@ function Config({
       style: {
         ...s.btn,
         fontSize: 11,
-        padding: "3px 10px"
+        padding: "2px 6px"
       },
       onClick: () => setEditandoId(null)
     }, "Cancelar")), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
-        gap: 8,
-        marginBottom: 8
+        gap: 5,
+        marginBottom: 5
       }
     }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
       style: s.label
@@ -680,14 +680,14 @@ function Config({
   }), editandoId === "nuevo" ? /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
-      margin: "0 0 12px",
+      margin: "0 0 8px",
       borderLeft: "3px solid #4dd9a0"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
-      marginBottom: 10
+      marginBottom: 6
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -699,15 +699,15 @@ function Config({
     style: {
       ...s.btn,
       fontSize: 11,
-      padding: "3px 10px"
+      padding: "2px 6px"
     },
     onClick: () => setEditandoId(null)
   }, "Cancelar")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
-      gap: 8,
-      marginBottom: 8
+      gap: 5,
+      marginBottom: 5
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: s.label
@@ -759,9 +759,9 @@ function Config({
     style: {
       ...s.btn,
       width: "100%",
-      padding: "10px",
+      padding: "6px",
       fontSize: 13,
-      marginBottom: 16,
+      marginBottom: 10,
       borderStyle: "dashed"
     },
     onClick: () => setEditandoId("nuevo")
@@ -770,15 +770,15 @@ function Config({
     ventas: ventas
   })), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: "0 16px 16px"
+      padding: "0 10px 10px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
-      margin: "0 0 14px",
+      margin: "0 0 9px",
       background: "var(--color-background-info)",
       border: "0.5px solid var(--color-border-info)",
-      padding: "10px 14px"
+      padding: "6px 9px"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -790,21 +790,21 @@ function Config({
     style: {
       fontSize: 13,
       color: "var(--color-text-secondary)",
-      marginBottom: 16,
+      marginBottom: 10,
       lineHeight: 1.6
     }
   }, "Control de stock en los 3 lugares. Al iniciar reparto el camión se carga desde la sodería automáticamente."), [["soderia", "🏭 Sodería"], ["casa", "🏠 Casa"], ["camion", "🚚 Camión"]].map(([lugar, titulo]) => /*#__PURE__*/React.createElement("div", {
     key: lugar,
     style: {
       ...s.card,
-      margin: "0 0 12px"
+      margin: "0 0 8px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
       fontWeight: 500,
       color: "var(--color-text-primary)",
-      marginBottom: 10
+      marginBottom: 6
     }
   }, titulo), /*#__PURE__*/React.createElement("div", {
     style: s.grid3
@@ -844,10 +844,10 @@ function Config({
   }, "Guardar stock"), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
-      margin: "16px 0 14px",
+      margin: "10px 0 9px",
       background: "var(--color-background-info)",
       border: "0.5px solid var(--color-border-info)",
-      padding: "10px 14px"
+      padding: "6px 9px"
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -875,20 +875,20 @@ function Config({
       key: dia,
       style: {
         ...s.card,
-        margin: "0 0 10px"
+        margin: "0 0 6px"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 14,
         fontWeight: 600,
         color: "var(--color-text-primary)",
-        marginBottom: 10
+        marginBottom: 6
       }
     }, dia), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr 1fr",
-        gap: 8
+        gap: 5
       }
     }, [["soda", "🫧 Soda"], ["b10", "💧 Bidón 10L"], ["b20", "🫙 Bidón 20L"]].map(([k, lbl]) => /*#__PURE__*/React.createElement("div", {
       key: k
@@ -918,10 +918,10 @@ function Config({
     }
   }, "Guardar cargas"))), tab === "datos" && /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: 16,
+      padding: 10,
       display: "flex",
       flexDirection: "column",
-      gap: 12
+      gap: 8
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -934,10 +934,10 @@ function Config({
       background: "var(--color-background-tertiary)",
       border: "none",
       borderRadius: 10,
-      padding: "14px 16px",
+      padding: "9px 10px",
       display: "flex",
       alignItems: "center",
-      gap: 8,
+      gap: 5,
       cursor: "pointer",
       textAlign: "left"
     },
@@ -968,7 +968,7 @@ function Config({
     }
   }, abiertoNotif ? "▲" : "▼")), abiertoNotif && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 10
+      marginTop: 6
     }
   }, /*#__PURE__*/React.createElement(NotifConfig, {
     syncData: syncData
@@ -983,10 +983,10 @@ function Config({
       background: "var(--color-background-tertiary)",
       border: "none",
       borderRadius: 10,
-      padding: "14px 16px",
+      padding: "9px 10px",
       display: "flex",
       alignItems: "center",
-      gap: 8,
+      gap: 5,
       cursor: "pointer",
       textAlign: "left"
     },
@@ -1017,7 +1017,7 @@ function Config({
     }
   }, abiertoHuella ? "▲" : "▼")), abiertoHuella && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 10
+      marginTop: 6
     }
   }, /*#__PURE__*/React.createElement(SeguridadHuella, null))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1030,10 +1030,10 @@ function Config({
       background: "var(--color-background-tertiary)",
       border: "none",
       borderRadius: 10,
-      padding: "14px 16px",
+      padding: "9px 10px",
       display: "flex",
       alignItems: "center",
-      gap: 8,
+      gap: 5,
       cursor: "pointer",
       textAlign: "left"
     },
@@ -1064,20 +1064,20 @@ function Config({
     }
   }, abiertoRespaldo ? "▲" : "▼")), abiertoRespaldo && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 10
+      marginTop: 6
     }
   }, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 12,
       color: "var(--color-text-tertiary)",
-      margin: "0 0 12px",
+      margin: "0 0 8px",
       lineHeight: 1.5
     }
   }, "Guardá todos los datos en un archivo. Descargalo seguido y guardalo en otro lado (mail, Drive). Si se pierde el teléfono, lo restaurás y recuperás todo."), /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btnPrimary,
       width: "100%",
-      marginBottom: 8
+      marginBottom: 5
     },
     onClick: () => {
       if (typeof window._descargarRespaldo === "function") window._descargarRespaldo();else alert("No se pudo generar el respaldo. Recargá la app e intentá de nuevo.");
@@ -1086,20 +1086,20 @@ function Config({
     style: {
       ...s.btn,
       width: "100%",
-      marginBottom: 8
+      marginBottom: 5
     },
     onClick: exportarVentasCSV
   }, "📊 Exportar ventas (.csv, para Excel/contador)"), /*#__PURE__*/React.createElement("label", {
     style: {
       ...s.btn,
       width: "100%",
-      padding: "10px",
+      padding: "6px",
       display: "block",
       textAlign: "center",
       cursor: "pointer",
       boxSizing: "border-box",
       fontSize: 13,
-      marginBottom: 10
+      marginBottom: 6
     }
   }, "♻️ Restaurar desde un respaldo", /*#__PURE__*/React.createElement("input", {
     type: "file",
@@ -1131,23 +1131,23 @@ function Config({
     style: {
       ...s.card,
       margin: 0,
-      padding: "10px 14px"
+      padding: "6px 9px"
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
       ...s.label,
-      marginBottom: 6
+      marginBottom: 4
     }
   }, "📦 Exportar datos de:"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
-      gap: 6
+      gap: 4
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btn,
-      padding: "6px 14px",
+      padding: "4px 9px",
       fontSize: 12,
       background: filtroReparto === "todos" ? "#185FA5" : "var(--color-background-tertiary)",
       color: filtroReparto === "todos" ? "#e2eaf4" : "var(--color-text-secondary)",
@@ -1158,7 +1158,7 @@ function Config({
     key: r.id,
     style: {
       ...s.btn,
-      padding: "6px 14px",
+      padding: "4px 9px",
       fontSize: 12,
       background: filtroReparto === r.id ? "#185FA5" : "var(--color-background-tertiary)",
       color: filtroReparto === r.id ? "#e2eaf4" : "var(--color-text-secondary)",
@@ -1181,8 +1181,8 @@ function Config({
     style: {
       display: "flex",
       alignItems: "center",
-      gap: 8,
-      marginBottom: 10
+      gap: 5,
+      marginBottom: 6
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -1198,7 +1198,7 @@ function Config({
     style: {
       ...s.btn,
       width: "100%",
-      padding: "11px",
+      padding: "7px",
       fontSize: 13
     },
     onClick: () => setImportando(true)
@@ -1211,11 +1211,11 @@ function Config({
     style: {
       fontSize: 12,
       color: "var(--color-text-secondary)",
-      marginBottom: 8
+      marginBottom: 5
     }
   }, "Seleccioná el archivo Excel con los clientes:"), repartos && repartos.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginBottom: 10
+      marginBottom: 6
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
@@ -1237,15 +1237,15 @@ function Config({
     style: {
       fontSize: 11,
       color: "var(--color-text-tertiary)",
-      marginTop: 4
+      marginTop: 3
     }
   }, "Los clientes importados quedarán asignados a ese reparto.")), /*#__PURE__*/React.createElement("input", {
     type: "file",
     accept: ".xlsx",
     style: {
       ...s.input,
-      marginBottom: 8,
-      padding: "6px"
+      marginBottom: 5,
+      padding: "4px"
     },
     onChange: e => {
       if (e.target.files[0]) {
@@ -1276,10 +1276,10 @@ function Config({
       background: "var(--color-background-tertiary)",
       border: "none",
       borderRadius: 10,
-      padding: "14px 16px",
+      padding: "9px 10px",
       display: "flex",
       alignItems: "center",
-      gap: 8,
+      gap: 5,
       cursor: "pointer",
       textAlign: "left"
     },
@@ -1310,15 +1310,15 @@ function Config({
     }
   }, abiertoMant ? "▲" : "▼")), abiertoMant && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 10
+      marginTop: 6
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btn,
       width: "100%",
-      padding: "10px",
+      padding: "6px",
       fontSize: 13,
-      marginBottom: 8
+      marginBottom: 5
     },
     onClick: () => {
       if (window.confirm("¿Subir todos los datos a la nube?")) {
@@ -1336,7 +1336,7 @@ function Config({
     style: {
       ...s.btn,
       width: "100%",
-      padding: "11px",
+      padding: "7px",
       background: "#185FA5",
       color: "#fff",
       border: "none",
@@ -1358,7 +1358,7 @@ function Config({
           to: lic.email,
           toName: lic.nombre || "",
           subject: `📊 Informe de repartos · ${hoy}`,
-          htmlContent: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:20px">
+          htmlContent: `<div style="font-family:sans-serif;max-width:480px;margin: 0 auto;padding:20px">
                       <h2 style="color:#185FA5">📊 Informe de repartos</h2>
                       <p style="color:#666">${hoy}</p>
                       <div style="background:#f0f7ff;border-radius:10px;padding:16px;margin:16px 0">
@@ -1395,7 +1395,7 @@ function Config({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 6
+        marginBottom: 4
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -1426,7 +1426,7 @@ function Config({
       style: {
         fontSize: 12,
         color: "#e05c5c",
-        marginTop: 8
+        marginTop: 5
       }
     }, "⚠️ Espacio alto. Eliminá fotos si la app falla."));
   })()), /*#__PURE__*/React.createElement("details", {
@@ -1443,7 +1443,7 @@ function Config({
     }
   }, "🔗 Vincular con Emma Control"), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 10
+      marginTop: 6
     }
   }, /*#__PURE__*/React.createElement(VincularEmmaControl, null))), /*#__PURE__*/React.createElement("a", {
     href: "https://wa.me/5493813399962?text=Hola%2C+necesito+ayuda+con+Sistema+de+Reparto",
@@ -1453,8 +1453,8 @@ function Config({
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      gap: 8,
-      padding: "12px",
+      gap: 5,
+      padding: "8px",
       borderRadius: 10,
       background: "#0a2e1f",
       border: "1px solid #4dd9a0",
@@ -1478,12 +1478,12 @@ function Config({
     }
   }, "⚠️ Zona peligrosa"), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 10
+      marginTop: 6
     }
   }, /*#__PURE__*/React.createElement("button", {
     style: {
       width: "100%",
-      padding: "12px",
+      padding: "8px",
       borderRadius: 10,
       border: "1px solid var(--color-text-danger)",
       background: "rgba(220,38,38,0.1)",
@@ -1526,19 +1526,19 @@ function Config({
     style: {
       fontSize: 11,
       color: "var(--color-text-tertiary)",
-      marginTop: 6,
+      marginTop: 4,
       textAlign: "center"
     }
   }, "Los productos, stock y repartos se conservan")))), tab === "vehiculo" && /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: 16
+      padding: 10
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 12
+      marginBottom: 8
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1555,20 +1555,20 @@ function Config({
   }, "Historial de service y reparaciones")), /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btnPrimary,
-      padding: "8px 14px",
+      padding: "5px 9px",
       fontSize: 13
     },
     onClick: () => setMostrarNuevoMant(true)
   }, "+ Registrar")), mantVeh.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
-      padding: "40px 20px",
+      padding: "26px 13px",
       color: "var(--color-text-tertiary)"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 40,
-      marginBottom: 10
+      marginBottom: 6
     }
   }, "🚐"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1577,13 +1577,13 @@ function Config({
   }, "Sin registros aún"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
-      marginTop: 6
+      marginTop: 4
     }
   }, "Registrá cambios de aceite, service y reparaciones")), [...mantVeh].reverse().map((m, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       ...s.card,
-      margin: "0 0 10px",
+      margin: "0 0 6px",
       borderLeft: `3px solid ${m.tipo === "aceite" ? "#f5b942" : m.tipo === "preventivo" ? "#4dd9a0" : m.tipo === "embrague" ? "#e05c5c" : m.tipo === "reparacion" ? "#5daaff" : m.tipo === "gnc" ? "#22c55e" : m.tipo === "vtv" ? "#3b82f6" : "#a0aec0"}`
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -1606,13 +1606,13 @@ function Config({
     style: {
       fontSize: 12,
       color: "var(--color-text-secondary)",
-      marginTop: 4
+      marginTop: 3
     }
   }, m.descripcion), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 12,
-      marginTop: 6,
+      gap: 8,
+      marginTop: 4,
       flexWrap: "wrap"
     }
   }, m.km && /*#__PURE__*/React.createElement("span", {
@@ -1629,17 +1629,17 @@ function Config({
     style: {
       fontSize: 12,
       color: "#f5b942",
-      marginTop: 4,
+      marginTop: 3,
       borderTop: "0.5px solid var(--color-border-tertiary)",
-      paddingTop: 4
+      paddingTop: 3
     }
   }, "⏰ Próximo: ", m.proximo)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       alignItems: "flex-end",
-      gap: 6,
-      marginLeft: 10,
+      gap: 4,
+      marginLeft: 6,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("span", {
@@ -1653,7 +1653,7 @@ function Config({
       color: "#e05c5c",
       border: "none",
       borderRadius: 6,
-      padding: "3px 8px",
+      padding: "2px 5px",
       fontSize: 11,
       cursor: "pointer"
     },
@@ -1666,7 +1666,7 @@ function Config({
     onCerrar: () => setMostrarNuevoMant(false)
   })), tab === "apariencia" && /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: 16
+      padding: 10
     }
   }, /*#__PURE__*/React.createElement(ConfigApariencia, null)));
 }
