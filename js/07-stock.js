@@ -257,6 +257,117 @@ function StockGeneral({
   }, "ℹ️ El ", /*#__PURE__*/React.createElement("b", null, "sifón"), " se cuenta en ", /*#__PURE__*/React.createElement("b", null, "unidades sueltas"), " (6 unidades = 1 cajón)."), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
+      margin: "0 0 6px",
+      border: "1px solid var(--color-border-secondary)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-primary)",
+      marginBottom: 2
+    }
+  }, "Σ Total general"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      marginBottom: 6
+    }
+  }, "El número real que existe en total, sea cual sea la ubicación."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 44px 44px 44px 44px 50px",
+      gap: 4,
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      marginBottom: 3
+    }
+  }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "Sodería"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "Depós."), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center"
+    }
+  }, "Client."), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center",
+      color: "var(--color-text-danger)"
+    }
+  }, "Perdi."), /*#__PURE__*/React.createElement("span", {
+    style: {
+      textAlign: "center",
+      color: "var(--color-text-success)",
+      fontWeight: 600
+    }
+  }, "Total")), PRODS.map(([k, lbl]) => {
+    const enSoderia = (stock.soderia?.[k] || 0) + (stock.soderia_vacios?.[k] || 0) + (totCamiones[k] || 0);
+    const enDeposito = stock.casa?.[k] || 0;
+    const enClientes = (totClientes[k] || 0) + (totPrestados[k] || 0);
+    const perdido2 = totalPerdidas[k] || 0;
+    const total = enSoderia + enDeposito + enClientes - perdido2;
+    return /*#__PURE__*/React.createElement("div", {
+      key: k,
+      style: {
+        display: "grid",
+        gridTemplateColumns: "1fr 44px 44px 44px 44px 50px",
+        gap: 4,
+        alignItems: "center",
+        padding: "3px 0",
+        borderTop: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-primary)"
+      }
+    }, lbl.replace(" 1.5L", "")), /*#__PURE__*/React.createElement("span", {
+      style: {
+        textAlign: "center",
+        fontSize: 12,
+        color: "var(--color-text-secondary)"
+      }
+    }, enSoderia), /*#__PURE__*/React.createElement("span", {
+      style: {
+        textAlign: "center",
+        fontSize: 12,
+        color: "var(--color-text-secondary)"
+      }
+    }, enDeposito), /*#__PURE__*/React.createElement("span", {
+      style: {
+        textAlign: "center",
+        fontSize: 12,
+        color: "var(--color-text-secondary)"
+      }
+    }, enClientes), /*#__PURE__*/React.createElement("span", {
+      style: {
+        textAlign: "center",
+        fontSize: 12,
+        color: perdido2 > 0 ? "var(--color-text-danger)" : "var(--color-text-tertiary)"
+      }
+    }, perdido2 > 0 ? "-" + perdido2 : "—"), /*#__PURE__*/React.createElement("span", {
+      style: {
+        textAlign: "center",
+        fontSize: 14,
+        fontWeight: 700,
+        color: "var(--color-text-success)"
+      }
+    }, total, k === "sifon" && /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "block",
+        fontSize: 11,
+        color: "var(--color-text-tertiary)",
+        fontWeight: 400
+      }
+    }, Math.floor(total / 6), " caj")));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...s.card,
       margin: "0 0 6px"
     }
   }, /*#__PURE__*/React.createElement("button", {
@@ -734,148 +845,6 @@ function StockGeneral({
       fontSize: 12
     }
   })))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 6px",
-      border: "1px solid var(--color-border-secondary)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: "var(--color-text-primary)",
-      marginBottom: 2
-    }
-  }, "Σ Total general"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-tertiary)",
-      marginBottom: 6
-    }
-  }, "El número real que existe en total, sea cual sea la ubicación."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 6
-    }
-  }, PRODS.map(([k, lbl]) => {
-    const enSoderia = (stock.soderia?.[k] || 0) + (stock.soderia_vacios?.[k] || 0);
-    const enCamiones = totCamiones[k] || 0;
-    const enDeposito = stock.casa?.[k] || 0;
-    const enClientes = (totClientes[k] || 0) + (totPrestados[k] || 0);
-    const perdido = totalPerdidas[k] || 0;
-    const total = enSoderia + enCamiones + enDeposito + enClientes - perdido;
-    return /*#__PURE__*/React.createElement("div", {
-      key: `res-${k}`,
-      style: {
-        marginBottom: 5
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "baseline",
-        gap: 4
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600,
-        color: "var(--color-text-primary)"
-      }
-    }, lbl.replace(" 1.5L", "")), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 20,
-        fontWeight: 700,
-        color: "var(--color-text-success)"
-      }
-    }, total)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 4,
-        flexWrap: "wrap",
-        marginTop: 2
-      }
-    }, chipResumen("🏭 Sodería", enSoderia, "var(--color-text-info)"), chipResumen("🚚 Camiones", enCamiones, "var(--color-text-info)"), chipResumen("📦 Depósito", enDeposito, "var(--color-text-secondary)"), chipResumen("👥 Clientes", enClientes, "var(--color-text-secondary)"), perdido > 0 && chipResumen("💔 Perdidos", perdido, "var(--color-text-danger)")));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 60px 60px 60px 60px",
-      gap: 4,
-      fontSize: 12,
-      color: "var(--color-text-tertiary)",
-      marginBottom: 3
-    }
-  }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "Sodería"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "Depós."), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "Client."), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center",
-      color: "var(--color-text-success)",
-      fontWeight: 600
-    }
-  }, "Total")), PRODS.map(([k, lbl]) => {
-    const enSoderia = (stock.soderia?.[k] || 0) + (stock.soderia_vacios?.[k] || 0) + (totCamiones[k] || 0);
-    const enDeposito = stock.casa?.[k] || 0;
-    const enClientes = (totClientes[k] || 0) + (totPrestados[k] || 0);
-    const perdido2 = totalPerdidas[k] || 0;
-    const total = enSoderia + enDeposito + enClientes - perdido2;
-    return /*#__PURE__*/React.createElement("div", {
-      key: k,
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 60px 60px 60px 60px",
-        gap: 4,
-        alignItems: "center",
-        padding: "3px 0",
-        borderTop: "0.5px solid var(--color-border-tertiary)"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "var(--color-text-primary)"
-      }
-    }, lbl.replace(" 1.5L", "")), /*#__PURE__*/React.createElement("span", {
-      style: {
-        textAlign: "center",
-        fontSize: 12,
-        color: "var(--color-text-secondary)"
-      }
-    }, enSoderia), /*#__PURE__*/React.createElement("span", {
-      style: {
-        textAlign: "center",
-        fontSize: 12,
-        color: "var(--color-text-secondary)"
-      }
-    }, enDeposito), /*#__PURE__*/React.createElement("span", {
-      style: {
-        textAlign: "center",
-        fontSize: 12,
-        color: "var(--color-text-secondary)"
-      }
-    }, enClientes), /*#__PURE__*/React.createElement("span", {
-      style: {
-        textAlign: "center",
-        fontSize: 14,
-        fontWeight: 700,
-        color: "var(--color-text-success)"
-      }
-    }, total, k === "sifon" && /*#__PURE__*/React.createElement("span", {
-      style: {
-        display: "block",
-        fontSize: 11,
-        color: "var(--color-text-tertiary)",
-        fontWeight: 400
-      }
-    }, Math.floor(total / 6), " caj")));
-  })), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
       margin: "0 0 6px"
