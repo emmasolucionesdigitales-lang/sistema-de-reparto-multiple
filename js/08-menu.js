@@ -2018,8 +2018,11 @@ function AtajoPlanillaSemana({
     const clientesDia = (clientes || []).filter(c => c.dia === dia);
     const totalClientes = clientesDia.length;
     const esPasado = fecha.getTime() < hoy0.getTime();
-    const ventaIdsDia = new Set((ventas || []).filter(v => v.fechaKey === fechaKey).map(v => v.clienteId));
-    const noVisitaIdsDia = new Set((noVisitas || []).filter(n => n.fecha === fechaKey).map(n => n.clienteId));
+    // Mismo fix de raíz que La Catalina (2026-10-17): sin "&& v.dia === dia"
+    // una venta de OTRO día con la misma fecha calendario contaba como
+    // visita de este día, inflando "visitados" y arruinando el conteo.
+    const ventaIdsDia = new Set((ventas || []).filter(v => v.fechaKey === fechaKey && v.dia === dia).map(v => v.clienteId));
+    const noVisitaIdsDia = new Set((noVisitas || []).filter(n => n.fecha === fechaKey && n.dia === dia).map(n => n.clienteId));
     // VISITADOS: clientes ÚNICOS del día con alguna venta registrada. Se cuenta
     // por cliente y no por registro de venta a propósito: un cliente que no
     // compró pero pagó deuda vieja SÍ fue visitado (queda como venta _esCobro),
