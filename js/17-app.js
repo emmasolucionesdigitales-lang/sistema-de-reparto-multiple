@@ -2297,6 +2297,68 @@ function AppPrincipal({
     irA("clientes");
   };
 
+  // ── Retirar cliente (dar de baja sin borrar historial) ──────────────────
+  // A diferencia de eliminarCliente, esto NO borra al cliente ni su
+  // historial de ventas: solo le limpia la asignación de envases y lo marca
+  // _retirado para que deje de aparecer en las listas del día. Pensado para
+  // clientes que dejaron de comprar (4+ visitas seguidas sin compra) y hay
+  // que recuperarles los envases, sin perder el registro de lo que compraron.
+  const retirarCliente = clienteId => {
+    const cli = clientes.find(c => c.id === clienteId);
+    if (!cli) return;
+    const totalEnvases = {
+      sifon: (Number(cli.sifon) || 0) + (Number(cli.prestado?.sifon) || 0),
+      bidon10: (Number(cli.bidon10) || 0) + (Number(cli.prestado?.bidon10) || 0),
+      bidon20: (Number(cli.bidon20) || 0) + (Number(cli.prestado?.bidon20) || 0),
+      dispenser: (Number(cli.dispenser) || 0) + (Number(cli.prestado?.dispenser) || 0)
+    };
+    const totalEnv = totalEnvases.sifon + totalEnvases.bidon10 + totalEnvases.bidon20 + totalEnvases.dispenser;
+    let devolvio = true;
+    if (totalEnv > 0) {
+      const det = [totalEnvases.sifon && `${totalEnvases.sifon} Sifón 1.5L`, totalEnvases.bidon10 && `${totalEnvases.bidon10} Bidón 10L`, totalEnvases.bidon20 && `${totalEnvases.bidon20} Bidón 20L`, totalEnvases.dispenser && `${totalEnvases.dispenser} Dispenser`].filter(Boolean).join(" · ");
+      devolvio = window.confirm(`Vas a retirar a "${cli.nombre}" (${det}) y darlo de baja del reparto.\n\n¿Los devolvió?\n\n• Aceptar = SÍ, sumarlos al stock (Depósito)\n• Cancelar = NO, se dan por perdidos\n\n(Cualquiera de las dos opciones lo retira igual)`);
+    } else {
+      if (!window.confirm(`Vas a retirar a ${cli.nombre} (ningún envase asignado) y darlo de baja del reparto. ¿Confirmás?`)) return;
+    }
+    if (totalEnv > 0 && devolvio) {
+      setStock(prev => {
+        const s = JSON.parse(JSON.stringify(prev || {}));
+        if (!s.casa) s.casa = {
+          sifon: 0,
+          bidon10: 0,
+          bidon20: 0,
+          dispenser: 0
+        };
+        ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
+          s.casa[k] = (s.casa[k] || 0) + (totalEnvases[k] || 0);
+        });
+        syncData({
+          stock: s
+        });
+        return s;
+      });
+      if (window._rmRegistrarMovimientoStock) {
+        const det = {};
+        ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
+          if (totalEnvases[k]) det[k] = totalEnvases[k];
+        });
+        if (Object.keys(det).length) window._rmRegistrarMovimientoStock("retiro", det, `Cliente retirado: ${cli.nombre}`);
+      }
+    } else if (totalEnv > 0 && !devolvio) {
+      registrarPerdida(totalEnvases, "Cliente retirado sin recuperar envases (se fugó/desapareció)", cli.nombre);
+    }
+    saveClientes(prev => (prev || []).map(c => c.id === clienteId ? {
+      ...c,
+      sifon: 0,
+      bidon10: 0,
+      bidon20: 0,
+      dispenser: 0,
+      prestado: {},
+      _retirado: true,
+      _upd: Date.now()
+    } : c));
+  };
+
   // ── Registrar un envase roto/perdido EN CASA DE UN CLIENTE (sin borrarlo) ──
   // Usado por el panel de "romper/perder" en la ficha del cliente. A
   // diferencia de un editar cliente común, acá el envase NO volvió al
@@ -2900,6 +2962,7 @@ function AppPrincipal({
     // de La Catalina.
     cliente: cliente,
     ventas: ventas.filter(v => v.clienteId === cliente.id),
+    noVisitas: (noVisitas || []).filter(v => v.clienteId === cliente.id),
     dia: diaActual || cliente.dia,
     fecha: fechaActual,
     productos: productos,
@@ -2924,6 +2987,13 @@ function AppPrincipal({
     onEditarVenta: editarVenta,
     onEliminarCliente: () => {
       eliminarCliente(cliente.id);
+      irA(pantallaOrigenDetalle());
+    },
+    onEliminarNoVisita: (nvDia, nvFecha) => {
+      saveNoVisitas(prev => (prev || []).filter(v => !(v.clienteId === cliente.id && v.dia === nvDia && v.fecha === nvFecha)));
+    },
+    onRetirarCliente: () => {
+      retirarCliente(cliente.id);
       irA(pantallaOrigenDetalle());
     },
     onNoEstaCliente: () => {
