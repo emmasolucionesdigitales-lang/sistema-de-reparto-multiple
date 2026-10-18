@@ -751,6 +751,8 @@ function DetalleCliente({
   onEliminarVenta,
   onEditarVenta,
   onEliminarCliente,
+  onEliminarNoVisita,
+  onRetirarCliente,
   onNoEstaCliente,
   onNoQuiereCliente,
   recordatorios,
@@ -784,14 +786,63 @@ function DetalleCliente({
     const hoy = new Date();
     return (hoy - d) / 86400000 <= 30;
   }).length;
+  // "Para retirar": 4 visitas SEGUIDAS sin comprar (no está confirmado 2da
+  // vez, o no quiso) — se calcula en vivo mirando el historial combinado de
+  // compras + no-visitas de este cliente, más reciente primero.
+  const comprasReales = ventas.filter(v => !v._esCobro && !v._esAjuste && !v._esCambio);
+  const eventosVisita = [...comprasReales.map(v => ({
+    fecha: v.fechaKey,
+    compra: true
+  })), ...(noVisitas || []).filter(n => n.motivo === "noesta2" || n.motivo === "noquiso").map(n => ({
+    fecha: n.fecha,
+    compra: false
+  }))].filter(e => e.fecha).sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
+  let consecutivasSinComprar = 0;
+  for (const e of eventosVisita) {
+    if (e.compra) break;
+    consecutivasSinComprar++;
+  }
+  const paraRetirar = consecutivasSinComprar >= 4;
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
     titulo: `Clientes · ${cliente.dia || ""}`,
     onVolver: onVolver
-  }), /*#__PURE__*/React.createElement("div", {
+  }), paraRetirar && !soloLectura && /*#__PURE__*/React.createElement("div", {
     style: {
-      background: "var(--color-background-secondary)",
+      margin: "8px 14px 0",
+      padding: "10px 14px",
+      borderRadius: 10,
+      background: "rgba(226,75,74,0.14)",
+      border: "1px solid #E24B4A",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "#E24B4A",
+      fontWeight: 500
+    }
+  }, "⚠ ", consecutivasSinComprar, " visitas seguidas sin comprar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      padding: "7px 12px",
+      borderRadius: 8,
+      border: "1px solid #E24B4A",
+      background: "transparent",
+      color: "#E24B4A",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer",
+      flexShrink: 0
+    },
+    onClick: () => onRetirarCliente && onRetirarCliente()
+  }, "Retirar envases y dar de baja")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: paraRetirar ? "rgba(226,75,74,0.08)" : "var(--color-background-secondary)",
+      border: paraRetirar ? "1px solid #E24B4A" : undefined,
       borderRadius: 10,
       margin: "8px 14px 0",
       padding: "10px 14px",
