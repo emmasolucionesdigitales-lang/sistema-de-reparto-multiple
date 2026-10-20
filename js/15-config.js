@@ -474,10 +474,28 @@ function AuditoriaGlobal({
       saldoDespues: v.saldoDespues,
       ts: Number(v.id) || Date.parse(v.fecha) || 0
     }));
-    return [...deAuditoria, ...deAjustes].sort((a, b) => b.ts - a.ts);
+    const deVentasNormales = (ventas || []).filter(v => !v._esAjuste && !v._esCobro && !v._esMixtoTrans && !v._esCambio && !v._esDevolucion).map(v => {
+      const det = (Array.isArray(v.detalle) ? v.detalle : Object.values(v.detalle || {})).map(d => `${d.cantidad}× ${d.nombre}`).join(", ");
+      return {
+        id: "venta_" + v.id,
+        tipo: "venta",
+        cliente: v.cliente || "",
+        clienteId: v.clienteId,
+        fechaVenta: v.fecha || "",
+        detalleTxt: det || "(sin productos)",
+        pago: v.pago || "",
+        monto: v.neto || 0,
+        ts: Number(v.id) || Date.parse(v.fecha) || 0
+      };
+    });
+    return [...deAuditoria, ...deAjustes, ...deVentasNormales].sort((a, b) => b.ts - a.ts);
   }, [auditoria, ventas]);
   const filtrados = items.filter(it => (filtro === "todos" || it.tipo === filtro) && (!busca.trim() || (it.cliente || "").toLowerCase().includes(busca.trim().toLowerCase())));
   const TIPO_LBL = {
+    venta: {
+      txt: "🧾 Venta",
+      color: "var(--color-text-success)"
+    },
     eliminada: {
       txt: "🗑 Eliminada",
       color: "var(--color-text-danger)"
@@ -543,7 +561,7 @@ function AuditoriaGlobal({
       flexWrap: "wrap",
       marginBottom: 12
     }
-  }, [["todos", "Todos"], ["eliminada", "Eliminadas"], ["editada", "Editadas"], ["ajuste", "Ajustes"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+  }, [["todos", "Todos"], ["venta", "Ventas"], ["eliminada", "Eliminadas"], ["editada", "Editadas"], ["ajuste", "Ajustes"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     onClick: () => setFiltro(v),
     style: {
@@ -600,7 +618,13 @@ function AuditoriaGlobal({
         color: "var(--color-text-primary)",
         marginBottom: 4
       }
-    }, it.cliente || "(sin cliente)"), it.tipo === "eliminada" && /*#__PURE__*/React.createElement("div", {
+    }, it.cliente || "(sin cliente)"), it.tipo === "venta" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        lineHeight: 1.5
+      }
+    }, "Venta del ", it.fechaVenta, " · ", it.detalleTxt, " · ", it.pago, " · ", fmt(it.monto)), it.tipo === "eliminada" && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--color-text-secondary)",
