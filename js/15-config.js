@@ -446,6 +446,186 @@ function LimpiarBackupsLocales() {
     }
   }, msg));
 }
+// ── Auditoría global de cambios ─────────────────────────────────────────────
+// Pedido del usuario: una pantalla aparte (no por cliente) donde se vea TODO
+// lo que no queda a simple vista en el historial normal — ventas eliminadas,
+// ventas editadas (con el antes/después) y ajustes de saldo, de TODOS los
+// clientes juntos, ordenado del más nuevo al más viejo.
+function AuditoriaGlobal({
+  auditoria,
+  ventas,
+  onVolver
+}) {
+  const [filtro, setFiltro] = React.useState("todos"); // todos | eliminada | editada | ajuste
+  const [busca, setBusca] = React.useState("");
+  const items = React.useMemo(() => {
+    const deAuditoria = (auditoria || []).map(a => ({
+      ...a,
+      ts: Date.parse(a.fecha) || Number((a.id || "0").split("_")[0]) || 0
+    }));
+    const deAjustes = (ventas || []).filter(v => v._esAjuste && !v._esAjusteEnvases).map(v => ({
+      id: "ajuste_" + v.id,
+      tipo: "ajuste",
+      cliente: v.cliente || "",
+      clienteId: v.clienteId,
+      fechaVenta: v.fecha || "",
+      obs: v.obs || "",
+      saldoAntes: v.saldoAntes,
+      saldoDespues: v.saldoDespues,
+      ts: Number(v.id) || Date.parse(v.fecha) || 0
+    }));
+    return [...deAuditoria, ...deAjustes].sort((a, b) => b.ts - a.ts);
+  }, [auditoria, ventas]);
+  const filtrados = items.filter(it => (filtro === "todos" || it.tipo === filtro) && (!busca.trim() || (it.cliente || "").toLowerCase().includes(busca.trim().toLowerCase())));
+  const TIPO_LBL = {
+    eliminada: {
+      txt: "🗑 Eliminada",
+      color: "var(--color-text-danger)"
+    },
+    editada: {
+      txt: "✏️ Editada",
+      color: "var(--color-text-warning)"
+    },
+    ajuste: {
+      txt: "⚖️ Ajuste de saldo",
+      color: "var(--color-text-info)"
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "var(--color-background-primary)",
+      zIndex: 500,
+      overflowY: "auto",
+      padding: "14px 16px 30px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      padding: "8px 12px",
+      fontSize: 13
+    },
+    onClick: onVolver
+  }, "← Volver"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16,
+      fontWeight: 600,
+      color: "var(--color-text-primary)"
+    }
+  }, "📜 Auditoría de cambios")), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-tertiary)",
+      margin: "0 0 10px",
+      lineHeight: 1.5
+    }
+  }, "Ventas eliminadas, ventas editadas (antes/después) y ajustes de saldo, de todos los clientes. Se guardan los últimos 200 cambios de cada tipo."), /*#__PURE__*/React.createElement("input", {
+    style: {
+      ...s.input,
+      marginBottom: 8,
+      fontSize: 13
+    },
+    placeholder: "🔍 Buscar por cliente...",
+    value: busca,
+    onChange: e => setBusca(e.target.value)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap",
+      marginBottom: 12
+    }
+  }, [["todos", "Todos"], ["eliminada", "Eliminadas"], ["editada", "Editadas"], ["ajuste", "Ajustes"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setFiltro(v),
+    style: {
+      fontSize: 12,
+      padding: "5px 10px",
+      borderRadius: 8,
+      border: "none",
+      cursor: "pointer",
+      background: filtro === v ? "#185FA5" : "var(--color-background-tertiary)",
+      color: filtro === v ? "#e2eaf4" : "var(--color-text-secondary)",
+      fontWeight: filtro === v ? 600 : 400
+    }
+  }, l))), !filtrados.length ? /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-tertiary)",
+      textAlign: "center",
+      marginTop: 30
+    }
+  }, "No hay registros todavía.") : filtrados.map(it => {
+    const tl = TIPO_LBL[it.tipo] || {
+      txt: it.tipo,
+      color: "var(--color-text-secondary)"
+    };
+    return /*#__PURE__*/React.createElement("div", {
+      key: it.id,
+      style: {
+        ...s.card,
+        margin: "0 0 8px",
+        borderLeft: `3px solid ${tl.color}`
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        fontWeight: 600,
+        color: tl.color
+      }
+    }, tl.txt), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        color: "var(--color-text-tertiary)"
+      }
+    }, it.ts ? new Date(it.ts).toLocaleString("es-AR") : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 500,
+        color: "var(--color-text-primary)",
+        marginBottom: 4
+      }
+    }, it.cliente || "(sin cliente)"), it.tipo === "eliminada" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        lineHeight: 1.5
+      }
+    }, "Venta del ", it.fechaVenta, " · ", it.detalleTxt, " · ", it.pago, " · ", fmt(it.monto)), it.tipo === "editada" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        lineHeight: 1.6
+      }
+    }, /*#__PURE__*/React.createElement("div", null, "Venta del ", it.fechaVenta), /*#__PURE__*/React.createElement("div", null, "Antes: ", it.detalleAntes, " · ", it.pagoAntes, " · ", fmt(it.montoAntes)), /*#__PURE__*/React.createElement("div", null, "Después: ", it.detalleDespues, " · ", it.pagoDespues, " · ", fmt(it.montoDespues))), it.tipo === "ajuste" && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-secondary)",
+        lineHeight: 1.5
+      }
+    }, it.obs, it.saldoAntes !== undefined && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 2
+      }
+    }, "Saldo antes: ", fmt(it.saldoAntes), " → después: ", fmt(it.saldoDespues))));
+  }));
+}
+
 function Config({
   productos,
   setProductos,
@@ -453,6 +633,7 @@ function Config({
   setClientes,
   ventas,
   setVentas,
+  auditoria,
   planillas,
   setPlanillas,
   stock,
@@ -472,6 +653,14 @@ function Config({
   const [abiertoRespaldo, setAbiertoRespaldo] = useState(false);
   const [abiertoMant, setAbiertoMant] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
+  const [verAuditoria, setVerAuditoria] = React.useState(false);
+  if (verAuditoria) {
+    return /*#__PURE__*/React.createElement(AuditoriaGlobal, {
+      auditoria: auditoria,
+      ventas: ventas,
+      onVolver: () => setVerAuditoria(false)
+    });
+  }
   // Exportar ventas a CSV — para llevarle algo armado a un contador, o
   // simplemente tener el historial en una planilla aparte de la app.
   const exportarVentasCSV = () => {
@@ -1136,7 +1325,14 @@ function Config({
       marginBottom: 5
     },
     onClick: exportarVentasCSV
-  }, "📊 Exportar ventas (.csv, para Excel/contador)"), /*#__PURE__*/React.createElement("label", {
+  }, "📊 Exportar ventas (.csv, para Excel/contador)"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      width: "100%",
+      marginBottom: 5
+    },
+    onClick: () => setVerAuditoria(true)
+  }, "📜 Auditoría de cambios (eliminadas, editadas, ajustes)"), /*#__PURE__*/React.createElement("label", {
     style: {
       ...s.btn,
       width: "100%",
