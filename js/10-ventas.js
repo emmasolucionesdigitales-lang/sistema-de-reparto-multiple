@@ -178,7 +178,14 @@ function NuevaVenta({
   const pagaTodo = deudaPrevia > 0 && pago !== "fiado" && opcionSaldo === "todo";
   const totalACobrar = pagaTodo ? deudaPrevia + aPagar : aPagar;
   // Cuando se elige "Paga deuda + compra", autocompletar el monto con el total combinado
+  // BUG REAL ("al editar una venta de fiado a otra forma de pago, se suma
+  // sola toda la deuda vieja del cliente al monto"): este auto-completado
+  // está pensado para una venta NUEVA (pagar hoy + saldar deuda vieja de
+  // una sola vez). En modo EDICIÓN de una venta ya existente, esa deuda
+  // vieja pertenece a OTRAS ventas — mezclarla acá rompe el saldo. Por eso
+  // se desactiva por completo mientras se está editando.
   React.useEffect(() => {
+    if (ventaEditar) return;
     if (pago === "fiado") return;
     if (opcionSaldo === "todo" && deudaPrevia > 0) {
       setMonto(String(Math.round(deudaPrevia + aPagar)));
