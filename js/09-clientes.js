@@ -772,6 +772,7 @@ function DetalleCliente({
   const [mostrarRecordatorio, setMostrarRecordatorio] = useState(false);
   const [mostrarPagoSaldo, setMostrarPagoSaldo] = useState(false);
   const [mostrarFotoGrande, setMostrarFotoGrande] = useState(false);
+  const [mostrarFotoComodato, setMostrarFotoComodato] = useState(false);
   const [mostrarCambio, setMostrarCambio] = useState(false);
   const recActivos = (recordatorios || []).filter(r => r.clienteId === cliente.id && !r.confirmado);
   const historial = [...ventas].sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || "") || (b.id || 0) - (a.id || 0));
@@ -1047,7 +1048,15 @@ function DetalleCliente({
       fontSize: 11,
       marginTop: 14
     }
-  }, "Tocá fuera para cerrar")), /*#__PURE__*/React.createElement("div", {
+  }, "Tocá fuera para cerrar")), mostrarFotoComodato && /*#__PURE__*/React.createElement(FotoClienteModal, {
+    cliente: cliente,
+    campo: "fotoComodato",
+    titulo: "Comodato",
+    onCerrar: () => setMostrarFotoComodato(false),
+    onGuardarFoto: b64 => onEditar({
+      fotoComodato: b64
+    })
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 16
     }
@@ -1178,7 +1187,31 @@ function DetalleCliente({
       fontSize: 26,
       textDecoration: "none"
     }
-  }, "💬"))), cliente.foto && !editandoCliente && /*#__PURE__*/React.createElement("div", {
+  }, "💬"), /*#__PURE__*/React.createElement("div", {
+    onClick: () => setMostrarFotoComodato(true),
+    title: cliente.fotoComodato ? "Ver foto del comodato" : "Cargar foto del comodato",
+    style: {
+      width: 26,
+      height: 26,
+      borderRadius: 6,
+      overflow: "hidden",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: "pointer",
+      fontSize: 20,
+      flexShrink: 0,
+      border: cliente.fotoComodato ? "1.5px solid #b794f6" : "1.5px dashed var(--color-border-secondary)"
+    }
+  }, cliente.fotoComodato ? /*#__PURE__*/React.createElement("img", {
+    src: cliente.fotoComodato,
+    alt: "Comodato",
+    style: {
+      width: "100%",
+      height: "100%",
+      objectFit: "cover"
+    }
+  }) : "📄"))), cliente.foto && !editandoCliente && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 10,
       cursor: "zoom-in",
