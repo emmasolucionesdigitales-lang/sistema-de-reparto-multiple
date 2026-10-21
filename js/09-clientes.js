@@ -54,7 +54,7 @@ function ClientesTabs({
 // todo lo que antes tomaba del cierre de ListaClientes llega por props
 // (mismos nombres, el cuerpo de abajo no se tocó).
 const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
-  c, atendidos, noVMap, visitados, clienteExpandidoId, setClienteExpandidoId, pendientes, clienteMoviendo, setClienteMoviendo, moverCliente, onSeleccionar, recordatorios, ventas, fecha, onConfirmarTransfer, todasVentas, productos, marcarNoVisita, onGuardarVenta, onCambiarDispenserCliente, onQuitarNoVisita, clientes, onReordenar
+  c, atendidos, noVMap, visitados, clienteExpandidoId, setClienteExpandidoId, pendientes, clienteMoviendo, setClienteMoviendo, moverCliente, onSeleccionar, recordatorios, ventas, fecha, onConfirmarTransfer, todasVentas, productos, marcarNoVisita, onGuardarVenta, onCambiarDispenserCliente, onQuitarNoVisita, clientes, onReordenar, onNoQuiereConEnvases
 }) {
     const [fotoOpen, setFotoOpen] = React.useState(false);
     const [mostrarMas, setMostrarMas] = React.useState(false);
@@ -380,38 +380,6 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
       }
     }, /*#__PURE__*/React.createElement("button", {
       style: {
-        flex: 1,
-        background: "var(--color-background-warning)",
-        color: "var(--color-text-warning)",
-        border: "1px solid var(--color-border-warning)",
-        borderRadius: 10,
-        padding: "10px 0",
-        fontSize: 13,
-        cursor: "pointer",
-        fontWeight: 500
-      },
-      onClick: () => {
-        marcarNoVisita(c.id, est === "noesta" ? "noesta2" : "noesta");
-        irAlSiguientePendiente();
-      }
-    }, est === "noesta" ? "2ª vez" : "🔄 No está"), /*#__PURE__*/React.createElement("button", {
-      style: {
-        flex: 1,
-        background: "var(--color-background-danger)",
-        color: "var(--color-text-danger)",
-        border: "1px solid var(--color-border-danger)",
-        borderRadius: 10,
-        padding: "10px 0",
-        fontSize: 13,
-        cursor: "pointer",
-        fontWeight: 500
-      },
-      onClick: () => {
-        marcarNoVisita(c.id, "noquiso");
-        irAlSiguientePendiente();
-      }
-    }, "No quiere"), /*#__PURE__*/React.createElement("button", {
-      style: {
         ...s.btn,
         flex: "0 0 38px",
         width: 38,
@@ -441,6 +409,14 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
       ventasCliente: (todasVentas || ventas).filter(v => v.clienteId === c.id),
       onGuardar: (...args) => {
         onGuardarVenta(c.id, ...args);
+        irAlSiguientePendiente();
+      },
+      onNoEsta: () => {
+        marcarNoVisita(c.id, est === "noesta" ? "noesta2" : "noesta");
+        irAlSiguientePendiente();
+      },
+      onNoQuiere: (envPrest, envDev) => {
+        if (onNoQuiereConEnvases) onNoQuiereConEnvases(c.id, envPrest, envDev);else marcarNoVisita(c.id, "noquiso");
         irAlSiguientePendiente();
       },
       onCambiarDispenser: delta => onCambiarDispenserCliente && onCambiarDispenserCliente(c.id, delta),
@@ -486,6 +462,7 @@ function ListaClientes({
   onEditarCliente,
   onRegistrarNoVisita,
   onQuitarNoVisita,
+  onNoQuiereConEnvases,
   onConfirmarTransfer,
   onAbrirMapa,
   onIrPlanilla,
@@ -626,7 +603,7 @@ function ListaClientes({
   };
   // Props estables para ClienteCard (ver comentario arriba de su definición).
   const cardProps = c => ({
-    c, atendidos, noVMap, visitados, clienteExpandidoId, setClienteExpandidoId, pendientes, clienteMoviendo, setClienteMoviendo, moverCliente, onSeleccionar, recordatorios, ventas, fecha, onConfirmarTransfer, todasVentas, productos, marcarNoVisita, onGuardarVenta, onCambiarDispenserCliente, onQuitarNoVisita, clientes, onReordenar
+    c, atendidos, noVMap, visitados, clienteExpandidoId, setClienteExpandidoId, pendientes, clienteMoviendo, setClienteMoviendo, moverCliente, onSeleccionar, recordatorios, ventas, fecha, onConfirmarTransfer, todasVentas, productos, marcarNoVisita, onGuardarVenta, onCambiarDispenserCliente, onQuitarNoVisita, clientes, onReordenar, onNoQuiereConEnvases
   });
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen

@@ -778,7 +778,39 @@ function NuevaVenta({
         setTransConfMixto(!transConfMixto);
         if (!transConfMixto) sonarTransferencia();
       }
-    }, transConfMixto ? "✓ OK" : "Confirmar"))), /*#__PURE__*/React.createElement("div", {
+    }, transConfMixto ? "✓ OK" : "Confirmar"))), (onNoEsta || onNoQuiere) && !ventaEditar && /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        marginBottom: 6
+      }
+    }, onNoEsta && /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 1,
+        background: "var(--color-background-warning)",
+        color: "var(--color-text-warning)",
+        border: "1px solid var(--color-border-warning)",
+        borderRadius: 10,
+        padding: "10px 0",
+        fontSize: 13,
+        fontWeight: 500,
+        cursor: "pointer"
+      },
+      onClick: onNoEsta
+    }, "🔄 No está"), onNoQuiere && /*#__PURE__*/React.createElement("button", {
+      style: {
+        flex: 1,
+        background: "var(--color-background-danger)",
+        color: "var(--color-text-danger)",
+        border: "1px solid var(--color-border-danger)",
+        borderRadius: 10,
+        padding: "10px 0",
+        fontSize: 13,
+        fontWeight: 500,
+        cursor: "pointer"
+      },
+      onClick: () => onNoQuiere(envPrest, envDev)
+    }, "🚫 No quiere")), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,

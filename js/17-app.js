@@ -2130,6 +2130,51 @@ function AppPrincipal({
       savePlanilla(planillaKey, nueva);
     }
   }, [ventas, noVisitas, clientes, diaActual, fechaActual, repartoActual]);
+  const registrarNoQuiereConEnvases = (clienteIdObj, envPrest, envDev) => {
+    const cli = clientes.find(c => c.id === clienteIdObj);
+    const nv = [...(noVisitas || []).filter(v => !(v.clienteId === clienteIdObj && v.dia === diaActual && v.fecha === fechaActual)), {
+      clienteId: clienteIdObj,
+      dia: diaActual,
+      fecha: fechaActual,
+      motivo: "noquiso",
+      _upd: Date.now()
+    }];
+    saveNoVisitas(nv);
+    const _ep = (envPrest || []).filter(e => e.prod && Number(e.cant) > 0);
+    const _ed = (envDev || []).filter(e => e.prod && Number(e.cant) > 0);
+    if (_ep.length || _ed.length) {
+      const fk = new Date().toLocaleDateString("en-CA");
+      saveVentas(prev => [...prev, {
+        id: Date.now(),
+        clienteId: clienteIdObj,
+        cliente: cli ? cli.nombre : "",
+        dia: diaActual,
+        fechaKey: fk,
+        fecha: new Date().toLocaleString("es-AR"),
+        hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+        detalle: [{
+          nombre: "Movimiento de envases (No quiere)",
+          cantidad: 1,
+          precio: 0,
+          total: 0
+        }],
+        pago: "-",
+        obs: "Envases marcados al no comprar",
+        neto: 0,
+        bruto: 0,
+        desc: 0,
+        costo: 0,
+        ganancia: 0,
+        pagadoNum: 0,
+        saldoDelta: 0,
+        envPrest: _ep,
+        envDev: _ed,
+        _esAjuste: true
+      }]);
+      saveClientes(prev => aplicarMovimientoEnvases(prev, ventas, clienteIdObj, _ep, _ed));
+    }
+    return nv;
+  };
   const registrarVenta = (ventaClienteId, detalle, pago, montoPagado, saldoAplicado, envPrest, envDev, obs, opcionSaldo, montoTrans2, saldoDeltaMixto, transConfirmadaInicial) => {
     // Resolver el cliente por id explícito en vez de depender del estado
     // global `cliente` — necesario para poder registrar desde la tarjeta
@@ -2994,6 +3039,7 @@ function AppPrincipal({
     onQuitarNoVisita: clienteId => {
       saveNoVisitas(prev => (prev || []).filter(v => !(v.clienteId === clienteId && v.dia === diaActual && v.fecha === fechaActual)));
     },
+    onNoQuiereConEnvases: registrarNoQuiereConEnvases,
     onConfirmarTransfer: (clienteId, ventaId) => {
       saveVentas(prev => prev.map(v => v.id === ventaId ? {
         ...v,
