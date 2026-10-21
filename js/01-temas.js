@@ -16,9 +16,17 @@ const TEMAS_LC = {
 // arriba, con la manija en "metálico" en vez de "clásico". Por eso se arman
 // solos acá abajo, copiando los vars de cada uno — si mañana cambiás un
 // color en un tema clásico, el metálico lo sigue automáticamente.
-Object.keys(TEMAS_LC).forEach(id=>{
+const BASE_TEMAS_LC_KEYS = Object.keys(TEMAS_LC);
+BASE_TEMAS_LC_KEYS.forEach(id=>{
   const base = TEMAS_LC[id];
   TEMAS_LC[id+"-metal"] = { nombre:base.nombre, modo:base.modo, emoji:"⚙️", relieve:true, vars:base.vars };
+});
+// ── ESTILO CUADRADO ─ esquinas rectas, sin relieve, mismos colores ───
+// Igual que Metálico: no es una paleta nueva, es la MISMA paleta con las
+// esquinas en 0 en vez de redondeadas. Se arma solo para cada paleta base.
+BASE_TEMAS_LC_KEYS.forEach(id=>{
+  const base = TEMAS_LC[id];
+  TEMAS_LC[id+"-cuadrado"] = { nombre:base.nombre, modo:base.modo, emoji:"⬜", cuadrado:true, vars:base.vars };
 });
 function _ajustarColorLC(hex, amt) {
   hex = (hex||"").replace("#","");
@@ -95,6 +103,15 @@ function _aplicarSombraGlobalLC(tema) {
       box-shadow:${sombraBadge} !important;
     }
   `;
+}
+// ── CUADRADO ─ todas las esquinas a 0, sin tocar colores ni sombras ──
+// Misma idea que _aplicarSombraGlobalLC: una sola regla global con
+// !important, así no hay que tocar cada pantalla para sacarle el
+// redondeado a tarjetas, botones, chips y avatares.
+function _aplicarCuadradoGlobalLC(tema) {
+  let tag = document.getElementById("cuadrado-global-lc");
+  if(!tag){ tag = document.createElement("style"); tag.id = "cuadrado-global-lc"; document.head.appendChild(tag); }
+  tag.textContent = tema.cuadrado ? `*, *::before, *::after { border-radius:0 !important; }` : "";
 }
 // ── FIBRA DE CARBONO — propiedades separadas, no todo en una variable ─────
 // El contenedor de toda la app pinta con background:"var(--color-background-
@@ -190,6 +207,7 @@ function aplicarTemaLC(temaId) {
     });
   }
   _aplicarSombraGlobalLC(tema);
+  _aplicarCuadradoGlobalLC(tema);
 }
 function getTemaLC() { try { return JSON.parse(localStorage.getItem("lc_tema")||'"oscuro-azul"'); } catch { return "oscuro-azul"; } }
 (()=>{
