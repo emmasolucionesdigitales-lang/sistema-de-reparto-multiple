@@ -776,6 +776,11 @@ function DetalleCliente({
   const [mostrarCambio, setMostrarCambio] = useState(false);
   const recActivos = (recordatorios || []).filter(r => r.clienteId === cliente.id && !r.confirmado);
   const historial = [...ventas].sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || "") || (b.id || 0) - (a.id || 0));
+  const historialConNV = [...historial, ...(noVisitas || []).map(nv => ({
+    ...nv,
+    _esNoVisita: true,
+    fechaKey: nv.fecha
+  }))].sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || "") || (b.id || 0) - (a.id || 0));
   const ventaHoy = fecha ? ventas.find(v => v.fechaKey === fecha && !v._esCobro && !v._esAjuste && !v._esCambio) : null;
   const initials = cliente.nombre.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
   const totalComprado = ventas.reduce((a, v) => a + (v.neto || 0), 0);
@@ -1537,7 +1542,51 @@ function DetalleCliente({
       color: "var(--color-text-tertiary)",
       padding: "4px 0"
     }
-  }, "Sin registros aún"), historial.map(v => /*#__PURE__*/React.createElement("div", {
+  }, "Sin registros aún"), historialConNV.map((item, idx) => {
+    if (item._esNoVisita) {
+      const esNoEsta = item.motivo === "noesta";
+      return /*#__PURE__*/React.createElement("div", {
+        key: "nv" + idx,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "9px 12px",
+          marginBottom: 8,
+          background: esNoEsta ? "rgba(245,158,11,0.08)" : "rgba(239,68,68,0.08)",
+          borderRadius: 10,
+          border: `0.5px solid ${esNoEsta ? "rgba(245,158,11,0.3)" : "rgba(239,68,68,0.3)"}`
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 18
+        }
+      }, esNoEsta ? "🚪" : "🙅"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 13,
+          fontWeight: 600,
+          color: esNoEsta ? "#f59e0b" : "#ef4444"
+        }
+      }, esNoEsta ? "No estaba en casa" : "No quiso comprar"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: "var(--color-text-tertiary)"
+        }
+      }, item.fechaKey, " · ", item.dia)), onEliminarNoVisita && /*#__PURE__*/React.createElement("button", {
+        style: {
+          ...s.btnDanger,
+          fontSize: 11,
+          padding: "3px 8px",
+          marginLeft: "auto",
+          flexShrink: 0
+        },
+        onClick: () => {
+          if (window.confirm(`¿Eliminar "${esNoEsta ? "No estaba en casa" : "No quiso comprar"}" del ${item.fechaKey}?`)) onEliminarNoVisita(item.dia, item.fecha);
+        }
+      }, "Eliminar"));
+    }
+    const v = item;
+    return /*#__PURE__*/React.createElement("div", {
     key: v.id,
     style: {
       marginBottom: 8
@@ -1618,7 +1667,8 @@ function DetalleCliente({
     onClick: () => {
       if (window.confirm(`¿Eliminar venta de ${fmt(v.neto)}?`)) onEliminarVenta(v.id);
     }
-  }, "Eliminar"))))))), /*#__PURE__*/React.createElement("details", {
+  }, "Eliminar"))));
+  }))), /*#__PURE__*/React.createElement("details", {
     style: {
       marginTop: 6
     }
