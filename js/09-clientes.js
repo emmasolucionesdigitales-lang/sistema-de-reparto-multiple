@@ -1402,6 +1402,7 @@ function DetalleCliente({
     productos: productos,
     onCancelar: () => setMostrarCambio(false),
     onConfirmar: (productoViejo, productoNuevo, motivo) => {
+      const esDevol = !productoNuevo;
       const vt = {
         id: Date.now(),
         clienteId: cliente.id,
@@ -1410,13 +1411,13 @@ function DetalleCliente({
         fechaKey: fecha,
         fecha: new Date().toLocaleString("es-AR"),
         detalle: [{
-          nombre: "Cambio de envase",
+          nombre: esDevol ? "Devolución de envase" : "Cambio de envase",
           cantidad: 1,
           precio: 0,
           total: 0
         }],
-        pago: "cambio",
-        obs: `Cambio: ${productoViejo} → ${productoNuevo}${motivo.trim() ? ` · ${motivo.trim()}` : ""}`,
+        pago: esDevol ? "devolucion" : "cambio",
+        obs: esDevol ? `Devolución: ${productoViejo}${motivo.trim() ? ` · ${motivo.trim()}` : ""}` : `Cambio: ${productoViejo} → ${productoNuevo}${motivo.trim() ? ` · ${motivo.trim()}` : ""}`,
         neto: 0,
         bruto: 0,
         desc: 0,
@@ -1428,11 +1429,12 @@ function DetalleCliente({
           prod: productoViejo,
           cant: 1
         }],
-        envPrest: [{
+        envPrest: esDevol ? [] : [{
           prod: productoNuevo,
           cant: 1
         }],
         _esCambio: true,
+        _esDevolucion: esDevol,
         _upd: Date.now()
       };
       onGuardarCambio && onGuardarCambio(vt);
