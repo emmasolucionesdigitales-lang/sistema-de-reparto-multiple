@@ -4034,123 +4034,6 @@ function PlanillaDelDia({
   }, "−", fmt(totalGastos))), /*#__PURE__*/React.createElement("div", {
     style: s.divider
   }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "12px 0 8px"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      color: "var(--color-text-tertiary)",
-      fontWeight: 500,
-      textTransform: "uppercase",
-      letterSpacing: "0.07em"
-    }
-  }, "Cobranza del día"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      ...s.btn,
-      fontSize: 11,
-      padding: "3px 10px"
-    },
-    onClick: () => setDatos(d => ({
-      ...d,
-      peso: String(pesoAuto || d.peso || ""),
-      efectivo: String(Math.round(cobEfectivo)),
-      retenciones: String(cobTransDesc),
-      fiado: String(Math.round(cobFiado))
-    }))
-  }, "↻ Autocompletar desde ventas")), /*#__PURE__*/React.createElement("div", {
-    style: s.grid3
-  }, [["efectivo", "Efectivo"], ["fiado", "Fiado"], ["retenciones", "Retención 2.5%"]].map(([k, l]) => /*#__PURE__*/React.createElement("div", {
-    key: k
-  }, /*#__PURE__*/React.createElement("label", {
-    style: {
-      ...s.label,
-      textAlign: "center"
-    }
-  }, l), /*#__PURE__*/React.createElement("input", {
-    style: {
-      ...s.inputNum,
-      textAlign: "center"
-    },
-    type: "number",
-    placeholder: "0",
-    value: datos[k] || "",
-    onChange: e => set(k, e.target.value)
-  })))), cobTransBruto > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "10px 0",
-      background: "var(--color-background-tertiary)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 500,
-      color: "var(--color-text-secondary)",
-      marginBottom: 8
-    }
-  }, "Detalle transferencias"), [["Monto bruto", fmt(cobTransBruto), "primary"], ["Retención 2.5%", `−${fmt(cobTransDesc)}`, "danger"], ["Neto recibido", fmt(cobTransNeto), "success"]].map(([l, v, c]) => /*#__PURE__*/React.createElement("div", {
-    key: l,
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      padding: "4px 0",
-      borderBottom: "0.5px solid var(--color-border-tertiary)"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, l), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: `var(--color-text-${c})`
-    }
-  }, v)))), cobSaldos > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "0 0 10px",
-      background: "var(--color-background-tertiary)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Cobrado de deuda anterior"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 500,
-      color: "#4dd9a0"
-    }
-  }, fmt(cobSaldos)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Observaciones"), /*#__PURE__*/React.createElement("textarea", {
-    style: {
-      ...s.input,
-      minHeight: 56,
-      resize: "vertical"
-    },
-    placeholder: "Notas del día...",
-    value: datos.obs || "",
-    onChange: e => set("obs", e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: s.divider
-  }), /*#__PURE__*/React.createElement("div", {
     id: "planilla-capture"
   }, /*#__PURE__*/React.createElement("span", {
     style: {
@@ -4656,7 +4539,7 @@ function PlanillaDelDia({
     }
   }, fmt(ganancia))))), /*#__PURE__*/React.createElement("button", {
     style: s.btnPrimary,
-    onClick: () => onGuardar(datos)
+    onClick: () => onGuardar({...datos, efectivo: String(Math.round(cobEfectivo)), fiado: String(Math.round(cobFiado)), retenciones: String(cobTransDesc)})
   }, "Guardar planilla"), !yaCerrado ? /*#__PURE__*/React.createElement("button", {
     style: {
       width: "100%",
