@@ -2739,7 +2739,12 @@ function AppPrincipal({
       confirmado: true
     } : r)),
     onVerConfirmaciones: dia => {
-      if (dia && !diaActual) setDiaActual(dia);
+      // Portado de La Catalina: si ya había una ruta activa en OTRO día,
+      // tocar "X transfer. sin confirmar" de otro día no cambiaba diaActual
+      // y la pantalla de Transferencias quedaba mostrando el día viejo (0
+      // pendientes) en vez del que se tocó. El día tocado tiene que ganar
+      // siempre.
+      if (dia) setDiaActual(dia);
       irA("confirmacionesDia");
     },
     transferenciasPendientes: DIAS.map(dia => {
