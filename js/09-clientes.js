@@ -511,6 +511,7 @@ function ListaClientes({
     sinEntrega,
     listos,
     pausados,
+    quincenales,
     todosListos
   } = React.useMemo(() => {
     const atendidos = new Set(ventas.filter(v => !v._esCobro && !v._esAjuste).map(v => v.clienteId));
@@ -528,12 +529,31 @@ function ListaClientes({
     // Portado de La Catalina.
     const hoyKeyLC = new Date().toLocaleDateString("en-CA");
     const estaPausado = c => !!(c.pausadoHasta && c.pausadoHasta >= hoyKeyLC);
-    const pendientesNormales = filtrados.filter(c => !visitados.has(c.id) && noVMap[c.id] !== "noesta" && !estaPausado(c));
-    const volverAlFinal = filtrados.filter(c => noVMap[c.id] === "noesta" && !atendidos.has(c.id) && !estaPausado(c));
+    // Clientes quincenales: compran, saltean la visita siguiente y recién
+    // vuelven a comprar a la otra — se marca una sola vez en el cliente
+    // (frecuencia: "quincenal") y el sistema calcula solo, según la última
+    // compra real, si les toca esta semana. Portado de La Catalina.
+    const ultimaCompraReal = {};
+    (todasVentas || ventas).forEach(v => {
+      if (v._esCobro || v._esAjuste || v._esAjusteEnvases || v._esCambio || v._esMixtoTrans) return;
+      const fk = v.fechaKey;
+      if (!fk) return;
+      if (!ultimaCompraReal[v.clienteId] || fk > ultimaCompraReal[v.clienteId]) ultimaCompraReal[v.clienteId] = fk;
+    });
+    const noLeTocaQuincenal = c => {
+      if (c.frecuencia !== "quincenal") return false;
+      const fk = ultimaCompraReal[c.id];
+      if (!fk) return false; // sin historial, tratar como que sí le toca
+      const dias = Math.floor((new Date(fecha + "T12:00:00") - new Date(fk + "T12:00:00")) / 86400000);
+      return dias < 10;
+    };
+    const pendientesNormales = filtrados.filter(c => !visitados.has(c.id) && noVMap[c.id] !== "noesta" && !estaPausado(c) && !noLeTocaQuincenal(c));
+    const volverAlFinal = filtrados.filter(c => noVMap[c.id] === "noesta" && !atendidos.has(c.id) && !estaPausado(c) && !noLeTocaQuincenal(c));
     const pendientes = [...pendientesNormales, ...volverAlFinal];
     const sinEntrega = filtrados.filter(c => visitadosSinVenta.has(c.id));
     const listos = filtrados.filter(c => atendidos.has(c.id));
     const pausados = filtrados.filter(c => estaPausado(c) && !atendidos.has(c.id));
+    const quincenales = filtrados.filter(c => !estaPausado(c) && !atendidos.has(c.id) && noLeTocaQuincenal(c));
     const todosListos = pendientes.length === 0 && clientes.length > 0;
     return {
       atendidos,
@@ -548,9 +568,10 @@ function ListaClientes({
       sinEntrega,
       listos,
       pausados,
+      quincenales,
       todosListos
     };
-  }, [clientes, ventas, noVisitas, fecha, busqueda]);
+  }, [clientes, ventas, todasVentas, noVisitas, fecha, busqueda]);
   const marcarNoVisita = (id, motivo) => {
     const prev = noVMap[id];
     if (motivo === "noesta" && prev === "noesta") onRegistrarNoVisita(id, "noesta2");else if (prev === motivo) onQuitarNoVisita(id);else onRegistrarNoVisita(id, motivo);
@@ -740,7 +761,16 @@ function ListaClientes({
       color: "#EF9F27",
       fontWeight: 600
     }
-  }, "⏸ ", pausados.length, " pausados"), /*#__PURE__*/React.createElement("button", {
+  }, "⏸ ", pausados.length, " pausados"), quincenales.length > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "2px 8px",
+      borderRadius: 10,
+      background: "#0f2740",
+      color: "#5daaff",
+      fontWeight: 600
+    }
+  }, "📅 ", quincenales.length, " no les toca"), /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btn,
       fontSize: 11,
@@ -815,6 +845,14 @@ function ListaClientes({
       color: "#EF9F27"
     }
   }, "⏸ Pausados (", pausados.length, ")"), pausados.map(c => /*#__PURE__*/React.createElement(ClienteCard, {
+    key: c.id,
+    ...cardProps(c)
+  }))), quincenales.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.sectionTitle,
+      color: "#5daaff"
+    }
+  }, "📅 Quincenales — no les toca esta semana (", quincenales.length, ")"), quincenales.map(c => /*#__PURE__*/React.createElement(ClienteCard, {
     key: c.id,
     ...cardProps(c)
   }))), todosListos && /*#__PURE__*/React.createElement("div", {
