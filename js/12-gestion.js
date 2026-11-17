@@ -394,7 +394,17 @@ function GestionClientes({
       color: "var(--color-text-success)",
       flexShrink: 0
     }
-  }, c.dia)), /*#__PURE__*/React.createElement("div", {
+  }, c.dia), c.pausadoHasta && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontWeight: 600,
+      padding: "2px 8px",
+      borderRadius: 20,
+      background: "#2e1f06",
+      color: "#EF9F27",
+      flexShrink: 0
+    }
+  }, "⏸ Pausado hasta ", c.pausadoHasta.slice(8, 10), "/", c.pausadoHasta.slice(5, 7))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--color-text-secondary)",
