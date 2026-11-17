@@ -795,7 +795,7 @@ function ListaClientes({
       width: "100%",
       boxShadow: "0 4px 16px rgba(15,110,86,0.4)"
     }
-  }, "✅ Reparto completo — Ver planilla del día →"))), rutaSugerida && /*#__PURE__*/React.createElement(ModalRutaSugerida, {
+  }, "✅ Reparto completo — Ver planilla del día →")), rutaSugerida && /*#__PURE__*/React.createElement(ModalRutaSugerida, {
     rutaSugerida: rutaSugerida,
     onCerrar: () => setRutaSugerida(null),
     onAplicar: aplicarRutaSugerida
