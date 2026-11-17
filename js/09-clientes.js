@@ -963,12 +963,66 @@ function DetalleCliente({
     consecutivasSinComprar++;
   }
   const paraRetirar = consecutivasSinComprar >= 4;
+  // Pausa de reparto: el cliente avisó que no va a estar X días — evita
+  // visitas al pedo mientras dura la pausa. Portado de La Catalina.
+  const pausado = !!cliente.pausadoHasta;
+  const togglePausa = () => {
+    if (pausado) {
+      if (!window.confirm("¿Quitar la pausa y volver a visitar a este cliente?")) return;
+      onEditar({
+        pausadoHasta: null,
+        pausadoMotivo: null
+      });
+      return;
+    }
+    const diasStr = window.prompt("¿Cuántos días avisó que no va a estar?", "15");
+    if (diasStr == null) return;
+    const dias = Math.max(1, Math.round(Number(diasStr) || 15));
+    const motivo = (window.prompt("Motivo (opcional):", "") || "").trim();
+    const hastaD = new Date();
+    hastaD.setDate(hastaD.getDate() + dias);
+    onEditar({
+      pausadoHasta: hastaD.toLocaleDateString("en-CA"),
+      pausadoMotivo: motivo
+    });
+  };
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
     titulo: `Clientes · ${cliente.dia || ""}`,
     onVolver: onVolver
-  }), paraRetirar && !soloLectura && /*#__PURE__*/React.createElement("div", {
+  }), pausado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "8px 14px 0",
+      padding: "10px 14px",
+      borderRadius: 10,
+      background: "#2e1f06",
+      border: "1px solid #EF9F27",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "#EF9F27",
+      fontWeight: 500
+    }
+  }, "⏸ No visitar hasta el ", (cliente.pausadoHasta || "").split("-").reverse().join("/"), cliente.pausadoMotivo ? ` · ${cliente.pausadoMotivo}` : ""), /*#__PURE__*/React.createElement("button", {
+    style: {
+      padding: "7px 12px",
+      borderRadius: 8,
+      border: "1px solid #EF9F27",
+      background: "transparent",
+      color: "#EF9F27",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer",
+      flexShrink: 0
+    },
+    onClick: togglePausa
+  }, "Quitar")), paraRetirar && !soloLectura && /*#__PURE__*/React.createElement("div", {
     style: {
       margin: "8px 14px 0",
       padding: "10px 14px",
@@ -1058,7 +1112,16 @@ function DetalleCliente({
       setEditandoCliente(!editandoCliente);
       setEditandoVentaId(null);
     }
-  }, editandoCliente ? "Cancelar" : "Editar"))), mostrarPagoSaldo && /*#__PURE__*/React.createElement("div", {
+  }, editandoCliente ? "Cancelar" : "Editar"), !soloLectura && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "5px 10px",
+      color: pausado ? "#EF9F27" : undefined,
+      borderColor: pausado ? "#EF9F27" : undefined
+    },
+    onClick: togglePausa
+  }, pausado ? "⏸ Pausado" : "⏸ Pausar"))), mostrarPagoSaldo && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       top: 0,
