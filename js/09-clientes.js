@@ -67,9 +67,27 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
     const hoyKeyCard = new Date().toLocaleDateString("en-CA");
     const pausado = !!(c.pausadoHasta && c.pausadoHasta >= hoyKeyCard);
     const ddmmPausa = pausado ? `${c.pausadoHasta.slice(8, 10)}/${c.pausadoHasta.slice(5, 7)}` : "";
-    const bc = atendido ? "#1D9E75" : pausado ? "#EF9F27" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
+    // Cliente quincenal: compra, saltea la visita siguiente y recién vuelve
+    // a comprar a la otra. Se calcula solo según la última compra real, sin
+    // fecha manual. Portado de La Catalina.
+    const esQuincenal = c.frecuencia === "quincenal";
+    const noLeTocaQuincenal = (() => {
+      if (!esQuincenal) return false;
+      let ultima = null;
+      (todasVentas || ventas).forEach(v => {
+        if (v.clienteId !== c.id) return;
+        if (v._esCobro || v._esAjuste || v._esAjusteEnvases || v._esCambio || v._esMixtoTrans) return;
+        const fk = v.fechaKey;
+        if (!fk) return;
+        if (!ultima || fk > ultima) ultima = fk;
+      });
+      if (!ultima) return false; // sin historial, tratar como que sí le toca
+      const dias = Math.floor((new Date(fecha + "T12:00:00") - new Date(ultima + "T12:00:00")) / 86400000);
+      return dias < 10;
+    })();
+    const bc = atendido ? "#1D9E75" : pausado ? "#EF9F27" : noLeTocaQuincenal ? "#5daaff" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
     const handleClick = () => onSeleccionar(c);
-    const puedeEntregar = (!visitados.has(c.id) || est === "noesta") && !atendido && !pausado;
+    const puedeEntregar = (!visitados.has(c.id) || est === "noesta") && !atendido && !pausado && !noLeTocaQuincenal;
     const expandido = clienteExpandidoId === c.id;
     const irAlSiguientePendiente = () => {
       const idx = pendientes.findIndex(x => x.id === c.id);
@@ -158,7 +176,17 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
         fontWeight: 600,
         flexShrink: 0
       }
-    }, "⏸ Pausado hasta ", ddmmPausa), (recordatorios || []).some(r => r.clienteId === c.id && !r.confirmado) && /*#__PURE__*/React.createElement("span", {
+    }, "⏸ Pausado hasta ", ddmmPausa), esQuincenal && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        padding: "1px 6px",
+        borderRadius: 4,
+        background: "#0f2740",
+        color: "#5daaff",
+        fontWeight: 600,
+        flexShrink: 0
+      }
+    }, noLeTocaQuincenal ? "📅 No le toca esta semana" : "📅 Quincenal"), (recordatorios || []).some(r => r.clienteId === c.id && !r.confirmado) && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 13,
         flexShrink: 0
