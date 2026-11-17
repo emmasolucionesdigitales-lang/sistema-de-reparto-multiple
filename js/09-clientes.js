@@ -510,6 +510,7 @@ function ListaClientes({
     pendientes,
     sinEntrega,
     listos,
+    pausados,
     todosListos
   } = React.useMemo(() => {
     const atendidos = new Set(ventas.filter(v => !v._esCobro && !v._esAjuste).map(v => v.clienteId));
@@ -522,11 +523,17 @@ function ListaClientes({
     const visitados = new Set([...atendidos, ...visitadosSinVenta]);
     const clientesOrdenados = [...clientes].sort((a, b) => (a.orden || 9999) - (b.orden || 9999));
     const filtrados = clientesOrdenados.filter(c => buscarCliente(c, busqueda) > 0);
-    const pendientesNormales = filtrados.filter(c => !visitados.has(c.id) && noVMap[c.id] !== "noesta");
-    const volverAlFinal = filtrados.filter(c => noVMap[c.id] === "noesta" && !atendidos.has(c.id));
+    // Pausa de reparto: mientras cliente.pausadoHasta no venció, no cuenta
+    // como pendiente ni bloquea "todos listos" — tiene su propia sección.
+    // Portado de La Catalina.
+    const hoyKeyLC = new Date().toLocaleDateString("en-CA");
+    const estaPausado = c => !!(c.pausadoHasta && c.pausadoHasta >= hoyKeyLC);
+    const pendientesNormales = filtrados.filter(c => !visitados.has(c.id) && noVMap[c.id] !== "noesta" && !estaPausado(c));
+    const volverAlFinal = filtrados.filter(c => noVMap[c.id] === "noesta" && !atendidos.has(c.id) && !estaPausado(c));
     const pendientes = [...pendientesNormales, ...volverAlFinal];
     const sinEntrega = filtrados.filter(c => visitadosSinVenta.has(c.id));
     const listos = filtrados.filter(c => atendidos.has(c.id));
+    const pausados = filtrados.filter(c => estaPausado(c) && !atendidos.has(c.id));
     const todosListos = pendientes.length === 0 && clientes.length > 0;
     return {
       atendidos,
@@ -540,6 +547,7 @@ function ListaClientes({
       pendientes,
       sinEntrega,
       listos,
+      pausados,
       todosListos
     };
   }, [clientes, ventas, noVisitas, fecha, busqueda]);
@@ -723,7 +731,16 @@ function ListaClientes({
     style: s.badge("warning")
   }, volverAlFinal.length, " volver al final"), sinEntrega.length > 0 && /*#__PURE__*/React.createElement("span", {
     style: s.badge("danger")
-  }, sinEntrega.length, " sin entrega"), /*#__PURE__*/React.createElement("button", {
+  }, sinEntrega.length, " sin entrega"), pausados.length > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "2px 8px",
+      borderRadius: 10,
+      background: "#2e1f06",
+      color: "#EF9F27",
+      fontWeight: 600
+    }
+  }, "⏸ ", pausados.length, " pausados"), /*#__PURE__*/React.createElement("button", {
     style: {
       ...s.btn,
       fontSize: 11,
@@ -790,6 +807,14 @@ function ListaClientes({
   }))), sinEntrega.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
     style: s.sectionTitle
   }, "Sin entrega (", sinEntrega.length, ")"), sinEntrega.map(c => /*#__PURE__*/React.createElement(ClienteCard, {
+    key: c.id,
+    ...cardProps(c)
+  }))), pausados.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("span", {
+    style: {
+      ...s.sectionTitle,
+      color: "#EF9F27"
+    }
+  }, "⏸ Pausados (", pausados.length, ")"), pausados.map(c => /*#__PURE__*/React.createElement(ClienteCard, {
     key: c.id,
     ...cardProps(c)
   }))), todosListos && /*#__PURE__*/React.createElement("div", {
