@@ -4438,7 +4438,8 @@ function PlanillaDelDia({
     ventas: ventasPropias.filter(v => v.pago === "transferencia" || v.pago === "mixto" && (Number(v.montoTrans) || 0) > 0),
     ventasPendTrans: ventasPendTrans,
     clientes: clientes,
-    onConfirmarTransfer: onConfirmarTransfer
+    onConfirmarTransfer: onConfirmarTransfer,
+    onEditarVenta: onEditarVenta
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       ...s.card,
