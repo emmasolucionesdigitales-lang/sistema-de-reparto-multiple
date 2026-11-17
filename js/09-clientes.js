@@ -61,9 +61,15 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
     const [mostrarDeuda, setMostrarDeuda] = React.useState(false);
     const atendido = atendidos.has(c.id);
     const est = noVMap[c.id];
-    const bc = atendido ? "#1D9E75" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
+    // Pausa de reparto: cliente avisó que no va a estar X días — mientras
+    // dure, no cuenta como pendiente ni muestra los botones rápidos de
+    // "No está"/"No quiso". Portado de La Catalina.
+    const hoyKeyCard = new Date().toLocaleDateString("en-CA");
+    const pausado = !!(c.pausadoHasta && c.pausadoHasta >= hoyKeyCard);
+    const ddmmPausa = pausado ? `${c.pausadoHasta.slice(8, 10)}/${c.pausadoHasta.slice(5, 7)}` : "";
+    const bc = atendido ? "#1D9E75" : pausado ? "#EF9F27" : est === "noesta" ? "#EF9F27" : est === "noesta2" || est === "noquiso" ? "#E24B4A" : "var(--color-border-tertiary)";
     const handleClick = () => onSeleccionar(c);
-    const puedeEntregar = (!visitados.has(c.id) || est === "noesta") && !atendido;
+    const puedeEntregar = (!visitados.has(c.id) || est === "noesta") && !atendido && !pausado;
     const expandido = clienteExpandidoId === c.id;
     const irAlSiguientePendiente = () => {
       const idx = pendientes.findIndex(x => x.id === c.id);
@@ -142,7 +148,17 @@ const ClienteCard = /*#__PURE__*/React.memo(function ClienteCard({
         flexShrink: 0,
         marginLeft: 3
       }
-    }, "📷")), (recordatorios || []).some(r => r.clienteId === c.id && !r.confirmado) && /*#__PURE__*/React.createElement("span", {
+    }, "📷")), pausado && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        padding: "1px 6px",
+        borderRadius: 4,
+        background: "#2e1f06",
+        color: "#EF9F27",
+        fontWeight: 600,
+        flexShrink: 0
+      }
+    }, "⏸ Pausado hasta ", ddmmPausa), (recordatorios || []).some(r => r.clienteId === c.id && !r.confirmado) && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 13,
         flexShrink: 0
