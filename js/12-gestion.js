@@ -404,7 +404,17 @@ function GestionClientes({
       color: "#EF9F27",
       flexShrink: 0
     }
-  }, "⏸ Pausado hasta ", c.pausadoHasta.slice(8, 10), "/", c.pausadoHasta.slice(5, 7))), /*#__PURE__*/React.createElement("div", {
+  }, "⏸ Pausado hasta ", c.pausadoHasta.slice(8, 10), "/", c.pausadoHasta.slice(5, 7)), c.frecuencia === "quincenal" && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontWeight: 600,
+      padding: "2px 8px",
+      borderRadius: 20,
+      background: "#0f2740",
+      color: "#5daaff",
+      flexShrink: 0
+    }
+  }, "📅 Quincenal")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--color-text-secondary)",

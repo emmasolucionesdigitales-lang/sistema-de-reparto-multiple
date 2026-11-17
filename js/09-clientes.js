@@ -1188,6 +1188,38 @@ function DetalleCliente({
     }
     setMostrarPausa(true);
   };
+  // Cliente quincenal: compra, saltea la visita siguiente y recién vuelve a
+  // comprar a la otra — se marca una sola vez y el sistema calcula solo,
+  // según la última compra real, si le toca esta semana (sin fecha manual,
+  // a diferencia de la pausa). Portado de La Catalina.
+  const esQuincenal = cliente.frecuencia === "quincenal";
+  const fechaRefQuincenal = fecha || new Date().toLocaleDateString("en-CA");
+  const noLeTocaQuincenal = (() => {
+    if (!esQuincenal) return false;
+    let ultima = null;
+    ventas.forEach(v => {
+      if (v._esCobro || v._esAjuste || v._esAjusteEnvases || v._esCambio || v._esMixtoTrans) return;
+      const fk = v.fechaKey;
+      if (!fk) return;
+      if (!ultima || fk > ultima) ultima = fk;
+    });
+    if (!ultima) return false; // sin historial, tratar como que sí le toca
+    const dias = Math.floor((new Date(fechaRefQuincenal + "T12:00:00") - new Date(ultima + "T12:00:00")) / 86400000);
+    return dias < 10;
+  })();
+  const toggleFrecuencia = () => {
+    if (esQuincenal) {
+      if (!window.confirm("¿Volver a frecuencia semanal normal para este cliente?")) return;
+      onEditar({
+        frecuencia: null
+      });
+      return;
+    }
+    if (!window.confirm("¿Marcar a este cliente como quincenal? El sistema calcula solo, según su última compra, si le toca cada semana.")) return;
+    onEditar({
+      frecuencia: "quincenal"
+    });
+  };
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
   }, /*#__PURE__*/React.createElement(HeaderApp, {
@@ -1224,7 +1256,24 @@ function DetalleCliente({
       flexShrink: 0
     },
     onClick: togglePausa
-  }, "Quitar")), paraRetirar && !soloLectura && /*#__PURE__*/React.createElement("div", {
+  }, "Quitar")), noLeTocaQuincenal && /*#__PURE__*/React.createElement("div", {
+    style: {
+      margin: "8px 14px 0",
+      padding: "10px 14px",
+      borderRadius: 10,
+      background: "#0f2740",
+      border: "1px solid #5daaff",
+      display: "flex",
+      alignItems: "center",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "#5daaff",
+      fontWeight: 500
+    }
+  }, "📅 Cliente quincenal — no le toca esta semana")), paraRetirar && !soloLectura && /*#__PURE__*/React.createElement("div", {
     style: {
       margin: "8px 14px 0",
       padding: "10px 14px",
@@ -1323,7 +1372,16 @@ function DetalleCliente({
       borderColor: pausado ? "#EF9F27" : undefined
     },
     onClick: togglePausa
-  }, pausado ? "⏸ Pausado" : "⏸ Pausar"))), mostrarPagoSaldo && /*#__PURE__*/React.createElement("div", {
+  }, pausado ? "⏸ Pausado" : "⏸ Pausar"), !soloLectura && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "5px 10px",
+      color: esQuincenal ? "#5daaff" : undefined,
+      borderColor: esQuincenal ? "#5daaff" : undefined
+    },
+    onClick: toggleFrecuencia
+  }, esQuincenal ? "📅 Quincenal" : "📅 Semanal"))), mostrarPagoSaldo && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       top: 0,
