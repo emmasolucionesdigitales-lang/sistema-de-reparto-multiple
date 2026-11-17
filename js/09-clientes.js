@@ -473,6 +473,7 @@ function ListaClientes({
   const [busqueda, setBusqueda] = useState("");
   const [clienteExpandidoId, setClienteExpandidoId] = useState(null);
   const [clienteMoviendo, setClienteMoviendo] = useState(null); // id del cliente "levantado", esperando destino
+  const [rutaSugerida, setRutaSugerida] = useState(null); // preview de ruta sugerida por horario habitual — nunca se aplica sola
   // Auto-scroll a la tarjeta "¡Todos visitados!" apenas se termina de
   // registrar el último cliente pendiente.
   const btnPlanillaRef = React.useRef(null);
@@ -583,6 +584,79 @@ function ListaClientes({
     const afuera = conMaps.length - conCoords.length;
     if (afuera > 0) setTimeout(() => alert(`Nota: ${afuera} cliente(s) quedaron afuera de la ruta óptima porque su link de Maps no trae coordenadas.`), 400);
   };
+  // Ruta sugerida: a diferencia de "Ruta óptima" (que ordena por cercanía
+  // GPS y abre Maps), esto sugiere el orden según el horario habitual en
+  // que cada cliente recibió sus últimas entregas, y lo muestra en un
+  // preview — nunca se aplica sola, el repartidor decide. Portado de La
+  // Catalina. Opera solo sobre los clientes visibles en este sector/
+  // repartidor (ya vienen filtrados en la prop "clientes").
+  const _horaAMinutos = hhmm => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(String(hhmm || "").trim());
+    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+  };
+  const sugerirRuta = () => {
+    const base = clientesOrdenados;
+    if (base.length < 3) {
+      alert("Hace falta al menos 3 clientes en el día.");
+      return;
+    }
+    const conHora = [],
+      sinHora = [];
+    base.forEach(c => {
+      const horas = (todasVentas || ventas).filter(v => v.clienteId === c.id && v.dia === dia && v.hora && !v._esCobro && !v._esAjuste && !v._esAjusteEnvases && !v._esCambio && !v._esMixtoTrans).sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || "")).slice(0, 8).map(v => _horaAMinutos(v.hora)).filter(n => n != null).sort((a, b) => a - b);
+      if (horas.length) conHora.push({
+        c,
+        min: horas[Math.floor(horas.length / 2)]
+      });else sinHora.push(c);
+    });
+    if (conHora.length < 2) {
+      alert("Todavía no hay suficiente historial de horarios.");
+      return;
+    }
+    conHora.sort((a, b) => a.min - b.min);
+    let secuencia = conHora.map(x => x.c);
+    const sinUbicar = [];
+    sinHora.forEach(c => {
+      const co = extraerCoordsDeURL(c.maps);
+      if (!co) {
+        sinUbicar.push(c);
+        return;
+      }
+      let mejorIdx = -1,
+        mejorD = Infinity;
+      secuencia.forEach((sc, i) => {
+        const sco = extraerCoordsDeURL(sc.maps);
+        if (!sco) return;
+        const d = (sco.lat - co.lat) ** 2 + (sco.lng - co.lng) ** 2;
+        if (d < mejorD) {
+          mejorD = d;
+          mejorIdx = i;
+        }
+      });
+      if (mejorIdx === -1) {
+        sinUbicar.push(c);
+        return;
+      }
+      secuencia = [...secuencia.slice(0, mejorIdx + 1), c, ...secuencia.slice(mejorIdx + 1)];
+    });
+    setRutaSugerida({
+      orden: [...secuencia, ...sinUbicar],
+      horaPorId: Object.fromEntries(conHora.map(x => [x.c.id, x.min])),
+      sinUbicarIds: new Set(sinUbicar.map(c => c.id))
+    });
+  };
+  const aplicarRutaSugerida = () => {
+    if (!rutaSugerida) return;
+    const posMap = {};
+    rutaSugerida.orden.forEach((c, i) => {
+      posMap[c.id] = i + 1;
+    });
+    onReordenar(clientes.map(c => posMap[c.id] !== undefined ? {
+      ...c,
+      orden: posMap[c.id]
+    } : c));
+    setRutaSugerida(null);
+  };
   const moverCliente = (idOrigen, idDestino) => {
     if (idOrigen === idDestino) return;
     const ordenActual = clientesOrdenados.map(c => c.id);
@@ -658,7 +732,14 @@ function ListaClientes({
       padding: "3px 10px"
     },
     onClick: onAbrirMapa || abrirRuta
-  }, "🗺 Mapa")), /*#__PURE__*/React.createElement("p", {
+  }, "🗺 Mapa"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 11,
+      padding: "3px 10px"
+    },
+    onClick: sugerirRuta
+  }, "✨ Sugerir ruta")), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 11,
       color: clienteMoviendo ? "var(--color-text-warning)" : "var(--color-text-tertiary)",
@@ -714,7 +795,103 @@ function ListaClientes({
       width: "100%",
       boxShadow: "0 4px 16px rgba(15,110,86,0.4)"
     }
-  }, "✅ Reparto completo — Ver planilla del día →")));
+  }, "✅ Reparto completo — Ver planilla del día →"))), rutaSugerida && /*#__PURE__*/React.createElement(ModalRutaSugerida, {
+    rutaSugerida: rutaSugerida,
+    onCerrar: () => setRutaSugerida(null),
+    onAplicar: aplicarRutaSugerida
+  }));
+}
+function ModalRutaSugerida({
+  rutaSugerida,
+  onCerrar,
+  onAplicar
+}) {
+  const fmtHora = min => {
+    const h = Math.floor(min / 60) % 24;
+    const m = min % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.7)",
+      zIndex: 999,
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "center"
+    },
+    onClick: onCerrar
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: "16px 16px 0 0",
+      padding: 20,
+      width: "100%",
+      maxWidth: 480,
+      maxHeight: "80vh",
+      overflowY: "auto",
+      boxShadow: "0 -8px 32px rgba(0,0,0,0.4)"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 4
+    }
+  }, "✨ Ruta sugerida"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginBottom: 12
+    }
+  }, "Según el horario habitual de entrega de cada cliente. Es solo una sugerencia — no se aplica sola."), rutaSugerida.orden.map((c, i) => {
+    const min = rutaSugerida.horaPorId[c.id];
+    const sinUbicar = rutaSugerida.sinUbicarIds.has(c.id);
+    return /*#__PURE__*/React.createElement("div", {
+      key: c.id,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "6px 0",
+        borderBottom: "0.5px solid var(--color-border-tertiary)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: "var(--color-text-primary)"
+      }
+    }, i + 1, ". ", c.nombre), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-tertiary)"
+      }
+    }, min != null ? `🕐 ~${fmtHora(min)}` : sinUbicar ? "sin datos" : "sin historial"));
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1
+    },
+    onClick: onCerrar
+  }, "Cerrar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 2
+    },
+    onClick: onAplicar
+  }, "Aplicar este orden"))));
 }
 function DetalleCliente({
   cliente,

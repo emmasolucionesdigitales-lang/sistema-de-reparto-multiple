@@ -2253,7 +2253,8 @@ function DetalleTransferencias({
   ventas,
   ventasPendTrans,
   clientes,
-  onConfirmarTransfer
+  onConfirmarTransfer,
+  onEditarVenta
 }) {
   const [abierto, setAbierto] = React.useState(false);
   const pendientes = (ventasPendTrans || []).length;
@@ -2262,6 +2263,24 @@ function DetalleTransferencias({
     (clientes || []).forEach(c => m[c.id] = c);
     return m;
   }, [clientes]);
+  // Editar el monto transferido de una venta pendiente de confirmar, sin
+  // abrir el formulario completo — solo para compras reales (no cobros de
+  // deuda, que se trackean como registro de monto único aparte). Portado
+  // de La Catalina.
+  const editarMontoVenta = v => {
+    if (!onEditarVenta || v._esCobro || v._esAjuste || v._esCambio) return;
+    const actual = v.pago === "mixto" ? Number(v.montoTrans) || 0 : (v.pagadoNum != null ? v.pagadoNum : v.neto) || 0;
+    const resp = window.prompt("Nuevo monto transferido:", String(actual));
+    if (resp == null) return;
+    const nm = Math.round(Number(resp) || 0);
+    if (nm <= 0) { window.alert("El monto tiene que ser mayor a $0."); return; }
+    const detalleArr = Array.isArray(v.detalle) ? v.detalle : Object.values(v.detalle || {});
+    if (v.pago === "mixto") {
+      onEditarVenta(v.id, detalleArr, "mixto", String(v.montoEfec || 0), v.saldoAplicado, v.obs, String(nm), v.transConfirmada);
+    } else {
+      onEditarVenta(v.id, detalleArr, v.pago, String(nm), v.saldoAplicado, v.obs, undefined, v.transConfirmada);
+    }
+  };
   return /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8,
@@ -2356,7 +2375,23 @@ function DetalleTransferencias({
         e.stopPropagation();
         onConfirmarTransfer && onConfirmarTransfer(v.clienteId, v.id);
       }
-    }, confirmada ? "✅ Confirmada" : "🔴 Pendiente"), !confirmada && tel && /*#__PURE__*/React.createElement("a", {
+    }, confirmada ? "✅ Confirmada" : "🔴 Pendiente"), !confirmada && !v._esCobro && !v._esAjuste && !v._esCambio && onEditarVenta && /*#__PURE__*/React.createElement("button", {
+      style: {
+        marginLeft: 6,
+        fontSize: 11,
+        padding: "1px 6px",
+        borderRadius: 4,
+        border: "none",
+        background: "var(--color-background-tertiary)",
+        color: "var(--color-text-secondary)",
+        cursor: "pointer"
+      },
+      title: "Editar monto transferido",
+      onClick: e => {
+        e.stopPropagation();
+        editarMontoVenta(v);
+      }
+    }, "✏️"), !confirmada && tel && /*#__PURE__*/React.createElement("a", {
       href: `https://wa.me/54${tel}?text=${msjWA}`,
       target: "_blank",
       rel: "noreferrer",
