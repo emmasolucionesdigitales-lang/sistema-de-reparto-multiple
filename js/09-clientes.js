@@ -9,7 +9,7 @@ function ClientesTabs({
   activo,
   onIr
 }) {
-  const tabs = [["todos", "👥", "Todos", "gestionClientes"], ["fiados", "💰", "Fiados", "fiadosPendientes"], ["dormidos", "😴", "Dormidos", "clientesDormidos"], ["mapa", "🗺", "Mapa", "mapaClientes"]];
+  const tabs = [["todos", "👥", "Todos", "gestionClientes"], ["fiados", "💰", "Fiados", "fiadosPendientes"], ["dormidos", "😴", "Dormidos", "clientesDormidos"], ["dispenser", "🌡", "Dispenser", "dispensersFrioCalor"], ["mapa", "🗺", "Mapa", "mapaClientes"]];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -1103,6 +1103,120 @@ function PausaClienteModal({
     }
   }, "Guardar"))));
 }
+// Dispenser frío/calor: configura el producto y el mínimo mensual (en
+// unidades) pactado a cambio del comodato del dispenser. El faltante se
+// revisa y cobra a mano desde "🌡 Dispenser" (ClientesTabs/DispensersFrioCalor),
+// siempre a precio ACTUAL del producto. Portado de La Catalina.
+function DispenserConfigModal({
+  cliente,
+  productos,
+  onGuardar,
+  onCerrar
+}) {
+  const opciones = (productos || []).filter(p => !p.esDispenser);
+  const [producto, setProducto] = React.useState(cliente.dispenserProducto || (opciones[0] && opciones[0].nombre) || "");
+  const [minimo, setMinimo] = React.useState(cliente.dispenserMinimoMensual || "");
+  const precioSel = (opciones.find(p => p.nombre === producto) || {}).precio || 0;
+  const pesosEq = precioSel && Number(minimo) ? Math.round(Number(minimo) * precioSel) : null;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.7)",
+      zIndex: 999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16
+    },
+    onClick: onCerrar
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: 16,
+      padding: 20,
+      width: "100%",
+      maxWidth: 400,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 4
+    }
+  }, "🌡 Mínimo del dispenser"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginBottom: 14
+    }
+  }, cliente.nombre), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Producto pactado"), /*#__PURE__*/React.createElement("select", {
+    style: {
+      ...s.select,
+      marginBottom: 12
+    },
+    value: producto,
+    onChange: e => setProducto(e.target.value)
+  }, opciones.map(p => /*#__PURE__*/React.createElement("option", {
+    key: p.id,
+    value: p.nombre
+  }, p.nombre))), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Mínimo por mes (unidades)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    inputMode: "numeric",
+    min: 0,
+    placeholder: "Ej: 12",
+    value: minimo,
+    onChange: e => setMinimo(e.target.value),
+    style: {
+      ...s.input,
+      marginBottom: 4
+    }
+  }), pesosEq ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)",
+      marginBottom: 12
+    }
+  }, "≈ ", fmt(pesosEq), " al precio actual de ", producto, " (", fmt(precioSel), " c/u) — si el precio cambia, se recalcula solo") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1
+    },
+    onClick: onCerrar
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 1
+    },
+    onClick: () => {
+      const n = Math.max(0, Math.round(Number(minimo)) || 0);
+      if (!producto || n <= 0) return;
+      onGuardar({
+        dispenserProducto: producto,
+        dispenserMinimoMensual: n
+      });
+    }
+  }, "Guardar"))));
+}
 function DetalleCliente({
   cliente,
   ventas,
@@ -1139,6 +1253,7 @@ function DetalleCliente({
   const [mostrarFotoComodato, setMostrarFotoComodato] = useState(false);
   const [mostrarCambio, setMostrarCambio] = useState(false);
   const [mostrarPausa, setMostrarPausa] = useState(false);
+  const [mostrarDispenserConfig, setMostrarDispenserConfig] = useState(false);
   const recActivos = (recordatorios || []).filter(r => r.clienteId === cliente.id && !r.confirmado);
   const historial = [...ventas].sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || "") || (b.id || 0) - (a.id || 0));
   const historialConNV = [...historial, ...(noVisitas || []).map(nv => ({
@@ -1193,6 +1308,10 @@ function DetalleCliente({
   // según la última compra real, si le toca esta semana (sin fecha manual,
   // a diferencia de la pausa). Portado de La Catalina.
   const esQuincenal = cliente.frecuencia === "quincenal";
+  // Dispenser frío/calor: botón de configuración solo si el cliente tiene
+  // al menos un dispenser en comodato. Portado de La Catalina.
+  const tieneDispenser = (Number(cliente.dispenser) || 0) > 0;
+  const dispenserConfigurado = tieneDispenser && cliente.dispenserProducto && Number(cliente.dispenserMinimoMensual) > 0;
   const fechaRefQuincenal = fecha || new Date().toLocaleDateString("en-CA");
   const noLeTocaQuincenal = (() => {
     if (!esQuincenal) return false;
@@ -1381,7 +1500,16 @@ function DetalleCliente({
       borderColor: esQuincenal ? "#5daaff" : undefined
     },
     onClick: toggleFrecuencia
-  }, esQuincenal ? "📅 Quincenal" : "📅 Semanal"))), mostrarPagoSaldo && /*#__PURE__*/React.createElement("div", {
+  }, esQuincenal ? "📅 Quincenal" : "📅 Semanal"), !soloLectura && tieneDispenser && /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "5px 10px",
+      color: dispenserConfigurado ? "#5daaff" : undefined,
+      borderColor: dispenserConfigurado ? "#5daaff" : undefined
+    },
+    onClick: () => setMostrarDispenserConfig(true)
+  }, dispenserConfigurado ? `🌡 ${cliente.dispenserMinimoMensual}/mes` : "🌡 Configurar mínimo"))), mostrarPagoSaldo && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       top: 0,
@@ -1408,6 +1536,14 @@ function DetalleCliente({
     onGuardar: cambios => {
       onEditar(cambios);
       setMostrarPausa(false);
+    }
+  }), mostrarDispenserConfig && /*#__PURE__*/React.createElement(DispenserConfigModal, {
+    cliente: cliente,
+    productos: productos,
+    onCerrar: () => setMostrarDispenserConfig(false),
+    onGuardar: cambios => {
+      onEditar(cambios);
+      setMostrarDispenserConfig(false);
     }
   }), mostrarRecordatorio && /*#__PURE__*/React.createElement(RecordatorioModal, {
     cliente: cliente,
@@ -2498,73 +2634,7 @@ function EditCliente({
       fontSize: 12,
       color: "var(--color-text-secondary)"
     }
-  }, "unidades prestadas"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...s.card,
-      margin: "4px 0",
-      background: "var(--color-background-tertiary)",
-      padding: "10px 12px"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: (datos.minimoMensual && datos.minimoMensual.activo) ? 8 : 0
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 500,
-      color: "var(--color-text-secondary)"
-    }
-  }, "💧 Consumo mínimo mensual (dispenser)"), /*#__PURE__*/React.createElement("button", {
-    style: {
-      fontSize: 11,
-      padding: "4px 10px",
-      borderRadius: 8,
-      border: "0.5px solid var(--color-border-secondary)",
-      cursor: "pointer",
-      background: (datos.minimoMensual && datos.minimoMensual.activo) ? "#185FA5" : "var(--color-background-secondary)",
-      color: (datos.minimoMensual && datos.minimoMensual.activo) ? "#e2eaf4" : "var(--color-text-secondary)"
-    },
-    onClick: () => set("minimoMensual", {
-      ...(datos.minimoMensual || {}),
-      activo: !(datos.minimoMensual && datos.minimoMensual.activo),
-      producto: (datos.minimoMensual && datos.minimoMensual.producto) || (productos && productos[0] ? productos[0].nombre : ""),
-      cantidad: (datos.minimoMensual && datos.minimoMensual.cantidad) || 5
-    })
-  }, (datos.minimoMensual && datos.minimoMensual.activo) ? "Activado" : "Desactivado")), datos.minimoMensual && datos.minimoMensual.activo && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    style: s.grid2
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Producto de referencia"), /*#__PURE__*/React.createElement("select", {
-    style: s.select,
-    value: (datos.minimoMensual && datos.minimoMensual.producto) || "",
-    onChange: e => set("minimoMensual", { ...(datos.minimoMensual || {}), producto: e.target.value })
-  }, (productos || []).map(p => /*#__PURE__*/React.createElement("option", {
-    key: p.id,
-    value: p.nombre
-  }, p.nombre)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: s.label
-  }, "Cantidad mínima / mes"), /*#__PURE__*/React.createElement("input", {
-    style: s.input,
-    type: "number",
-    min: 0,
-    value: (datos.minimoMensual && datos.minimoMensual.cantidad) ?? "",
-    onChange: e => set("minimoMensual", { ...(datos.minimoMensual || {}), cantidad: Number(e.target.value) || 0 })
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--color-text-tertiary)",
-      marginTop: 6
-    }
-  }, (() => {
-    const prod = (productos || []).find(p => p.nombre === (datos.minimoMensual && datos.minimoMensual.producto));
-    const cant = (datos.minimoMensual && datos.minimoMensual.cantidad) || 0;
-    const valor = prod ? cant * (Number(prod.precio) || 0) : 0;
-    return `Si el cliente no llega a comprar ${cant} de "${(datos.minimoMensual && datos.minimoMensual.producto) || "—"}" en el mes (≈ ${fmt(valor)} a precio actual), se le cobra la diferencia de forma automática el día 1 del mes siguiente.`;
-  })()))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+  }, "unidades prestadas"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: s.label
   }, "Saldo (corrección manual)"), /*#__PURE__*/React.createElement("input", {
     style: s.input,
@@ -3602,4 +3672,167 @@ function ClientesDormidos({
       }
     }, "🗑️ Eliminar")
   }))));
+}
+// Dispensers frío/calor — pantalla de revisión y cobro manual del mínimo
+// mensual pactado por dispenser (reemplaza el cobro automático y
+// silencioso que había antes en minimoMensual/17-app.js). Navegación por
+// mes; "Cobrar faltante" registra un ajuste de saldo con el mismo patrón
+// que el resto de la app (saldoAntes/saldoDespues/saldoDelta + _esAjuste),
+// con flags propios (_esAjusteDispenser + _mesDispenser) para no cobrar
+// dos veces el mismo mes. Portado de La Catalina.
+function DispensersFrioCalor({
+  clientes,
+  ventas,
+  productos,
+  onCobrarFaltante,
+  onVolver
+}) {
+  const hoy = new Date();
+  const [mesSel, setMesSel] = React.useState(`${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`);
+  const cambiarMes = delta => {
+    const [y, m] = mesSel.split("-").map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    setMesSel(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  };
+  const nombreMes = (() => {
+    const [y, m] = mesSel.split("-").map(Number);
+    const d = new Date(y, m - 1, 1);
+    const n = d.toLocaleDateString("es-AR", {
+      month: "long",
+      year: "numeric"
+    });
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  })();
+  const conDispenser = (clientes || []).filter(c => !c._retirado && (Number(c.dispenser) || 0) > 0 && c.dispenserProducto && Number(c.dispenserMinimoMensual) > 0);
+  const filas = conDispenser.map(c => {
+    const consumido = (ventas || []).filter(v => v.clienteId === c.id && v.fechaKey && v.fechaKey.slice(0, 7) === mesSel && !v._esCobro && !v._esAjuste && !v._esAjusteEnvases && !v._esCambio && !v._esMixtoTrans).reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === c.dispenserProducto).reduce((b, d) => b + (Number(d.cantidad) || 0), 0), 0);
+    const minimo = Number(c.dispenserMinimoMensual) || 0;
+    const faltante = Math.max(0, minimo - consumido);
+    const producto = (productos || []).find(p => p.nombre === c.dispenserProducto);
+    const precio = producto ? Number(producto.precio) || 0 : 0;
+    const monto = faltante * precio;
+    const yaCobrado = (ventas || []).some(v => v.clienteId === c.id && v._esAjusteDispenser && v._mesDispenser === mesSel);
+    return {
+      c,
+      consumido,
+      minimo,
+      faltante,
+      monto,
+      precio,
+      yaCobrado
+    };
+  }).sort((a, b) => b.faltante - a.faltante);
+  return /*#__PURE__*/React.createElement("div", {
+    style: s.screen
+  }, /*#__PURE__*/React.createElement("div", {
+    style: s.header
+  }, /*#__PURE__*/React.createElement("button", {
+    style: s.backBtn,
+    onClick: onVolver
+  }, "← Volver"), /*#__PURE__*/React.createElement("div", {
+    style: s.headerTitle
+  }, "🌡 Dispensers frío/calor"), /*#__PURE__*/React.createElement(HeaderBotones, null)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 14,
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: s.btn,
+    onClick: () => cambiarMes(-1)
+  }, "◀"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      minWidth: 150,
+      textAlign: "center"
+    }
+  }, nombreMes), /*#__PURE__*/React.createElement("button", {
+    style: s.btn,
+    onClick: () => cambiarMes(1)
+  }, "▶")), filas.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 40,
+      textAlign: "center",
+      color: "var(--color-text-tertiary)",
+      fontSize: 14
+    }
+  }, "Ningún cliente tiene un mínimo de dispenser configurado todavía."), filas.map(({
+    c,
+    consumido,
+    minimo,
+    faltante,
+    monto,
+    precio,
+    yaCobrado
+  }) => /*#__PURE__*/React.createElement("div", {
+    key: c.id,
+    style: {
+      ...s.card,
+      margin: "6px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 500,
+      color: "var(--color-text-primary)"
+    }
+  }, c.nombre), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, c.dia)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--color-text-secondary)",
+      marginBottom: 6
+    }
+  }, c.dispenserProducto, ": ", consumido, "/", minimo, " este mes"), faltante > 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "var(--color-text-danger)"
+    }
+  }, "Faltan ", faltante, " · ", fmt(monto)), yaCobrado ? /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--color-text-tertiary)"
+    }
+  }, "Ya cobrado este mes") : /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      fontSize: 12,
+      padding: "6px 12px",
+      background: "#185FA5",
+      color: "#e2eaf4",
+      border: "none"
+    },
+    onClick: () => {
+      if (!window.confirm(`¿Cobrarle a ${c.nombre} ${fmt(monto)} por faltarle ${faltante} ${c.dispenserProducto} este mes?`)) return;
+      onCobrarFaltante(c, faltante, monto, precio, consumido, mesSel, nombreMes);
+    }
+  }, "Cobrar faltante")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 500,
+      color: "var(--color-text-success)"
+    }
+  }, "✓ Cumplió el mínimo"))));
 }

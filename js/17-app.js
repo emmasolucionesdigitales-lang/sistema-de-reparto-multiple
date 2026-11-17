@@ -1340,89 +1340,32 @@ function AppPrincipal({
     }
   }, []); // solo al arrancar
 
-  // ── Cobro automático de consumo mínimo mensual (dispenser) ──────────
-  // Al abrir la app, si ya cruzamos a un mes nuevo, revisa los clientes
-  // con `minimoMensual.activo` y, si el mes recién terminado no llegó al
-  // mínimo pactado, genera un cargo (ajuste) por la diferencia. Corre una
-  // sola vez por mes (checkpoint en localStorage) y NO cobra retroactivo
-  // la primera vez que se activa la función (evita sorpresas).
+  // ── Migración: minimoMensual → dispenser + dispenserProducto/dispenserMinimoMensual ──
+  // La función de "consumo mínimo mensual" dejó de cobrarse sola (era un
+  // cobro automático y silencioso, sin pantalla de revisión) y pasó a ser
+  // manual, igual que en La Catalina: ahora se revisa y cobra desde
+  // "🌡 Dispenser" (pestaña de Gestión de clientes), con botón "Cobrar
+  // faltante" + confirm. Este efecto corre UNA sola vez (checkpoint en
+  // localStorage) y copia los valores viejos (c.minimoMensual =
+  // {activo, producto, cantidad}) a los campos nuevos (c.dispenserProducto,
+  // c.dispenserMinimoMensual) para no perder lo que ya estaba configurado.
+  // No borra minimoMensual: queda como historial.
   React.useEffect(() => {
-    if (!clientes || !clientes.length || !productos || !productos.length) return;
-    const CHECKPOINT_KEY = "rm_minimo_mensual_facturado_hasta";
-    const pad2 = n => String(n).padStart(2, "0");
-    const mesKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
-    const hoy = new Date();
-    const mesAnteriorDate = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
-    const mesAnteriorKey = mesKey(mesAnteriorDate);
-    const facturadoHasta = localStorage.getItem(CHECKPOINT_KEY);
-    if (!facturadoHasta) {
-      // Primera vez que corre: no facturar nada retroactivo, solo fijar el punto de partida.
-      localStorage.setItem(CHECKPOINT_KEY, mesAnteriorKey);
-      return;
+    if (!clientes || !clientes.length) return;
+    const MIGR_KEY = "rm_migracion_dispenser_v1";
+    if (localStorage.getItem(MIGR_KEY)) return;
+    const necesitaMigrar = c => c.minimoMensual && c.minimoMensual.activo && c.minimoMensual.producto && Number(c.minimoMensual.cantidad) > 0 && !c.dispenserProducto && !(Number(c.dispenserMinimoMensual) > 0);
+    const aMigrar = clientes.filter(necesitaMigrar);
+    if (aMigrar.length) {
+      saveClientes(prev => prev.map(c => necesitaMigrar(c) ? {
+        ...c,
+        dispenserProducto: c.minimoMensual.producto,
+        dispenserMinimoMensual: Number(c.minimoMensual.cantidad) || 0
+      } : c));
+      console.log(`Migración dispenser: ${aMigrar.length} cliente(s) con mínimo mensual (minimoMensual) pasados a los campos nuevos (dispenserProducto/dispenserMinimoMensual). Revisar cada uno tiene dispenser > 0 cargado para que el botón de configuración se vea en su ficha.`);
     }
-    if (facturadoHasta >= mesAnteriorKey) return; // ya está al día
-
-    const desde = `${mesAnteriorKey}-01`;
-    const ultimoDia = new Date(mesAnteriorDate.getFullYear(), mesAnteriorDate.getMonth() + 1, 0).getDate();
-    const hasta = `${mesAnteriorKey}-${pad2(ultimoDia)}`;
-    const cargos = [];
-    let n = 0;
-    clientes.forEach(c => {
-      const mm = c.minimoMensual;
-      if (!mm || !mm.activo || !mm.producto || !(Number(mm.cantidad) > 0)) return;
-      const prod = productos.find(p => p.nombre === mm.producto);
-      const precioActual = prod ? Number(prod.precio) || 0 : 0;
-      const minimoValor = (Number(mm.cantidad) || 0) * precioActual;
-      if (minimoValor <= 0) return;
-      const ventasMes = (ventas || []).filter(v => v.clienteId === c.id && !v._esCobro && !v._esAjuste && !v._esCambio && v.fechaKey >= desde && v.fechaKey <= hasta);
-      const consumido = ventasMes.reduce((a, v) => a + (v.detalle || []).filter(d => d.nombre === mm.producto).reduce((b, d) => b + (Number(d.total) || 0), 0), 0);
-      const diferencia = Math.round(minimoValor - consumido);
-      if (diferencia <= 0) return;
-      n++;
-      cargos.push({
-        id: Date.now() + n,
-        clienteId: c.id,
-        cliente: c.nombre,
-        dia: c.dia || "",
-        fechaKey: new Date().toLocaleDateString("en-CA"),
-        fecha: new Date().toLocaleString("es-AR"),
-        hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
-        detalle: [{
-          nombre: `Cargo por consumo mínimo (${mesAnteriorKey})`,
-          cantidad: 1,
-          precio: 0,
-          total: 0
-        }],
-        pago: "-",
-        obs: `Mínimo mensual: ${mm.cantidad} × "${mm.producto}" (${fmt(minimoValor)}) − consumido ${fmt(consumido)} = cargo ${fmt(diferencia)}`,
-        saldoAplicado: 0,
-        neto: 0,
-        bruto: 0,
-        desc: 0,
-        costo: 0,
-        ganancia: 0,
-        pagadoNum: 0,
-        saldoDelta: -diferencia,
-        envPrest: [],
-        envDev: [],
-        saldoAntes: c.saldo || 0,
-        saldoDespues: (Number(c.saldo) || 0) - diferencia,
-        _esAjuste: true,
-        _esCargoMinimo: true,
-        _periodoMinimo: mesAnteriorKey,
-        _upd: Date.now()
-      });
-    });
-    if (cargos.length) {
-      saveVentas(prev => [...prev, ...cargos]);
-      saveClientes(prev => prev.map(cl => {
-        const cargo = cargos.find(cg => cg.clienteId === cl.id);
-        return cargo ? { ...cl, saldo: (Number(cl.saldo) || 0) + cargo.saldoDelta } : cl;
-      }));
-      console.log(`Cobro automático de mínimo mensual (${mesAnteriorKey}): ${cargos.length} cargo(s) generado(s).`);
-    }
-    localStorage.setItem(CHECKPOINT_KEY, mesAnteriorKey);
-  }, [clientes, ventas, productos]);
+    localStorage.setItem(MIGR_KEY, "1");
+  }, [clientes]);
 
   // Respaldo COMPLETO descargable + restaurar (solo dueño)
   React.useEffect(() => {
@@ -3663,6 +3606,53 @@ function AppPrincipal({
       } : c));
     },
     onVolver: () => window.history.back()
+  })), pantalla === "dispensersFrioCalor" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ClientesTabs, {
+    activo: "dispenser",
+    onIr: irA
+  }), /*#__PURE__*/React.createElement(DispensersFrioCalor, {
+    clientes: clientes,
+    ventas: ventas,
+    productos: productos,
+    onVolver: () => window.history.back(),
+    onCobrarFaltante: (c, faltante, monto, precio, consumido, mesSel, nombreMes) => {
+      const vt = {
+        id: Date.now(),
+        clienteId: c.id,
+        cliente: c.nombre,
+        dia: c.dia,
+        fechaKey: new Date().toLocaleDateString("en-CA"),
+        fecha: new Date().toLocaleString("es-AR"),
+      hora: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+        detalle: [{
+          nombre: c.dispenserProducto,
+          cantidad: faltante,
+          precio,
+          total: monto
+        }],
+        pago: "manual",
+        obs: `Dispenser frío/calor — mes ${nombreMes}: consumió ${consumido}/${c.dispenserMinimoMensual}, faltan ${faltante} (a ${fmt(precio)} c/u)`,
+        neto: 0,
+        bruto: 0,
+        desc: 0,
+        costo: 0,
+        ganancia: 0,
+        pagadoNum: 0,
+        saldoDelta: -monto,
+        envPrest: [],
+        envDev: [],
+        saldoAntes: c.saldo || 0,
+        saldoDespues: (Number(c.saldo) || 0) - monto,
+        _esAjuste: true,
+        _esAjusteDispenser: true,
+        _mesDispenser: mesSel,
+        _upd: Date.now()
+      };
+      saveVentas(prev => [...prev, vt]);
+      saveClientes(prev => prev.map(cl => cl.id === c.id ? {
+        ...cl,
+        saldo: (Number(cl.saldo) || 0) - monto
+      } : cl));
+    }
   })), pantalla === "resumen" && /*#__PURE__*/React.createElement(Resumen, {
     ventas: ventas,
     clientes: clientes,
