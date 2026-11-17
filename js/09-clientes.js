@@ -934,6 +934,109 @@ function ModalRutaSugerida({
     onClick: onAplicar
   }, "Aplicar este orden"))));
 }
+// Modal para pausar el reparto a un cliente: elige la fecha de vuelta con el
+// selector nativo de fecha del celular (pedido de Guillermo: antes pedía
+// "cuántos días" con prompt y era menos práctico que elegir la fecha
+// directo). Mismo estilo visual que los otros modales chicos de la app
+// (RecordatorioModal). Portado de La Catalina.
+function PausaClienteModal({
+  cliente,
+  onGuardar,
+  onCerrar
+}) {
+  const hoy = new Date().toLocaleDateString("en-CA");
+  const sugerida = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 15);
+    return d.toLocaleDateString("en-CA");
+  })();
+  const [fecha, setFecha] = React.useState(cliente.pausadoHasta || sugerida);
+  const [motivo, setMotivo] = React.useState(cliente.pausadoMotivo || "");
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.7)",
+      zIndex: 999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16
+    },
+    onClick: onCerrar
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--color-background-secondary)",
+      borderRadius: 16,
+      padding: 20,
+      width: "100%",
+      maxWidth: 400,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 500,
+      color: "var(--color-text-primary)",
+      marginBottom: 4
+    }
+  }, "⏸ Pausar reparto"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--color-text-secondary)",
+      marginBottom: 12
+    }
+  }, cliente.nombre), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "¿Qué día volvés a su casa?"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: fecha,
+    min: hoy,
+    onChange: e => setFecha(e.target.value),
+    style: {
+      ...s.input,
+      marginBottom: 12
+    }
+  }), /*#__PURE__*/React.createElement("label", {
+    style: s.label
+  }, "Motivo (opcional)"), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    value: motivo,
+    onChange: e => setMotivo(e.target.value),
+    placeholder: "Ej: dijo que no va a estar",
+    style: {
+      ...s.input,
+      marginBottom: 16
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btn,
+      flex: 1
+    },
+    onClick: onCerrar
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    style: {
+      ...s.btnPrimary,
+      flex: 1
+    },
+    onClick: () => {
+      if (!fecha) return;
+      onGuardar({
+        pausadoHasta: fecha,
+        pausadoMotivo: motivo || ""
+      });
+    }
+  }, "Guardar"))));
+}
 function DetalleCliente({
   cliente,
   ventas,
@@ -969,6 +1072,7 @@ function DetalleCliente({
   const [mostrarFotoGrande, setMostrarFotoGrande] = useState(false);
   const [mostrarFotoComodato, setMostrarFotoComodato] = useState(false);
   const [mostrarCambio, setMostrarCambio] = useState(false);
+  const [mostrarPausa, setMostrarPausa] = useState(false);
   const recActivos = (recordatorios || []).filter(r => r.clienteId === cliente.id && !r.confirmado);
   const historial = [...ventas].sort((a, b) => (b.fechaKey || "").localeCompare(a.fechaKey || "") || (b.id || 0) - (a.id || 0));
   const historialConNV = [...historial, ...(noVisitas || []).map(nv => ({
@@ -1016,16 +1120,7 @@ function DetalleCliente({
       });
       return;
     }
-    const diasStr = window.prompt("¿Cuántos días avisó que no va a estar?", "15");
-    if (diasStr == null) return;
-    const dias = Math.max(1, Math.round(Number(diasStr) || 15));
-    const motivo = (window.prompt("Motivo (opcional):", "") || "").trim();
-    const hastaD = new Date();
-    hastaD.setDate(hastaD.getDate() + dias);
-    onEditar({
-      pausadoHasta: hastaD.toLocaleDateString("en-CA"),
-      pausadoMotivo: motivo
-    });
+    setMostrarPausa(true);
   };
   return /*#__PURE__*/React.createElement("div", {
     style: s.screen
@@ -1183,7 +1278,14 @@ function DetalleCliente({
       setMostrarPagoSaldo(false);
     },
     onCerrar: () => setMostrarPagoSaldo(false)
-  })), mostrarRecordatorio && /*#__PURE__*/React.createElement(RecordatorioModal, {
+  })), mostrarPausa && /*#__PURE__*/React.createElement(PausaClienteModal, {
+    cliente: cliente,
+    onCerrar: () => setMostrarPausa(false),
+    onGuardar: cambios => {
+      onEditar(cambios);
+      setMostrarPausa(false);
+    }
+  }), mostrarRecordatorio && /*#__PURE__*/React.createElement(RecordatorioModal, {
     cliente: cliente,
     onGuardar: datos => {
       onGuardarRecordatorio && onGuardarRecordatorio({
