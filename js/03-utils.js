@@ -880,13 +880,9 @@ function PieEnvases({
   izquierda,
   children
 }) {
-  const KEYS = ["sifon", "bidon10", "bidon20", "dispenser"];
-  const KP = {
-    "Sifón 1.5L": "sifon",
-    "Bidón 10L": "bidon10",
-    "Bidón 20L": "bidon20",
-    "Dispenser": "dispenser"
-  };
+  const PRODS = ((typeof window !== "undefined" && window._rmProductos) || []).filter(p => p.trackStock !== false).map(p => [claveStockDeProducto(p), p.nombre.replace(" 1.5L", "")]);
+  const KEYS = PRODS.map(([k]) => k);
+  const NOMBRES = Object.fromEntries(PRODS.map(([k, lbl]) => [k, lbl]));
   const [draft, setDraft] = React.useState(null); // null = panel cerrado
   const [mostrarPerdida, setMostrarPerdida] = React.useState(false);
   const [prodPerdida, setProdPerdida] = React.useState("sifon");
@@ -919,12 +915,6 @@ function PieEnvases({
       prest: Object.fromEntries(KEYS.map(k => [k, prestadoClienteDe(c, k, ventas)]))
     });
   };
-  const LBL_ENV = {
-    sifon: "Sifón",
-    bidon10: "Bidón 10L",
-    bidon20: "Bidón 20L",
-    dispenser: "Dispenser"
-  };
   const confirmar = async () => {
     // Antes esto guardaba directo, sin dejar rastro de qué cambió ni quién
     // lo tocó. Ahora se pide confirmación mostrando el antes/después y
@@ -952,7 +942,7 @@ function PieEnvases({
       setDraft(null);
       return;
     }
-    const resumen = cambios.map(ch => `${LBL_ENV[ch.producto]} (${ch.campo === "fijo" ? "Fijos" : "Prestados"}): ${ch.antes} → ${ch.despues}`).join("\n");
+    const resumen = cambios.map(ch => `${NOMBRES[ch.producto]} (${ch.campo === "fijo" ? "Fijos" : "Prestados"}): ${ch.antes} → ${ch.despues}`).join("\n");
     const ok = window.rmConfirm ? await window.rmConfirm(`Confirmar corrección de envases de ${c.nombre}:\n\n${resumen}`) : window.confirm(`Confirmar corrección de envases de ${c.nombre}:\n\n${resumen}`);
     if (!ok) return;
     // Los 4 productos (incluido dispenser) se guardan directo en c.prestado
@@ -1011,38 +1001,30 @@ function PieEnvases({
       color: "var(--color-text-tertiary)",
       marginBottom: 4
     }
-  }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "Sifón"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "10L"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "20L"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "Disp")), [["fijos", "🏠 Fijos"], ["prest", "📦 Prestados"]].map(([t, l]) => /*#__PURE__*/React.createElement("div", {
+  }, null, [["fijos", "🏠 Fijos"], ["prest", "📦 Prestados"]].map(([t, l]) => /*#__PURE__*/React.createElement("div", {
     key: t,
-    style: {
-      display: "grid",
-      gridTemplateColumns: "82px 1fr 1fr 1fr 1fr",
-      gap: 4,
-      alignItems: "center",
-      marginBottom: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
+    style: { marginBottom: 7 }
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: t === "prest" ? "var(--color-text-warning)" : "var(--color-text-secondary)"
+      color: t === "prest" ? "var(--color-text-warning)" : "var(--color-text-secondary)",
+      marginBottom: 3
     }
-  }, l), KEYS.map(k => /*#__PURE__*/React.createElement("input", {
+  }, l), /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", flexWrap: "wrap", gap: 5 }
+  }, KEYS.map(k => /*#__PURE__*/React.createElement("label", {
     key: k,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+      background: "var(--color-background-secondary)",
+      borderRadius: 6,
+      padding: "3px 6px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: { fontSize: 10, color: "var(--color-text-tertiary)" }
+  }, NOMBRES[k]), /*#__PURE__*/React.createElement("input", {
     type: "number",
     value: draft[t][k],
     onChange: e => {
@@ -1057,13 +1039,14 @@ function PieEnvases({
     },
     style: {
       ...s.inputNum,
-      padding: "6px 2px",
-      fontSize: 14,
+      width: 38,
+      padding: "4px 2px",
+      fontSize: 13,
       textAlign: "center",
       fontWeight: t === "prest" && draft[t][k] !== 0 ? 600 : 400,
       color: t === "prest" ? draft[t][k] > 0 ? "var(--color-text-warning)" : draft[t][k] < 0 ? "var(--color-text-success)" : "var(--color-text-primary)" : "var(--color-text-primary)"
     }
-  })))), /*#__PURE__*/React.createElement("div", {
+  }))))))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: "var(--color-text-tertiary)",
@@ -1117,15 +1100,10 @@ function PieEnvases({
       fontSize: 12,
       textAlign: "left"
     }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "sifon"
-  }, "Sifón 1.5L"), /*#__PURE__*/React.createElement("option", {
-    value: "bidon10"
-  }, "Bidón 10L"), /*#__PURE__*/React.createElement("option", {
-    value: "bidon20"
-  }, "Bidón 20L"), /*#__PURE__*/React.createElement("option", {
-    value: "dispenser"
-  }, "Dispenser")), /*#__PURE__*/React.createElement("input", {
+  }, PRODS.map(([k, lbl]) => /*#__PURE__*/React.createElement("option", {
+    key: k,
+    value: k
+  }, lbl))), /*#__PURE__*/React.createElement("input", {
     type: "number",
     min: 1,
     placeholder: "Cant.",
