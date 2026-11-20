@@ -1222,6 +1222,7 @@ function DispenserConfigModal({
 function DetalleCliente({
   cliente,
   ventas,
+  noVisitas,
   dia,
   fecha,
   productos,
