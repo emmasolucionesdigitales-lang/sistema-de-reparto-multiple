@@ -40,22 +40,26 @@ function StockGeneral({
   });
   const hoyDia = DIAS[(new Date().getDay() + 6) % 7] || "Lunes";
   const [diaCarga, setDiaCarga] = React.useState(DIAS.includes(hoyDia) ? hoyDia : "Lunes");
-  const STOCK_KEY = {
-    1: "sifon",
-    2: "bidon10",
-    3: "bidon20",
-    4: "dispenser"
-  };
-  const keyDe = p => STOCK_KEY[p.id] || "p" + p.id;
-  const PRODS = (productos || []).length ? (productos || []).map(p => [keyDe(p), p.nombre]) : [["sifon", "Sifón 1.5L"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"], ["dispenser", "Dispenser"]];
+  // Pedido de Guillermo (19/11/2026, portado de La Catalina/Individual):
+  // keyDe ahora usa la clave canónica de producto (claveStockDeProducto,
+  // ver 03-utils.js) en vez de un mapa fijo por id -- antes, para un
+  // producto nuevo, keyDe devolvía "p"+id, una clave DISTINTA a la que usa
+  // el resto de la app ("prod_"+id vía claveStockDeProducto), así que el
+  // stock de un producto nuevo quedaba desincronizado en esta pantalla.
+  // Para los 4 de siempre el resultado es idéntico (misma clave de toda
+  // la vida).
+  const keyDe = p => claveStockDeProducto(p);
+  const productosStock = (productos || []).filter(p => p.trackStock !== false);
+  const PRODS = productosStock.length ? productosStock.map(p => [keyDe(p), p.nombre]) : [["sifon", "Sifón 1.5L"], ["bidon10", "Bidón 10L"], ["bidon20", "Bidón 20L"], ["dispenser", "Dispenser"]];
+  const PROD_KEYS = PRODS.map(([k]) => k);
+  const cero = () => Object.fromEntries(PROD_KEYS.map(k => [k, 0]));
+  const gridArqueo = "1fr " + PROD_KEYS.map(() => "42px").join(" ");
+  const clavesCargaStock = productosDeCarga(productos).map(claveStockDeProducto);
+  const LBL_CORTA_LEGACY = { sifon: "Sif", bidon10: "10L", bidon20: "20L", dispenser: "Disp" };
+  const lblCorta = k => LBL_CORTA_LEGACY[k] || (PRODS.find(([pk]) => pk === k)?.[1] || k).replace(" 1.5L", "").replace("Bidón ", "").slice(0, 4);
   const setLoc = (loc, key, val) => {
     const ns = JSON.parse(JSON.stringify(stock));
-    if (!ns[loc]) ns[loc] = {
-      sifon: 0,
-      bidon10: 0,
-      bidon20: 0,
-      dispenser: 0
-    };
+    if (!ns[loc]) ns[loc] = cero();
     const antes = Number(ns[loc][key] || 0);
     const despues = Math.max(0, Math.round(Number(val) || 0));
     ns[loc][key] = despues;
@@ -124,6 +128,10 @@ function StockGeneral({
   const [nuevoProdNombre, setNuevoProdNombre] = React.useState("");
   const [nuevoProdCosto, setNuevoProdCosto] = React.useState("");
   const [nuevoProdPrecio, setNuevoProdPrecio] = React.useState("");
+  // Peso del producto nuevo (kg por unidad) — pedido de Guillermo
+  // (19/11/2026, portado de La Catalina/Individual): solo para tener una
+  // idea del peso que lleva el vehículo al salir a repartir. Opcional.
+  const [nuevoProdPeso, setNuevoProdPeso] = React.useState("");
   const agregarProducto = () => {
     const nombre = (window.prompt("Nombre del producto nuevo:") || "").trim();
     if (!nombre) return;
@@ -145,44 +153,25 @@ function StockGeneral({
     setCargasDia(nc);
   };
   const clientesReales = clientes || [];
-  const totClientes = {
-    sifon: 0,
-    bidon10: 0,
-    bidon20: 0,
-    dispenser: 0
-  };
+  const totClientes = cero();
   clientesReales.forEach(c => {
-    totClientes.sifon += Number(c.sifon) || 0;
-    totClientes.bidon10 += Number(c.bidon10) || 0;
-    totClientes.bidon20 += Number(c.bidon20) || 0;
-    totClientes.dispenser += Number(c.dispenser) || 0;
+    PROD_KEYS.forEach(k => { totClientes[k] += Number(c[k]) || 0; });
   });
 
-  // Prestado EXTRA (más allá de lo fijo) — para sifón/bidón10/bidón20 se lee
-  // directo de c.prestado (se mantiene solo, ver aplicarMovimientoEnvases en
-  // 17-app.js); dispenser sigue calculándose del historial + ajuste manual.
-  const totPrestados = {
-    sifon: 0,
-    bidon10: 0,
-    bidon20: 0,
-    dispenser: 0
-  };
+  // Prestado EXTRA (más allá de lo fijo) — se lee directo de c.prestado
+  // (se mantiene solo, ver aplicarMovimientoEnvases en 17-app.js).
+  const totPrestados = cero();
   clientesReales.forEach(c => {
-    ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
+    PROD_KEYS.forEach(k => {
       totPrestados[k] += prestadoClienteDe(c, k, ventas);
     });
   });
 
   // Todos los camiones juntos (uno por reparto) — para el total general
-  const totCamiones = {
-    sifon: 0,
-    bidon10: 0,
-    bidon20: 0,
-    dispenser: 0
-  };
+  const totCamiones = cero();
   (repartos || []).forEach(rep => {
     const c = stock.camiones?.[rep.id] || {};
-    ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
+    PROD_KEYS.forEach(k => {
       totCamiones[k] += Number(c[k]) || 0;
     });
   });
@@ -215,17 +204,9 @@ function StockGeneral({
       motivo: "Roto en el reparto"
     });
   };
-  const totalPerdidas = {
-    sifon: 0,
-    bidon10: 0,
-    bidon20: 0,
-    dispenser: 0
-  };
+  const totalPerdidas = cero();
   (perdidas || []).forEach(p => {
-    totalPerdidas.sifon += p.sifon || 0;
-    totalPerdidas.bidon10 += p.bidon10 || 0;
-    totalPerdidas.bidon20 += p.bidon20 || 0;
-    totalPerdidas.dispenser += p.dispenser || 0;
+    PROD_KEYS.forEach(k => { totalPerdidas[k] += p[k] || 0; });
   });
   const chipResumen = (lbl, val, color) => /*#__PURE__*/React.createElement("span", {
     style: {
@@ -240,19 +221,20 @@ function StockGeneral({
       color
     }
   }, val));
-  const MOV_LBL = {
+  const MOV_LBL_LEGACY = {
     sifon: "Sifón",
     bidon10: "10L",
     bidon20: "20L",
     dispenser: "Dispenser"
   };
+  const MOV_LBL = Object.fromEntries(PRODS.map(([k, lbl]) => [k, MOV_LBL_LEGACY[k] || lbl.replace(" 1.5L", "")]));
   const MOV_TIPO_LBL = {
     cierre: "🔁 Cierre del día"
   };
   const renderMovDetalle = m => {
     if (m.tipo === "cierre") {
       const partes = [];
-      ["sifon", "bidon10", "bidon20"].forEach(k => {
+      clavesCargaStock.forEach(k => {
         const d = m.detalle?.[k];
         if (!d) return;
         const bits = [];
@@ -743,60 +725,28 @@ function StockGeneral({
       flexWrap: "wrap",
       marginBottom: 5
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Sifón ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-primary)"
-    }
-  }, totClientes.sifon), " ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--color-text-tertiary)"
-    }
-  }, "(", Math.floor(totClientes.sifon / 6), " caj)")), /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "10L ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-primary)"
-    }
-  }, totClientes.bidon10)), /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "20L ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-primary)"
-    }
-  }, totClientes.bidon20)), /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Disp ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-primary)"
-    }
-  }, totClientes.dispenser))), /*#__PURE__*/React.createElement("button", {
+  }, productosStock.map(p => {
+    const k = keyDe(p);
+    return /*#__PURE__*/React.createElement("span", {
+      key: k,
+      style: {
+        background: "var(--color-background-tertiary)",
+        borderRadius: 6,
+        padding: "2px 5px",
+        fontSize: 12,
+        color: "var(--color-text-secondary)"
+      }
+    }, lblCorta(k), " ", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: "var(--color-text-primary)"
+      }
+    }, totClientes[k]), k === "sifon" && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        color: "var(--color-text-tertiary)"
+      }
+    }, " (", Math.floor(totClientes.sifon / 6), " caj)"));
+  })), /*#__PURE__*/React.createElement("button", {
     onClick: () => setClientesAbierto(o => !o),
     style: {
       ...s.btn,
@@ -866,33 +816,22 @@ function StockGeneral({
   }, d === "todos" ? "Todos" : d.slice(0, 3)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "1fr 42px 42px 42px 42px",
+      gridTemplateColumns: gridArqueo,
       gap: 4,
       fontSize: 12,
       color: "var(--color-text-tertiary)",
       marginBottom: 5
     }
-  }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+  }, [/*#__PURE__*/React.createElement("span", { key: "_" })].concat(PROD_KEYS.map(k => /*#__PURE__*/React.createElement("span", {
+    key: k,
     style: {
       textAlign: "center"
     }
-  }, "Sif"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "10L"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "20L"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      textAlign: "center"
-    }
-  }, "Disp")), clientesReales.filter(c => diaArqueo === "todos" || c.dia === diaArqueo).filter(c => buscarCliente(c, buscaArqueo) > 0).sort((a, b) => (a.nombre || "").localeCompare(b.nombre || "")).map(c => /*#__PURE__*/React.createElement("div", {
+  }, lblCorta(k))))), clientesReales.filter(c => diaArqueo === "todos" || c.dia === diaArqueo).filter(c => buscarCliente(c, buscaArqueo) > 0).sort((a, b) => (a.nombre || "").localeCompare(b.nombre || "")).map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     style: {
       display: "grid",
-      gridTemplateColumns: "1fr 42px 42px 42px 42px",
+      gridTemplateColumns: gridArqueo,
       gap: 4,
       alignItems: "center",
       marginBottom: 4
@@ -911,7 +850,7 @@ function StockGeneral({
       fontSize: 11,
       color: "var(--color-text-tertiary)"
     }
-  }, c.dia)), modoArqueo === "fijos" ? ["sifon", "bidon10", "bidon20", "dispenser"].map(k => /*#__PURE__*/React.createElement("input", {
+  }, c.dia)), modoArqueo === "fijos" ? PROD_KEYS.map(k => /*#__PURE__*/React.createElement("input", {
     key: k,
     type: "number",
     value: c[k] || 0,
@@ -921,7 +860,7 @@ function StockGeneral({
       padding: "4px 2px",
       fontSize: 12
     }
-  })) : ["sifon", "bidon10", "bidon20", "dispenser"].map(k => {
+  })) : PROD_KEYS.map(k => {
     const val = prestadoClienteDe(c, k, ventas);
     return /*#__PURE__*/React.createElement("input", {
       key: k,
@@ -988,55 +927,23 @@ function StockGeneral({
       flexWrap: "wrap",
       marginBottom: 6
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Sifón ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-danger)"
-    }
-  }, totalPerdidas.sifon)), /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "10L ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-danger)"
-    }
-  }, totalPerdidas.bidon10)), /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "20L ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-danger)"
-    }
-  }, totalPerdidas.bidon20)), /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--color-background-tertiary)",
-      borderRadius: 6,
-      padding: "2px 5px",
-      fontSize: 12,
-      color: "var(--color-text-secondary)"
-    }
-  }, "Dispenser ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: "var(--color-text-danger)"
-    }
-  }, totalPerdidas.dispenser))), /*#__PURE__*/React.createElement("div", {
+  }, productosStock.map(p => {
+    const k = keyDe(p);
+    return /*#__PURE__*/React.createElement("span", {
+      key: k,
+      style: {
+        background: "var(--color-background-tertiary)",
+        borderRadius: 6,
+        padding: "2px 5px",
+        fontSize: 12,
+        color: "var(--color-text-secondary)"
+      }
+    }, p.nombre.replace(" 1.5L", ""), " ", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: "var(--color-text-danger)"
+      }
+    }, totalPerdidas[k]));
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--color-background-tertiary)",
       borderRadius: 8,
@@ -1459,6 +1366,24 @@ function StockGeneral({
     }
   }))), /*#__PURE__*/React.createElement("div", {
     style: {
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      ...s.label,
+      marginBottom: 3
+    }
+  }, "Peso kg por unidad (opcional)"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    value: nuevoProdPeso,
+    onChange: e => setNuevoProdPeso(e.target.value),
+    style: {
+      ...inNum,
+      fontSize: 12,
+      width: "100%"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
       display: "flex",
       gap: 6
     }
@@ -1473,6 +1398,7 @@ function StockGeneral({
       setNuevoProdNombre("");
       setNuevoProdCosto("");
       setNuevoProdPrecio("");
+      setNuevoProdPeso("");
     }
   }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     style: {
@@ -1492,13 +1418,17 @@ function StockGeneral({
         id: Date.now(),
         nombre: nuevoProdNombre.trim(),
         costo: Number(nuevoProdCosto) || 0,
-        precio: Number(nuevoProdPrecio) || 0
+        precio: Number(nuevoProdPrecio) || 0,
+        trackStock: true,
+        retornable: true,
+        peso: Number(nuevoProdPeso) || 0
       };
       setProductos([...(productos || []), nuevo]);
       setMostrarNuevoProd(false);
       setNuevoProdNombre("");
       setNuevoProdCosto("");
       setNuevoProdPrecio("");
+      setNuevoProdPeso("");
     }
   }, "✓ Agregar"))))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1565,7 +1495,7 @@ function StockGeneral({
       gridTemplateColumns: "1fr 1fr",
       gap: 5
     }
-  }, [["soda", "Sifón"], ["b10", "Bidón 10L"], ["b20", "Bidón 20L"], ["disp", "Dispenser"]].map(([k, lbl]) => /*#__PURE__*/React.createElement("div", {
+  }, [...productosDeCarga(productos).map(p => [claveCargaDeProducto(p), p.nombre]), ["disp", "Dispenser"]].map(([k, lbl]) => /*#__PURE__*/React.createElement("div", {
     key: k,
     style: {
       display: "flex",
