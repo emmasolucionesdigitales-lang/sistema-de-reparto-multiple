@@ -1111,12 +1111,14 @@ function Config({
       fontWeight: 700,
       color: "var(--color-text-info)"
     }
-  }, "🚚 Carga diaria del camión")), ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map(dia => {
-    const c = cargasDia?.[dia] || {
-      soda: 0,
-      b10: 0,
-      b20: 0
-    };
+  }, "🚚 Carga diaria del camión")), DIAS.map(dia => {
+    // Pedido de Guillermo (20/11/2026, portado de Individual): antes esto
+    // solo tenia soda/b10/b20 fijos -- ahora la lista de columnas se arma
+    // con los productos reales de carga (productosDeCarga/claveCargaDeProducto),
+    // asi un producto nuevo tambien entra a la carga diaria configurable.
+    const c = cargasDia?.[dia] || CARGA_DIA_DEFAULT[dia] || { soda: 0, b10: 0, b20: 0 };
+    const otrosProdsCarga = productosDeCarga(productos || []).filter(p => !["soda", "b10", "b20"].includes(claveCargaDeProducto(p)));
+    const colsCarga = [["soda", "🫧 Soda"], ["b10", "💧 Bidón 10L"], ["b20", "🫙 Bidón 20L"], ...otrosProdsCarga.map(p => [claveCargaDeProducto(p), p.nombre.replace(" 1.5L", "")])];
     const upd = (k, v) => {
       const nd = {
         ...(cargasDia || {}),
@@ -1143,10 +1145,10 @@ function Config({
     }, dia), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
+        gridTemplateColumns: `repeat(${colsCarga.length}, 1fr)`,
         gap: 5
       }
-    }, [["soda", "🫧 Soda"], ["b10", "💧 Bidón 10L"], ["b20", "🫙 Bidón 20L"]].map(([k, lbl]) => /*#__PURE__*/React.createElement("div", {
+    }, colsCarga.map(([k, lbl]) => /*#__PURE__*/React.createElement("div", {
       key: k
     }, /*#__PURE__*/React.createElement("label", {
       style: {
