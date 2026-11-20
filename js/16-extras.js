@@ -1856,10 +1856,19 @@ function NuevoRecordatorioForm({
   const [fecha, setFecha] = React.useState(hoy);
   const [hora, setHora] = React.useState("10:00");
   const [busq, setBusq] = React.useState("");
+  // Pedido de Guillermo (20/11/2026, portado de Individual/La Catalina): a veces no se
+  // acuerda el nombre ni la direccion exacta del cliente, solo se acuerda
+  // "mas o menos donde cae" en la lista del dia -- antes la unica forma de
+  // encontrarlo era salir de Agenda, ir a Clientes del dia y volver con el
+  // nombre ya sabido. Con el chip de dia aca mismo se puede ver la lista
+  // completa de ese dia, EN EL MISMO ORDEN de visita (c.orden) que ya usa
+  // Clientes del dia, para reconocerlo sin necesitar el nombre.
+  const [diaFiltro, setDiaFiltro] = React.useState(null);
   const [clienteId, setClienteId] = React.useState(null);
   const [motivo, setMotivo] = React.useState("");
   const [paraRepartidor, setParaRepartidor] = React.useState(""); // "" = yo mismo (dueño)
-  const clientesFilt = busq.length > 1 ? clientes.filter(c => buscarCliente(c, busq) > 0).slice(0, 6) : [];
+  const clientesDelDia = diaFiltro ? [...clientes].filter(c => c.dia === diaFiltro).sort((a, b) => (a.orden || 9999) - (b.orden || 9999)) : null;
+  const clientesFilt = busq.length > 1 ? (clientesDelDia || clientes).filter(c => buscarCliente(c, busq) > 0).slice(0, diaFiltro ? 40 : 6) : clientesDelDia || [];
   const clienteSel = clientes.find(c => c.id === clienteId);
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TipoRecordatorioSelector, {
     tipo: tipo,
@@ -1905,26 +1914,59 @@ function NuevoRecordatorioForm({
     onClick: () => {
       setClienteId(null);
       setBusq("");
+      setDiaFiltro(null);
     }
   }, "✕")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("input", {
     style: s.input,
-    placeholder: "Escribí el nombre del cliente...",
+    placeholder: "Escribí el nombre del cliente... (opcional)",
     value: busq,
     onChange: e => setBusq(e.target.value)
-  }), clientesFilt.map(c => /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", gap: 6, margin: "8px 0", flexWrap: "wrap" }
+  }, DIAS.map(d => /*#__PURE__*/React.createElement("button", {
+    key: d,
+    onClick: () => setDiaFiltro(diaFiltro === d ? null : d),
+    style: {
+      fontSize: 12,
+      padding: "5px 10px",
+      borderRadius: 7,
+      border: "none",
+      cursor: "pointer",
+      background: diaFiltro === d ? "#185FA5" : "var(--color-background-tertiary)",
+      color: diaFiltro === d ? "#e2eaf4" : "var(--color-text-secondary)",
+      fontWeight: diaFiltro === d ? 500 : 400
+    }
+  }, d.slice(0, 3)))), clientesFilt.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     style: {
       ...s.card,
       margin: "2px 0",
       padding: "8px 12px",
       cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
       background: "var(--color-background-tertiary)"
     },
     onClick: () => {
       setClienteId(c.id);
       setBusq("");
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, diaFiltro && /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 20,
+      height: 20,
+      borderRadius: "50%",
+      background: "var(--color-background-primary)",
+      color: "var(--color-text-info)",
+      fontSize: 10.5,
+      fontWeight: 700,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0
+    }
+  }, c.orden || "·"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 500,
@@ -1935,7 +1977,7 @@ function NuevoRecordatorioForm({
       fontSize: 11,
       color: "var(--color-text-secondary)"
     }
-  }, c.dia, direccionCliente(c) && " · ", direccionCliente(c)))))), repartidores && repartidores.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, c.dia, direccionCliente(c) && " · ", direccionCliente(c))))))), repartidores && repartidores.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 10
     }
