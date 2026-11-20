@@ -26,12 +26,54 @@ function direccionCliente(c) {
   if (c.barrio) partes.push(c.barrio);
   return partes.join(" · ");
 }
-const KEY_PROD_ENV = {
+let KEY_PROD_ENV = {
   "Sifón 1.5L": "sifon",
   "Bidón 10L": "bidon10",
   "Bidón 20L": "bidon20",
   "Dispenser": "dispenser"
 };
+// ── Pedido de Guillermo (19/11/2026, portado de La Catalina / Individual):
+//    poder agregar un producto nuevo y que el stock y los envases prestados
+//    lo manejen solos, sin tocar codigo. claveStockDeProducto(p): la clave
+//    de stock/comodato de un producto -- para los 4 de siempre, la MISMA
+//    clave de toda la vida; para uno nuevo, se genera sola ("prod_<id>").
+function claveStockDeProducto(p) {
+  if (!p) return null;
+  if (typeof CLAVE_LEGACY_POR_NOMBRE !== "undefined" && CLAVE_LEGACY_POR_NOMBRE[p.nombre]) {
+    return CLAVE_LEGACY_POR_NOMBRE[p.nombre];
+  }
+  return "prod_" + p.id;
+}
+// Reconstruye KEY_PROD_ENV (nombre de producto -> clave de stock) para
+// TODOS los productos actuales. Se llama cada vez que cambia la lista de
+// productos (ver 17-app.js). Como KEY_PROD_ENV se reasigna (no se muta),
+// cualquier funcion que lo lea en el momento ve siempre la version mas
+// nueva.
+function actualizarKeyProdEnv(productos) {
+  const nuevo = {};
+  (productos || []).forEach(p => {
+    if (p.trackStock === false) return;
+    nuevo[p.nombre] = claveStockDeProducto(p);
+  });
+  KEY_PROD_ENV = nuevo;
+}
+// ── Lo mismo para el cierre del dia / carga por dia (08-menu.js,
+//    07-stock.js, 15-config.js), que usa sus propias 3 claves cortas de
+//    siempre (soda/b10/b20). productosDeCarga: productos que van al camion
+//    y entran al cierre del dia (todos los que tienen stock propio, MENOS
+//    el dispenser). claveCargaDeProducto: clave corta de siempre para los
+//    3 de siempre; para un producto nuevo, usa directamente su clave de
+//    stock (ya unica).
+function productosDeCarga(productos) {
+  return (productos || []).filter(p => p.trackStock !== false && !p.esDispenser);
+}
+function claveCargaDeProducto(p) {
+  if (!p) return null;
+  if (typeof PL_LEGACY_POR_NOMBRE !== "undefined" && PL_LEGACY_POR_NOMBRE[p.nombre]) {
+    return PL_LEGACY_POR_NOMBRE[p.nombre];
+  }
+  return claveStockDeProducto(p);
+}
 // ── Cuánto tiene PRESTADO un cliente de un producto ("sifon"|"bidon10"|
 //    "bidon20"|"dispenser"). Se lee directo de c.prestado (campo que se
 //    mantiene solo, sumando/restando en cada venta — ver
