@@ -2183,11 +2183,7 @@ function AppPrincipal({
     const envAutoDetect = [];
     const fijosAutoAjuste = {};
     if (opcionSaldo !== "cobro_deuda" && opcionSaldo !== "cambio_envase") {
-      const campoFijo = {
-        "Sifón 1.5L": "sifon",
-        "Bidón 10L": "bidon10",
-        "Bidón 20L": "bidon20"
-      };
+      const campoFijo = Object.fromEntries((productos || []).filter(p => p.trackStock !== false && !p.esDispenser).map(p => [p.nombre, claveStockDeProducto(p)]));
       detalle.forEach(d => {
         const k = campoFijo[d.nombre];
         if (!k) return;
