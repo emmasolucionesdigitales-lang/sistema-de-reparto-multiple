@@ -674,7 +674,7 @@ function AppPrincipal({
     setStock(prev => {
       const s = JSON.parse(JSON.stringify(normStock(prev)));
       if (!s.camiones[repartoId]) s.camiones[repartoId] = stockCamionVacio();
-      ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
+      clavesStock.map(c => c.clave).forEach(k => {
         s.soderia[k] = (s.soderia[k] || 0) + (sobrLlenos[k] || 0);
         s.soderia_vacios[k] = (s.soderia_vacios[k] || 0) + (vacios[k] || 0);
         s.camiones[repartoId][k] = Math.max(0, (s.camiones[repartoId][k] || 0) - (sobrLlenos[k] || 0) - (vacios[k] || 0));
