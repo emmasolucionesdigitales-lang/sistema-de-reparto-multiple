@@ -35,11 +35,13 @@ function aplicarMovimientoEnvases(clientesPrev, ventasPrev, clienteId, envPrest,
       bidon20: c.prestado?.bidon20,
       dispenser: c.prestado?.dispenser
     };
-    const fijo = {
-      sifon: Number(c.sifon) || 0,
-      bidon10: Number(c.bidon10) || 0,
-      bidon20: Number(c.bidon20) || 0
-    };
+    // "fijo" (envases propios del cliente, no prestados) se arma solo, a
+    // partir de los campos reales del cliente (c[k]) -- asi sirve para
+    // CUALQUIER producto, no solo sifon/bidon10/bidon20 (antes "dispenser"
+    // tampoco se ajustaba aca -- se corrige de paso, portado de La
+    // Catalina, 19/11/2026).
+    const fijo = {};
+    const fijoDe = k => fijo[k] !== undefined ? fijo[k] : (fijo[k] = Number(c[k]) || 0);
     const seed = k => {
       if (prestado[k] === undefined) prestado[k] = prestadoHistoricoDe(ventasPrev, clienteId, k);
     };
@@ -58,7 +60,7 @@ function aplicarMovimientoEnvases(clientesPrev, ventasPrev, clienteId, envPrest,
       const deLoPrestado = Math.min(prestado[k], cant);
       prestado[k] -= deLoPrestado;
       cant -= deLoPrestado;
-      if (cant > 0) fijo[k] = Math.max(0, fijo[k] - cant);
+      if (cant > 0) fijo[k] = Math.max(0, fijoDe(k) - cant);
     });
     ["sifon", "bidon10", "bidon20", "dispenser"].forEach(k => {
       if (prestado[k] === undefined) prestado[k] = c.prestado?.[k] || 0;
@@ -66,9 +68,7 @@ function aplicarMovimientoEnvases(clientesPrev, ventasPrev, clienteId, envPrest,
     return {
       ...c,
       prestado,
-      sifon: fijo.sifon,
-      bidon10: fijo.bidon10,
-      bidon20: fijo.bidon20
+      ...fijo
     };
   });
 }
