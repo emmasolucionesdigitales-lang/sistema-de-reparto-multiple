@@ -2822,6 +2822,24 @@ function PlanillaDelDia({
   const clientesDia = new Set((clientes || []).filter(c => c.dia === dia).map(c => c.id));
   const ventasPropias = ventas.filter(v => clientesDia.has(v.clienteId));
   const ventasExtraDia = ventas.filter(v => !clientesDia.has(v.clienteId) && (!v.dia || v.dia === dia) && v.fechaKey === fecha);
+  // Pedido de Guillermo (20/11/2026, portado de Individual/La Catalina): el
+  // cierre del día usaba 3 claves cortas fijas (soda/b10/b20) sin relación
+  // con las de stock, y dejaba afuera cualquier producto nuevo. Ahora se
+  // arma sola, a partir de los productos reales marcados para ir al camión
+  // (ver productosDeCarga/claveCargaDeProducto en 03-utils.js).
+  const productosCarga = productosDeCarga(productos);
+  const clavesCarga = productosCarga.map(claveCargaDeProducto);
+  const ceroCarga = () => Object.fromEntries(clavesCarga.map(k => [k, 0]));
+  const dispProd = (productos || []).find(p => p.esDispenser);
+  const dispNombre = dispProd ? dispProd.nombre : "Dispenser";
+  const nombreAPk = Object.fromEntries(productosCarga.map(p => [p.nombre, claveCargaDeProducto(p)]));
+  const labelCorto = p => (p && p.nombre || "").replace(" 1.5L", "");
+  const prodsCargaUI = productosCarga.map(p => ({ id: claveCargaDeProducto(p), nombre: p.nombre, costoUnit: p.costo || 0 }));
+  const planKeyToStockKey = Object.fromEntries(productosCarga.map(p => [claveCargaDeProducto(p), claveStockDeProducto(p)]));
+  // Peso/bultos de productos "extra" (más allá de soda/b10/b20) que van al
+  // camión y tienen un peso cargado (kg por unidad) -- opcional, no inventa
+  // ningún número si el producto no tiene peso asignado.
+  const otrosProdsCarga = productosCarga.filter(p => !["soda", "b10", "b20"].includes(claveCargaDeProducto(p)));
   // Auto-calcular desde ventas del dia
   const CAJON_SODA = 6;
   const getProdCosto = nombre => {
@@ -2832,30 +2850,12 @@ function PlanillaDelDia({
   const costB10 = getProdCosto("Bidón 10L") || 800;
   const costB20 = getProdCosto("Bidón 20L") || 1100;
   const COSTO_CAJON_SODA = costSifon * CAJON_SODA;
-  const prodKey = {
-    "Bidón 10L": "b10",
-    "Bidón 20L": "b20",
-    "Sifón 1.5L": "soda"
-  };
+  const prodKey = nombreAPk;
   // Solo ventas de clientes propios del día
-  const totalesPorProd = {
-    b10: {
-      vacios: 0,
-      plata: 0,
-      llenar: 0
-    },
-    b20: {
-      vacios: 0,
-      plata: 0,
-      llenar: 0
-    },
-    soda: {
-      vacios: 0,
-      plata: 0,
-      llenar: 0,
-      cajones: 0
-    }
-  };
+  const totalesPorProd = Object.fromEntries(clavesCarga.map(pk => [
+    pk,
+    pk === "soda" ? { vacios: 0, plata: 0, llenar: 0, cajones: 0 } : { vacios: 0, plata: 0, llenar: 0 }
+  ]));
   ventasPropias.forEach(v => {
     v.detalle.forEach(d => {
       const k = prodKey[d.nombre];
@@ -2869,6 +2869,11 @@ function PlanillaDelDia({
   totalesPorProd.soda.llenar = sodaCajones * COSTO_CAJON_SODA;
   totalesPorProd.b10.llenar = totalesPorProd.b10.vacios * costB10;
   totalesPorProd.b20.llenar = totalesPorProd.b20.vacios * costB20;
+  productosCarga.forEach(p => {
+    const pk = claveCargaDeProducto(p);
+    if (pk === "soda" || pk === "b10" || pk === "b20") return;
+    totalesPorProd[pk].llenar = totalesPorProd[pk].vacios * (p.costo || 0);
+  });
   const totalVentaPlata = Object.values(totalesPorProd).reduce((a, p) => a + p.plata, 0);
   const totalVentaLlenar = Object.values(totalesPorProd).reduce((a, p) => a + p.llenar, 0);
   // Totales ventas de otros días
@@ -2901,8 +2906,12 @@ function PlanillaDelDia({
     const _b10Init = Number(planilla?.productos?.b10?.llenos || 0);
     const _b20Init = Number(planilla?.productos?.b20?.llenos || 0);
     const _cajInit = Math.floor(_sLlenos / (CAJON_SODA || 6));
-    const _pesoInit = _cajInit * 13 + _b10Init * 10 + _b20Init * 20;
-    const _bultosInit = _cajInit + _b10Init + _b20Init;
+    // Peso/bultos de productos "extra" (más allá de soda/b10/b20) -- solo
+    // suma si el producto tiene un peso (kg por unidad) cargado.
+    const _otrosPeso = otrosProdsCarga.reduce((acc, p) => acc + Number(planilla?.productos?.[claveCargaDeProducto(p)]?.llenos || 0) * (Number(p.peso) || 0), 0);
+    const _otrosBultos = otrosProdsCarga.reduce((acc, p) => acc + Number(planilla?.productos?.[claveCargaDeProducto(p)]?.llenos || 0), 0);
+    const _pesoInit = _cajInit * 13 + _b10Init * 10 + _b20Init * 20 + _otrosPeso;
+    const _bultosInit = _cajInit + _b10Init + _b20Init + _otrosBultos;
     const _fechaAuto = /^\d{4}-\d{2}-\d{2}$/.test(fecha || "") ? fecha.split("-").reverse().join("/") : "";
     return {
       ...planilla,
@@ -2970,55 +2979,27 @@ function PlanillaDelDia({
   // antes de entrar a la pantalla de Cierre, porque el botón "Enviar
   // informe" vive en la pantalla de Planilla y saca su propia foto fresca
   // en el momento en que el dueño decide mandarlo.
-  const [realesLlenos, setRealesLlenos] = useState({
-    soda: "",
-    b10: "",
-    b20: ""
-  });
-  const [realesVacios, setRealesVacios] = useState({
-    soda: "",
-    b10: "",
-    b20: ""
-  });
-  const [realesParaLlenar, setRealesParaLlenar] = useState({
-    soda: "",
-    b10: "",
-    b20: ""
-  });
+  const ceroCargaStr = () => Object.fromEntries(clavesCarga.map(k => [k, ""]));
+  const [realesLlenos, setRealesLlenos] = useState(ceroCargaStr());
+  const [realesVacios, setRealesVacios] = useState(ceroCargaStr());
+  const [realesParaLlenar, setRealesParaLlenar] = useState(ceroCargaStr());
   // Si ya se confirmó el cierre alguna vez para este día (localStorage se
   // marca de inmediato en confirmarCierre, antes incluso de que la planilla
   // sincronizada vuelva a bajar como prop), no hay que volver a pedir la
   // verificación de envases — se pasa directo al botón de enviar informe.
   const yaCerrado = !!planilla._diaCerrado || !!localStorage.getItem(cierreKey);
-  const llenosCargados = {
-    soda: Number(datos.productos?.soda?.llenos || 0),
-    b10: Number(datos.productos?.b10?.llenos || 0),
-    b20: Number(datos.productos?.b20?.llenos || 0)
-  };
+  const llenosCargados = Object.fromEntries(clavesCarga.map(pk => [pk, Number(datos.productos?.[pk]?.llenos || 0)]));
   // Peso y bultos calculados desde los productos cargados
   const cajonesLlenos = Math.floor((llenosCargados.soda || 0) / CAJON_SODA);
   const b10Llenos = llenosCargados.b10 || 0;
   const b20Llenos = llenosCargados.b20 || 0;
-  const pesoAuto = cajonesLlenos * 13 + b10Llenos * 10 + b20Llenos * 20;
-  const bultosAuto = cajonesLlenos + b10Llenos + b20Llenos;
-  const vendidosDia = {
-    soda: 0,
-    b10: 0,
-    b20: 0,
-    disp: 0
-  };
-  const prestadosDia = {
-    soda: 0,
-    b10: 0,
-    b20: 0,
-    disp: 0
-  };
-  const devueltosDia = {
-    soda: 0,
-    b10: 0,
-    b20: 0,
-    disp: 0
-  };
+  const pesoExtra = otrosProdsCarga.reduce((acc, p) => acc + Number(llenosCargados[claveCargaDeProducto(p)] || 0) * (Number(p.peso) || 0), 0);
+  const bultosExtra = otrosProdsCarga.reduce((acc, p) => acc + Number(llenosCargados[claveCargaDeProducto(p)] || 0), 0);
+  const pesoAuto = cajonesLlenos * 13 + b10Llenos * 10 + b20Llenos * 20 + pesoExtra;
+  const bultosAuto = cajonesLlenos + b10Llenos + b20Llenos + bultosExtra;
+  const vendidosDia = { ...ceroCarga(), disp: 0 };
+  const prestadosDia = { ...ceroCarga(), disp: 0 };
+  const devueltosDia = { ...ceroCarga(), disp: 0 };
   ventas.forEach(v => {
     (v.detalle || []).forEach(d => {
       const k = prodKey[d.nombre];
@@ -3039,22 +3020,9 @@ function PlanillaDelDia({
   (dispMovs || []).forEach(m => {
     if (m.delta > 0) prestadosDia.disp += m.delta;else devueltosDia.disp += -m.delta;
   });
-  const sobrantes = {
-    soda: Math.max(0, llenosCargados.soda - vendidosDia.soda),
-    b10: Math.max(0, llenosCargados.b10 - vendidosDia.b10),
-    b20: Math.max(0, llenosCargados.b20 - vendidosDia.b20)
-  };
-  const vaciosRec = {
-    soda: Math.max(0, vendidosDia.soda + devueltosDia.soda - prestadosDia.soda),
-    b10: Math.max(0, vendidosDia.b10 + devueltosDia.b10 - prestadosDia.b10),
-    b20: Math.max(0, vendidosDia.b20 + devueltosDia.b20 - prestadosDia.b20)
-  };
+  const sobrantes = Object.fromEntries(clavesCarga.map(pk => [pk, Math.max(0, (llenosCargados[pk] || 0) - (vendidosDia[pk] || 0))]));
+  const vaciosRec = Object.fromEntries(clavesCarga.map(pk => [pk, Math.max(0, (vendidosDia[pk] || 0) + (devueltosDia[pk] || 0) - (prestadosDia[pk] || 0))]));
   // Sodería actual (antes del cierre) — para mostrar "quedará en" por fila
-  const convPk = {
-    soda: "sifon",
-    b10: "bidon10",
-    b20: "bidon20"
-  };
   const soderiaActual = stock?.soderia || {};
   const soderiaVaciosActual = stock?.soderia_vacios || {};
 
@@ -3064,19 +3032,18 @@ function PlanillaDelDia({
   // vuelve — por eso lo prestado pendiente (sin devolver) suma acá. Lo que
   // ya es fijo permanente de cada cliente y el depósito NO forman parte de
   // este número: son otra cosa.
-  const enClientesPrestado = { soda: 0, b10: 0, b20: 0 };
+  const enClientesPrestado = ceroCarga();
   (clientes || []).forEach(c => {
-    ["soda", "b10", "b20"].forEach(pk => {
-      const sk = convPk[pk];
+    clavesCarga.forEach(pk => {
+      const sk = planKeyToStockKey[pk];
       enClientesPrestado[pk] += prestadoClienteDe(c, sk, ventas);
     });
   });
   const capFijaGuardada = (stock?.capacidadFijaPorReparto || {})[repartoId];
-  const CAPACIDAD_FIJA = capFijaGuardada && (capFijaGuardada.soda || capFijaGuardada.b10 || capFijaGuardada.b20) ? capFijaGuardada : {
-    soda: (stock?.soderia?.sifon || 0) + (stock?.soderia_vacios?.sifon || 0) + enClientesPrestado.soda,
-    b10: (stock?.soderia?.bidon10 || 0) + (stock?.soderia_vacios?.bidon10 || 0) + enClientesPrestado.b10,
-    b20: (stock?.soderia?.bidon20 || 0) + (stock?.soderia_vacios?.bidon20 || 0) + enClientesPrestado.b20
-  };
+  const CAPACIDAD_FIJA = capFijaGuardada && clavesCarga.some(pk => capFijaGuardada[pk]) ? capFijaGuardada : Object.fromEntries(clavesCarga.map(pk => {
+    const sk = planKeyToStockKey[pk];
+    return [pk, (stock?.soderia?.[sk] || 0) + (stock?.soderia_vacios?.[sk] || 0) + (enClientesPrestado[pk] || 0)];
+  }));
   const [editandoCapFija, setEditandoCapFija] = useState(null);
   // Cartel de confirmación antes de mover algo del/al Depósito — pedido del
   // usuario: la app tiene que avisar y preguntar, no mover en silencio.
@@ -3087,7 +3054,7 @@ function PlanillaDelDia({
     setStock(prev => {
       const s2 = JSON.parse(JSON.stringify(prev || {}));
       if (!s2.capacidadFijaPorReparto) s2.capacidadFijaPorReparto = {};
-      if (!s2.capacidadFijaPorReparto[repartoId]) s2.capacidadFijaPorReparto[repartoId] = { soda: 0, b10: 0, b20: 0 };
+      if (!s2.capacidadFijaPorReparto[repartoId]) s2.capacidadFijaPorReparto[repartoId] = ceroCarga();
       s2.capacidadFijaPorReparto[repartoId][pk] = valorStr !== "" && !isNaN(num) ? Math.round(num * cajon) : CAPACIDAD_FIJA[pk];
       syncData({ stock: s2 });
       return s2;
@@ -3098,27 +3065,15 @@ function PlanillaDelDia({
   // Cuánto necesitás para la salida del PRÓXIMO día de este mismo reparto
   const DIAS_ORDEN = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
   const diaSiguiente = DIAS_ORDEN[(DIAS_ORDEN.indexOf(dia) + 1) % DIAS_ORDEN.length];
-  const necesarioManana = cargasDia && cargasDia[diaSiguiente] || {
-    soda: 0,
-    b10: 0,
-    b20: 0
-  };
+  const necesarioManana = cargasDia && cargasDia[diaSiguiente] || ceroCarga();
 
   // "Para llenar" (calculado) = de los vacíos que vuelven HOY, cuántos hacen
   // falta llenar para completar lo que se necesita mañana — teniendo en
   // cuenta lo que YA había en sodería de días anteriores, no solo lo de hoy.
-  const paraLlenarCalc = {
-    soda: 0,
-    b10: 0,
-    b20: 0
-  };
-  const vaciosRestoCalc = {
-    soda: 0,
-    b10: 0,
-    b20: 0
-  };
-  ["soda", "b10", "b20"].forEach(pk => {
-    const sk = convPk[pk];
+  const paraLlenarCalc = ceroCarga();
+  const vaciosRestoCalc = ceroCarga();
+  clavesCarga.forEach(pk => {
+    const sk = planKeyToStockKey[pk];
     const llenosHoy = pk === "soda" ? Math.floor(sobrantes[pk] / CAJON_SODA) : sobrantes[pk];
     const vaciosHoy = pk === "soda" ? Math.floor(vaciosRec[pk] / CAJON_SODA) : vaciosRec[pk];
     const llenosYaHabia = pk === "soda" ? Math.floor((soderiaActual[sk] || 0) / CAJON_SODA) : soderiaActual[sk] || 0;
@@ -3142,23 +3097,20 @@ function PlanillaDelDia({
     // ningún lado, y por eso el cierre marcaba "falta un cajón" seguido.
     // Encontrado y arreglado primero en La Catalina; mismo fix acá.
     const sueltosSodaVV = vaciosRec.soda % CAJON_SODA;
-    const realesL = {
-      soda: realesLlenos.soda !== "" ? Number(realesLlenos.soda) * CAJON_SODA + sueltosSodaLL : sobrantes.soda,
-      b10: realesLlenos.b10 !== "" ? Number(realesLlenos.b10) : sobrantes.b10,
-      b20: realesLlenos.b20 !== "" ? Number(realesLlenos.b20) : sobrantes.b20
-    };
-    const realesPL = {
-      soda: (realesParaLlenar.soda !== "" ? Number(realesParaLlenar.soda) : paraLlenarCalc.soda) * CAJON_SODA,
-      b10: realesParaLlenar.b10 !== "" ? Number(realesParaLlenar.b10) : paraLlenarCalc.b10,
-      b20: realesParaLlenar.b20 !== "" ? Number(realesParaLlenar.b20) : paraLlenarCalc.b20
-    };
-    const realesV = {
-      soda: (realesVacios.soda !== "" ? Number(realesVacios.soda) * CAJON_SODA : vaciosRestoCalc.soda * CAJON_SODA) + sueltosSodaVV,
-      b10: realesVacios.b10 !== "" ? Number(realesVacios.b10) : vaciosRestoCalc.b10,
-      b20: realesVacios.b20 !== "" ? Number(realesVacios.b20) : vaciosRestoCalc.b20
-    };
+    const realesL = Object.fromEntries(clavesCarga.map(pk => [pk,
+      pk === "soda" ? (realesLlenos.soda !== "" ? Number(realesLlenos.soda) * CAJON_SODA + sueltosSodaLL : sobrantes.soda)
+        : (realesLlenos[pk] !== "" ? Number(realesLlenos[pk]) : sobrantes[pk])
+    ]));
+    const realesPL = Object.fromEntries(clavesCarga.map(pk => [pk,
+      pk === "soda" ? (realesParaLlenar.soda !== "" ? Number(realesParaLlenar.soda) : paraLlenarCalc.soda) * CAJON_SODA
+        : (realesParaLlenar[pk] !== "" ? Number(realesParaLlenar[pk]) : paraLlenarCalc[pk])
+    ]));
+    const realesV = Object.fromEntries(clavesCarga.map(pk => [pk,
+      pk === "soda" ? (realesVacios.soda !== "" ? Number(realesVacios.soda) * CAJON_SODA : vaciosRestoCalc.soda * CAJON_SODA) + sueltosSodaVV
+        : (realesVacios[pk] !== "" ? Number(realesVacios[pk]) : vaciosRestoCalc[pk])
+    ]));
     const diffs = {};
-    ["soda", "b10", "b20"].forEach(pk => {
+    clavesCarga.forEach(pk => {
       const calcL = pk === "soda" ? Math.floor(sobrantes[pk] / CAJON_SODA) : sobrantes[pk];
       const calcV = pk === "soda" ? Math.floor(vaciosRec[pk] / CAJON_SODA) : vaciosRec[pk];
       const realLTotal = (realesL[pk] + realesPL[pk]) / (pk === "soda" ? CAJON_SODA : 1);
@@ -3188,7 +3140,7 @@ function PlanillaDelDia({
     const diffDeposito = {};
     const llenFijo = {},
       vacFijo = {};
-    ["soda", "b10", "b20"].forEach(pk => {
+    clavesCarga.forEach(pk => {
       const esperadoPk = llenosCargados[pk];
       const vuelveTotalPk = realesL[pk] + realesPL[pk] + realesV[pk];
       diffDeposito[pk] = vuelveTotalPk - esperadoPk;
@@ -3221,29 +3173,12 @@ function PlanillaDelDia({
       vacFijo
     } = calcularMovimientoDeposito();
     const s = JSON.parse(JSON.stringify(stock));
-    if (!s.soderia) s.soderia = {
-      sifon: 0,
-      bidon10: 0,
-      bidon20: 0
-    };
-    if (!s.soderia_vacios) s.soderia_vacios = {
-      sifon: 0,
-      bidon10: 0,
-      bidon20: 0
-    };
+    if (!s.soderia) s.soderia = {};
+    if (!s.soderia_vacios) s.soderia_vacios = {};
     if (!s.camiones) s.camiones = {};
-    const conv = {
-      soda: "sifon",
-      b10: "bidon10",
-      b20: "bidon20"
-    };
-    if (!s.casa) s.casa = {
-      sifon: 0,
-      bidon10: 0,
-      bidon20: 0
-    };
-    ["soda", "b10", "b20"].forEach(pk => {
-      const sk = conv[pk];
+    if (!s.casa) s.casa = {};
+    clavesCarga.forEach(pk => {
+      const sk = planKeyToStockKey[pk];
       s.soderia[sk] = (s.soderia[sk] || 0) + llenFijo[pk];
       s.soderia_vacios[sk] = (s.soderia_vacios[sk] || 0) + vacFijo[pk];
       s.casa[sk] = (s.casa[sk] || 0) + diffDeposito[pk];
@@ -3256,8 +3191,8 @@ function PlanillaDelDia({
     });
     if (window._rmRegistrarMovimientoStock) {
       const detalleCierre = {};
-      ["soda", "b10", "b20"].forEach(pk => {
-        const sk = conv[pk];
+      clavesCarga.forEach(pk => {
+        const sk = planKeyToStockKey[pk];
         const soderiaVuelta = (llenFijo[pk] || 0) + (vacFijo[pk] || 0);
         const deposito = diffDeposito[pk] || 0;
         if (soderiaVuelta || deposito) detalleCierre[sk] = {
@@ -3294,7 +3229,7 @@ function PlanillaDelDia({
     const {
       diffDeposito
     } = calcularMovimientoDeposito();
-    const hayMovimiento = ["soda", "b10", "b20"].some(pk => diffDeposito[pk] !== 0);
+    const hayMovimiento = clavesCarga.some(pk => diffDeposito[pk] !== 0);
     if (hayMovimiento) setMostrarConfirmDeposito(true);else confirmarCierre();
   };
 
@@ -3338,7 +3273,12 @@ function PlanillaDelDia({
         margin: "0 0 8px",
         padding: "10px 12px"
       }
-    }, [["Soda", llenosCargados.soda > 0 ? `${Math.floor(llenosCargados.soda / CAJON_SODA)} cajones (${llenosCargados.soda} un)` : "—"], ["Bidón 10L", llenosCargados.b10 > 0 ? `${llenosCargados.b10} unidades` : "—"], ["Bidón 20L", llenosCargados.b20 > 0 ? `${llenosCargados.b20} unidades` : "—"]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
+    }, productosCarga.map(p => {
+      const pk = claveCargaDeProducto(p);
+      const l = pk === "soda" ? "Soda" : labelCorto(p);
+      const v = llenosCargados[pk] > 0 ? (pk === "soda" ? `${Math.floor(llenosCargados[pk] / CAJON_SODA)} cajones (${llenosCargados[pk]} un)` : `${llenosCargados[pk]} unidades`) : "—";
+      return [l, v];
+    }).map(([l, v]) => /*#__PURE__*/React.createElement("div", {
       key: l,
       style: {
         display: "flex",
@@ -3377,7 +3317,7 @@ function PlanillaDelDia({
         textAlign: h ? "center" : "left",
         fontWeight: 500
       }
-    }, h))), [["Soda", "soda"], ["10L", "b10"], ["20L", "b20"], ["Dispenser", "disp"]].map(([label, pk]) => /*#__PURE__*/React.createElement("div", {
+    }, h))), [...productosCarga.map(p => [claveCargaDeProducto(p) === "soda" ? "Soda" : labelCorto(p), claveCargaDeProducto(p)]), [dispNombre, "disp"]].map(([label, pk]) => /*#__PURE__*/React.createElement("div", {
       key: pk,
       style: {
         display: "grid",
@@ -3429,11 +3369,13 @@ function PlanillaDelDia({
         margin: "0 0 16px",
         padding: "10px 12px"
       }
-    }, [["Soda", "soda"], ["10L", "b10"], ["20L", "b20"]].map(([label, pk]) => {
+    }, productosCarga.map(p => {
+      const pk = claveCargaDeProducto(p);
+      const label = pk === "soda" ? "Soda" : labelCorto(p);
       const cajon = pk === "soda" ? CAJON_SODA : 1;
       const unidad = pk === "soda" ? "cajones" : "unidades";
       const div = n => pk === "soda" ? Math.floor(n / cajon) : n;
-      const sk = convPk[pk];
+      const sk = planKeyToStockKey[pk];
       const cols = [{
         tipo: "llenos",
         titulo: "Lleno",
@@ -3617,8 +3559,8 @@ function PlanillaDelDia({
       disabled: enviandoCierre
     }, enviandoCierre ? "⏳ Cerrando día..." : "✓ Confirmar y cerrar día"), mostrarConfirmDeposito && (() => {
       const { diffDeposito } = calcularMovimientoDeposito();
-      const LBL = { soda: "Sifón", b10: "Bidón 10L", b20: "Bidón 20L" };
-      const filas = ["soda", "b10", "b20"].filter(pk => diffDeposito[pk] !== 0);
+      const LBL = Object.fromEntries(productosCarga.map(p => [claveCargaDeProducto(p), p.nombre]));
+      const filas = clavesCarga.filter(pk => diffDeposito[pk] !== 0);
       return /*#__PURE__*/React.createElement("div", {
         style: {
           position: "fixed",
@@ -3807,7 +3749,7 @@ function PlanillaDelDia({
       fontWeight: 500,
       textAlign: h === "Producto" ? "left" : "right"
     }
-  }, h))), PRODUCTOS_CONFIG.map(p => {
+  }, h))), prodsCargaUI.map(p => {
     const auto = totalesPorProd[p.id];
     const esSoda = p.id === "soda";
     return /*#__PURE__*/React.createElement("div", {
@@ -4686,11 +4628,11 @@ function InicioReparto({
   onGuardar,
   onVolver
 }) {
-  const prodKeys = {
-    "Sifón 1.5L": "soda",
-    "Bidón 10L": "b10",
-    "Bidón 20L": "b20"
-  };
+  // Pedido de Guillermo (20/11/2026, portado de Individual/La Catalina):
+  // prodKeys ahora se arma desde los productos reales marcados para ir al
+  // camión (productosDeCarga/claveCargaDeProducto), no de un mapa fijo de
+  // 3 nombres -- así un producto nuevo entra solo a esta pantalla.
+  const prodKeys = Object.fromEntries(productosDeCarga(productos).map(p => [p.nombre, claveCargaDeProducto(p)]));
   const CAJON = 6; // sifones por cajón
   const [llenos, setLlenos] = useState(() => {
     const precarga = (cargasDia || CARGA_DIA_DEFAULT)[dia] || CARGA_DIA_DEFAULT[dia] || {};
@@ -4860,7 +4802,7 @@ function InicioReparto({
       display: "flex",
       gap: 16
     }
-  }, [["Sifón", stock?.soderia?.sifon || 0], ["Bidón 10L", stock?.soderia?.bidon10 || 0], ["Bidón 20L", stock?.soderia?.bidon20 || 0]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
+  }, productosDeCarga(productos).map(p => { const sk = claveStockDeProducto(p); return [p.nombre.replace(" 1.5L", ""), stock?.soderia?.[sk] || 0]; }).map(([l, v]) => /*#__PURE__*/React.createElement("div", {
     key: l,
     style: {
       textAlign: "center"
