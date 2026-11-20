@@ -1234,27 +1234,27 @@ function AppRepartidor({
           casa: {},
           camiones: {}
         }));
-        if (!s.soderia) s.soderia = {
-          sifon: 0,
-          bidon10: 0,
-          bidon20: 0
-        };
+        // Pedido de Guillermo (20/11/2026, portado de Individual/misma decisión
+        // que el cierre del día en 08-menu.js): antes esto solo movia stock
+        // de soda/b10/b20 -- ahora recorre los productos reales de carga
+        // (productosDeCarga/claveCargaDeProducto), asi un producto nuevo
+        // tambien se descuenta de soderia y se suma al camion al iniciar reparto.
+        if (!s.soderia) s.soderia = {};
         if (!s.camiones) s.camiones = {};
-        if (!s.camiones[miReparto.id]) s.camiones[miReparto.id] = {
-          sifon: 0,
-          bidon10: 0,
-          bidon20: 0,
-          dispenser: 0
-        };
-        const soda = Number(p.productos?.soda?.llenos || 0);
-        const b10 = Number(p.productos?.b10?.llenos || 0);
-        const b20 = Number(p.productos?.b20?.llenos || 0);
-        s.soderia.sifon = Math.max(0, (s.soderia.sifon || 0) - soda);
-        s.soderia.bidon10 = Math.max(0, (s.soderia.bidon10 || 0) - b10);
-        s.soderia.bidon20 = Math.max(0, (s.soderia.bidon20 || 0) - b20);
-        s.camiones[miReparto.id].sifon = (s.camiones[miReparto.id].sifon || 0) + soda;
-        s.camiones[miReparto.id].bidon10 = (s.camiones[miReparto.id].bidon10 || 0) + b10;
-        s.camiones[miReparto.id].bidon20 = (s.camiones[miReparto.id].bidon20 || 0) + b20;
+        if (!s.camiones[miReparto.id]) s.camiones[miReparto.id] = {};
+        const clavesCargaRoles = productosDeCarga(productos).map(claveCargaDeProducto);
+        const planKeyToStockKeyRoles = Object.fromEntries(productosDeCarga(productos).map(p => [claveCargaDeProducto(p), claveStockDeProducto(p)]));
+        const llenosPorPk = {};
+        clavesCargaRoles.forEach(pk => {
+          const llenos = Number(p.productos?.[pk]?.llenos || 0);
+          llenosPorPk[pk] = llenos;
+          const sk = planKeyToStockKeyRoles[pk];
+          s.soderia[sk] = Math.max(0, (s.soderia[sk] || 0) - llenos);
+          s.camiones[miReparto.id][sk] = (s.camiones[miReparto.id][sk] || 0) + llenos;
+        });
+        const soda = llenosPorPk.soda || 0;
+        const b10 = llenosPorPk.b10 || 0;
+        const b20 = llenosPorPk.b20 || 0;
         // La carga real de hoy queda como sugerencia para la próxima vez que
         // este reparto salga este mismo día — no depende de un número fijo.
         const cargasDiaNuevo = {
@@ -1262,9 +1262,7 @@ function AppRepartidor({
           [miReparto.id]: {
             ...((datos.cargasDia || {})[miReparto.id] || {}),
             [diaActual]: {
-              soda,
-              b10,
-              b20
+              ...llenosPorPk
             }
           }
         };
