@@ -671,7 +671,7 @@ function Config({
   repartos,
   repartoActual
 }) {
-  const [tab, setTab] = useState(["datos", "vehiculo", "apariencia"].includes(tabInicial) ? tabInicial : "datos");
+  const [tab, setTab] = useState(["datos", "vehiculo", "apariencia", "stock"].includes(tabInicial) ? tabInicial : "datos");
   const [abiertoNotif, setAbiertoNotif] = useState(false);
   const [abiertoHuella, setAbiertoHuella] = useState(false);
   const [abiertoRespaldo, setAbiertoRespaldo] = useState(false);
