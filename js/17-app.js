@@ -545,25 +545,40 @@ function AppPrincipal({
     localStorage.setItem("rm_cobros_dia_migrados_v1", "1");
   }, [ventas, clientes]);
   const [productos, setProductos] = useLS("rm_productos_v3", PRODUCTOS_INICIALES);
+  // Pedido de Guillermo (19/11/2026, portado de La Catalina / Individual):
+  // mantiene KEY_PROD_ENV (03-utils.js) al dia con la lista real de
+  // productos en cada render, y expone esa lista como global para que
+  // PieEnvases/FormCliente/stockCamionVacio (03-utils.js, 02-constantes.js)
+  // puedan armar sus claves dinamicas sin que haya que pasarles un prop
+  // nuevo en cada pantalla que los usa.
+  actualizarKeyProdEnv(productos);
+  window._rmProductos = productos;
+  const BASE_DEFAULT_FIJA = {
+    sifon: 150,
+    bidon10: 70,
+    bidon20: 21,
+    dispenser: 0
+  };
+  // El stock antes solo conocia estas 4 claves fijas -- y normStock, por
+  // donde pasa TODO guardado de stock (ver setStock mas abajo), ni siquiera
+  // preservaba capacidadFijaPorReparto (la base del checksum "cuadra con el
+  // fijo" POR REPARTO que ya usa 08-menu.js). Ahora se arma solo a partir
+  // de la lista real de productos (los 4 de siempre quedan con la misma
+  // clave de toda la vida, asi no se pierde ni se mueve ningun dato
+  // guardado) y capacidadFijaPorReparto viaja siempre.
+  const clavesStock = productos.filter(p => p.trackStock !== false).map(p => ({
+    clave: claveStockDeProducto(p),
+    capacidadBase: p.capacidadBase ?? BASE_DEFAULT_FIJA[claveStockDeProducto(p)] ?? 0
+  }));
   const normStock = s => {
-    const e = () => ({
-      sifon: 0,
-      bidon10: 0,
-      bidon20: 0,
-      dispenser: 0
-    });
+    const e = () => {
+      const o = {};
+      clavesStock.forEach(c => { o[c.clave] = 0; });
+      return o;
+    };
     const pick = o => {
-      const r = {
-        sifon: 0,
-        bidon10: 0,
-        bidon20: 0,
-        dispenser: 0
-      };
-      if (o && typeof o === "object") {
-        for (const k in o) {
-          r[k] = Math.max(0, Math.round(Number(o[k]) || 0));
-        }
-      }
+      const r = {};
+      clavesStock.forEach(c => { r[c.clave] = Math.max(0, Math.round(Number(o?.[c.clave]) || 0)); });
       return r;
     };
     const pickCamiones = o => {
@@ -575,11 +590,21 @@ function AppPrincipal({
       }
       return r;
     };
+    const pickCapFijaPorReparto = o => {
+      const r = {};
+      if (o && typeof o === "object") {
+        for (const rid in o) {
+          r[rid] = { ...o[rid] };
+        }
+      }
+      return r;
+    };
     const base = {
       soderia: e(),
       soderia_vacios: e(),
       casa: e(),
-      camiones: {}
+      camiones: {},
+      capacidadFijaPorReparto: {}
     };
     if (!s || typeof s !== "object") return base;
     if (s.soderia && typeof s.soderia === "object") {
@@ -596,14 +621,16 @@ function AppPrincipal({
         soderia: pick(s.soderia),
         soderia_vacios: pick(s.soderia_vacios),
         casa: pick(s.casa),
-        camiones
+        camiones,
+        capacidadFijaPorReparto: pickCapFijaPorReparto(s.capacidadFijaPorReparto)
       };
     }
     return {
       soderia: pick(s),
       soderia_vacios: e(),
       casa: e(),
-      camiones: {}
+      camiones: {},
+      capacidadFijaPorReparto: pickCapFijaPorReparto(s.capacidadFijaPorReparto)
     };
   };
   const [stockRaw, setStockRaw] = useLS("rm_stock_v4", {
