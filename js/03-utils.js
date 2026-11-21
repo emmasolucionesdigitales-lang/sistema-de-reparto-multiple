@@ -1799,6 +1799,15 @@ function buscarCliente(c, q) {
 //    un mismo producto si viene repartido en más de una venta) y devuelve
 //    el texto ya codificado, listo para el href de wa.me.
 // ════════════════════════════════════════════════════════════════════
+// Pedido de Guillermo (21/11/2026, portado de La Catalina): los mensajes
+// de WhatsApp siempre decían "Buen día" sin importar la hora real a la
+// que se mandan. Saludo según franja horaria.
+function saludoSegunHora() {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 12) return "Buen día";
+  if (h >= 12 && h < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
 function armarMsjTransferWA(ventas) {
   const lista = ventas || [];
   const porNombre = {};
@@ -1811,7 +1820,7 @@ function armarMsjTransferWA(ventas) {
   const items = Object.keys(porNombre).map(nombre => `${porNombre[nombre]} ${nombre}`);
   const itemsTxt = items.length ? items.reduce((acc, txt, i) => i === 0 ? txt : i === items.length - 1 ? `${acc} y ${txt}` : `${acc}, ${txt}`, "") : "";
   const total = lista.reduce((a, v) => a + ((v.pagadoNum != null ? v.pagadoNum : v.neto) || 0), 0);
-  const texto = itemsTxt ? `Buen día, estimado cliente! Hoy le dejé ${itemsTxt}, lo que da un total de ${fmt(total)}. Muchas gracias!` : `Buen día, estimado cliente! Le escribo por la transferencia de hoy, de ${fmt(total)}. Muchas gracias!`;
+  const texto = itemsTxt ? `${saludoSegunHora()}, estimado cliente! Hoy le dejé ${itemsTxt}, lo que da un total de ${fmt(total)}. Muchas gracias!` : `${saludoSegunHora()}, estimado cliente! Le escribo por la transferencia de hoy, de ${fmt(total)}. Muchas gracias!`;
   return encodeURIComponent(texto);
 }
 
